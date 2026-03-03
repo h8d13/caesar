@@ -16,10 +16,12 @@ import type { TFoundMedia } from './types';
 const getTextContent = (node: any): string => {
     if (node.type === 'text') return node.data || '';
     if (node.children) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return node.children
-            .map((child: any) => getTextContent(child))
-            .join('');
+        return (
+            node.children
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .map((child: any) => getTextContent(child))
+                .join('')
+        );
     }
     return '';
 };

@@ -111,6 +111,7 @@ export function useWhiteboard(
             setLayerIds(state.layerIds);
             pushToHistory(state.layers, state.layerIds);
         });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [channelId, trpc]);
 
     // --- Subscribe to remote events ---
@@ -704,6 +705,7 @@ export function useWhiteboard(
                 return;
             }
         },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         [
             broadcastCursor,
             canvasMode,
