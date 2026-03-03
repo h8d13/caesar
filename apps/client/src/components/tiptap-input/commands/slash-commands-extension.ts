@@ -40,6 +40,7 @@ export const SlashCommands = Node.create<SlashCommandsOptions>({
                 ...this.options.suggestion,
                 items: ({ query }) => {
                     const commands =
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         (this.editor.storage as Record<string, any>)[
                             this.name
                         ]?.[COMMANDS_STORAGE_KEY]?.commands ??

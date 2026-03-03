@@ -3,10 +3,10 @@
 // are faster with the willReadFrequently attribute set to true."
 // Caused by is-emoji-supported used in @tiptap/extension-emoji.
 const orig = HTMLCanvasElement.prototype.getContext;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 HTMLCanvasElement.prototype.getContext = function (
     this: HTMLCanvasElement,
     type: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     attrs?: any
 ) {
     if (type === '2d') {

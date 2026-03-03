@@ -45,6 +45,7 @@ const DialogsProvider = memo(() => {
 
     return (
         <Suspense fallback={null}>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {createElement(DialogsMap[openDialog] as any, {
                 ...props,
                 isOpen: realIsOpen,
