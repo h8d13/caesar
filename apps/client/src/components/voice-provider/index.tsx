@@ -347,7 +347,7 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
           let audioContext: AudioContext | null = null;
 
           try {
-            audioContext = new window.AudioContext();
+            audioContext = new window.AudioContext({ sampleRate: 48000 });
             const source = audioContext.createMediaStreamSource(rawStream);
             const destination = audioContext.createMediaStreamDestination();
 
