@@ -9,59 +9,59 @@ import { MessageRenderer } from '../channel-view/text/renderer';
 import { UserAvatar } from '../user-avatar';
 
 type TParentMessageContentProps = {
-  parentMessage: TJoinedMessage;
+    parentMessage: TJoinedMessage;
 };
 
 const ParentMessageContent = memo(
-  ({ parentMessage }: TParentMessageContentProps) => {
-    const user = useUserById(parentMessage.userId);
+    ({ parentMessage }: TParentMessageContentProps) => {
+        const user = useUserById(parentMessage.userId);
 
-    if (!user) {
-      return null;
+        if (!user) {
+            return null;
+        }
+
+        return (
+            <div className="px-4 py-3 border-b border-border bg-secondary/30">
+                <div className="flex items-center gap-2 mb-1">
+                    <UserAvatar
+                        userId={parentMessage.userId}
+                        className="h-8 w-8"
+                        showUserPopover
+                    />
+                    <span className="text-sm font-medium">
+                        {getRenderedUsername(user)}
+                    </span>
+                </div>
+                <div className="text-sm line-clamp-3 opacity-80">
+                    <MessageRenderer message={parentMessage} />
+                </div>
+            </div>
+        );
     }
-
-    return (
-      <div className="px-4 py-3 border-b border-border bg-secondary/30">
-        <div className="flex items-center gap-2 mb-1">
-          <UserAvatar
-            userId={parentMessage.userId}
-            className="h-8 w-8"
-            showUserPopover
-          />
-          <span className="text-sm font-medium">
-            {getRenderedUsername(user)}
-          </span>
-        </div>
-        <div className="text-sm line-clamp-3 opacity-80">
-          <MessageRenderer message={parentMessage} />
-        </div>
-      </div>
-    );
-  }
 );
 
 type TParentMessagePreviewProps = {
-  messageId: number;
+    messageId: number;
 };
 
 const ParentMessagePreview = memo(
-  ({ messageId }: TParentMessagePreviewProps) => {
-    const { channelId } = useThreadSidebar();
-    const parentMessage = useParentMessage(messageId, channelId);
+    ({ messageId }: TParentMessagePreviewProps) => {
+        const { channelId } = useThreadSidebar();
+        const parentMessage = useParentMessage(messageId, channelId);
 
-    if (!parentMessage) {
-      return (
-        <div className="px-4 py-3 border-b border-border bg-secondary/30 flex items-center gap-2">
-          <Spinner size="xs" />
-          <span className="text-sm text-muted-foreground">
-            Loading message...
-          </span>
-        </div>
-      );
+        if (!parentMessage) {
+            return (
+                <div className="px-4 py-3 border-b border-border bg-secondary/30 flex items-center gap-2">
+                    <Spinner size="xs" />
+                    <span className="text-sm text-muted-foreground">
+                        Loading message...
+                    </span>
+                </div>
+            );
+        }
+
+        return <ParentMessageContent parentMessage={parentMessage} />;
     }
-
-    return <ParentMessageContent parentMessage={parentMessage} />;
-  }
 );
 
 export { ParentMessagePreview };

@@ -24,16 +24,12 @@ describe('http helpers', () => {
     test('matches exact path and path segment prefixes', () => {
       expect(hasPrefixPathSegment('/public', '/public')).toBe(true);
       expect(hasPrefixPathSegment('/public/file.txt', '/public')).toBe(true);
-      expect(
-        hasPrefixPathSegment('/uploads/a/b.js', '/uploads')
-      ).toBe(true);
+      expect(hasPrefixPathSegment('/uploads/a/b.js', '/uploads')).toBe(true);
     });
 
     test('does not match lookalike prefixes', () => {
       expect(hasPrefixPathSegment('/publicx', '/public')).toBe(false);
-      expect(
-        hasPrefixPathSegment('/publicx-extra', '/publicx')
-      ).toBe(false);
+      expect(hasPrefixPathSegment('/publicx-extra', '/publicx')).toBe(false);
     });
   });
 

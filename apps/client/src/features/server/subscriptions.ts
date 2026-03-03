@@ -11,42 +11,44 @@ import { subscribeToUsers } from './users/subscriptions';
 import { subscribeToVoice } from './voice/subscriptions';
 
 const subscribeToServer = () => {
-  const trpc = getTRPCClient();
+    const trpc = getTRPCClient();
 
-  const onSettingsUpdateSub = trpc.others.onServerSettingsUpdate.subscribe(
-    undefined,
-    {
-      onData: (settings: TPublicServerSettings) => {
-        logDebug('[EVENTS] others.onServerSettingsUpdate', { settings });
-        setPublicServerSettings(settings);
-      },
-      onError: (err) =>
-        console.error('onSettingsUpdate subscription error:', err)
-    }
-  );
+    const onSettingsUpdateSub = trpc.others.onServerSettingsUpdate.subscribe(
+        undefined,
+        {
+            onData: (settings: TPublicServerSettings) => {
+                logDebug('[EVENTS] others.onServerSettingsUpdate', {
+                    settings
+                });
+                setPublicServerSettings(settings);
+            },
+            onError: (err) =>
+                console.error('onSettingsUpdate subscription error:', err)
+        }
+    );
 
-  return () => {
-    onSettingsUpdateSub.unsubscribe();
-  };
+    return () => {
+        onSettingsUpdateSub.unsubscribe();
+    };
 };
 
 const initSubscriptions = () => {
-  const subscriptors = [
-    subscribeToChannels,
-    subscribeToServer,
-    subscribeToEmojis,
-    subscribeToRoles,
-    subscribeToUsers,
-    subscribeToMessages,
-    subscribeToVoice,
-    subscribeToCategories
-  ];
+    const subscriptors = [
+        subscribeToChannels,
+        subscribeToServer,
+        subscribeToEmojis,
+        subscribeToRoles,
+        subscribeToUsers,
+        subscribeToMessages,
+        subscribeToVoice,
+        subscribeToCategories
+    ];
 
-  const unsubscribes = subscriptors.map((subscriptor) => subscriptor());
+    const unsubscribes = subscriptors.map((subscriptor) => subscriptor());
 
-  return () => {
-    unsubscribes.forEach((unsubscribe) => unsubscribe());
-  };
+    return () => {
+        unsubscribes.forEach((unsubscribe) => unsubscribe());
+    };
 };
 
 export { initSubscriptions };

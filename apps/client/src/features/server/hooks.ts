@@ -1,31 +1,28 @@
-import {
-  ChannelPermission,
-  Permission
-} from '@sharkord/shared';
+import { ChannelPermission, Permission } from '@sharkord/shared';
 import { useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import type { IRootState } from '../store';
 import { useChannelById, useChannelPermissionsById } from './channels/hooks';
 import {
-  channelReadStateByIdSelector,
-  hasUnreadMentionSelector
+    channelReadStateByIdSelector,
+    hasUnreadMentionSelector
 } from './channels/selectors';
 import {
-  connectedSelector,
-  connectingSelector,
-  disconnectInfoSelector,
-  hasUnreadMentionsSelector,
-  hasVisibleChannelsInCategorySelector,
-  infoSelector,
-  isOwnUserOwnerSelector,
-  ownUserRolesSelector,
-  ownVoiceUserSelector,
-  publicServerSettingsSelector,
-  serverNameSelector,
-  typingUsersByChannelIdSelector,
-  typingUsersByThreadIdSelector,
-  userRolesSelector,
-  voiceUsersByChannelIdSelector
+    connectedSelector,
+    connectingSelector,
+    disconnectInfoSelector,
+    hasUnreadMentionsSelector,
+    hasVisibleChannelsInCategorySelector,
+    infoSelector,
+    isOwnUserOwnerSelector,
+    ownUserRolesSelector,
+    ownVoiceUserSelector,
+    publicServerSettingsSelector,
+    serverNameSelector,
+    typingUsersByChannelIdSelector,
+    typingUsersByThreadIdSelector,
+    userRolesSelector,
+    voiceUsersByChannelIdSelector
 } from './selectors';
 import { hasSharingScreenUsersSelector } from './voice/selectors';
 
@@ -38,7 +35,7 @@ export const useDisconnectInfo = () => useSelector(disconnectInfoSelector);
 export const useServerName = () => useSelector(serverNameSelector);
 
 export const usePublicServerSettings = () =>
-  useSelector(publicServerSettingsSelector);
+    useSelector(publicServerSettingsSelector);
 
 export const useOwnUserRoles = () => useSelector(ownUserRolesSelector);
 
@@ -47,97 +44,100 @@ export const useInfo = () => useSelector(infoSelector);
 export const useIsOwnUserOwner = () => useSelector(isOwnUserOwnerSelector);
 
 export const useCan = () => {
-  const ownUserRoles = useOwnUserRoles();
-  const isOwner = useIsOwnUserOwner();
+    const ownUserRoles = useOwnUserRoles();
+    const isOwner = useIsOwnUserOwner();
 
-  // TODO: maybe this can can recieve both Permission and ChannelPermission?
-  const can = useCallback(
-    (permission: Permission | Permission[]) => {
-      if (isOwner) return true;
+    // TODO: maybe this can can recieve both Permission and ChannelPermission?
+    const can = useCallback(
+        (permission: Permission | Permission[]) => {
+            if (isOwner) return true;
 
-      const permissionsToCheck = Array.isArray(permission)
-        ? permission
-        : [permission];
+            const permissionsToCheck = Array.isArray(permission)
+                ? permission
+                : [permission];
 
-      for (const role of ownUserRoles) {
-        for (const perm of role.permissions) {
-          if (permissionsToCheck.includes(perm)) {
-            return true;
-          }
-        }
-      }
+            for (const role of ownUserRoles) {
+                for (const perm of role.permissions) {
+                    if (permissionsToCheck.includes(perm)) {
+                        return true;
+                    }
+                }
+            }
 
-      return false;
-    },
-    [ownUserRoles, isOwner]
-  );
+            return false;
+        },
+        [ownUserRoles, isOwner]
+    );
 
-  return can;
+    return can;
 };
 
 export const useChannelCan = (channelId: number | undefined) => {
-  const ownUserRoles = useChannelPermissionsById(channelId || -1);
-  const isOwner = useIsOwnUserOwner();
-  const channel = useChannelById(channelId || -1);
+    const ownUserRoles = useChannelPermissionsById(channelId || -1);
+    const isOwner = useIsOwnUserOwner();
+    const channel = useChannelById(channelId || -1);
 
-  const can = useCallback(
-    (permission: ChannelPermission) => {
-      if (isOwner || !channel || !channel?.private) return true;
+    const can = useCallback(
+        (permission: ChannelPermission) => {
+            if (isOwner || !channel || !channel?.private) return true;
 
-      // if VIEW is false, no other permission matters
-      if (ownUserRoles.permissions[ChannelPermission.VIEW_CHANNEL] === false)
-        return false;
+            // if VIEW is false, no other permission matters
+            if (
+                ownUserRoles.permissions[ChannelPermission.VIEW_CHANNEL] ===
+                false
+            )
+                return false;
 
-      return ownUserRoles.permissions[permission] === true;
-    },
-    [ownUserRoles, isOwner, channel]
-  );
+            return ownUserRoles.permissions[permission] === true;
+        },
+        [ownUserRoles, isOwner, channel]
+    );
 
-  return can;
+    return can;
 };
 
 // Returns true if the user can view at least one of the channels in the category
 export const useHasVisibleChannelsInCategory = (categoryId: number) =>
-  useSelector((state: IRootState) =>
-    hasVisibleChannelsInCategorySelector(state, categoryId)
-  );
+    useSelector((state: IRootState) =>
+        hasVisibleChannelsInCategorySelector(state, categoryId)
+    );
 
 export const useUserRoles = (userId: number) =>
-  useSelector((state: IRootState) => userRolesSelector(state, userId));
+    useSelector((state: IRootState) => userRolesSelector(state, userId));
 
 export const useTypingUsersByChannelId = (channelId: number) =>
-  useSelector((state: IRootState) =>
-    typingUsersByChannelIdSelector(state, channelId)
-  );
+    useSelector((state: IRootState) =>
+        typingUsersByChannelIdSelector(state, channelId)
+    );
 
 export const useTypingUsersByThreadId = (parentMessageId: number) =>
-  useSelector((state: IRootState) =>
-    typingUsersByThreadIdSelector(state, parentMessageId)
-  );
+    useSelector((state: IRootState) =>
+        typingUsersByThreadIdSelector(state, parentMessageId)
+    );
 
 export const useVoiceUsersByChannelId = (channelId: number) =>
-  useSelector((state: IRootState) =>
-    voiceUsersByChannelIdSelector(state, channelId)
-  );
+    useSelector((state: IRootState) =>
+        voiceUsersByChannelIdSelector(state, channelId)
+    );
 
 export const useOwnVoiceUser = () => useSelector(ownVoiceUserSelector);
 
 export const useUnreadMessagesCount = (channelId: number) =>
-  useSelector((state: IRootState) =>
-    channelReadStateByIdSelector(state, channelId)
-  );
+    useSelector((state: IRootState) =>
+        channelReadStateByIdSelector(state, channelId)
+    );
 
 export const useHasUnreadMention = (channelId: number) =>
-  useSelector((state: IRootState) =>
-    hasUnreadMentionSelector(state, channelId)
-  );
+    useSelector((state: IRootState) =>
+        hasUnreadMentionSelector(state, channelId)
+    );
 
 export const useHasSharingScreenUsers = (channelId: number) =>
-  useSelector((state: IRootState) =>
-    hasSharingScreenUsersSelector(state, channelId)
-  );
+    useSelector((state: IRootState) =>
+        hasSharingScreenUsersSelector(state, channelId)
+    );
 
 export const useHasUnreadMentions = (channelId: number) =>
-  useSelector((state: IRootState) =>
-    hasUnreadMentionsSelector(state, channelId)
-  );
+    useSelector((state: IRootState) =>
+        hasUnreadMentionsSelector(state, channelId)
+    );

@@ -5,31 +5,31 @@ import { createCachedSelector } from 're-reselect';
 const DEFAULT_ARRAY: any[] = [];
 
 export const messagesMapSelector = (state: IRootState) =>
-  state.server.messagesMap;
+    state.server.messagesMap;
 
 export const typingMapSelector = (state: IRootState) => state.server.typingMap;
 
 export const messagesByChannelIdSelector = (
-  state: IRootState,
-  channelId: number
+    state: IRootState,
+    channelId: number
 ) => state.server.messagesMap[channelId] || DEFAULT_ARRAY;
 
 export const threadMessagesMapSelector = (state: IRootState) =>
-  state.server.threadMessagesMap;
+    state.server.threadMessagesMap;
 
 export const threadMessagesByParentIdSelector = (
-  state: IRootState,
-  parentMessageId: number
+    state: IRootState,
+    parentMessageId: number
 ) => state.server.threadMessagesMap[parentMessageId] || DEFAULT_ARRAY;
 
 export const threadTypingMapSelector = (state: IRootState) =>
-  state.server.threadTypingMap;
+    state.server.threadTypingMap;
 
 export const parentMessageByIdSelector = createCachedSelector(
-  [
-    (state: IRootState, _messageId: number, channelId: number) =>
-      messagesByChannelIdSelector(state, channelId),
-    (_: IRootState, messageId: number) => messageId
-  ],
-  (messages, messageId) => messages.find((m) => m.id === messageId)
+    [
+        (state: IRootState, _messageId: number, channelId: number) =>
+            messagesByChannelIdSelector(state, channelId),
+        (_: IRootState, messageId: number) => messageId
+    ],
+    (messages, messageId) => messages.find((m) => m.id === messageId)
 )((_, messageId: number) => messageId);

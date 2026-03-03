@@ -75,13 +75,19 @@ const createHttpServer = async (port: number = config.server.port) => {
         }
 
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        res.setHeader(
+          'Access-Control-Allow-Headers',
+          'Content-Type, Authorization'
+        );
 
         // Security headers
         res.setHeader('X-Content-Type-Options', 'nosniff');
         res.setHeader('X-Frame-Options', 'DENY');
         res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-        res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+        res.setHeader(
+          'Strict-Transport-Security',
+          'max-age=31536000; includeSubDomains'
+        );
         res.setHeader(
           'Content-Security-Policy',
           "default-src 'self'; script-src 'self' blob: data: 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' wss: ws:; media-src 'self' blob:; font-src 'self'; frame-src https://www.youtube-nocookie.com; frame-ancestors 'none'"

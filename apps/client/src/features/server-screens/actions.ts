@@ -4,18 +4,18 @@ import { store } from '../store';
 import { serverScreenSliceActions } from './slice';
 
 export const openServerScreen = (
-  serverScreen: ServerScreen,
-  props?: TGenericObject
+    serverScreen: ServerScreen,
+    props?: TGenericObject
 ) => {
-  store.dispatch(
-    serverScreenSliceActions.openServerScreen({ serverScreen, props })
-  );
+    store.dispatch(
+        serverScreenSliceActions.openServerScreen({ serverScreen, props })
+    );
 };
 
 export const closeServerScreens = () => {
-  store.dispatch(serverScreenSliceActions.closeServerScreens());
+    store.dispatch(serverScreenSliceActions.closeServerScreens());
 };
 
 export const resetServerScreens = () => {
-  store.dispatch(serverScreenSliceActions.resetServerScreens());
+    store.dispatch(serverScreenSliceActions.resetServerScreens());
 };

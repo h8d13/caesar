@@ -6,42 +6,43 @@ import { memo, useCallback } from 'react';
 import { useModViewContext } from '../context';
 
 const Messages = memo(() => {
-  const { messages } = useModViewContext();
+    const { messages } = useModViewContext();
 
-  const renderItem = useCallback(
-    (message: TMessage) => (
-      <div className="py-2 px-1 border-b border-border last:border-0 bg-secondary/50 rounded-md">
-        <span className="text-xs text-muted-foreground">
-          {format(new Date(message.createdAt), 'PPpp')}
-        </span>
-        <MessageRenderer
-          message={{
-            ...message,
-            files: [],
-            reactions: []
-          }}
+    const renderItem = useCallback(
+        (message: TMessage) => (
+            <div className="py-2 px-1 border-b border-border last:border-0 bg-secondary/50 rounded-md">
+                <span className="text-xs text-muted-foreground">
+                    {format(new Date(message.createdAt), 'PPpp')}
+                </span>
+                <MessageRenderer
+                    message={{
+                        ...message,
+                        files: [],
+                        reactions: []
+                    }}
+                />
+            </div>
+        ),
+        []
+    );
+
+    const searchFilter = useCallback(
+        (message: TMessage, term: string) =>
+            message.content?.toLowerCase().includes(term.toLowerCase()) ??
+            false,
+        []
+    );
+
+    return (
+        <PaginatedList
+            items={messages}
+            renderItem={renderItem}
+            searchFilter={searchFilter}
+            searchPlaceholder="Search in message..."
+            emptyMessage="No messages found."
+            itemsPerPage={8}
         />
-      </div>
-    ),
-    []
-  );
-
-  const searchFilter = useCallback(
-    (message: TMessage, term: string) =>
-      message.content?.toLowerCase().includes(term.toLowerCase()) ?? false,
-    []
-  );
-
-  return (
-    <PaginatedList
-      items={messages}
-      renderItem={renderItem}
-      searchFilter={searchFilter}
-      searchPlaceholder="Search in message..."
-      emptyMessage="No messages found."
-      itemsPerPage={8}
-    />
-  );
+    );
 });
 
 export { Messages };

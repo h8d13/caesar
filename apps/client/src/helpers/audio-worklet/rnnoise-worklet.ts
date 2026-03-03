@@ -5,12 +5,12 @@ import { RNNOISE_WORKLET_NAME } from '@/helpers/audio-gate';
 import rnnoiseWasmUrl from '@jitsi/rnnoise-wasm/dist/rnnoise.wasm?url';
 
 type TRNNoiseWorkletConfig = {
-  enabled?: boolean;
+    enabled?: boolean;
 };
 
 type TRNNoiseWorkletAvailability = {
-  available: boolean;
-  reason?: string;
+    available: boolean;
+    reason?: string;
 };
 
 const workletLoadPromises = new WeakMap<BaseAudioContext, Promise<void>>();
@@ -20,159 +20,159 @@ let availabilitySnapshotCache: TRNNoiseWorkletAvailability | null = null;
 let wasmBinary: ArrayBuffer | null = null;
 
 const notifyAvailabilitySubscribers = () => {
-  availabilitySubscribers.forEach((listener) => listener());
+    availabilitySubscribers.forEach((listener) => listener());
 };
 
 const isRNNoiseWorkletSupported = () => {
-  if (typeof window === 'undefined') return false;
+    if (typeof window === 'undefined') return false;
 
-  return (
-    typeof window.AudioWorkletNode !== 'undefined' &&
-    typeof window.AudioContext !== 'undefined' &&
-    'audioWorklet' in window.AudioContext.prototype &&
-    typeof WebAssembly !== 'undefined'
-  );
+    return (
+        typeof window.AudioWorkletNode !== 'undefined' &&
+        typeof window.AudioContext !== 'undefined' &&
+        'audioWorklet' in window.AudioContext.prototype &&
+        typeof WebAssembly !== 'undefined'
+    );
 };
 
 const subscribeRNNoiseWorkletAvailability = (listener: () => void) => {
-  availabilitySubscribers.add(listener);
+    availabilitySubscribers.add(listener);
 
-  return () => {
-    availabilitySubscribers.delete(listener);
-  };
+    return () => {
+        availabilitySubscribers.delete(listener);
+    };
 };
 
 const getRNNoiseWorkletAvailabilitySnapshot =
-  (): TRNNoiseWorkletAvailability => {
-    const nextSnapshot: TRNNoiseWorkletAvailability =
-      !isRNNoiseWorkletSupported()
-        ? {
-            available: false,
-            reason:
-              'This browser does not support AudioWorklet or WebAssembly.'
-          }
-        : runtimeUnavailableReason
-          ? {
-              available: false,
-              reason: runtimeUnavailableReason
-            }
-          : { available: true };
+    (): TRNNoiseWorkletAvailability => {
+        const nextSnapshot: TRNNoiseWorkletAvailability =
+            !isRNNoiseWorkletSupported()
+                ? {
+                      available: false,
+                      reason: 'This browser does not support AudioWorklet or WebAssembly.'
+                  }
+                : runtimeUnavailableReason
+                  ? {
+                        available: false,
+                        reason: runtimeUnavailableReason
+                    }
+                  : { available: true };
 
-    if (
-      availabilitySnapshotCache &&
-      availabilitySnapshotCache.available === nextSnapshot.available &&
-      availabilitySnapshotCache.reason === nextSnapshot.reason
-    ) {
-      return availabilitySnapshotCache;
-    }
+        if (
+            availabilitySnapshotCache &&
+            availabilitySnapshotCache.available === nextSnapshot.available &&
+            availabilitySnapshotCache.reason === nextSnapshot.reason
+        ) {
+            return availabilitySnapshotCache;
+        }
 
-    availabilitySnapshotCache = nextSnapshot;
+        availabilitySnapshotCache = nextSnapshot;
 
-    return availabilitySnapshotCache;
-  };
+        return availabilitySnapshotCache;
+    };
 
 const markRNNoiseWorkletUnavailable = (reason: string) => {
-  if (runtimeUnavailableReason) return;
+    if (runtimeUnavailableReason) return;
 
-  runtimeUnavailableReason = reason;
-  notifyAvailabilitySubscribers();
+    runtimeUnavailableReason = reason;
+    notifyAvailabilitySubscribers();
 };
 
 const postRNNoiseWorkletConfig = (
-  node: AudioWorkletNode,
-  config: TRNNoiseWorkletConfig
+    node: AudioWorkletNode,
+    config: TRNNoiseWorkletConfig
 ) => {
-  node.port.postMessage({
-    type: 'config',
-    enabled: config.enabled
-  });
+    node.port.postMessage({
+        type: 'config',
+        enabled: config.enabled
+    });
 };
 
 const loadRNNoiseWasmBinary = async (): Promise<ArrayBuffer> => {
-  if (wasmBinary) return wasmBinary;
+    if (wasmBinary) return wasmBinary;
 
-  const response = await fetch(rnnoiseWasmUrl);
+    const response = await fetch(rnnoiseWasmUrl);
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch RNNoise WASM: ${response.status}`);
-  }
+    if (!response.ok) {
+        throw new Error(`Failed to fetch RNNoise WASM: ${response.status}`);
+    }
 
-  wasmBinary = await response.arrayBuffer();
+    wasmBinary = await response.arrayBuffer();
 
-  return wasmBinary;
+    return wasmBinary;
 };
 
 const ensureRNNoiseWorkletLoaded = async (audioContext: AudioContext) => {
-  if (!isRNNoiseWorkletSupported()) {
-    throw new Error(
-      'AudioWorklet or WebAssembly is not supported in this browser.'
-    );
-  }
+    if (!isRNNoiseWorkletSupported()) {
+        throw new Error(
+            'AudioWorklet or WebAssembly is not supported in this browser.'
+        );
+    }
 
-  let loadPromise = workletLoadPromises.get(audioContext);
+    let loadPromise = workletLoadPromises.get(audioContext);
 
-  if (!loadPromise) {
-    loadPromise = audioContext.audioWorklet.addModule(rnnoiseProcessorUrl);
-    workletLoadPromises.set(audioContext, loadPromise);
-  }
+    if (!loadPromise) {
+        loadPromise = audioContext.audioWorklet.addModule(rnnoiseProcessorUrl);
+        workletLoadPromises.set(audioContext, loadPromise);
+    }
 
-  await loadPromise;
+    await loadPromise;
 };
 
 const createRNNoiseWorkletNode = async (
-  audioContext: AudioContext,
-  config: TRNNoiseWorkletConfig
+    audioContext: AudioContext,
+    config: TRNNoiseWorkletConfig
 ): Promise<AudioWorkletNode> => {
-  await ensureRNNoiseWorkletLoaded(audioContext);
+    await ensureRNNoiseWorkletLoaded(audioContext);
 
-  const node = new AudioWorkletNode(audioContext, RNNOISE_WORKLET_NAME);
+    const node = new AudioWorkletNode(audioContext, RNNOISE_WORKLET_NAME);
 
-  postRNNoiseWorkletConfig(node, config);
+    postRNNoiseWorkletConfig(node, config);
 
-  // load and send the WASM binary to the worklet
-  const binary = await loadRNNoiseWasmBinary();
-  const binaryCopy = binary.slice(0);
+    // load and send the WASM binary to the worklet
+    const binary = await loadRNNoiseWasmBinary();
+    const binaryCopy = binary.slice(0);
 
-  node.port.postMessage(
-    { type: 'wasm-binary', binary: binaryCopy },
-    [binaryCopy]
-  );
+    node.port.postMessage({ type: 'wasm-binary', binary: binaryCopy }, [
+        binaryCopy
+    ]);
 
-  // wait for the worklet to signal it's ready
-  await new Promise<void>((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error('RNNoise WASM initialization timed out'));
-    }, 10000);
+    // wait for the worklet to signal it's ready
+    await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+            reject(new Error('RNNoise WASM initialization timed out'));
+        }, 10000);
 
-    const handler = (event: MessageEvent) => {
-      const data = event.data;
+        const handler = (event: MessageEvent) => {
+            const data = event.data;
 
-      if (!data || data.type !== 'ready') return;
+            if (!data || data.type !== 'ready') return;
 
-      clearTimeout(timeout);
-      node.port.removeEventListener('message', handler);
+            clearTimeout(timeout);
+            node.port.removeEventListener('message', handler);
 
-      if (data.success) {
-        resolve();
-      } else {
-        reject(
-          new Error(data.error || 'RNNoise WASM initialization failed')
-        );
-      }
-    };
+            if (data.success) {
+                resolve();
+            } else {
+                reject(
+                    new Error(
+                        data.error || 'RNNoise WASM initialization failed'
+                    )
+                );
+            }
+        };
 
-    node.port.addEventListener('message', handler);
-    node.port.start();
-  });
+        node.port.addEventListener('message', handler);
+        node.port.start();
+    });
 
-  return node;
+    return node;
 };
 
 export {
-  createRNNoiseWorkletNode,
-  getRNNoiseWorkletAvailabilitySnapshot,
-  isRNNoiseWorkletSupported,
-  markRNNoiseWorkletUnavailable,
-  postRNNoiseWorkletConfig,
-  subscribeRNNoiseWorkletAvailability
+    createRNNoiseWorkletNode,
+    getRNNoiseWorkletAvailabilitySnapshot,
+    isRNNoiseWorkletSupported,
+    markRNNoiseWorkletUnavailable,
+    postRNNoiseWorkletConfig,
+    subscribeRNNoiseWorkletAvailability
 };

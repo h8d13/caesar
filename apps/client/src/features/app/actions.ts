@@ -7,112 +7,112 @@ import { store } from '../store';
 import { appSliceActions } from './slice';
 
 export const setAppLoading = (loading: boolean) =>
-  store.dispatch(appSliceActions.setAppLoading(loading));
+    store.dispatch(appSliceActions.setAppLoading(loading));
 
 export const setIsAutoConnecting = (isAutoConnecting: boolean) =>
-  store.dispatch(appSliceActions.setIsAutoConnecting(isAutoConnecting));
+    store.dispatch(appSliceActions.setIsAutoConnecting(isAutoConnecting));
 
 export const fetchServerInfo = async (): Promise<TServerInfo | undefined> => {
-  try {
-    const url = getUrlFromServer();
-    const response = await fetch(`${url}/info`);
+    try {
+        const url = getUrlFromServer();
+        const response = await fetch(`${url}/info`);
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch server info');
+        if (!response.ok) {
+            throw new Error('Failed to fetch server info');
+        }
+
+        const data = await response.json();
+
+        return data;
+    } catch (error) {
+        console.error('Error fetching server info:', error);
     }
-
-    const data = await response.json();
-
-    return data;
-  } catch (error) {
-    console.error('Error fetching server info:', error);
-  }
 };
 
 export const loadApp = async () => {
-  const info = await fetchServerInfo();
+    const info = await fetchServerInfo();
 
-  if (!info) {
-    console.error('Failed to load server info during app load');
-    toast.error('Failed to load server info');
-    return;
-  }
+    if (!info) {
+        console.error('Failed to load server info during app load');
+        toast.error('Failed to load server info');
+        return;
+    }
 
-  setInfo(info);
-  setAppLoading(false);
+    setInfo(info);
+    setAppLoading(false);
 };
 
 export const setModViewOpen = (isOpen: boolean, userId?: number) =>
-  store.dispatch(
-    appSliceActions.setModViewOpen({
-      modViewOpen: isOpen,
-      userId
-    })
-  );
+    store.dispatch(
+        appSliceActions.setModViewOpen({
+            modViewOpen: isOpen,
+            userId
+        })
+    );
 
 export const openThreadSidebar = (parentMessageId: number, channelId: number) =>
-  store.dispatch(
-    appSliceActions.setThreadSidebarOpen({
-      open: true,
-      parentMessageId,
-      channelId
-    })
-  );
+    store.dispatch(
+        appSliceActions.setThreadSidebarOpen({
+            open: true,
+            parentMessageId,
+            channelId
+        })
+    );
 
 export const closeThreadSidebar = () =>
-  store.dispatch(
-    appSliceActions.setThreadSidebarOpen({
-      open: false,
-      parentMessageId: undefined,
-      channelId: undefined
-    })
-  );
+    store.dispatch(
+        appSliceActions.setThreadSidebarOpen({
+            open: false,
+            parentMessageId: undefined,
+            channelId: undefined
+        })
+    );
 
 export const resetApp = () => {
-  store.dispatch(
-    appSliceActions.setModViewOpen({
-      modViewOpen: false,
-      userId: undefined
-    })
-  );
-  store.dispatch(
-    appSliceActions.setThreadSidebarOpen({
-      open: false,
-      parentMessageId: undefined,
-      channelId: undefined
-    })
-  );
+    store.dispatch(
+        appSliceActions.setModViewOpen({
+            modViewOpen: false,
+            userId: undefined
+        })
+    );
+    store.dispatch(
+        appSliceActions.setThreadSidebarOpen({
+            open: false,
+            parentMessageId: undefined,
+            channelId: undefined
+        })
+    );
 };
 
 export const setAutoJoinLastChannel = (autoJoin: boolean) => {
-  store.dispatch(appSliceActions.setAutoJoinLastChannel(autoJoin));
+    store.dispatch(appSliceActions.setAutoJoinLastChannel(autoJoin));
 
-  setLocalStorageItemBool(LocalStorageKey.AUTO_JOIN_LAST_CHANNEL, autoJoin);
+    setLocalStorageItemBool(LocalStorageKey.AUTO_JOIN_LAST_CHANNEL, autoJoin);
 };
 
 export const setDmsOpen = (open: boolean) =>
-  store.dispatch(appSliceActions.setDmsOpen(open));
+    store.dispatch(appSliceActions.setDmsOpen(open));
 
 export const setSelectedDmChannelId = (channelId: number | undefined) =>
-  store.dispatch(appSliceActions.setSelectedDmChannelId(channelId));
+    store.dispatch(appSliceActions.setSelectedDmChannelId(channelId));
 
 export const setBrowserNotifications = async (enabled: boolean) => {
-  if (enabled && 'Notification' in window) {
-    const permission = await Notification.requestPermission();
+    if (enabled && 'Notification' in window) {
+        const permission = await Notification.requestPermission();
 
-    if (permission !== 'granted') {
-      return;
+        if (permission !== 'granted') {
+            return;
+        }
     }
-  }
 
-  store.dispatch(appSliceActions.setBrowserNotifications(enabled));
-  setLocalStorageItemBool(LocalStorageKey.BROWSER_NOTIFICATIONS, enabled);
+    store.dispatch(appSliceActions.setBrowserNotifications(enabled));
+    setLocalStorageItemBool(LocalStorageKey.BROWSER_NOTIFICATIONS, enabled);
 };
 
 export const setBrowserNotificationsForMentions = (enabled: boolean) => {
-  store.dispatch(appSliceActions.setBrowserNotificationsForMentions(enabled));
-  setLocalStorageItemBool(
-    LocalStorageKey.BROWSER_NOTIFICATIONS_FOR_MENTIONS,
-    enabled
-  );
+    store.dispatch(appSliceActions.setBrowserNotificationsForMentions(enabled));
+    setLocalStorageItemBool(
+        LocalStorageKey.BROWSER_NOTIFICATIONS_FOR_MENTIONS,
+        enabled
+    );
 };

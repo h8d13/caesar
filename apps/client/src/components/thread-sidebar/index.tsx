@@ -9,39 +9,44 @@ const MAX_WIDTH = 600;
 const DEFAULT_WIDTH = 384;
 
 const ThreadContentWrapper = memo(() => {
-  const { parentMessageId, channelId } = useThreadSidebar();
+    const { parentMessageId, channelId } = useThreadSidebar();
 
-  if (!parentMessageId || !channelId) {
+    if (!parentMessageId || !channelId) {
+        return (
+            <div className="flex-1 flex items-center justify-center">
+                <span className="text-muted-foreground">
+                    No thread selected
+                </span>
+            </div>
+        );
+    }
+
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <span className="text-muted-foreground">No thread selected</span>
-      </div>
+        <ThreadContent
+            parentMessageId={parentMessageId}
+            channelId={channelId}
+        />
     );
-  }
-
-  return (
-    <ThreadContent parentMessageId={parentMessageId} channelId={channelId} />
-  );
 });
 
 type TThreadSidebarProps = {
-  isOpen: boolean;
+    isOpen: boolean;
 };
 
 const ThreadSidebar = memo(({ isOpen }: TThreadSidebarProps) => {
-  return (
-    <ResizableSidebar
-      storageKey={LocalStorageKey.THREAD_SIDEBAR_WIDTH}
-      minWidth={MIN_WIDTH}
-      maxWidth={MAX_WIDTH}
-      defaultWidth={DEFAULT_WIDTH}
-      edge="left"
-      isOpen={isOpen}
-      className="hidden lg:flex"
-    >
-      <ThreadContentWrapper />
-    </ResizableSidebar>
-  );
+    return (
+        <ResizableSidebar
+            storageKey={LocalStorageKey.THREAD_SIDEBAR_WIDTH}
+            minWidth={MIN_WIDTH}
+            maxWidth={MAX_WIDTH}
+            defaultWidth={DEFAULT_WIDTH}
+            edge="left"
+            isOpen={isOpen}
+            className="hidden lg:flex"
+        >
+            <ThreadContentWrapper />
+        </ResizableSidebar>
+    );
 });
 
 export { ThreadSidebar };

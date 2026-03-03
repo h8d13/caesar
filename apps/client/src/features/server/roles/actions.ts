@@ -3,13 +3,13 @@ import type { TJoinedRole } from '@sharkord/shared';
 import { serverSliceActions } from '../slice';
 
 export const setRoles = (roles: TJoinedRole[]) =>
-  store.dispatch(serverSliceActions.setRoles(roles));
+    store.dispatch(serverSliceActions.setRoles(roles));
 
 export const addRole = (role: TJoinedRole) =>
-  store.dispatch(serverSliceActions.addRole(role));
+    store.dispatch(serverSliceActions.addRole(role));
 
 export const updateRole = (roleId: number, role: Partial<TJoinedRole>) =>
-  store.dispatch(serverSliceActions.updateRole({ roleId, role }));
+    store.dispatch(serverSliceActions.updateRole({ roleId, role }));
 
 export const removeRole = (roleId: number) =>
-  store.dispatch(serverSliceActions.removeRole({ roleId }));
+    store.dispatch(serverSliceActions.removeRole({ roleId }));

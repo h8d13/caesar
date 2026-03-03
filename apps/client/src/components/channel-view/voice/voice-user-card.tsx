@@ -16,129 +16,136 @@ import { PinButton } from './pin-button';
 import { VolumeButton } from './volume-button';
 
 type TVoiceUserCardProps = {
-  userId: number;
-  onPin: () => void;
-  onUnpin: () => void;
-  showPinControls?: boolean;
-  voiceUser: TVoiceUser;
-  className?: string;
-  isPinned?: boolean;
+    userId: number;
+    onPin: () => void;
+    onUnpin: () => void;
+    showPinControls?: boolean;
+    voiceUser: TVoiceUser;
+    className?: string;
+    isPinned?: boolean;
 };
 
 const VoiceUserCard = memo(
-  ({
-    userId,
-    onPin,
-    onUnpin,
-    className,
-    isPinned = false,
-    showPinControls = true,
-    voiceUser
-  }: TVoiceUserCardProps) => {
-    const { videoRef, hasVideoStream, isSpeaking, speakingIntensity } =
-      useVoiceRefs(userId);
-    const { getUserVolumeKey } = useVolumeControl();
-    const { devices } = useDevices();
-    const ownUserId = useOwnUserId();
-    const isOwnUser = userId === ownUserId;
-    const showUserBanners = useShowUserBannersInVoice();
+    ({
+        userId,
+        onPin,
+        onUnpin,
+        className,
+        isPinned = false,
+        showPinControls = true,
+        voiceUser
+    }: TVoiceUserCardProps) => {
+        const { videoRef, hasVideoStream, isSpeaking, speakingIntensity } =
+            useVoiceRefs(userId);
+        const { getUserVolumeKey } = useVolumeControl();
+        const { devices } = useDevices();
+        const ownUserId = useOwnUserId();
+        const isOwnUser = userId === ownUserId;
+        const showUserBanners = useShowUserBannersInVoice();
 
-    const handlePinToggle = useCallback(() => {
-      if (isPinned) {
-        onUnpin?.();
-      } else {
-        onPin?.();
-      }
-    }, [isPinned, onPin, onUnpin]);
+        const handlePinToggle = useCallback(() => {
+            if (isPinned) {
+                onUnpin?.();
+            } else {
+                onPin?.();
+            }
+        }, [isPinned, onPin, onUnpin]);
 
-    const containerRef = useRef<HTMLDivElement>(null);
-    const isActivelySpeaking = !voiceUser.state.micMuted && isSpeaking;
+        const containerRef = useRef<HTMLDivElement>(null);
+        const isActivelySpeaking = !voiceUser.state.micMuted && isSpeaking;
 
-    return (
-      <div
-        ref={containerRef}
-        className={cn(
-          'relative bg-card rounded-lg overflow-hidden group',
-          'flex items-center justify-center',
-          'w-full h-full',
-          'border border-border',
-          isActivelySpeaking
-            ? speakingIntensity === 1
-              ? 'speaking-effect-low'
-              : speakingIntensity === 2
-                ? 'speaking-effect-medium'
-                : 'speaking-effect-high'
-            : '',
-          className
-        )}
-      >
-        {voiceUser.banner && showUserBanners ? (
-          <div
-            className="h-full w-full rounded-t-md bg-cover bg-center blur-sm brightness-50 bg-no-repeat absolute inset-0"
-            style={{
-              backgroundImage: `url("${getFileUrl(voiceUser.banner)}")`
-            }}
-          />
-        ) : (
-          <CardGradient />
-        )}
+        return (
+            <div
+                ref={containerRef}
+                className={cn(
+                    'relative bg-card rounded-lg overflow-hidden group',
+                    'flex items-center justify-center',
+                    'w-full h-full',
+                    'border border-border',
+                    isActivelySpeaking
+                        ? speakingIntensity === 1
+                            ? 'speaking-effect-low'
+                            : speakingIntensity === 2
+                              ? 'speaking-effect-medium'
+                              : 'speaking-effect-high'
+                        : '',
+                    className
+                )}
+            >
+                {voiceUser.banner && showUserBanners ? (
+                    <div
+                        className="h-full w-full rounded-t-md bg-cover bg-center blur-sm brightness-50 bg-no-repeat absolute inset-0"
+                        style={{
+                            backgroundImage: `url("${getFileUrl(voiceUser.banner)}")`
+                        }}
+                    />
+                ) : (
+                    <CardGradient />
+                )}
 
-        <CardControls>
-          {!isOwnUser && <VolumeButton volumeKey={getUserVolumeKey(userId)} />}
-          <FullscreenButton containerRef={containerRef} />
-          {showPinControls && (
-            <PinButton isPinned={isPinned} handlePinToggle={handlePinToggle} />
-          )}
-        </CardControls>
+                <CardControls>
+                    {!isOwnUser && (
+                        <VolumeButton volumeKey={getUserVolumeKey(userId)} />
+                    )}
+                    <FullscreenButton containerRef={containerRef} />
+                    {showPinControls && (
+                        <PinButton
+                            isPinned={isPinned}
+                            handlePinToggle={handlePinToggle}
+                        />
+                    )}
+                </CardControls>
 
-        {hasVideoStream && (
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            playsInline
-            className={cn(
-              'absolute inset-0 w-full h-full object-contain',
-              isOwnUser && devices.mirrorOwnVideo && '-scale-x-100'
-            )}
-          />
-        )}
-        {!hasVideoStream && (
-          <UserAvatar
-            userId={userId}
-            className="w-12 h-12 md:w-16 md:h-16 lg:w-24 lg:h-24"
-            showStatusBadge={false}
-          />
-        )}
+                {hasVideoStream && (
+                    <video
+                        ref={videoRef}
+                        autoPlay
+                        muted
+                        playsInline
+                        className={cn(
+                            'absolute inset-0 w-full h-full object-contain',
+                            isOwnUser &&
+                                devices.mirrorOwnVideo &&
+                                '-scale-x-100'
+                        )}
+                    />
+                )}
+                {!hasVideoStream && (
+                    <UserAvatar
+                        userId={userId}
+                        className="w-12 h-12 md:w-16 md:h-16 lg:w-24 lg:h-24"
+                        showStatusBadge={false}
+                    />
+                )}
 
-        <div className="absolute bottom-0 left-0 right-0 p-2">
-          <div className="flex items-center justify-between">
-            <span className="text-white font-medium text-xs truncate">
-              {voiceUser.name}
-            </span>
+                <div className="absolute bottom-0 left-0 right-0 p-2">
+                    <div className="flex items-center justify-between">
+                        <span className="text-white font-medium text-xs truncate">
+                            {voiceUser.name}
+                        </span>
 
-            <div className="flex items-center gap-1">
-              {voiceUser.state.micMuted && (
-                <MicOff className="size-3.5 text-red-500/80" />
-              )}
+                        <div className="flex items-center gap-1">
+                            {voiceUser.state.micMuted && (
+                                <MicOff className="size-3.5 text-red-500/80" />
+                            )}
 
-              {voiceUser.state.soundMuted && (
-                <HeadphoneOff className="size-3.5 text-red-500/80" />
-              )}
+                            {voiceUser.state.soundMuted && (
+                                <HeadphoneOff className="size-3.5 text-red-500/80" />
+                            )}
 
-              {voiceUser.state.webcamEnabled && (
-                <Video className="size-3.5 text-blue-600/80" />
-              )}
+                            {voiceUser.state.webcamEnabled && (
+                                <Video className="size-3.5 text-blue-600/80" />
+                            )}
 
-              {voiceUser.state.sharingScreen && (
-                <Monitor className="size-3.5 text-purple-500/80" />
-              )}
+                            {voiceUser.state.sharingScreen && (
+                                <Monitor className="size-3.5 text-purple-500/80" />
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+        );
+    }
 );
 
 VoiceUserCard.displayName = 'VoiceUserCard';

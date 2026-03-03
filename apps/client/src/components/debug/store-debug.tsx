@@ -3,11 +3,11 @@ import { logDebug } from '@/helpers/browser-logger';
 import { useSelector } from 'react-redux';
 
 const StoreDebug = () => {
-  const server = useSelector((state: IRootState) => state.server);
+    const server = useSelector((state: IRootState) => state.server);
 
-  logDebug('Server State', server);
+    logDebug('Server State', server);
 
-  return null;
+    return null;
 };
 
 export { StoreDebug };

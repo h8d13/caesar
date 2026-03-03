@@ -14,83 +14,86 @@ import { type TDisconnectInfo } from './types';
 let unsubscribeFromServer: (() => void) | null = null;
 
 export const setConnected = (status: boolean) => {
-  store.dispatch(serverSliceActions.setConnected(status));
+    store.dispatch(serverSliceActions.setConnected(status));
 };
 
 export const resetServerState = () => {
-  store.dispatch(serverSliceActions.resetState());
+    store.dispatch(serverSliceActions.resetState());
 };
 
 export const setDisconnectInfo = (info: TDisconnectInfo | undefined) => {
-  store.dispatch(serverSliceActions.setDisconnectInfo(info));
+    store.dispatch(serverSliceActions.setDisconnectInfo(info));
 };
 
 export const setConnecting = (status: boolean) => {
-  store.dispatch(serverSliceActions.setConnecting(status));
+    store.dispatch(serverSliceActions.setConnecting(status));
 };
 
 export const setServerId = (id: string) => {
-  store.dispatch(serverSliceActions.setServerId(id));
+    store.dispatch(serverSliceActions.setServerId(id));
 };
 
 export const setPublicServerSettings = (
-  settings: TPublicServerSettings | undefined
+    settings: TPublicServerSettings | undefined
 ) => {
-  store.dispatch(serverSliceActions.setPublicSettings(settings));
+    store.dispatch(serverSliceActions.setPublicSettings(settings));
 };
 
 export const setInfo = (info: TServerInfo | undefined) => {
-  store.dispatch(serverSliceActions.setInfo(info));
+    store.dispatch(serverSliceActions.setInfo(info));
 };
 
 export const connect = async () => {
-  const state = store.getState();
-  const info = infoSelector(state);
+    const state = store.getState();
+    const info = infoSelector(state);
 
-  if (!info) {
-    throw new Error('Failed to fetch server info');
-  }
+    if (!info) {
+        throw new Error('Failed to fetch server info');
+    }
 
-  const { serverId } = info;
+    const { serverId } = info;
 
-  const host = getHostFromServer();
-  const trpc = await connectToTRPC(host);
+    const host = getHostFromServer();
+    const trpc = await connectToTRPC(host);
 
-  const { hasPassword, handshakeHash } = await trpc.others.handshake.query();
+    const { hasPassword, handshakeHash } = await trpc.others.handshake.query();
 
-  if (hasPassword) {
-    // show password prompt
-    openDialog(Dialog.SERVER_PASSWORD, { handshakeHash, serverId });
-    return;
-  }
+    if (hasPassword) {
+        // show password prompt
+        openDialog(Dialog.SERVER_PASSWORD, { handshakeHash, serverId });
+        return;
+    }
 
-  await joinServer(handshakeHash);
+    await joinServer(handshakeHash);
 };
 
 export const joinServer = async (handshakeHash: string, password?: string) => {
-  const trpc = getTRPCClient();
-  const data = await trpc.others.joinServer.query({ handshakeHash, password });
+    const trpc = getTRPCClient();
+    const data = await trpc.others.joinServer.query({
+        handshakeHash,
+        password
+    });
 
-  logDebug('joinServer', data);
+    logDebug('joinServer', data);
 
-  unsubscribeFromServer = initSubscriptions();
+    unsubscribeFromServer = initSubscriptions();
 
-  store.dispatch(serverSliceActions.setInitialData(data));
+    store.dispatch(serverSliceActions.setInitialData(data));
 };
 
 export const disconnectFromServer = () => {
-  cleanup();
-  unsubscribeFromServer?.();
+    cleanup();
+    unsubscribeFromServer?.();
 };
 
 window.useToken = async (token: string) => {
-  const trpc = getTRPCClient();
+    const trpc = getTRPCClient();
 
-  try {
-    await trpc.others.useSecretToken.mutate({ token });
+    try {
+        await trpc.others.useSecretToken.mutate({ token });
 
-    toast.success('You are now an owner of this server');
-  } catch {
-    toast.error('Invalid access token');
-  }
+        toast.success('You are now an owner of this server');
+    } catch {
+        toast.error('Invalid access token');
+    }
 };

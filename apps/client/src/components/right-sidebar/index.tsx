@@ -15,89 +15,93 @@ const MAX_WIDTH = 360;
 const DEFAULT_WIDTH = 240; // w-60 = 240px
 
 type TUserProps = {
-  userId: number;
-  user: { name: string };
-  banned: boolean;
-  socialCredit: number;
+    userId: number;
+    user: { name: string };
+    banned: boolean;
+    socialCredit: number;
 };
 
 const User = memo(({ userId, user, banned, socialCredit }: TUserProps) => {
-  return (
-    <UserPopover userId={userId}>
-      <div className="flex items-center gap-3 rounded px-2 py-1.5 hover:bg-accent select-none min-w-0">
-        <UserAvatar userId={userId} className="h-8 w-8 shrink-0" />
-        <span
-          className={cn(
-            'text-sm truncate',
-            banned && 'line-through opacity-50'
-          )}
-          style={{ color: banned ? undefined : getSocialCreditColor(socialCredit) }}
-        >
-          {getRenderedUsername(user, userId)}
-        </span>
-      </div>
-    </UserPopover>
-  );
+    return (
+        <UserPopover userId={userId}>
+            <div className="flex items-center gap-3 rounded px-2 py-1.5 hover:bg-accent select-none min-w-0">
+                <UserAvatar userId={userId} className="h-8 w-8 shrink-0" />
+                <span
+                    className={cn(
+                        'text-sm truncate',
+                        banned && 'line-through opacity-50'
+                    )}
+                    style={{
+                        color: banned
+                            ? undefined
+                            : getSocialCreditColor(socialCredit)
+                    }}
+                >
+                    {getRenderedUsername(user, userId)}
+                </span>
+            </div>
+        </UserPopover>
+    );
 });
 
 type TRightSidebarProps = {
-  className?: string;
-  isOpen?: boolean;
+    className?: string;
+    isOpen?: boolean;
 };
 
 const RightSidebar = memo(
-  ({ className, isOpen = true }: TRightSidebarProps) => {
-    const users = useUsers();
+    ({ className, isOpen = true }: TRightSidebarProps) => {
+        const users = useUsers();
 
-    const { usersToShow, usersCount } = useMemo(() => {
-      const filtered = users.filter(
-        (user) => user.name !== DELETED_USER_IDENTITY_AND_NAME
-      );
+        const { usersToShow, usersCount } = useMemo(() => {
+            const filtered = users.filter(
+                (user) => user.name !== DELETED_USER_IDENTITY_AND_NAME
+            );
 
-      return {
-        usersToShow: filtered.slice(0, MAX_USERS_TO_SHOW),
-        usersCount: filtered.length
-      };
-    }, [users]);
+            return {
+                usersToShow: filtered.slice(0, MAX_USERS_TO_SHOW),
+                usersCount: filtered.length
+            };
+        }, [users]);
 
-    const hasHiddenUsers = users.length > MAX_USERS_TO_SHOW;
+        const hasHiddenUsers = users.length > MAX_USERS_TO_SHOW;
 
-    return (
-      <ResizableSidebar
-        storageKey={LocalStorageKey.RIGHT_SIDEBAR_WIDTH}
-        minWidth={MIN_WIDTH}
-        maxWidth={MAX_WIDTH}
-        defaultWidth={DEFAULT_WIDTH}
-        edge="left"
-        isOpen={isOpen}
-        className={cn('h-full', className)}
-      >
-        <div className="flex h-12 items-center border-b border-border px-4">
-          <h3 className="text-sm font-semibold text-foreground">
-            Members — {usersCount}
-          </h3>
-        </div>
-        <div className="flex-1 overflow-y-auto p-2">
-          <div className="space-y-1">
-            {usersToShow.map((user) => (
-              <User
-                key={user.id}
-                userId={user.id}
-                user={user}
-                banned={user.banned}
-                socialCredit={user.socialCredit ?? 0}
-              />
-            ))}
-            {hasHiddenUsers && (
-              <div className="text-sm text-muted-foreground px-2 py-1.5">
-                +{users.length - MAX_USERS_TO_SHOW} more...
-              </div>
-            )}
-          </div>
-        </div>
-      </ResizableSidebar>
-    );
-  }
+        return (
+            <ResizableSidebar
+                storageKey={LocalStorageKey.RIGHT_SIDEBAR_WIDTH}
+                minWidth={MIN_WIDTH}
+                maxWidth={MAX_WIDTH}
+                defaultWidth={DEFAULT_WIDTH}
+                edge="left"
+                isOpen={isOpen}
+                className={cn('h-full', className)}
+            >
+                <div className="flex h-12 items-center border-b border-border px-4">
+                    <h3 className="text-sm font-semibold text-foreground">
+                        Members — {usersCount}
+                    </h3>
+                </div>
+                <div className="flex-1 overflow-y-auto p-2">
+                    <div className="space-y-1">
+                        {usersToShow.map((user) => (
+                            <User
+                                key={user.id}
+                                userId={user.id}
+                                user={user}
+                                banned={user.banned}
+                                socialCredit={user.socialCredit ?? 0}
+                            />
+                        ))}
+                        {hasHiddenUsers && (
+                            <div className="text-sm text-muted-foreground px-2 py-1.5">
+                                +{users.length - MAX_USERS_TO_SHOW} more...
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </ResizableSidebar>
+        );
+    }
 );
 
 export { RightSidebar };

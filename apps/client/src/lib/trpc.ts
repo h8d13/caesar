@@ -3,11 +3,11 @@ import { resetDialogs } from '@/features/dialogs/actions';
 import { resetServerScreens } from '@/features/server-screens/actions';
 import { resetServerState, setDisconnectInfo } from '@/features/server/actions';
 import {
-  getSessionStorageItem,
-  LocalStorageKey,
-  removeLocalStorageItem,
-  removeSessionStorageItem,
-  SessionStorageKey
+    getSessionStorageItem,
+    LocalStorageKey,
+    removeLocalStorageItem,
+    removeSessionStorageItem,
+    SessionStorageKey
 } from '@/helpers/storage';
 import { type AppRouter, type TConnectionParams } from '@sharkord/shared';
 import { createTRPCProxyClient, createWSClient, wsLink } from '@trpc/client';
@@ -21,94 +21,94 @@ let isCleaningUp = false;
 // we must not clear auto-login localStorage or it will be lost on refresh in Firefox.
 let isNavigatingAway = false;
 window.addEventListener('beforeunload', () => {
-  isNavigatingAway = true;
+    isNavigatingAway = true;
 });
 
 const initializeTRPC = (host: string) => {
-  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
 
-  wsClient = createWSClient({
-    url: `${protocol}://${host}`,
-    // @ts-expect-error - the onclose type is not correct in trpc
-    onClose: (cause: CloseEvent) => {
-      cleanup();
+    wsClient = createWSClient({
+        url: `${protocol}://${host}`,
+        // @ts-expect-error - the onclose type is not correct in trpc
+        onClose: (cause: CloseEvent) => {
+            cleanup();
 
-      setDisconnectInfo({
-        code: cause.code,
-        reason: cause.reason,
-        wasClean: cause.wasClean,
-        time: new Date()
-      });
-    },
-    connectionParams: async (): Promise<TConnectionParams> => {
-      return {
-        token: getSessionStorageItem(SessionStorageKey.TOKEN) || ''
-      };
-    },
-    keepAlive: {
-      enabled: true,
-      intervalMs: 30_000,
-      pongTimeoutMs: 5_000
-    }
-  });
+            setDisconnectInfo({
+                code: cause.code,
+                reason: cause.reason,
+                wasClean: cause.wasClean,
+                time: new Date()
+            });
+        },
+        connectionParams: async (): Promise<TConnectionParams> => {
+            return {
+                token: getSessionStorageItem(SessionStorageKey.TOKEN) || ''
+            };
+        },
+        keepAlive: {
+            enabled: true,
+            intervalMs: 30_000,
+            pongTimeoutMs: 5_000
+        }
+    });
 
-  trpc = createTRPCProxyClient<AppRouter>({
-    links: [wsLink({ client: wsClient })]
-  });
+    trpc = createTRPCProxyClient<AppRouter>({
+        links: [wsLink({ client: wsClient })]
+    });
 
-  currentHost = host;
+    currentHost = host;
 
-  return trpc;
+    return trpc;
 };
 
 const connectToTRPC = (host: string) => {
-  if (trpc && currentHost === host) {
-    return trpc;
-  }
+    if (trpc && currentHost === host) {
+        return trpc;
+    }
 
-  return initializeTRPC(host);
+    return initializeTRPC(host);
 };
 
 const getTRPCClient = () => {
-  if (!trpc) {
-    throw new Error('TRPC client is not initialized');
-  }
+    if (!trpc) {
+        throw new Error('TRPC client is not initialized');
+    }
 
-  return trpc;
+    return trpc;
 };
 
 const cleanup = () => {
-  if (isCleaningUp) {
-    return;
-  }
+    if (isCleaningUp) {
+        return;
+    }
 
-  isCleaningUp = true;
+    isCleaningUp = true;
 
-  if (wsClient) {
-    wsClient.close();
-    wsClient = null;
-  }
+    if (wsClient) {
+        wsClient.close();
+        wsClient = null;
+    }
 
-  trpc = null;
-  currentHost = null;
+    trpc = null;
+    currentHost = null;
 
-  // cleanup can be called due to various reasons (manual disconnect, connection error, auto-login failure, etc).
-  // so we remove any persisted auto-login token to prevent auto-login loops.
-  // skip this when navigating away (refresh/close) - Firefox fires onClose during refresh, Chrome does not
-  if (!isNavigatingAway)
-    removeLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN);
+    // cleanup can be called due to various reasons (manual disconnect, connection error, auto-login failure, etc).
+    // so we remove any persisted auto-login token to prevent auto-login loops.
+    // skip this when navigating away (refresh/close) - Firefox fires onClose during refresh, Chrome does not
+    if (!isNavigatingAway)
+        removeLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN);
 
-  resetServerScreens();
-  resetServerState();
-  resetDialogs();
-  resetApp();
+    resetServerScreens();
+    resetServerState();
+    resetDialogs();
+    resetApp();
 
-  removeSessionStorageItem(SessionStorageKey.TOKEN);
+    removeSessionStorageItem(SessionStorageKey.TOKEN);
 
-  // this should help Firefox users who report that auto login is not consistent
-  setTimeout(() => {
-    isCleaningUp = false;
-  }, 100);
+    // this should help Firefox users who report that auto login is not consistent
+    setTimeout(() => {
+        isCleaningUp = false;
+    }, 100);
 };
 
 export { cleanup, connectToTRPC, getTRPCClient, type AppRouter };

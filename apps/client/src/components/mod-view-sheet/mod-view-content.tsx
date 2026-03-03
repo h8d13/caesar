@@ -10,81 +10,81 @@ import { Links } from './server-activity/links';
 import { Messages } from './server-activity/messages';
 
 type TWrapperProps = {
-  children: React.ReactNode;
+    children: React.ReactNode;
 };
 
 const Wrapper = memo(({ children }: TWrapperProps) => {
-  const { setView } = useModViewContext();
+    const { setView } = useModViewContext();
 
-  const onBackClick = useCallback(() => {
-    setView(undefined);
-  }, [setView]);
+    const onBackClick = useCallback(() => {
+        setView(undefined);
+    }, [setView]);
 
-  return (
-    <div className="w-full space-y-4">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onBackClick}
-        className="h-auto p-1 text-xs text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-3 w-3 mr-1" />
-        Go back
-      </Button>
-      {children}
-    </div>
-  );
+    return (
+        <div className="w-full space-y-4">
+            <Button
+                variant="ghost"
+                size="sm"
+                onClick={onBackClick}
+                className="h-auto p-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+                <ArrowLeft className="h-3 w-3 mr-1" />
+                Go back
+            </Button>
+            {children}
+        </div>
+    );
 });
 
 type TRoutingProps = {
-  view: ModViewScreen | undefined;
+    view: ModViewScreen | undefined;
 };
 
 const Routing = memo(({ view }: TRoutingProps) => {
-  if (view === ModViewScreen.FILES) {
-    return (
-      <Wrapper>
-        <Files />
-      </Wrapper>
-    );
-  }
+    if (view === ModViewScreen.FILES) {
+        return (
+            <Wrapper>
+                <Files />
+            </Wrapper>
+        );
+    }
 
-  if (view === ModViewScreen.MESSAGES) {
-    return (
-      <Wrapper>
-        <Messages />
-      </Wrapper>
-    );
-  }
+    if (view === ModViewScreen.MESSAGES) {
+        return (
+            <Wrapper>
+                <Messages />
+            </Wrapper>
+        );
+    }
 
-  if (view === ModViewScreen.LINKS) {
-    return (
-      <Wrapper>
-        <Links />
-      </Wrapper>
-    );
-  }
+    if (view === ModViewScreen.LINKS) {
+        return (
+            <Wrapper>
+                <Links />
+            </Wrapper>
+        );
+    }
 
-  return (
-    <>
-      <ServerActivity />
-      <Details />
-    </>
-  );
+    return (
+        <>
+            <ServerActivity />
+            <Details />
+        </>
+    );
 });
 
 const ModViewContent = memo(() => {
-  const { view } = useModViewContext();
+    const { view } = useModViewContext();
 
-  return (
-    <div className="h-full overflow-y-auto">
-      <div className="space-y-4 p-4">
-        <Header />
-        <div className="border-t border-border" />
-        <Routing view={view} />
-      </div>
-    </div>
-  );
+    return (
+        <div className="h-full overflow-y-auto">
+            <div className="space-y-4 p-4">
+                <Header />
+                <div className="border-t border-border" />
+                <Routing view={view} />
+            </div>
+        </div>
+    );
 });
 
 export { ModViewContent };

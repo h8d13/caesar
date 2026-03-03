@@ -1,99 +1,106 @@
 import { useCallback, useEffect, useState } from 'react';
 
 const useAvailableDevices = () => {
-  const [inputDevices, setInputDevices] = useState<
-    (MediaDeviceInfo | undefined)[]
-  >([]);
-  const [playbackDevices, setPlaybackDevices] = useState<
-    (MediaDeviceInfo | undefined)[]
-  >([]);
-  const [videoDevices, setVideoDevices] = useState<
-    (MediaDeviceInfo | undefined)[]
-  >([]);
-  const [loading, setLoading] = useState(true);
+    const [inputDevices, setInputDevices] = useState<
+        (MediaDeviceInfo | undefined)[]
+    >([]);
+    const [playbackDevices, setPlaybackDevices] = useState<
+        (MediaDeviceInfo | undefined)[]
+    >([]);
+    const [videoDevices, setVideoDevices] = useState<
+        (MediaDeviceInfo | undefined)[]
+    >([]);
+    const [loading, setLoading] = useState(true);
 
-  const normalizeDevices = useCallback(
-    (devices: MediaDeviceInfo[], kind: MediaDeviceKind) => {
-      const seen = new Set<string>();
-      const normalized: MediaDeviceInfo[] = [];
+    const normalizeDevices = useCallback(
+        (devices: MediaDeviceInfo[], kind: MediaDeviceKind) => {
+            const seen = new Set<string>();
+            const normalized: MediaDeviceInfo[] = [];
 
-      for (const device of devices) {
-        const dedupeKey =
-          device.deviceId || `${kind}-fallback-${device.groupId || 'default'}`;
+            for (const device of devices) {
+                const dedupeKey =
+                    device.deviceId ||
+                    `${kind}-fallback-${device.groupId || 'default'}`;
 
-        if (seen.has(dedupeKey)) {
-          continue;
+                if (seen.has(dedupeKey)) {
+                    continue;
+                }
+
+                seen.add(dedupeKey);
+                normalized.push(device);
+            }
+
+            // default device always on top, then sorted alphabetically
+            normalized.sort((a, b) => {
+                if (a.deviceId === 'default') return -1;
+                if (b.deviceId === 'default') return 1;
+
+                return a.label.localeCompare(b.label);
+            });
+
+            return normalized;
+        },
+        []
+    );
+
+    const loadDevices = useCallback(async () => {
+        if (!navigator.mediaDevices?.enumerateDevices) {
+            setLoading(false);
+            return;
         }
 
-        seen.add(dedupeKey);
-        normalized.push(device);
-      }
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
 
-      // default device always on top, then sorted alphabetically
-      normalized.sort((a, b) => {
-        if (a.deviceId === 'default') return -1;
-        if (b.deviceId === 'default') return 1;
+            const inputDevices = normalizeDevices(
+                devices.filter((device) => device.kind === 'audioinput'),
+                'audioinput'
+            );
 
-        return a.label.localeCompare(b.label);
-      });
+            const playbackDevices = normalizeDevices(
+                devices.filter((device) => device.kind === 'audiooutput'),
+                'audiooutput'
+            );
 
-      return normalized;
-    },
-    []
-  );
+            const videoDevices = normalizeDevices(
+                devices.filter((device) => device.kind === 'videoinput'),
+                'videoinput'
+            );
 
-  const loadDevices = useCallback(async () => {
-    if (!navigator.mediaDevices?.enumerateDevices) {
-      setLoading(false);
-      return;
-    }
+            setInputDevices(inputDevices);
+            setPlaybackDevices(playbackDevices);
+            setVideoDevices(videoDevices);
+        } finally {
+            setLoading(false);
+        }
+    }, [normalizeDevices]);
 
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
+    useEffect(() => {
+        void loadDevices();
 
-      const inputDevices = normalizeDevices(
-        devices.filter((device) => device.kind === 'audioinput'),
-        'audioinput'
-      );
+        if (!navigator.mediaDevices?.addEventListener) return;
 
-      const playbackDevices = normalizeDevices(
-        devices.filter((device) => device.kind === 'audiooutput'),
-        'audiooutput'
-      );
+        const onDeviceChange = () => {
+            void loadDevices();
+        };
 
-      const videoDevices = normalizeDevices(
-        devices.filter((device) => device.kind === 'videoinput'),
-        'videoinput'
-      );
+        navigator.mediaDevices.addEventListener('devicechange', onDeviceChange);
 
-      setInputDevices(inputDevices);
-      setPlaybackDevices(playbackDevices);
-      setVideoDevices(videoDevices);
-    } finally {
-      setLoading(false);
-    }
-  }, [normalizeDevices]);
+        return () => {
+            navigator.mediaDevices.removeEventListener(
+                'devicechange',
+                onDeviceChange
+            );
+        };
+    }, [loadDevices]);
 
-  useEffect(() => {
-    void loadDevices();
-
-    if (!navigator.mediaDevices?.addEventListener) return;
-
-    const onDeviceChange = () => {
-      void loadDevices();
+    return {
+        inputDevices,
+        playbackDevices,
+        videoDevices,
+        loading,
+        loadDevices
     };
-
-    navigator.mediaDevices.addEventListener('devicechange', onDeviceChange);
-
-    return () => {
-      navigator.mediaDevices.removeEventListener(
-        'devicechange',
-        onDeviceChange
-      );
-    };
-  }, [loadDevices]);
-
-  return { inputDevices, playbackDevices, videoDevices, loading, loadDevices };
 };
 
 export { useAvailableDevices };

@@ -3,103 +3,103 @@ import type { TDevices } from '@/types';
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 export interface TAppState {
-  appLoading: boolean;
-  isAutoConnecting: boolean;
-  devices: TDevices | undefined;
-  modViewOpen: boolean;
-  modViewUserId: number | undefined;
-  threadSidebarOpen: boolean;
-  threadParentMessageId: number | undefined;
-  threadChannelId: number | undefined;
-  autoJoinLastChannel: boolean;
-  dmsOpen: boolean;
-  selectedDmChannelId: number | undefined;
-  browserNotifications: boolean;
-  browserNotificationsForMentions: boolean;
+    appLoading: boolean;
+    isAutoConnecting: boolean;
+    devices: TDevices | undefined;
+    modViewOpen: boolean;
+    modViewUserId: number | undefined;
+    threadSidebarOpen: boolean;
+    threadParentMessageId: number | undefined;
+    threadChannelId: number | undefined;
+    autoJoinLastChannel: boolean;
+    dmsOpen: boolean;
+    selectedDmChannelId: number | undefined;
+    browserNotifications: boolean;
+    browserNotificationsForMentions: boolean;
 }
 
 const initialState: TAppState = {
-  appLoading: true,
-  isAutoConnecting: false,
-  devices: undefined,
-  modViewOpen: false,
-  modViewUserId: undefined,
-  threadSidebarOpen: false,
-  threadParentMessageId: undefined,
-  threadChannelId: undefined,
-  autoJoinLastChannel: getLocalStorageItemBool(
-    LocalStorageKey.AUTO_JOIN_LAST_CHANNEL,
-    false
-  ),
-  dmsOpen: false,
-  selectedDmChannelId: undefined,
-  browserNotifications: getLocalStorageItemBool(
-    LocalStorageKey.BROWSER_NOTIFICATIONS,
-    false
-  ),
-  browserNotificationsForMentions: getLocalStorageItemBool(
-    LocalStorageKey.BROWSER_NOTIFICATIONS_FOR_MENTIONS,
-    false
-  )
+    appLoading: true,
+    isAutoConnecting: false,
+    devices: undefined,
+    modViewOpen: false,
+    modViewUserId: undefined,
+    threadSidebarOpen: false,
+    threadParentMessageId: undefined,
+    threadChannelId: undefined,
+    autoJoinLastChannel: getLocalStorageItemBool(
+        LocalStorageKey.AUTO_JOIN_LAST_CHANNEL,
+        false
+    ),
+    dmsOpen: false,
+    selectedDmChannelId: undefined,
+    browserNotifications: getLocalStorageItemBool(
+        LocalStorageKey.BROWSER_NOTIFICATIONS,
+        false
+    ),
+    browserNotificationsForMentions: getLocalStorageItemBool(
+        LocalStorageKey.BROWSER_NOTIFICATIONS_FOR_MENTIONS,
+        false
+    )
 };
 
 export const appSlice = createSlice({
-  name: 'app',
-  initialState,
-  reducers: {
-    setAppLoading: (state, action: PayloadAction<boolean>) => {
-      state.appLoading = action.payload;
-    },
-    setDevices: (state, action: PayloadAction<TDevices>) => {
-      state.devices = action.payload;
-    },
-    setModViewOpen: (
-      state,
-      action: PayloadAction<{
-        modViewOpen: boolean;
-        userId?: number;
-      }>
-    ) => {
-      state.modViewOpen = action.payload.modViewOpen;
-      state.modViewUserId = action.payload.userId;
-    },
-    setThreadSidebarOpen: (
-      state,
-      action: PayloadAction<{
-        open: boolean;
-        parentMessageId?: number;
-        channelId?: number;
-      }>
-    ) => {
-      state.threadSidebarOpen = action.payload.open;
-      state.threadParentMessageId = action.payload.parentMessageId;
-      state.threadChannelId = action.payload.channelId;
-    },
-    setAutoJoinLastChannel: (state, action: PayloadAction<boolean>) => {
-      state.autoJoinLastChannel = action.payload;
-    },
-    setIsAutoConnecting: (state, action: PayloadAction<boolean>) => {
-      state.isAutoConnecting = action.payload;
-    },
-    setDmsOpen: (state, action: PayloadAction<boolean>) => {
-      state.dmsOpen = action.payload;
-    },
-    setSelectedDmChannelId: (
-      state,
-      action: PayloadAction<number | undefined>
-    ) => {
-      state.selectedDmChannelId = action.payload;
-    },
-    setBrowserNotifications: (state, action: PayloadAction<boolean>) => {
-      state.browserNotifications = action.payload;
-    },
-    setBrowserNotificationsForMentions: (
-      state,
-      action: PayloadAction<boolean>
-    ) => {
-      state.browserNotificationsForMentions = action.payload;
+    name: 'app',
+    initialState,
+    reducers: {
+        setAppLoading: (state, action: PayloadAction<boolean>) => {
+            state.appLoading = action.payload;
+        },
+        setDevices: (state, action: PayloadAction<TDevices>) => {
+            state.devices = action.payload;
+        },
+        setModViewOpen: (
+            state,
+            action: PayloadAction<{
+                modViewOpen: boolean;
+                userId?: number;
+            }>
+        ) => {
+            state.modViewOpen = action.payload.modViewOpen;
+            state.modViewUserId = action.payload.userId;
+        },
+        setThreadSidebarOpen: (
+            state,
+            action: PayloadAction<{
+                open: boolean;
+                parentMessageId?: number;
+                channelId?: number;
+            }>
+        ) => {
+            state.threadSidebarOpen = action.payload.open;
+            state.threadParentMessageId = action.payload.parentMessageId;
+            state.threadChannelId = action.payload.channelId;
+        },
+        setAutoJoinLastChannel: (state, action: PayloadAction<boolean>) => {
+            state.autoJoinLastChannel = action.payload;
+        },
+        setIsAutoConnecting: (state, action: PayloadAction<boolean>) => {
+            state.isAutoConnecting = action.payload;
+        },
+        setDmsOpen: (state, action: PayloadAction<boolean>) => {
+            state.dmsOpen = action.payload;
+        },
+        setSelectedDmChannelId: (
+            state,
+            action: PayloadAction<number | undefined>
+        ) => {
+            state.selectedDmChannelId = action.payload;
+        },
+        setBrowserNotifications: (state, action: PayloadAction<boolean>) => {
+            state.browserNotifications = action.payload;
+        },
+        setBrowserNotificationsForMentions: (
+            state,
+            action: PayloadAction<boolean>
+        ) => {
+            state.browserNotificationsForMentions = action.payload;
+        }
     }
-  }
 });
 
 const appSliceActions = appSlice.actions;

@@ -1,6 +1,6 @@
 type TVoiceControlsBridge = {
-  setMicMuted: (muted: boolean) => Promise<void>;
-  setSoundMuted: (muted: boolean) => Promise<void>;
+    setMicMuted: (muted: boolean) => Promise<void>;
+    setSoundMuted: (muted: boolean) => Promise<void>;
 };
 
 // Server settings screens are rendered from a top-level portal and may live
@@ -9,17 +9,17 @@ type TVoiceControlsBridge = {
 let voiceControlsBridge: TVoiceControlsBridge | null = null;
 
 const setVoiceControlsBridge = (bridge: TVoiceControlsBridge) => {
-  voiceControlsBridge = bridge;
+    voiceControlsBridge = bridge;
 };
 
 const clearVoiceControlsBridge = () => {
-  voiceControlsBridge = null;
+    voiceControlsBridge = null;
 };
 
 const getVoiceControlsBridge = () => voiceControlsBridge;
 
 export {
-  clearVoiceControlsBridge,
-  getVoiceControlsBridge,
-  setVoiceControlsBridge
+    clearVoiceControlsBridge,
+    getVoiceControlsBridge,
+    setVoiceControlsBridge
 };

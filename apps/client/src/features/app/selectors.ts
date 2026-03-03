@@ -4,47 +4,47 @@ import type { IRootState } from '../store';
 export const appLoadingSelector = (state: IRootState) => state.app.appLoading;
 
 export const isAutoConnectingSelector = (state: IRootState) =>
-  state.app.isAutoConnecting;
+    state.app.isAutoConnecting;
 
 export const devicesSelector = (state: IRootState) => state.app.devices;
 
 export const modViewOpenSelector = (state: IRootState) => state.app.modViewOpen;
 
 export const modViewUserIdSelector = (state: IRootState) =>
-  state.app.modViewUserId;
+    state.app.modViewUserId;
 
 export const threadSidebarOpenSelector = (state: IRootState) =>
-  state.app.threadSidebarOpen;
+    state.app.threadSidebarOpen;
 
 export const threadParentMessageIdSelector = (state: IRootState) =>
-  state.app.threadParentMessageId;
+    state.app.threadParentMessageId;
 
 export const threadChannelIdSelector = (state: IRootState) =>
-  state.app.threadChannelId;
+    state.app.threadChannelId;
 
 export const autoJoinLastChannelSelector = (state: IRootState) =>
-  state.app.autoJoinLastChannel;
+    state.app.autoJoinLastChannel;
 
 export const dmsOpenSelector = (state: IRootState) => state.app.dmsOpen;
 
 export const selectedDmChannelIdSelector = (state: IRootState) =>
-  state.app.selectedDmChannelId;
+    state.app.selectedDmChannelId;
 
 export const browserNotificationsSelector = (state: IRootState) =>
-  state.app.browserNotifications;
+    state.app.browserNotifications;
 
 export const browserNotificationsForMentionsSelector = (state: IRootState) =>
-  state.app.browserNotificationsForMentions;
+    state.app.browserNotificationsForMentions;
 
 export const threadSidebarDataSelector = createSelector(
-  [
-    threadSidebarOpenSelector,
-    threadParentMessageIdSelector,
-    threadChannelIdSelector
-  ],
-  (isOpen, parentMessageId, channelId) => ({
-    isOpen,
-    parentMessageId,
-    channelId
-  })
+    [
+        threadSidebarOpenSelector,
+        threadParentMessageIdSelector,
+        threadChannelIdSelector
+    ],
+    (isOpen, parentMessageId, channelId) => ({
+        isOpen,
+        parentMessageId,
+        channelId
+    })
 );

@@ -5,87 +5,100 @@ import { getRenderedUsername } from '@/helpers/get-rendered-username';
 import { getSocialCreditColor } from '@/helpers/get-social-credit-color';
 import { cn } from '@/lib/utils';
 import {
-  DELETED_USER_IDENTITY_AND_NAME,
-  type TJoinedMessage
+    DELETED_USER_IDENTITY_AND_NAME,
+    type TJoinedMessage
 } from '@sharkord/shared';
 import { format } from 'date-fns';
 import { memo } from 'react';
 import { Message } from './message';
 
 type TMessagesGroupProps = {
-  group: TJoinedMessage[];
-  disableActions?: boolean;
-  disableFiles?: boolean;
-  disableReactions?: boolean;
-  onReply?: (message: TJoinedMessage) => void;
-  onScrollToMessage?: (messageId: number) => void;
+    group: TJoinedMessage[];
+    disableActions?: boolean;
+    disableFiles?: boolean;
+    disableReactions?: boolean;
+    onReply?: (message: TJoinedMessage) => void;
+    onScrollToMessage?: (messageId: number) => void;
 };
 
 const MessagesGroup = memo(
-  ({
-    group,
-    disableActions,
-    disableFiles,
-    disableReactions,
-    onReply,
-    onScrollToMessage
-  }: TMessagesGroupProps) => {
-    const firstMessage = group[0];
-    const user = useUserById(firstMessage.userId);
-    const date = new Date(firstMessage.createdAt);
-    const isOwnUser = useIsOwnUser(firstMessage.userId);
-    const isDeletedUser = user?.name === DELETED_USER_IDENTITY_AND_NAME;
+    ({
+        group,
+        disableActions,
+        disableFiles,
+        disableReactions,
+        onReply,
+        onScrollToMessage
+    }: TMessagesGroupProps) => {
+        const firstMessage = group[0];
+        const user = useUserById(firstMessage.userId);
+        const date = new Date(firstMessage.createdAt);
+        const isOwnUser = useIsOwnUser(firstMessage.userId);
+        const isDeletedUser = user?.name === DELETED_USER_IDENTITY_AND_NAME;
 
-    if (!user) return null;
+        if (!user) return null;
 
-    return (
-      <div className="flex min-w-0 max-w-dvw gap-1 pl-2 pt-2 pr-2">
-        <UserAvatar userId={user.id} className="h-10 w-10" showUserPopover />
-        <div className="flex min-w-0 flex-col w-full">
-          <div className="flex gap-2 items-baseline pl-1 select-none">
-            <span
-              className={cn(
-                isOwnUser && 'font-bold',
-                isDeletedUser && 'line-through text-muted-foreground'
-              )}
-              style={isDeletedUser ? undefined : { color: getSocialCreditColor(user.socialCredit ?? 0) }}
-            >
-              {getRenderedUsername(user, user.id)}
-            </span>
-            <RelativeTime date={date}>
-              {(relativeTime) => (
-                <span
-                  className="text-primary/60 text-xs"
-                  title={format(date, 'PPpp')}
-                >
-                  {relativeTime}
-                </span>
-              )}
-            </RelativeTime>
-          </div>
-          <div className="flex min-w-0 flex-col">
-            {group.map((message) => (
-              <div
-                key={message.id}
-                id={`message-${message.id}`}
-                className="rounded-md transition-colors duration-1000"
-              >
-                <Message
-                  key={message.id}
-                  message={message}
-                  disableActions={disableActions}
-                  disableFiles={disableFiles}
-                  disableReactions={disableReactions}
-                  onReply={onReply}
-                  onScrollToMessage={onScrollToMessage}
+        return (
+            <div className="flex min-w-0 max-w-dvw gap-1 pl-2 pt-2 pr-2">
+                <UserAvatar
+                    userId={user.id}
+                    className="h-10 w-10"
+                    showUserPopover
                 />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+                <div className="flex min-w-0 flex-col w-full">
+                    <div className="flex gap-2 items-baseline pl-1 select-none">
+                        <span
+                            className={cn(
+                                isOwnUser && 'font-bold',
+                                isDeletedUser &&
+                                    'line-through text-muted-foreground'
+                            )}
+                            style={
+                                isDeletedUser
+                                    ? undefined
+                                    : {
+                                          color: getSocialCreditColor(
+                                              user.socialCredit ?? 0
+                                          )
+                                      }
+                            }
+                        >
+                            {getRenderedUsername(user, user.id)}
+                        </span>
+                        <RelativeTime date={date}>
+                            {(relativeTime) => (
+                                <span
+                                    className="text-primary/60 text-xs"
+                                    title={format(date, 'PPpp')}
+                                >
+                                    {relativeTime}
+                                </span>
+                            )}
+                        </RelativeTime>
+                    </div>
+                    <div className="flex min-w-0 flex-col">
+                        {group.map((message) => (
+                            <div
+                                key={message.id}
+                                id={`message-${message.id}`}
+                                className="rounded-md transition-colors duration-1000"
+                            >
+                                <Message
+                                    key={message.id}
+                                    message={message}
+                                    disableActions={disableActions}
+                                    disableFiles={disableFiles}
+                                    disableReactions={disableReactions}
+                                    onReply={onReply}
+                                    onScrollToMessage={onScrollToMessage}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 );
 
 export { MessagesGroup };

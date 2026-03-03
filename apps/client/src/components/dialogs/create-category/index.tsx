@@ -1,15 +1,15 @@
 import { useForm } from '@/hooks/use-form';
 import { getTRPCClient } from '@/lib/trpc';
 import {
-  AutoFocus,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  Group,
-  Input
+    AutoFocus,
+    Button,
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    Group,
+    Input
 } from '@sharkord/ui';
 import { memo, useCallback, useState } from 'react';
 import type { TDialogBaseProps } from '../types';
@@ -17,59 +17,63 @@ import type { TDialogBaseProps } from '../types';
 type TCreateCategoryDialogProps = TDialogBaseProps;
 
 const CreateCategoryDialog = memo(
-  ({ isOpen, close }: TCreateCategoryDialogProps) => {
-    const { values, r, setTrpcErrors } = useForm({
-      name: 'New Category'
-    });
-    const [loading, setLoading] = useState(false);
-
-    const onSubmit = useCallback(async () => {
-      const trpc = getTRPCClient();
-
-      setLoading(true);
-
-      try {
-        await trpc.categories.add.mutate({
-          name: values.name
+    ({ isOpen, close }: TCreateCategoryDialogProps) => {
+        const { values, r, setTrpcErrors } = useForm({
+            name: 'New Category'
         });
+        const [loading, setLoading] = useState(false);
 
-        close();
-      } catch (error) {
-        setTrpcErrors(error);
-      } finally {
-        setLoading(false);
-      }
-    }, [values.name, close, setTrpcErrors]);
+        const onSubmit = useCallback(async () => {
+            const trpc = getTRPCClient();
 
-    return (
-      <Dialog open={isOpen}>
-        <DialogContent onInteractOutside={close} close={close} aria-describedby={undefined}>
-          <DialogHeader>
-            <DialogTitle>Create New Category</DialogTitle>
-          </DialogHeader>
+            setLoading(true);
 
-          <Group label="Category name">
-            <AutoFocus>
-              <Input
-                {...r('name')}
-                placeholder="Category name"
-                onEnter={onSubmit}
-              />
-            </AutoFocus>
-          </Group>
+            try {
+                await trpc.categories.add.mutate({
+                    name: values.name
+                });
 
-          <DialogFooter className="gap-2">
-            <Button variant="ghost" onClick={close}>
-              Cancel
-            </Button>
-            <Button onClick={onSubmit} disabled={loading}>
-              Create Category
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+                close();
+            } catch (error) {
+                setTrpcErrors(error);
+            } finally {
+                setLoading(false);
+            }
+        }, [values.name, close, setTrpcErrors]);
+
+        return (
+            <Dialog open={isOpen}>
+                <DialogContent
+                    onInteractOutside={close}
+                    close={close}
+                    aria-describedby={undefined}
+                >
+                    <DialogHeader>
+                        <DialogTitle>Create New Category</DialogTitle>
+                    </DialogHeader>
+
+                    <Group label="Category name">
+                        <AutoFocus>
+                            <Input
+                                {...r('name')}
+                                placeholder="Category name"
+                                onEnter={onSubmit}
+                            />
+                        </AutoFocus>
+                    </Group>
+
+                    <DialogFooter className="gap-2">
+                        <Button variant="ghost" onClick={close}>
+                            Cancel
+                        </Button>
+                        <Button onClick={onSubmit} disabled={loading}>
+                            Create Category
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        );
+    }
 );
 
 export { CreateCategoryDialog };

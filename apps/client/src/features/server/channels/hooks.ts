@@ -1,53 +1,53 @@
 import type { IRootState } from '@/features/store';
 import { useSelector } from 'react-redux';
 import {
-  channelByIdSelector,
-  channelIdsSelector,
-  channelPermissionsByIdSelector,
-  channelsByCategoryIdSelector,
-  channelsMapSelector,
-  channelsSelector,
-  currentVoiceChannelIdSelector,
-  directMessagesUnreadCountSelector,
-  isCurrentVoiceChannelSelectedSelector,
-  selectedChannelIdSelector,
-  selectedChannelSelector,
-  selectedChannelTypeSelector
+    channelByIdSelector,
+    channelIdsSelector,
+    channelPermissionsByIdSelector,
+    channelsByCategoryIdSelector,
+    channelsMapSelector,
+    channelsSelector,
+    currentVoiceChannelIdSelector,
+    directMessagesUnreadCountSelector,
+    isCurrentVoiceChannelSelectedSelector,
+    selectedChannelIdSelector,
+    selectedChannelSelector,
+    selectedChannelTypeSelector
 } from './selectors';
 
 export const useChannels = () =>
-  useSelector((state: IRootState) => channelsSelector(state));
+    useSelector((state: IRootState) => channelsSelector(state));
 
 export const useChannelById = (channelId: number) =>
-  useSelector((state: IRootState) => channelByIdSelector(state, channelId));
+    useSelector((state: IRootState) => channelByIdSelector(state, channelId));
 
 export const useChannelsByCategoryId = (categoryId: number) =>
-  useSelector((state: IRootState) =>
-    channelsByCategoryIdSelector(state, categoryId)
-  );
+    useSelector((state: IRootState) =>
+        channelsByCategoryIdSelector(state, categoryId)
+    );
 
 export const useSelectedChannelId = () =>
-  useSelector(selectedChannelIdSelector);
+    useSelector(selectedChannelIdSelector);
 
 export const useSelectedChannel = () => useSelector(selectedChannelSelector);
 
 export const useCurrentVoiceChannelId = () =>
-  useSelector(currentVoiceChannelIdSelector);
+    useSelector(currentVoiceChannelIdSelector);
 
 export const useIsCurrentVoiceChannelSelected = () =>
-  useSelector(isCurrentVoiceChannelSelectedSelector);
+    useSelector(isCurrentVoiceChannelSelectedSelector);
 
 export const useChannelPermissionsById = (channelId: number) =>
-  useSelector((state: IRootState) =>
-    channelPermissionsByIdSelector(state, channelId)
-  );
+    useSelector((state: IRootState) =>
+        channelPermissionsByIdSelector(state, channelId)
+    );
 
 export const useSelectedChannelType = () =>
-  useSelector(selectedChannelTypeSelector);
+    useSelector(selectedChannelTypeSelector);
 
 export const useChannelsMap = () => useSelector(channelsMapSelector);
 
 export const useChannelIds = () => useSelector(channelIdsSelector);
 
 export const useDirectMessagesUnreadCount = () =>
-  useSelector(directMessagesUnreadCountSelector);
+    useSelector(directMessagesUnreadCountSelector);

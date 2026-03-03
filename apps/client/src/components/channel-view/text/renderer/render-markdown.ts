@@ -2,8 +2,8 @@ import { linkifyHtml } from '@sharkord/shared';
 import { marked } from 'marked';
 
 marked.setOptions({
-  breaks: true,
-  gfm: true
+    breaks: true,
+    gfm: true
 });
 
 /**
@@ -19,23 +19,23 @@ marked.setOptions({
  * through safely — marked preserves existing HTML tags.
  */
 const renderMarkdown = (content: string): string => {
-  // Convert editor HTML to markdown-like text:
-  // - <br> variants → newlines
-  // - paragraph boundaries → double newlines
-  // - strip remaining <p> tags
-  const text = content
-    .replace(/<br\s*(?:class="[^"]*")?\s*\/?>/gi, '\n')
-    .replace(/<\/p>\s*<p>/gi, '\n\n')
-    .replace(/<\/?p>/gi, '')
-    .replace(/&gt;/g, '>')
-    .replace(/&lt;/g, '<')
-    .replace(/&amp;/g, '&');
+    // Convert editor HTML to markdown-like text:
+    // - <br> variants → newlines
+    // - paragraph boundaries → double newlines
+    // - strip remaining <p> tags
+    const text = content
+        .replace(/<br\s*(?:class="[^"]*")?\s*\/?>/gi, '\n')
+        .replace(/<\/p>\s*<p>/gi, '\n\n')
+        .replace(/<\/?p>/gi, '')
+        .replace(/&gt;/g, '>')
+        .replace(/&lt;/g, '<')
+        .replace(/&amp;/g, '&');
 
-  // Convert markdown → HTML (preserves inline HTML like mentions, emojis)
-  const html = marked.parse(text) as string;
+    // Convert markdown → HTML (preserves inline HTML like mentions, emojis)
+    const html = marked.parse(text) as string;
 
-  // Catch any bare URLs that marked didn't auto-link
-  return linkifyHtml(html);
+    // Catch any bare URLs that marked didn't auto-link
+    return linkifyHtml(html);
 };
 
 export { renderMarkdown };

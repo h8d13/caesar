@@ -1,9 +1,9 @@
 import { ownUserIdSelector } from '@/features/server/users/selectors';
 import { store } from '@/features/store';
 import {
-  getLocalStorageItemAsJSON,
-  LocalStorageKey,
-  setLocalStorageItemAsJSON
+    getLocalStorageItemAsJSON,
+    LocalStorageKey,
+    setLocalStorageItemAsJSON
 } from '@/helpers/storage';
 import { isEmptyMessage } from '@sharkord/shared';
 
@@ -13,60 +13,60 @@ type TDraftMessageKey = string;
 type TDraftMessages = Record<TDraftMessageKey, string>;
 
 const loadDraftsFromStorage = (): TDraftMessages => {
-  try {
-    return (
-      getLocalStorageItemAsJSON<TDraftMessages>(
-        LocalStorageKey.DRAFT_MESSAGES
-      ) ?? {}
-    );
-  } catch {
-    return {};
-  }
+    try {
+        return (
+            getLocalStorageItemAsJSON<TDraftMessages>(
+                LocalStorageKey.DRAFT_MESSAGES
+            ) ?? {}
+        );
+    } catch {
+        return {};
+    }
 };
 
 const saveDraftsToStorage = (drafts: TDraftMessages) => {
-  try {
-    setLocalStorageItemAsJSON(LocalStorageKey.DRAFT_MESSAGES, drafts);
-  } catch {
-    // ignore
-  }
+    try {
+        setLocalStorageItemAsJSON(LocalStorageKey.DRAFT_MESSAGES, drafts);
+    } catch {
+        // ignore
+    }
 };
 
 const getDraftMessage = (draftKey: TDraftMessageKey): string => {
-  return loadDraftsFromStorage()[draftKey] ?? '';
+    return loadDraftsFromStorage()[draftKey] ?? '';
 };
 
 const setDraftMessage = (draftKey: TDraftMessageKey, message: string) => {
-  const drafts = loadDraftsFromStorage();
+    const drafts = loadDraftsFromStorage();
 
-  if (isEmptyMessage(message)) {
-    delete drafts[draftKey];
-  } else {
-    drafts[draftKey] = message;
-  }
+    if (isEmptyMessage(message)) {
+        delete drafts[draftKey];
+    } else {
+        drafts[draftKey] = message;
+    }
 
-  saveDraftsToStorage(drafts);
+    saveDraftsToStorage(drafts);
 };
 
 const clearDraftMessage = (draftKey: TDraftMessageKey) => {
-  const drafts = loadDraftsFromStorage();
+    const drafts = loadDraftsFromStorage();
 
-  delete drafts[draftKey];
+    delete drafts[draftKey];
 
-  saveDraftsToStorage(drafts);
+    saveDraftsToStorage(drafts);
 };
 
 const getChannelDraftKey = (channelId: number): TDraftMessageKey => {
-  const state = store.getState();
-  const ownUserId = ownUserIdSelector(state);
+    const state = store.getState();
+    const ownUserId = ownUserIdSelector(state);
 
-  return `ch-${channelId}-${ownUserId}`;
+    return `ch-${channelId}-${ownUserId}`;
 };
 
 export {
-  clearDraftMessage,
-  getChannelDraftKey,
-  getDraftMessage,
-  loadDraftsFromStorage,
-  setDraftMessage
+    clearDraftMessage,
+    getChannelDraftKey,
+    getDraftMessage,
+    loadDraftsFromStorage,
+    setDraftMessage
 };

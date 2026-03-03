@@ -3,40 +3,43 @@ import { memo } from 'react';
 import { useVoiceRefs } from './hooks/use-voice-refs';
 
 type TVoiceUserAudioStreamProps = {
-  userId: number;
+    userId: number;
 };
 
 const VoiceUserAudioStream = memo(({ userId }: TVoiceUserAudioStreamProps) => {
-  const { audioRef, hasAudioStream } = useVoiceRefs(userId);
+    const { audioRef, hasAudioStream } = useVoiceRefs(userId);
 
-  return (
-    <>
-      {hasAudioStream && (
-        <audio
-          ref={audioRef}
-          className="hidden"
-          autoPlay
-          data-user-id={userId}
-        />
-      )}
-    </>
-  );
+    return (
+        <>
+            {hasAudioStream && (
+                <audio
+                    ref={audioRef}
+                    className="hidden"
+                    autoPlay
+                    data-user-id={userId}
+                />
+            )}
+        </>
+    );
 });
 
 type TVoiceAudioStreamsProps = {
-  channelId: number;
+    channelId: number;
 };
 
 const VoiceAudioStreams = memo(({ channelId }: TVoiceAudioStreamsProps) => {
-  const voiceUsers = useVoiceUsersByChannelId(channelId);
+    const voiceUsers = useVoiceUsersByChannelId(channelId);
 
-  return (
-    <>
-      {voiceUsers.map((voiceUser) => (
-        <VoiceUserAudioStream key={voiceUser.id} userId={voiceUser.id} />
-      ))}
-    </>
-  );
+    return (
+        <>
+            {voiceUsers.map((voiceUser) => (
+                <VoiceUserAudioStream
+                    key={voiceUser.id}
+                    userId={voiceUser.id}
+                />
+            ))}
+        </>
+    );
 });
 
 export { VoiceAudioStreams };

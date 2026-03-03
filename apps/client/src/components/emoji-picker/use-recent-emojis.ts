@@ -1,18 +1,18 @@
 import type { TEmojiItem } from '@/components/tiptap-input/helpers';
 import {
-  getLocalStorageItemAsJSON,
-  LocalStorageKey,
-  setLocalStorageItemAsJSON
+    getLocalStorageItemAsJSON,
+    LocalStorageKey,
+    setLocalStorageItemAsJSON
 } from '@/helpers/storage';
 import { useCallback, useSyncExternalStore } from 'react';
 
 const MAX_RECENT_EMOJIS = 32;
 
 type StoredEmoji = {
-  name: string;
-  shortcodes: string[];
-  fallbackImage?: string;
-  emoji?: string;
+    name: string;
+    shortcodes: string[];
+    fallbackImage?: string;
+    emoji?: string;
 };
 
 let recentEmojisCache: TEmojiItem[] | null = null;
@@ -20,72 +20,72 @@ let recentEmojisCache: TEmojiItem[] | null = null;
 const subscribers = new Set<() => void>();
 
 const notifySubscribers = () => {
-  subscribers.forEach((callback) => callback());
+    subscribers.forEach((callback) => callback());
 };
 
 const loadRecentEmojis = (): TEmojiItem[] => {
-  if (recentEmojisCache !== null) {
+    if (recentEmojisCache !== null) {
+        return recentEmojisCache;
+    }
+
+    const stored = getLocalStorageItemAsJSON<StoredEmoji[]>(
+        LocalStorageKey.RECENT_EMOJIS,
+        []
+    );
+
+    recentEmojisCache = stored ?? [];
+
     return recentEmojisCache;
-  }
-
-  const stored = getLocalStorageItemAsJSON<StoredEmoji[]>(
-    LocalStorageKey.RECENT_EMOJIS,
-    []
-  );
-
-  recentEmojisCache = stored ?? [];
-
-  return recentEmojisCache;
 };
 
 const saveRecentEmojis = (emojis: TEmojiItem[]): void => {
-  const toStore: StoredEmoji[] = emojis.map((e) => ({
-    name: e.name,
-    shortcodes: e.shortcodes,
-    emoji: e.emoji
-  }));
+    const toStore: StoredEmoji[] = emojis.map((e) => ({
+        name: e.name,
+        shortcodes: e.shortcodes,
+        emoji: e.emoji
+    }));
 
-  setLocalStorageItemAsJSON(LocalStorageKey.RECENT_EMOJIS, toStore);
+    setLocalStorageItemAsJSON(LocalStorageKey.RECENT_EMOJIS, toStore);
 
-  recentEmojisCache = emojis;
+    recentEmojisCache = emojis;
 
-  notifySubscribers();
+    notifySubscribers();
 };
 
 const addRecentEmoji = (emoji: TEmojiItem): void => {
-  const current = loadRecentEmojis();
+    const current = loadRecentEmojis();
 
-  const filtered = current.filter((e) => e.name !== emoji.name);
-  const updated = [emoji, ...filtered].slice(0, MAX_RECENT_EMOJIS);
+    const filtered = current.filter((e) => e.name !== emoji.name);
+    const updated = [emoji, ...filtered].slice(0, MAX_RECENT_EMOJIS);
 
-  saveRecentEmojis(updated);
+    saveRecentEmojis(updated);
 };
 
 const subscribe = (callback: () => void): (() => void) => {
-  subscribers.add(callback);
+    subscribers.add(callback);
 
-  return () => subscribers.delete(callback);
+    return () => subscribers.delete(callback);
 };
 
 const getSnapshot = (): TEmojiItem[] => {
-  return loadRecentEmojis();
+    return loadRecentEmojis();
 };
 
 const useRecentEmojis = () => {
-  const recentEmojis = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getSnapshot
-  );
+    const recentEmojis = useSyncExternalStore(
+        subscribe,
+        getSnapshot,
+        getSnapshot
+    );
 
-  const addRecent = useCallback((emoji: TEmojiItem) => {
-    addRecentEmoji(emoji);
-  }, []);
+    const addRecent = useCallback((emoji: TEmojiItem) => {
+        addRecentEmoji(emoji);
+    }, []);
 
-  return {
-    recentEmojis,
-    addRecent
-  };
+    return {
+        recentEmojis,
+        addRecent
+    };
 };
 
 export { addRecentEmoji, useRecentEmojis };

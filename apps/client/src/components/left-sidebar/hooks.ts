@@ -1,8 +1,8 @@
 import { useAutoJoinLastChannel } from '@/features/app/hooks';
 import { setSelectedChannelId } from '@/features/server/channels/actions';
 import {
-  useChannelsMap,
-  useCurrentVoiceChannelId
+    useChannelsMap,
+    useCurrentVoiceChannelId
 } from '@/features/server/channels/hooks';
 import { joinVoice } from '@/features/server/voice/actions';
 import { useVoice } from '@/features/server/voice/hooks';
@@ -12,115 +12,115 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 const loadExpandedValue = (categoryId: number): boolean => {
-  const expandedMap = getLocalStorageItemAsJSON<Record<number, boolean>>(
-    LocalStorageKey.CATEGORIES_EXPANDED,
-    {}
-  );
+    const expandedMap = getLocalStorageItemAsJSON<Record<number, boolean>>(
+        LocalStorageKey.CATEGORIES_EXPANDED,
+        {}
+    );
 
-  return expandedMap?.[categoryId] ?? true;
+    return expandedMap?.[categoryId] ?? true;
 };
 
 const saveExpandedValue = (categoryId: number, expanded: boolean): void => {
-  const expandedMap = getLocalStorageItemAsJSON<Record<number, boolean>>(
-    LocalStorageKey.CATEGORIES_EXPANDED,
-    {}
-  );
+    const expandedMap = getLocalStorageItemAsJSON<Record<number, boolean>>(
+        LocalStorageKey.CATEGORIES_EXPANDED,
+        {}
+    );
 
-  const newExpandedMap = {
-    ...expandedMap,
-    [categoryId]: expanded
-  };
+    const newExpandedMap = {
+        ...expandedMap,
+        [categoryId]: expanded
+    };
 
-  localStorage.setItem(
-    LocalStorageKey.CATEGORIES_EXPANDED,
-    JSON.stringify(newExpandedMap)
-  );
+    localStorage.setItem(
+        LocalStorageKey.CATEGORIES_EXPANDED,
+        JSON.stringify(newExpandedMap)
+    );
 };
 
 const useCategoryExpanded = (categoryId: number) => {
-  const [expanded, setExpanded] = useState(loadExpandedValue(categoryId));
+    const [expanded, setExpanded] = useState(loadExpandedValue(categoryId));
 
-  const toggleExpanded = useCallback(() => {
-    setExpanded((prev) => {
-      const newValue = !prev;
+    const toggleExpanded = useCallback(() => {
+        setExpanded((prev) => {
+            const newValue = !prev;
 
-      saveExpandedValue(categoryId, newValue);
+            saveExpandedValue(categoryId, newValue);
 
-      return newValue;
-    });
-  }, [categoryId]);
+            return newValue;
+        });
+    }, [categoryId]);
 
-  return useMemo(
-    () => ({ expanded, toggleExpanded }),
-    [expanded, toggleExpanded]
-  );
+    return useMemo(
+        () => ({ expanded, toggleExpanded }),
+        [expanded, toggleExpanded]
+    );
 };
 
 const useSelectChannel = () => {
-  const { init } = useVoice();
-  const currentVoiceChannelId = useCurrentVoiceChannelId();
-  const autoJoinLastChannel = useAutoJoinLastChannel();
-  const channelsMap = useChannelsMap();
+    const { init } = useVoice();
+    const currentVoiceChannelId = useCurrentVoiceChannelId();
+    const autoJoinLastChannel = useAutoJoinLastChannel();
+    const channelsMap = useChannelsMap();
 
-  const selectChannel = useCallback(
-    async (channelId: number) => {
-      const channel = channelsMap[channelId];
+    const selectChannel = useCallback(
+        async (channelId: number) => {
+            const channel = channelsMap[channelId];
 
-      if (!channel) return;
+            if (!channel) return;
 
-      setSelectedChannelId(channel.id);
+            setSelectedChannelId(channel.id);
 
-      if (channel.type !== ChannelType.VOICE) {
-        // persist selected channel for non-voice channels
-        localStorage.setItem(
-          LocalStorageKey.LAST_SELECTED_CHANNEL,
-          channel.id.toString()
-        );
-      }
+            if (channel.type !== ChannelType.VOICE) {
+                // persist selected channel for non-voice channels
+                localStorage.setItem(
+                    LocalStorageKey.LAST_SELECTED_CHANNEL,
+                    channel.id.toString()
+                );
+            }
 
-      if (
-        channel?.type === ChannelType.VOICE &&
-        currentVoiceChannelId !== channel.id
-      ) {
-        const response = await joinVoice(channel.id);
+            if (
+                channel?.type === ChannelType.VOICE &&
+                currentVoiceChannelId !== channel.id
+            ) {
+                const response = await joinVoice(channel.id);
 
-        if (!response) {
-          // joining voice failed
-          setSelectedChannelId(undefined);
-          toast.error('Failed to join voice channel');
+                if (!response) {
+                    // joining voice failed
+                    setSelectedChannelId(undefined);
+                    toast.error('Failed to join voice channel');
 
-          return;
-        }
+                    return;
+                }
 
-        try {
-          await init(response, channel.id);
-        } catch {
-          setSelectedChannelId(undefined);
-          toast.error('Failed to initialize voice connection');
-        }
-      }
-    },
-    [channelsMap, currentVoiceChannelId, init]
-  );
-
-  useEffect(() => {
-    if (!autoJoinLastChannel) return;
-
-    const lastSelectedChannelId = localStorage.getItem(
-      LocalStorageKey.LAST_SELECTED_CHANNEL
+                try {
+                    await init(response, channel.id);
+                } catch {
+                    setSelectedChannelId(undefined);
+                    toast.error('Failed to initialize voice connection');
+                }
+            }
+        },
+        [channelsMap, currentVoiceChannelId, init]
     );
 
-    if (lastSelectedChannelId) {
-      const channelId = parseInt(lastSelectedChannelId, 10);
-      const lastChannel = channelsMap[channelId];
+    useEffect(() => {
+        if (!autoJoinLastChannel) return;
 
-      if (lastChannel) {
-        setSelectedChannelId(channelId);
-      }
-    }
-  }, [channelsMap, autoJoinLastChannel]);
+        const lastSelectedChannelId = localStorage.getItem(
+            LocalStorageKey.LAST_SELECTED_CHANNEL
+        );
 
-  return selectChannel;
+        if (lastSelectedChannelId) {
+            const channelId = parseInt(lastSelectedChannelId, 10);
+            const lastChannel = channelsMap[channelId];
+
+            if (lastChannel) {
+                setSelectedChannelId(channelId);
+            }
+        }
+    }, [channelsMap, autoJoinLastChannel]);
+
+    return selectChannel;
 };
 
 export { useCategoryExpanded, useSelectChannel };

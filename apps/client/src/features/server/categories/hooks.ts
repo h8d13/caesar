@@ -5,4 +5,4 @@ import { categoriesSelector, categoryByIdSelector } from './selectors';
 export const useCategories = () => useSelector(categoriesSelector);
 
 export const useCategoryById = (categoryId: number) =>
-  useSelector((state: IRootState) => categoryByIdSelector(state, categoryId));
+    useSelector((state: IRootState) => categoryByIdSelector(state, categoryId));

@@ -1,4 +1,3 @@
-import './patch-canvas';
 import { Toaster } from '@sharkord/ui';
 import 'prosemirror-view/style/prosemirror.css';
 import { StrictMode } from 'react';
@@ -15,24 +14,25 @@ import { ThemeProvider } from './components/theme-provider/index.tsx';
 import { store } from './features/store.ts';
 import { LocalStorageKey } from './helpers/storage.ts';
 import './index.css';
+import './patch-canvas';
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <ThemeProvider
-      defaultTheme="dark"
-      storageKey={LocalStorageKey.VITE_UI_THEME}
-    >
-      <DebugInfo />
-      <Toaster />
-      <Provider store={store}>
-        <StoreDebug />
-        <DevicesProvider>
-          <DialogsProvider />
-          <ServerScreensProvider />
-          <AutoLoginController />
-          <Routing />
-        </DevicesProvider>
-      </Provider>
-    </ThemeProvider>
-  </StrictMode>
+    <StrictMode>
+        <ThemeProvider
+            defaultTheme="dark"
+            storageKey={LocalStorageKey.VITE_UI_THEME}
+        >
+            <DebugInfo />
+            <Toaster />
+            <Provider store={store}>
+                <StoreDebug />
+                <DevicesProvider>
+                    <DialogsProvider />
+                    <ServerScreensProvider />
+                    <AutoLoginController />
+                    <Routing />
+                </DevicesProvider>
+            </Provider>
+        </ThemeProvider>
+    </StrictMode>
 );

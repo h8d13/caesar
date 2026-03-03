@@ -3,51 +3,51 @@ import { memo } from 'react';
 import { useVoiceRefs } from './hooks/use-voice-refs';
 
 type TExternalAudioStreamProps = {
-  streamId: number;
-  sourceId: string;
-  streamKey: string;
+    streamId: number;
+    sourceId: string;
+    streamKey: string;
 };
 
 const ExternalAudioStream = memo(
-  ({ streamId, sourceId, streamKey }: TExternalAudioStreamProps) => {
-    const { externalAudioRef, hasExternalAudioStream } = useVoiceRefs(
-      streamId,
-      sourceId,
-      streamKey
-    );
+    ({ streamId, sourceId, streamKey }: TExternalAudioStreamProps) => {
+        const { externalAudioRef, hasExternalAudioStream } = useVoiceRefs(
+            streamId,
+            sourceId,
+            streamKey
+        );
 
-    return (
-      <>
-        {hasExternalAudioStream && (
-          <audio
-            ref={externalAudioRef}
-            className="hidden"
-            autoPlay
-            data-stream-id={streamId}
-          />
-        )}
-      </>
-    );
-  }
+        return (
+            <>
+                {hasExternalAudioStream && (
+                    <audio
+                        ref={externalAudioRef}
+                        className="hidden"
+                        autoPlay
+                        data-stream-id={streamId}
+                    />
+                )}
+            </>
+        );
+    }
 );
 
 type TExternalAudioStreamsProps = {
-  channelId: number;
+    channelId: number;
 };
 
 const ExternalAudioStreams = memo(
-  ({ channelId }: TExternalAudioStreamsProps) => {
-    const externalStreams = useVoiceChannelExternalStreamsList(channelId);
+    ({ channelId }: TExternalAudioStreamsProps) => {
+        const externalStreams = useVoiceChannelExternalStreamsList(channelId);
 
-    return externalStreams.map((stream) => (
-      <ExternalAudioStream
-        key={stream.streamId}
-        streamId={stream.streamId}
-        sourceId={stream.sourceId}
-        streamKey={stream.key}
-      />
-    ));
-  }
+        return externalStreams.map((stream) => (
+            <ExternalAudioStream
+                key={stream.streamId}
+                streamId={stream.streamId}
+                sourceId={stream.sourceId}
+                streamKey={stream.key}
+            />
+        ));
+    }
 );
 
 export { ExternalAudioStreams };

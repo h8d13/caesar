@@ -5,7 +5,6 @@ import {
 } from '@sharkord/shared';
 import { randomUUIDv7 } from 'bun';
 import { createHash } from 'crypto';
-import { eq } from 'drizzle-orm';
 import fs from 'fs/promises';
 import path from 'path';
 import { db } from '../db';

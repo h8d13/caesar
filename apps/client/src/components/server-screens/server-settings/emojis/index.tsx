@@ -10,75 +10,78 @@ import { UpdateEmoji } from './update-emoji';
 import { UploadEmoji } from './upload-emoji';
 
 const Emojis = memo(() => {
-  const { emojis, refetch, loading } = useAdminEmojis();
-  const openFilePicker = useFilePicker();
+    const { emojis, refetch, loading } = useAdminEmojis();
+    const openFilePicker = useFilePicker();
 
-  const [selectedEmojiId, setSelectedEmojiId] = useState<number | undefined>(
-    undefined
-  );
-  const [isUploading, setIsUploading] = useState(false);
+    const [selectedEmojiId, setSelectedEmojiId] = useState<number | undefined>(
+        undefined
+    );
+    const [isUploading, setIsUploading] = useState(false);
 
-  const uploadEmoji = useCallback(async () => {
-    const files = await openFilePicker('image/*', true);
+    const uploadEmoji = useCallback(async () => {
+        const files = await openFilePicker('image/*', true);
 
-    if (!files || files.length === 0) return;
+        if (!files || files.length === 0) return;
 
-    setIsUploading(true);
+        setIsUploading(true);
 
-    const trpc = getTRPCClient();
+        const trpc = getTRPCClient();
 
-    try {
-      const temporaryFiles = await uploadFiles(files);
+        try {
+            const temporaryFiles = await uploadFiles(files);
 
-      await trpc.emojis.add.mutate(
-        temporaryFiles.map((f) => ({
-          name: f.originalName.replace(/\.[^/.]+$/, '').slice(0, 32),
-          fileId: f.id
-        }))
-      );
+            await trpc.emojis.add.mutate(
+                temporaryFiles.map((f) => ({
+                    name: f.originalName.replace(/\.[^/.]+$/, '').slice(0, 32),
+                    fileId: f.id
+                }))
+            );
 
-      refetch();
-      toast.success('Emoji created');
-    } catch (error) {
-      console.error('Error uploading emoji:', error);
+            refetch();
+            toast.success('Emoji created');
+        } catch (error) {
+            console.error('Error uploading emoji:', error);
 
-      toast.error('Failed to upload emoji');
-    } finally {
-      setIsUploading(false);
+            toast.error('Failed to upload emoji');
+        } finally {
+            setIsUploading(false);
+        }
+    }, [openFilePicker, refetch]);
+
+    const selectedEmoji = useMemo(
+        () => emojis.find((e) => e.id === selectedEmojiId),
+        [emojis, selectedEmojiId]
+    );
+
+    if (loading) {
+        return <LoadingCard className="h-[600px]" />;
     }
-  }, [openFilePicker, refetch]);
 
-  const selectedEmoji = useMemo(
-    () => emojis.find((e) => e.id === selectedEmojiId),
-    [emojis, selectedEmojiId]
-  );
+    return (
+        <div className="flex gap-6">
+            <EmojiList
+                emojis={emojis}
+                setSelectedEmojiId={(id) => setSelectedEmojiId(id)}
+                selectedEmojiId={selectedEmojiId ?? -1}
+                uploadEmoji={uploadEmoji}
+                isUploading={isUploading}
+            />
 
-  if (loading) {
-    return <LoadingCard className="h-[600px]" />;
-  }
-
-  return (
-    <div className="flex gap-6">
-      <EmojiList
-        emojis={emojis}
-        setSelectedEmojiId={(id) => setSelectedEmojiId(id)}
-        selectedEmojiId={selectedEmojiId ?? -1}
-        uploadEmoji={uploadEmoji}
-        isUploading={isUploading}
-      />
-
-      {selectedEmoji ? (
-        <UpdateEmoji
-          key={selectedEmoji.id}
-          selectedEmoji={selectedEmoji}
-          setSelectedEmojiId={setSelectedEmojiId}
-          refetch={refetch}
-        />
-      ) : (
-        <UploadEmoji uploadEmoji={uploadEmoji} isUploading={isUploading} />
-      )}
-    </div>
-  );
+            {selectedEmoji ? (
+                <UpdateEmoji
+                    key={selectedEmoji.id}
+                    selectedEmoji={selectedEmoji}
+                    setSelectedEmojiId={setSelectedEmojiId}
+                    refetch={refetch}
+                />
+            ) : (
+                <UploadEmoji
+                    uploadEmoji={uploadEmoji}
+                    isUploading={isUploading}
+                />
+            )}
+        </div>
+    );
 });
 
 export { Emojis };

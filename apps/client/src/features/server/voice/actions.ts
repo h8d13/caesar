@@ -1,25 +1,25 @@
 import type { TPinnedCard } from '@/components/channel-view/voice/hooks/use-pin-card-controller';
 import { store } from '@/features/store';
 import {
-  LocalStorageKey,
-  setLocalStorageItem,
-  setLocalStorageItemBool
+    LocalStorageKey,
+    setLocalStorageItem,
+    setLocalStorageItemBool
 } from '@/helpers/storage';
 import { getTRPCClient } from '@/lib/trpc';
 import {
-  getTrpcError,
-  type TExternalStream,
-  type TVoiceUserState
+    getTrpcError,
+    type TExternalStream,
+    type TVoiceUserState
 } from '@sharkord/shared';
 import type { RtpCapabilities } from 'mediasoup-client/types';
 import { toast } from 'sonner';
 import {
-  setCurrentVoiceChannelId,
-  setSelectedChannelId
+    setCurrentVoiceChannelId,
+    setSelectedChannelId
 } from '../channels/actions';
 import {
-  currentVoiceChannelIdSelector,
-  selectedChannelIdSelector
+    currentVoiceChannelIdSelector,
+    selectedChannelIdSelector
 } from '../channels/selectors';
 import { serverSliceActions } from '../slice';
 import { playSound } from '../sounds/actions';
@@ -28,205 +28,209 @@ import { ownUserIdSelector } from '../users/selectors';
 import { ownVoiceStateSelector } from './selectors';
 
 export const addUserToVoiceChannel = (
-  userId: number,
-  channelId: number,
-  voiceState: TVoiceUserState
+    userId: number,
+    channelId: number,
+    voiceState: TVoiceUserState
 ): void => {
-  const state = store.getState();
-  const ownUserId = ownUserIdSelector(state);
-  const currentChannelId = currentVoiceChannelIdSelector(state);
+    const state = store.getState();
+    const ownUserId = ownUserIdSelector(state);
+    const currentChannelId = currentVoiceChannelIdSelector(state);
 
-  store.dispatch(
-    serverSliceActions.addUserToVoiceChannel({
-      userId,
-      channelId,
-      state: voiceState
-    })
-  );
+    store.dispatch(
+        serverSliceActions.addUserToVoiceChannel({
+            userId,
+            channelId,
+            state: voiceState
+        })
+    );
 
-  if (userId !== ownUserId && channelId === currentChannelId) {
-    playSound(SoundType.REMOTE_USER_JOINED_VOICE_CHANNEL);
-  }
+    if (userId !== ownUserId && channelId === currentChannelId) {
+        playSound(SoundType.REMOTE_USER_JOINED_VOICE_CHANNEL);
+    }
 };
 
 export const removeUserFromVoiceChannel = (
-  userId: number,
-  channelId: number
+    userId: number,
+    channelId: number
 ): void => {
-  const state = store.getState();
-  const ownUserId = ownUserIdSelector(state);
-  const currentChannelId = currentVoiceChannelIdSelector(state);
+    const state = store.getState();
+    const ownUserId = ownUserIdSelector(state);
+    const currentChannelId = currentVoiceChannelIdSelector(state);
 
-  store.dispatch(
-    serverSliceActions.removeUserFromVoiceChannel({ userId, channelId })
-  );
+    store.dispatch(
+        serverSliceActions.removeUserFromVoiceChannel({ userId, channelId })
+    );
 
-  if (userId !== ownUserId && channelId === currentChannelId) {
-    playSound(SoundType.REMOTE_USER_LEFT_VOICE_CHANNEL);
-  }
+    if (userId !== ownUserId && channelId === currentChannelId) {
+        playSound(SoundType.REMOTE_USER_LEFT_VOICE_CHANNEL);
+    }
 };
 
 export const addExternalStreamToVoiceChannel = (
-  channelId: number,
-  streamId: number,
-  stream: TExternalStream
+    channelId: number,
+    streamId: number,
+    stream: TExternalStream
 ): void => {
-  store.dispatch(
-    serverSliceActions.addExternalStreamToChannel({
-      channelId,
-      streamId,
-      stream
-    })
-  );
+    store.dispatch(
+        serverSliceActions.addExternalStreamToChannel({
+            channelId,
+            streamId,
+            stream
+        })
+    );
 };
 
 export const updateExternalStreamInVoiceChannel = (
-  channelId: number,
-  streamId: number,
-  stream: TExternalStream
+    channelId: number,
+    streamId: number,
+    stream: TExternalStream
 ): void => {
-  store.dispatch(
-    serverSliceActions.updateExternalStreamInChannel({
-      channelId,
-      streamId,
-      stream
-    })
-  );
+    store.dispatch(
+        serverSliceActions.updateExternalStreamInChannel({
+            channelId,
+            streamId,
+            stream
+        })
+    );
 };
 
 export const removeExternalStreamFromVoiceChannel = (
-  channelId: number,
-  streamId: number
+    channelId: number,
+    streamId: number
 ): void => {
-  store.dispatch(
-    serverSliceActions.removeExternalStreamFromChannel({
-      channelId,
-      streamId
-    })
-  );
+    store.dispatch(
+        serverSliceActions.removeExternalStreamFromChannel({
+            channelId,
+            streamId
+        })
+    );
 };
 
 export const updateVoiceUserState = (
-  userId: number,
-  channelId: number,
-  newState: Partial<TVoiceUserState>
+    userId: number,
+    channelId: number,
+    newState: Partial<TVoiceUserState>
 ): void => {
-  const state = store.getState();
-  const ownUserId = ownUserIdSelector(state);
-  const currentChannelId = currentVoiceChannelIdSelector(state);
+    const state = store.getState();
+    const ownUserId = ownUserIdSelector(state);
+    const currentChannelId = currentVoiceChannelIdSelector(state);
 
-  if (userId !== ownUserId && channelId === currentChannelId) {
-    const currentUserState = state.server.voiceMap[channelId]?.users[userId];
+    if (userId !== ownUserId && channelId === currentChannelId) {
+        const currentUserState =
+            state.server.voiceMap[channelId]?.users[userId];
 
-    if (newState.sharingScreen === true && !currentUserState?.sharingScreen) {
-      playSound(SoundType.REMOTE_USER_STARTED_SCREENSHARE);
-    } else if (
-      newState.sharingScreen === false &&
-      currentUserState?.sharingScreen
-    ) {
-      playSound(SoundType.REMOTE_USER_STOPPED_SCREENSHARE);
+        if (
+            newState.sharingScreen === true &&
+            !currentUserState?.sharingScreen
+        ) {
+            playSound(SoundType.REMOTE_USER_STARTED_SCREENSHARE);
+        } else if (
+            newState.sharingScreen === false &&
+            currentUserState?.sharingScreen
+        ) {
+            playSound(SoundType.REMOTE_USER_STOPPED_SCREENSHARE);
+        }
     }
-  }
 
-  store.dispatch(
-    serverSliceActions.updateVoiceUserState({ userId, channelId, newState })
-  );
+    store.dispatch(
+        serverSliceActions.updateVoiceUserState({ userId, channelId, newState })
+    );
 };
 
 export const updateOwnVoiceState = (
-  newState: Partial<TVoiceUserState>
+    newState: Partial<TVoiceUserState>
 ): void => {
-  store.dispatch(serverSliceActions.updateOwnVoiceState(newState));
+    store.dispatch(serverSliceActions.updateOwnVoiceState(newState));
 };
 
 export const joinVoice = async (
-  channelId: number
+    channelId: number
 ): Promise<RtpCapabilities | undefined> => {
-  const state = store.getState();
-  const currentChannelId = currentVoiceChannelIdSelector(state);
+    const state = store.getState();
+    const currentChannelId = currentVoiceChannelIdSelector(state);
 
-  if (channelId === currentChannelId) {
-    // already in the desired channel
+    if (channelId === currentChannelId) {
+        // already in the desired channel
+        return undefined;
+    }
+
+    if (currentChannelId) {
+        // is already in a voice channel, leave it first
+        await leaveVoice();
+    }
+
+    setCurrentVoiceChannelId(channelId);
+
+    const { micMuted, soundMuted } = ownVoiceStateSelector(state);
+    const client = getTRPCClient();
+
+    try {
+        const { routerRtpCapabilities } = await client.voice.join.mutate({
+            channelId,
+            state: { micMuted, soundMuted }
+        });
+
+        return routerRtpCapabilities;
+    } catch (error) {
+        toast.error(getTrpcError(error, 'Failed to join voice channel'));
+    }
+
     return undefined;
-  }
-
-  if (currentChannelId) {
-    // is already in a voice channel, leave it first
-    await leaveVoice();
-  }
-
-  setCurrentVoiceChannelId(channelId);
-
-  const { micMuted, soundMuted } = ownVoiceStateSelector(state);
-  const client = getTRPCClient();
-
-  try {
-    const { routerRtpCapabilities } = await client.voice.join.mutate({
-      channelId,
-      state: { micMuted, soundMuted }
-    });
-
-    return routerRtpCapabilities;
-  } catch (error) {
-    toast.error(getTrpcError(error, 'Failed to join voice channel'));
-  }
-
-  return undefined;
 };
 
 export const leaveVoice = async (): Promise<void> => {
-  const state = store.getState();
-  const currentChannelId = currentVoiceChannelIdSelector(state);
-  const selectedChannelId = selectedChannelIdSelector(state);
+    const state = store.getState();
+    const currentChannelId = currentVoiceChannelIdSelector(state);
+    const selectedChannelId = selectedChannelIdSelector(state);
 
-  if (!currentChannelId) {
-    return;
-  }
+    if (!currentChannelId) {
+        return;
+    }
 
-  if (selectedChannelId === currentChannelId) {
-    setSelectedChannelId(undefined);
-  }
+    if (selectedChannelId === currentChannelId) {
+        setSelectedChannelId(undefined);
+    }
 
-  setCurrentVoiceChannelId(undefined);
-  updateOwnVoiceState({ webcamEnabled: false, sharingScreen: false });
-  setPinnedCard(undefined);
+    setCurrentVoiceChannelId(undefined);
+    updateOwnVoiceState({ webcamEnabled: false, sharingScreen: false });
+    setPinnedCard(undefined);
 
-  const client = getTRPCClient();
+    const client = getTRPCClient();
 
-  try {
-    await client.voice.leave.mutate();
-    playSound(SoundType.OWN_USER_LEFT_VOICE_CHANNEL);
-  } catch (error) {
-    toast.error(getTrpcError(error, 'Failed to leave voice channel'));
-  }
+    try {
+        await client.voice.leave.mutate();
+        playSound(SoundType.OWN_USER_LEFT_VOICE_CHANNEL);
+    } catch (error) {
+        toast.error(getTrpcError(error, 'Failed to leave voice channel'));
+    }
 };
 
 export const setPinnedCard = (pinnedCard: TPinnedCard | undefined): void => {
-  store.dispatch(serverSliceActions.setPinnedCard(pinnedCard));
+    store.dispatch(serverSliceActions.setPinnedCard(pinnedCard));
 };
 
 export const setHideNonVideoParticipants = (value: boolean): void => {
-  store.dispatch(serverSliceActions.setHideNonVideoParticipants(value));
+    store.dispatch(serverSliceActions.setHideNonVideoParticipants(value));
 
-  try {
-    setLocalStorageItem(
-      LocalStorageKey.HIDE_NON_VIDEO_PARTICIPANTS,
-      String(value)
-    );
-  } catch (error) {
-    console.error('Failed to save voice options:', error);
-  }
+    try {
+        setLocalStorageItem(
+            LocalStorageKey.HIDE_NON_VIDEO_PARTICIPANTS,
+            String(value)
+        );
+    } catch (error) {
+        console.error('Failed to save voice options:', error);
+    }
 };
 
 export const setShowUserBannersInVoice = (value: boolean): void => {
-  store.dispatch(serverSliceActions.setShowUserBannersInVoice(value));
+    store.dispatch(serverSliceActions.setShowUserBannersInVoice(value));
 
-  try {
-    setLocalStorageItemBool(
-      LocalStorageKey.VOICE_CHAT_SHOW_USER_BANNERS,
-      value
-    );
-  } catch (error) {
-    console.error('Failed to save voice options:', error);
-  }
+    try {
+        setLocalStorageItemBool(
+            LocalStorageKey.VOICE_CHAT_SHOW_USER_BANNERS,
+            value
+        );
+    } catch (error) {
+        console.error('Failed to save voice options:', error);
+    }
 };

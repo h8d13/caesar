@@ -1,91 +1,91 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 type VideoStats = {
-  width: number;
-  height: number;
-  frameRate: number;
+    width: number;
+    height: number;
+    frameRate: number;
 };
 
 const UPDATE_INTERVAL_MS = 1000;
 
 const useVideoStats = (
-  videoRef: React.RefObject<HTMLVideoElement | null>,
-  enabled: boolean
+    videoRef: React.RefObject<HTMLVideoElement | null>,
+    enabled: boolean
 ) => {
-  const [stats, setStats] = useState<VideoStats | null>(null);
-  const frameCountRef = useRef(0);
-  const lastUpdateRef = useRef(0);
-  const callbackIdRef = useRef<number | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const [stats, setStats] = useState<VideoStats | null>(null);
+    const frameCountRef = useRef(0);
+    const lastUpdateRef = useRef(0);
+    const callbackIdRef = useRef<number | null>(null);
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const onFrame = useCallback(() => {
-    frameCountRef.current++;
+    const onFrame = useCallback(() => {
+        frameCountRef.current++;
 
-    const video = videoRef.current;
+        const video = videoRef.current;
 
-    if (!video) return;
+        if (!video) return;
 
-    callbackIdRef.current = video.requestVideoFrameCallback(onFrame);
-  }, [videoRef]);
+        callbackIdRef.current = video.requestVideoFrameCallback(onFrame);
+    }, [videoRef]);
 
-  useEffect(() => {
-    const video = videoRef.current;
+    useEffect(() => {
+        const video = videoRef.current;
 
-    if (!enabled || !video) {
-      setStats(null);
+        if (!enabled || !video) {
+            setStats(null);
 
-      frameCountRef.current = 0;
-      lastUpdateRef.current = 0;
+            frameCountRef.current = 0;
+            lastUpdateRef.current = 0;
 
-      return;
-    }
+            return;
+        }
 
-    frameCountRef.current = 0;
-    lastUpdateRef.current = performance.now();
-    callbackIdRef.current = video.requestVideoFrameCallback(onFrame);
+        frameCountRef.current = 0;
+        lastUpdateRef.current = performance.now();
+        callbackIdRef.current = video.requestVideoFrameCallback(onFrame);
 
-    intervalRef.current = setInterval(() => {
-      const now = performance.now();
-      const elapsed = (now - lastUpdateRef.current) / 1000;
+        intervalRef.current = setInterval(() => {
+            const now = performance.now();
+            const elapsed = (now - lastUpdateRef.current) / 1000;
 
-      if (elapsed <= 0) return;
+            if (elapsed <= 0) return;
 
-      const fps = frameCountRef.current / elapsed;
+            const fps = frameCountRef.current / elapsed;
 
-      frameCountRef.current = 0;
-      lastUpdateRef.current = now;
+            frameCountRef.current = 0;
+            lastUpdateRef.current = now;
 
-      const width = video.videoWidth || 0;
-      const height = video.videoHeight || 0;
+            const width = video.videoWidth || 0;
+            const height = video.videoHeight || 0;
 
-      if (width > 0 && height > 0) {
-        setStats({ width, height, frameRate: Math.round(fps) });
-      } else {
-        setStats(null);
-      }
-    }, UPDATE_INTERVAL_MS);
+            if (width > 0 && height > 0) {
+                setStats({ width, height, frameRate: Math.round(fps) });
+            } else {
+                setStats(null);
+            }
+        }, UPDATE_INTERVAL_MS);
 
-    return () => {
-      if (callbackIdRef.current !== null && video) {
-        video.cancelVideoFrameCallback(callbackIdRef.current);
+        return () => {
+            if (callbackIdRef.current !== null && video) {
+                video.cancelVideoFrameCallback(callbackIdRef.current);
 
-        callbackIdRef.current = null;
-      }
+                callbackIdRef.current = null;
+            }
 
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
 
-        intervalRef.current = null;
-      }
+                intervalRef.current = null;
+            }
 
-      setStats(null);
+            setStats(null);
 
-      frameCountRef.current = 0;
-      lastUpdateRef.current = 0;
-    };
-  }, [enabled, videoRef, onFrame]);
+            frameCountRef.current = 0;
+            lastUpdateRef.current = 0;
+        };
+    }, [enabled, videoRef, onFrame]);
 
-  return stats;
+    return stats;
 };
 
 export { useVideoStats };

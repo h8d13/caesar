@@ -4,46 +4,46 @@ import { getUrlFromServer } from './get-file-url';
 import { getSessionStorageItem, SessionStorageKey } from './storage';
 
 const uploadFile = async (file: File) => {
-  const url = getUrlFromServer();
+    const url = getUrlFromServer();
 
-  const res = await fetch(`${url}/upload`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/octet-stream',
-      [UploadHeaders.TYPE]: file.type,
-      [UploadHeaders.CONTENT_LENGTH]: file.size.toString(),
-      [UploadHeaders.ORIGINAL_NAME]: file.name,
-      [UploadHeaders.TOKEN]:
-        getSessionStorageItem(SessionStorageKey.TOKEN) ?? ''
-    },
-    body: file
-  });
+    const res = await fetch(`${url}/upload`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/octet-stream',
+            [UploadHeaders.TYPE]: file.type,
+            [UploadHeaders.CONTENT_LENGTH]: file.size.toString(),
+            [UploadHeaders.ORIGINAL_NAME]: file.name,
+            [UploadHeaders.TOKEN]:
+                getSessionStorageItem(SessionStorageKey.TOKEN) ?? ''
+        },
+        body: file
+    });
 
-  if (!res.ok) {
-    const errorData = await res.json();
+    if (!res.ok) {
+        const errorData = await res.json();
 
-    toast.error(errorData.error || res.statusText);
+        toast.error(errorData.error || res.statusText);
 
-    return undefined;
-  }
+        return undefined;
+    }
 
-  const tempFile: TTempFile = await res.json();
+    const tempFile: TTempFile = await res.json();
 
-  return tempFile;
+    return tempFile;
 };
 
 const uploadFiles = async (files: File[]) => {
-  const uploadedFiles: TTempFile[] = [];
+    const uploadedFiles: TTempFile[] = [];
 
-  for (const file of files) {
-    const uploadedFile = await uploadFile(file);
+    for (const file of files) {
+        const uploadedFile = await uploadFile(file);
 
-    if (!uploadedFile) continue;
+        if (!uploadedFile) continue;
 
-    uploadedFiles.push(uploadedFile);
-  }
+        uploadedFiles.push(uploadedFile);
+    }
 
-  return uploadedFiles;
+    return uploadedFiles;
 };
 
 export { uploadFile, uploadFiles };

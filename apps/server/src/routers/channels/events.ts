@@ -48,10 +48,7 @@ const onChannelReadStatesDeltaRoute = protectedProcedure.subscription(
 
 const onChannelMentionRoute = protectedProcedure.subscription(
   async ({ ctx }) => {
-    return ctx.pubsub.subscribeFor(
-      ctx.userId,
-      ServerEvents.CHANNEL_MENTION
-    );
+    return ctx.pubsub.subscribeFor(ctx.userId, ServerEvents.CHANNEL_MENTION);
   }
 );
 

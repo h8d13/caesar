@@ -280,7 +280,7 @@ const joinMessagesWithRelations = async (
     files: filesByMessage[msg.id] ?? [],
     reactions: reactionsByMessage[msg.id] ?? [],
     replyTo: msg.replyToMessageId
-      ? replyToByMessage[msg.replyToMessageId] ?? null
+      ? (replyToByMessage[msg.replyToMessageId] ?? null)
       : null
   }));
 };

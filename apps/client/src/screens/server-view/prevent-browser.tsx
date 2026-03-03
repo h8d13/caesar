@@ -3,12 +3,12 @@ import { usePreventExit } from '@/hooks/use-prevent-exit';
 import { memo } from 'react';
 
 const PreventBrowser = memo(() => {
-  const currentVoiceChannelId = useCurrentVoiceChannelId();
+    const currentVoiceChannelId = useCurrentVoiceChannelId();
 
-  // this will prevent the user from closing the browser tab/window when connected to a voice channel
-  usePreventExit(!!currentVoiceChannelId);
+    // this will prevent the user from closing the browser tab/window when connected to a voice channel
+    usePreventExit(!!currentVoiceChannelId);
 
-  return null;
+    return null;
 });
 
 export { PreventBrowser };

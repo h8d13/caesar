@@ -1,25 +1,25 @@
 import { openDialog } from '@/features/dialogs/actions';
 import {
-  useCategories,
-  useCategoryById
+    useCategories,
+    useCategoryById
 } from '@/features/server/categories/hooks';
 import {
-  useCan,
-  useHasVisibleChannelsInCategory
+    useCan,
+    useHasVisibleChannelsInCategory
 } from '@/features/server/hooks';
 import { getTRPCClient } from '@/lib/trpc';
 import {
-  DndContext,
-  type DragEndEvent,
-  PointerSensor,
-  closestCenter,
-  useSensor,
-  useSensors
+    DndContext,
+    type DragEndEvent,
+    PointerSensor,
+    closestCenter,
+    useSensor,
+    useSensors
 } from '@dnd-kit/core';
 import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy
+    SortableContext,
+    useSortable,
+    verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Permission, getTrpcError } from '@sharkord/shared';
@@ -34,150 +34,158 @@ import { Channels } from './channels';
 import { useCategoryExpanded } from './hooks';
 
 type TCategoryProps = {
-  categoryId: number;
+    categoryId: number;
 };
 
 const Category = memo(({ categoryId }: TCategoryProps) => {
-  const can = useCan();
-  const hasVisibleChannelsInCategory =
-    useHasVisibleChannelsInCategory(categoryId);
-  const { expanded, toggleExpanded } = useCategoryExpanded(categoryId);
-  const category = useCategoryById(categoryId);
+    const can = useCan();
+    const hasVisibleChannelsInCategory =
+        useHasVisibleChannelsInCategory(categoryId);
+    const { expanded, toggleExpanded } = useCategoryExpanded(categoryId);
+    const category = useCategoryById(categoryId);
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id: categoryId });
-
-  const onCreateChannelClick = useCallback(() => {
-    openDialog(Dialog.CREATE_CHANNEL, { categoryId });
-  }, [categoryId]);
-
-  if (
-    !category ||
-    (!hasVisibleChannelsInCategory && !can(Permission.MANAGE_CHANNELS))
-  ) {
-    return null;
-  }
-
-  const ChevronIcon = expanded ? ChevronDown : ChevronRight;
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={{
-        transform: CSS.Transform.toString(transform && { ...transform, x: 0 }),
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
         transition,
-        opacity: isDragging ? 0.5 : 1
-      }}
-      className="mb-4"
-    >
-      <div className="mb-1 flex w-full items-center px-2 py-1 text-xs font-semibold text-muted-foreground">
-        <div className="flex w-full items-stretch gap-1">
-          <IconButton
-            variant="ghost"
-            size="sm"
-            icon={ChevronIcon}
-            onClick={toggleExpanded}
-            title={expanded ? 'Collapse category' : 'Expand category'}
-          />
-          <CategoryContextMenu categoryId={category.id}>
-            <span
-              {...attributes}
-              {...listeners}
-              className="cursor-grab active:cursor-grabbing flex-1"
-            >
-              {category.name}
-            </span>
-          </CategoryContextMenu>
+        isDragging
+    } = useSortable({ id: categoryId });
+
+    const onCreateChannelClick = useCallback(() => {
+        openDialog(Dialog.CREATE_CHANNEL, { categoryId });
+    }, [categoryId]);
+
+    if (
+        !category ||
+        (!hasVisibleChannelsInCategory && !can(Permission.MANAGE_CHANNELS))
+    ) {
+        return null;
+    }
+
+    const ChevronIcon = expanded ? ChevronDown : ChevronRight;
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={{
+                transform: CSS.Transform.toString(
+                    transform && { ...transform, x: 0 }
+                ),
+                transition,
+                opacity: isDragging ? 0.5 : 1
+            }}
+            className="mb-4"
+        >
+            <div className="mb-1 flex w-full items-center px-2 py-1 text-xs font-semibold text-muted-foreground">
+                <div className="flex w-full items-stretch gap-1">
+                    <IconButton
+                        variant="ghost"
+                        size="sm"
+                        icon={ChevronIcon}
+                        onClick={toggleExpanded}
+                        title={
+                            expanded ? 'Collapse category' : 'Expand category'
+                        }
+                    />
+                    <CategoryContextMenu categoryId={category.id}>
+                        <span
+                            {...attributes}
+                            {...listeners}
+                            className="cursor-grab active:cursor-grabbing flex-1"
+                        >
+                            {category.name}
+                        </span>
+                    </CategoryContextMenu>
+                </div>
+
+                <Protect permission={Permission.MANAGE_CHANNELS}>
+                    <IconButton
+                        variant="ghost"
+                        size="sm"
+                        icon={Plus}
+                        onClick={onCreateChannelClick}
+                        title="Create channel"
+                    />
+                </Protect>
+            </div>
+
+            {expanded && <Channels categoryId={category.id} />}
         </div>
-
-        <Protect permission={Permission.MANAGE_CHANNELS}>
-          <IconButton
-            variant="ghost"
-            size="sm"
-            icon={Plus}
-            onClick={onCreateChannelClick}
-            title="Create channel"
-          />
-        </Protect>
-      </div>
-
-      {expanded && <Channels categoryId={category.id} />}
-    </div>
-  );
+    );
 });
 
 const Categories = memo(() => {
-  const can = useCan();
-  const categories = useCategories();
-  const categoryIds = useMemo(
-    () => categories.map((cat) => cat.id),
-    [categories]
-  );
+    const can = useCan();
+    const categories = useCategories();
+    const categoryIds = useMemo(
+        () => categories.map((cat) => cat.id),
+        [categories]
+    );
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8
-      }
-    })
-  );
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8
+            }
+        })
+    );
 
-  const handleDragEnd = useCallback(
-    async (event: DragEndEvent) => {
-      const { active, over } = event;
+    const handleDragEnd = useCallback(
+        async (event: DragEndEvent) => {
+            const { active, over } = event;
 
-      if (!over || active.id === over.id) {
-        return;
-      }
+            if (!over || active.id === over.id) {
+                return;
+            }
 
-      const oldIndex = categoryIds.indexOf(active.id as number);
-      const newIndex = categoryIds.indexOf(over.id as number);
+            const oldIndex = categoryIds.indexOf(active.id as number);
+            const newIndex = categoryIds.indexOf(over.id as number);
 
-      if (oldIndex === -1 || newIndex === -1) {
-        return;
-      }
+            if (oldIndex === -1 || newIndex === -1) {
+                return;
+            }
 
-      const reorderedIds = [...categoryIds];
-      const [movedId] = reorderedIds.splice(oldIndex, 1);
+            const reorderedIds = [...categoryIds];
+            const [movedId] = reorderedIds.splice(oldIndex, 1);
 
-      reorderedIds.splice(newIndex, 0, movedId);
+            reorderedIds.splice(newIndex, 0, movedId);
 
-      const trpc = getTRPCClient();
+            const trpc = getTRPCClient();
 
-      try {
-        await trpc.categories.reorder.mutate({ categoryIds: reorderedIds });
-      } catch (error) {
-        toast.error(getTrpcError(error, 'Failed to reorder categories'));
-      }
-    },
-    [categoryIds]
-  );
+            try {
+                await trpc.categories.reorder.mutate({
+                    categoryIds: reorderedIds
+                });
+            } catch (error) {
+                toast.error(
+                    getTrpcError(error, 'Failed to reorder categories')
+                );
+            }
+        },
+        [categoryIds]
+    );
 
-  return (
-    <div className="flex-1 overflow-y-auto p-2">
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={categoryIds}
-          strategy={verticalListSortingStrategy}
-          disabled={!can(Permission.MANAGE_CATEGORIES)}
-        >
-          {categories.map((category) => (
-            <Category key={category.id} categoryId={category.id} />
-          ))}
-        </SortableContext>
-      </DndContext>
-    </div>
-  );
+    return (
+        <div className="flex-1 overflow-y-auto p-2">
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+            >
+                <SortableContext
+                    items={categoryIds}
+                    strategy={verticalListSortingStrategy}
+                    disabled={!can(Permission.MANAGE_CATEGORIES)}
+                >
+                    {categories.map((category) => (
+                        <Category key={category.id} categoryId={category.id} />
+                    ))}
+                </SortableContext>
+            </DndContext>
+        </div>
+    );
 });
 
 export { Categories };

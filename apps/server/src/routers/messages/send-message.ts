@@ -1,7 +1,5 @@
 import {
-  ActivityLogType,
   ChannelPermission,
-  getPlainTextFromHtml,
   isEmptyMessage,
   Permission
 } from '@sharkord/shared';
@@ -13,10 +11,7 @@ import { publishMessage, publishReplyCount } from '../../db/publishers';
 import { assertDmChannel, isDirectMessageChannel } from '../../db/queries/dms';
 import { getSettings } from '../../db/queries/server';
 import { messageFiles, messages } from '../../db/schema';
-import { getInvokerCtxFromTrpcCtx } from '../../helpers/get-invoker-ctx-from-trpc-ctx';
-import { parseCommandArgs } from '../../helpers/parse-command-args';
 import { sanitizeMessageHtml } from '../../helpers/sanitize-html';
-import { enqueueActivityLog } from '../../queues/activity-log';
 import { enqueueProcessMetadata } from '../../queues/message-metadata';
 import { fileManager } from '../../utils/file-manager';
 import { invariant } from '../../utils/invariant';

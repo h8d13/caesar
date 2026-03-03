@@ -61,7 +61,7 @@ const seedDatabase = async () => {
     storageMaxFilesPerMessage: STORAGE_DEFAULT_MAX_FILES_PER_MESSAGE,
     storageFileSharingInDirectMessages: true,
     storageSpaceQuotaByUser: STORAGE_MIN_QUOTA_PER_USER,
-    storageOverflowAction: STORAGE_OVERFLOW_ACTION,
+    storageOverflowAction: STORAGE_OVERFLOW_ACTION
   };
 
   await db.insert(settings).values(initialSettings);

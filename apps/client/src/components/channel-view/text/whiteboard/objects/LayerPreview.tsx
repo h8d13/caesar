@@ -10,88 +10,94 @@ import { Rectangle } from './Rectangle';
 import { Text } from './Text';
 
 type LayerPreviewProps = {
-  layer: Layer;
-  onPointerDown?: (e: React.PointerEvent) => void;
-  selectionColor?: string;
-  onValueChange?: (value: string) => void;
-  isEditing?: boolean;
+    layer: Layer;
+    onPointerDown?: (e: React.PointerEvent) => void;
+    selectionColor?: string;
+    onValueChange?: (value: string) => void;
+    isEditing?: boolean;
 };
 
 const LayerPreview = memo(
-  ({ layer, onPointerDown, selectionColor, onValueChange, isEditing }: LayerPreviewProps) => {
-    switch (layer.type) {
-      case LayerType.Rectangle:
-        return (
-          <Rectangle
-            layer={layer}
-            onPointerDown={onPointerDown}
-            selectionColor={selectionColor}
-          />
-        );
-      case LayerType.Ellipse:
-        return (
-          <Ellipse
-            layer={layer}
-            onPointerDown={onPointerDown}
-            selectionColor={selectionColor}
-          />
-        );
-      case LayerType.Triangle:
-      case LayerType.Hexagon:
-        return (
-          <Polygon
-            layer={layer}
-            onPointerDown={onPointerDown}
-            selectionColor={selectionColor}
-          />
-        );
-      case LayerType.Line:
-        return (
-          <Line
-            layer={layer}
-            onPointerDown={onPointerDown}
-            selectionColor={selectionColor}
-          />
-        );
-      case LayerType.Arrow:
-        return (
-          <Arrow
-            layer={layer}
-            onPointerDown={onPointerDown}
-            selectionColor={selectionColor}
-          />
-        );
-      case LayerType.Path:
-        return (
-          <Path
-            layer={layer}
-            onPointerDown={onPointerDown}
-            selectionColor={selectionColor}
-          />
-        );
-      case LayerType.Text:
-        return (
-          <Text
-            layer={layer}
-            onPointerDown={onPointerDown}
-            selectionColor={selectionColor}
-            onValueChange={onValueChange}
-            isEditing={isEditing}
-          />
-        );
-      case LayerType.Note:
-        return (
-          <Note
-            layer={layer}
-            onPointerDown={onPointerDown}
-            selectionColor={selectionColor}
-            onValueChange={onValueChange}
-          />
-        );
-      default:
-        return null;
+    ({
+        layer,
+        onPointerDown,
+        selectionColor,
+        onValueChange,
+        isEditing
+    }: LayerPreviewProps) => {
+        switch (layer.type) {
+            case LayerType.Rectangle:
+                return (
+                    <Rectangle
+                        layer={layer}
+                        onPointerDown={onPointerDown}
+                        selectionColor={selectionColor}
+                    />
+                );
+            case LayerType.Ellipse:
+                return (
+                    <Ellipse
+                        layer={layer}
+                        onPointerDown={onPointerDown}
+                        selectionColor={selectionColor}
+                    />
+                );
+            case LayerType.Triangle:
+            case LayerType.Hexagon:
+                return (
+                    <Polygon
+                        layer={layer}
+                        onPointerDown={onPointerDown}
+                        selectionColor={selectionColor}
+                    />
+                );
+            case LayerType.Line:
+                return (
+                    <Line
+                        layer={layer}
+                        onPointerDown={onPointerDown}
+                        selectionColor={selectionColor}
+                    />
+                );
+            case LayerType.Arrow:
+                return (
+                    <Arrow
+                        layer={layer}
+                        onPointerDown={onPointerDown}
+                        selectionColor={selectionColor}
+                    />
+                );
+            case LayerType.Path:
+                return (
+                    <Path
+                        layer={layer}
+                        onPointerDown={onPointerDown}
+                        selectionColor={selectionColor}
+                    />
+                );
+            case LayerType.Text:
+                return (
+                    <Text
+                        layer={layer}
+                        onPointerDown={onPointerDown}
+                        selectionColor={selectionColor}
+                        onValueChange={onValueChange}
+                        isEditing={isEditing}
+                    />
+                );
+            case LayerType.Note:
+                return (
+                    <Note
+                        layer={layer}
+                        onPointerDown={onPointerDown}
+                        selectionColor={selectionColor}
+                        onValueChange={onValueChange}
+                    />
+                );
+            default:
+                return null;
+        }
     }
-  }
 );
 
 export { LayerPreview };

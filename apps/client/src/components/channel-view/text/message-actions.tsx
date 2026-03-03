@@ -2,8 +2,8 @@ import { EmojiPicker } from '@/components/emoji-picker';
 import { useRecentEmojis } from '@/components/emoji-picker/use-recent-emojis';
 import { Protect } from '@/components/protect';
 import {
-  shouldUseFallbackImage,
-  type TEmojiItem
+    shouldUseFallbackImage,
+    type TEmojiItem
 } from '@/components/tiptap-input/helpers';
 import { openThreadSidebar } from '@/features/app/actions';
 import { requestConfirmation } from '@/features/dialogs/actions';
@@ -12,13 +12,13 @@ import { getTRPCClient } from '@/lib/trpc';
 import { Permission } from '@sharkord/shared';
 import { IconButton } from '@sharkord/ui';
 import {
-  MessageSquareText,
-  Pencil,
-  Pin,
-  PinOff,
-  Reply,
-  Smile,
-  Trash
+    MessageSquareText,
+    Pencil,
+    Pin,
+    PinOff,
+    Reply,
+    Smile,
+    Trash
 } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
@@ -26,175 +26,180 @@ import { toast } from 'sonner';
 const MAX_QUICK_EMOJIS = 4;
 
 type TMessageActionsProps = {
-  messageId: number;
-  channelId: number;
-  onEdit: () => void;
-  onReply?: () => void;
-  canManage: boolean;
-  editable: boolean;
-  isThreadReply?: boolean;
-  isPinned?: boolean;
-  disablePin?: boolean;
+    messageId: number;
+    channelId: number;
+    onEdit: () => void;
+    onReply?: () => void;
+    canManage: boolean;
+    editable: boolean;
+    isThreadReply?: boolean;
+    isPinned?: boolean;
+    disablePin?: boolean;
 };
 
 const MessageActions = memo(
-  ({
-    onEdit,
-    onReply,
-    messageId,
-    channelId,
-    canManage,
-    editable,
-    isThreadReply,
-    isPinned,
-    disablePin
-  }: TMessageActionsProps) => {
-    const { recentEmojis } = useRecentEmojis();
-    const recentEmojisToShow = useMemo(
-      () => recentEmojis.slice(0, MAX_QUICK_EMOJIS),
-      [recentEmojis]
-    );
+    ({
+        onEdit,
+        onReply,
+        messageId,
+        channelId,
+        canManage,
+        editable,
+        isThreadReply,
+        isPinned,
+        disablePin
+    }: TMessageActionsProps) => {
+        const { recentEmojis } = useRecentEmojis();
+        const recentEmojisToShow = useMemo(
+            () => recentEmojis.slice(0, MAX_QUICK_EMOJIS),
+            [recentEmojis]
+        );
 
-    const onDeleteClick = useCallback(async () => {
-      const choice = await requestConfirmation({
-        title: 'Delete Message',
-        message:
-          'Are you sure you want to delete this message? This action is irreversible.',
-        confirmLabel: 'Delete',
-        cancelLabel: 'Cancel'
-      });
+        const onDeleteClick = useCallback(async () => {
+            const choice = await requestConfirmation({
+                title: 'Delete Message',
+                message:
+                    'Are you sure you want to delete this message? This action is irreversible.',
+                confirmLabel: 'Delete',
+                cancelLabel: 'Cancel'
+            });
 
-      if (!choice) return;
+            if (!choice) return;
 
-      const trpc = getTRPCClient();
+            const trpc = getTRPCClient();
 
-      try {
-        await trpc.messages.delete.mutate({ messageId });
-        deleteMessage(channelId, messageId);
-        toast.success('Message deleted');
-      } catch {
-        toast.error('Failed to delete message');
-      }
-    }, [channelId, messageId]);
+            try {
+                await trpc.messages.delete.mutate({ messageId });
+                deleteMessage(channelId, messageId);
+                toast.success('Message deleted');
+            } catch {
+                toast.error('Failed to delete message');
+            }
+        }, [channelId, messageId]);
 
-    const onEmojiSelect = useCallback(
-      async (emoji: TEmojiItem) => {
-        const trpc = getTRPCClient();
+        const onEmojiSelect = useCallback(
+            async (emoji: TEmojiItem) => {
+                const trpc = getTRPCClient();
 
-        try {
-          await trpc.messages.toggleReaction.mutate({
-            messageId,
-            emoji: emoji.shortcodes[0]
-          });
-        } catch (error) {
-          toast.error('Failed to add reaction');
+                try {
+                    await trpc.messages.toggleReaction.mutate({
+                        messageId,
+                        emoji: emoji.shortcodes[0]
+                    });
+                } catch (error) {
+                    toast.error('Failed to add reaction');
 
-          console.error('Error adding reaction:', error);
-        }
-      },
-      [messageId]
-    );
+                    console.error('Error adding reaction:', error);
+                }
+            },
+            [messageId]
+        );
 
-    const onReplyClick = useCallback(() => {
-      openThreadSidebar(messageId, channelId);
-    }, [messageId, channelId]);
+        const onReplyClick = useCallback(() => {
+            openThreadSidebar(messageId, channelId);
+        }, [messageId, channelId]);
 
-    const onPinClick = useCallback(async () => {
-      const trpc = getTRPCClient();
+        const onPinClick = useCallback(async () => {
+            const trpc = getTRPCClient();
 
-      try {
-        await trpc.messages.togglePin.mutate({ messageId });
+            try {
+                await trpc.messages.togglePin.mutate({ messageId });
 
-        toast.success('Message pinned status toggled');
-      } catch (error) {
-        toast.error('Failed to toggle pin status');
+                toast.success('Message pinned status toggled');
+            } catch (error) {
+                toast.error('Failed to toggle pin status');
 
-        console.error('Error toggling pin status:', error);
-      }
-    }, [messageId]);
+                console.error('Error toggling pin status:', error);
+            }
+        }, [messageId]);
 
-    return (
-      <div className="gap-1 absolute right-0 -top-6 z-10 hidden group-hover:flex [&:has([data-state=open])]:flex items-center space-x-1 rounded-lg shadow-lg border border-border p-2 transition-all bg-background">
-        {!isThreadReply && onReply && (
-          <IconButton
-            size="sm"
-            variant="ghost"
-            icon={Reply}
-            onClick={onReply}
-            title="Reply"
-          />
-        )}
-        {!isThreadReply && (
-          <IconButton
-            size="sm"
-            variant="ghost"
-            icon={MessageSquareText}
-            onClick={onReplyClick}
-            title="Reply in Thread"
-          />
-        )}
-        {canManage && (
-          <>
-            <IconButton
-              size="sm"
-              variant="ghost"
-              icon={Pencil}
-              onClick={onEdit}
-              disabled={!editable}
-              title="Edit Message"
-            />
+        return (
+            <div className="gap-1 absolute right-0 -top-6 z-10 hidden group-hover:flex [&:has([data-state=open])]:flex items-center space-x-1 rounded-lg shadow-lg border border-border p-2 transition-all bg-background">
+                {!isThreadReply && onReply && (
+                    <IconButton
+                        size="sm"
+                        variant="ghost"
+                        icon={Reply}
+                        onClick={onReply}
+                        title="Reply"
+                    />
+                )}
+                {!isThreadReply && (
+                    <IconButton
+                        size="sm"
+                        variant="ghost"
+                        icon={MessageSquareText}
+                        onClick={onReplyClick}
+                        title="Reply in Thread"
+                    />
+                )}
+                {canManage && (
+                    <>
+                        <IconButton
+                            size="sm"
+                            variant="ghost"
+                            icon={Pencil}
+                            onClick={onEdit}
+                            disabled={!editable}
+                            title="Edit Message"
+                        />
 
-            <IconButton
-              size="sm"
-              variant="ghost"
-              icon={Trash}
-              onClick={onDeleteClick}
-              title="Delete Message"
-            />
-          </>
-        )}
-        {!disablePin && (
-          <Protect permission={Permission.PIN_MESSAGES}>
-            <IconButton
-              size="sm"
-              variant="ghost"
-              icon={isPinned ? PinOff : Pin}
-              onClick={onPinClick}
-              title={isPinned ? 'Unpin Message' : 'Pin Message'}
-            />
-          </Protect>
-        )}
+                        <IconButton
+                            size="sm"
+                            variant="ghost"
+                            icon={Trash}
+                            onClick={onDeleteClick}
+                            title="Delete Message"
+                        />
+                    </>
+                )}
+                {!disablePin && (
+                    <Protect permission={Permission.PIN_MESSAGES}>
+                        <IconButton
+                            size="sm"
+                            variant="ghost"
+                            icon={isPinned ? PinOff : Pin}
+                            onClick={onPinClick}
+                            title={isPinned ? 'Unpin Message' : 'Pin Message'}
+                        />
+                    </Protect>
+                )}
 
-        <Protect permission={Permission.REACT_TO_MESSAGES}>
-          <div className="flex items-center space-x-0.5 border-l pl-1 gap-1">
-            {recentEmojisToShow.map((emoji) => (
-              <button
-                key={emoji.name}
-                type="button"
-                onClick={() => onEmojiSelect(emoji)}
-                className="w-6 h-6 flex items-center justify-center hover:bg-accent rounded-md transition-colors text-md"
-                title={`:${emoji.shortcodes[0]}:`}
-              >
-                {emoji.emoji && !shouldUseFallbackImage(emoji) ? (
-                  <span>{emoji.emoji}</span>
-                ) : emoji.fallbackImage ? (
-                  <img
-                    src={emoji.fallbackImage}
-                    alt={emoji.name}
-                    className="w-5 h-5 object-contain"
-                  />
-                ) : null}
-              </button>
-            ))}
+                <Protect permission={Permission.REACT_TO_MESSAGES}>
+                    <div className="flex items-center space-x-0.5 border-l pl-1 gap-1">
+                        {recentEmojisToShow.map((emoji) => (
+                            <button
+                                key={emoji.name}
+                                type="button"
+                                onClick={() => onEmojiSelect(emoji)}
+                                className="w-6 h-6 flex items-center justify-center hover:bg-accent rounded-md transition-colors text-md"
+                                title={`:${emoji.shortcodes[0]}:`}
+                            >
+                                {emoji.emoji &&
+                                !shouldUseFallbackImage(emoji) ? (
+                                    <span>{emoji.emoji}</span>
+                                ) : emoji.fallbackImage ? (
+                                    <img
+                                        src={emoji.fallbackImage}
+                                        alt={emoji.name}
+                                        className="w-5 h-5 object-contain"
+                                    />
+                                ) : null}
+                            </button>
+                        ))}
 
-            <EmojiPicker onEmojiSelect={onEmojiSelect}>
-              <IconButton variant="ghost" icon={Smile} title="Add Reaction" />
-            </EmojiPicker>
-          </div>
-        </Protect>
-      </div>
-    );
-  }
+                        <EmojiPicker onEmojiSelect={onEmojiSelect}>
+                            <IconButton
+                                variant="ghost"
+                                icon={Smile}
+                                title="Add Reaction"
+                            />
+                        </EmojiPicker>
+                    </div>
+                </Protect>
+            </div>
+        );
+    }
 );
 
 export { MessageActions };
