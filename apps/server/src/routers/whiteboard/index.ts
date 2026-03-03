@@ -1,4 +1,4 @@
-import { ServerEvents } from '@sharkord/shared';
+import { ServerEvents, type Layer } from '@sharkord/shared';
 import { z } from 'zod';
 import { WhiteboardRuntime } from '../../runtimes/whiteboard';
 import { protectedProcedure, t } from '../../utils/trpc';
@@ -45,7 +45,8 @@ const addLayerRoute = protectedProcedure
   )
   .mutation(({ input, ctx }) => {
     const runtime = WhiteboardRuntime.findOrCreate(input.channelId);
-    runtime.addLayer(input.layerId, input.layer);
+    const layer = input.layer as Layer;
+    runtime.addLayer(input.layerId, layer);
 
     ctx.pubsub.publishForChannel(
       input.channelId,
@@ -53,7 +54,7 @@ const addLayerRoute = protectedProcedure
       {
         channelId: input.channelId,
         layerId: input.layerId,
-        layer: input.layer
+        layer
       }
     );
   });
@@ -70,7 +71,8 @@ const updateLayerRoute = protectedProcedure
     const runtime = WhiteboardRuntime.findById(input.channelId);
     if (!runtime) return;
 
-    runtime.updateLayer(input.layerId, input.layer);
+    const layer = input.layer as Partial<Layer>;
+    runtime.updateLayer(input.layerId, layer);
 
     ctx.pubsub.publishForChannel(
       input.channelId,
@@ -78,7 +80,7 @@ const updateLayerRoute = protectedProcedure
       {
         channelId: input.channelId,
         layerId: input.layerId,
-        layer: input.layer
+        layer
       }
     );
   });
