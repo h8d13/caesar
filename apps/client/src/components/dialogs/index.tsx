@@ -45,7 +45,7 @@ const DialogsProvider = memo(() => {
 
     return (
         <Suspense fallback={null}>
-            {createElement(DialogsMap[openDialog], {
+            {createElement(DialogsMap[openDialog] as any, {
                 ...props,
                 isOpen: realIsOpen,
                 close: closeDialogs

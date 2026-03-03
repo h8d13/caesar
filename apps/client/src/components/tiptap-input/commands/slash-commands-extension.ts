@@ -40,8 +40,10 @@ export const SlashCommands = Node.create<SlashCommandsOptions>({
                 ...this.options.suggestion,
                 items: ({ query }) => {
                     const commands =
-                        this.editor.storage[this.name]?.[COMMANDS_STORAGE_KEY]
-                            ?.commands ?? this.options.commands;
+                        (this.editor.storage as Record<string, any>)[
+                            this.name
+                        ]?.[COMMANDS_STORAGE_KEY]?.commands ??
+                        this.options.commands;
 
                     return commands.filter((cmd: TBuiltInCommand) =>
                         cmd.name.toLowerCase().startsWith(query.toLowerCase())

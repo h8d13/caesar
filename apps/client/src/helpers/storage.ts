@@ -24,6 +24,7 @@ export enum LocalStorageKey {
     BROWSER_NOTIFICATIONS = 'sharkord-browser-notifications',
     NICKNAMES = 'sharkord-nicknames',
     WHITEBOARD_SIDEBAR_WIDTH = 'sharkord-whiteboard-sidebar-width',
+    VOICE_CHAT_SIDEBAR_WIDTH = 'sharkord-voice-chat-sidebar-width',
     BROWSER_NOTIFICATIONS_FOR_MENTIONS = 'sharkord-browser-notifications-for-mentions'
 }
 

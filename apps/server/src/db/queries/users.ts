@@ -215,6 +215,7 @@ const getUserById = async (
       banned: users.banned,
       banReason: users.banReason,
       bannedAt: users.bannedAt,
+      socialCredit: users.socialCredit,
       avatar: avatarFiles,
       banner: bannerFiles
     })
@@ -263,6 +264,7 @@ const getUserByIdentity = async (
       banned: users.banned,
       banReason: users.banReason,
       bannedAt: users.bannedAt,
+      socialCredit: users.socialCredit,
       avatar: avatarFiles,
       banner: bannerFiles
     })
@@ -321,6 +323,7 @@ const getUsers = async (): Promise<TJoinedUser[]> => {
       banned: users.banned,
       banReason: users.banReason,
       bannedAt: users.bannedAt,
+      socialCredit: users.socialCredit,
       avatar: avatarFiles,
       banner: bannerFiles
     })
@@ -364,6 +367,7 @@ const getUsers = async (): Promise<TJoinedUser[]> => {
     banned: result.banned,
     banReason: result.banReason,
     bannedAt: result.bannedAt,
+    socialCredit: result.socialCredit,
     roleIds: rolesMap[result.id] || []
   }));
 };

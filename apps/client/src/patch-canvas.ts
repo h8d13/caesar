@@ -4,7 +4,11 @@
 // Caused by is-emoji-supported used in @tiptap/extension-emoji.
 const orig = HTMLCanvasElement.prototype.getContext;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-HTMLCanvasElement.prototype.getContext = function (type: string, attrs?: any) {
+HTMLCanvasElement.prototype.getContext = function (
+    this: HTMLCanvasElement,
+    type: string,
+    attrs?: any
+) {
     if (type === '2d') {
         attrs = { ...attrs, willReadFrequently: true };
     }

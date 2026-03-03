@@ -142,8 +142,8 @@ const MentionSuggestion = {
         query: string;
     }): TJoinedPublicUser[] => {
         const users: TJoinedPublicUser[] =
-            (editor.storage as TMentionStorage)[MENTION_STORAGE_KEY]?.users ??
-            [];
+            (editor.storage as unknown as TMentionStorage)[MENTION_STORAGE_KEY]
+                ?.users ?? [];
         if (!query) return users.slice(0, 10);
         const q = query.toLowerCase();
         return users

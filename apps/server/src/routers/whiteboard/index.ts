@@ -1,4 +1,4 @@
-import { ServerEvents, type Layer } from '@sharkord/shared';
+import { ServerEvents } from '@sharkord/shared';
 import { z } from 'zod';
 import { WhiteboardRuntime } from '../../runtimes/whiteboard';
 import { protectedProcedure, t } from '../../utils/trpc';
@@ -21,7 +21,7 @@ const layerSchema = z.object({
   strokeSize: z.number().optional(),
   x2: z.number().optional(),
   y2: z.number().optional()
-}) as z.ZodType<Layer>;
+});
 
 // --- Queries ---
 
