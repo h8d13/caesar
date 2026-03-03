@@ -90,12 +90,8 @@ const ExternalStreamCard = memo(
     className,
     showPinControls = true
   }: TExternalStreamCardProps) => {
-    const {
-      externalVideoRef,
-      externalAudioRef,
-      hasExternalVideoStream,
-      hasExternalAudioStream
-    } = useVoiceRefs(streamId, stream.sourceId, stream.key);
+    const { externalVideoRef, hasExternalVideoStream, hasExternalAudioStream } =
+      useVoiceRefs(streamId, stream.sourceId, stream.key);
 
     const { getVolume, setVolume, toggleMute, getExternalVolumeKey } =
       useVolumeControl();
@@ -211,10 +207,6 @@ const ExternalStreamCard = memo(
               )}
             </div>
           </div>
-        )}
-
-        {hasAudio && (
-          <audio ref={externalAudioRef} autoPlay className="hidden" />
         )}
 
         <div className="absolute bottom-0 left-0 right-0 p-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
