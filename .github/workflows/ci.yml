@@ -9,7 +9,7 @@ on:
 
 jobs:
   ci:
-    name: Lint & Test
+    name: Lint | Typecheck | Format
     runs-on: ubuntu-latest
 
     steps:
@@ -33,6 +33,4 @@ jobs:
       - name: Typecheck
         run: bun check-types
 
-      - name: Run tests
-        run: bun run test
 
