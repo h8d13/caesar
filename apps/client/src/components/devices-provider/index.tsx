@@ -27,6 +27,7 @@ const DEFAULT_DEVICE_SETTINGS: TDeviceSettings = {
   autoGainControl: true,
   noiseGateEnabled: true,
   noiseGateThresholdDb: MICROPHONE_GATE_DEFAULT_THRESHOLD_DB,
+  rnnoiseEnabled: true,
   shareSystemAudio: true,
   mirrorOwnVideo: false,
   screenResolution: Resolution['720p'],

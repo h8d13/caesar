@@ -9,6 +9,10 @@ import {
   getNoiseGateWorkletAvailabilitySnapshot,
   subscribeNoiseGateWorkletAvailability
 } from '@/helpers/audio-worklet/noise-gate-worklet';
+import {
+  getRNNoiseWorkletAvailabilitySnapshot,
+  subscribeRNNoiseWorkletAvailability
+} from '@/helpers/audio-worklet/rnnoise-worklet';
 import { useForm } from '@/hooks/use-form';
 import { Resolution, VideoCodec } from '@/types';
 import { DEFAULT_BITRATE } from '@sharkord/shared';
@@ -71,6 +75,12 @@ const Devices = memo(() => {
     getNoiseGateWorkletAvailabilitySnapshot
   );
   const isNoiseGateAvailable = noiseGateWorkletAvailability.available;
+  const rnnoiseWorkletAvailability = useSyncExternalStore(
+    subscribeRNNoiseWorkletAvailability,
+    getRNNoiseWorkletAvailabilitySnapshot,
+    getRNNoiseWorkletAvailabilitySnapshot
+  );
+  const isRNNoiseAvailable = rnnoiseWorkletAvailability.available;
   const {
     testAudioRef,
     permissionState,
@@ -331,6 +341,16 @@ const Devices = memo(() => {
                   }
                 />
               </Group>
+
+              <Group label="AI Noise Suppression">
+                <Switch
+                  checked={values.rnnoiseEnabled}
+                  disabled={!isRNNoiseAvailable}
+                  onCheckedChange={(checked) =>
+                    onChange('rnnoiseEnabled', checked)
+                  }
+                />
+              </Group>
             </div>
 
             {!isNoiseGateAvailable && (
@@ -339,6 +359,15 @@ const Devices = memo(() => {
                 gating.
                 {noiseGateWorkletAvailability.reason
                   ? ` ${noiseGateWorkletAvailability.reason}`
+                  : ''}
+              </p>
+            )}
+
+            {!isRNNoiseAvailable && values.rnnoiseEnabled && (
+              <p className="text-xs text-muted-foreground">
+                AI Noise Suppression is unavailable.
+                {rnnoiseWorkletAvailability.reason
+                  ? ` ${rnnoiseWorkletAvailability.reason}`
                   : ''}
               </p>
             )}

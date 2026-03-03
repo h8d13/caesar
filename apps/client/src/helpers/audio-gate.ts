@@ -5,6 +5,7 @@ const MICROPHONE_GATE_CLOSE_HOLD_MS = 100;
 const MICROPHONE_TEST_LEVEL_SAMPLE_INTERVAL_MS = 20;
 const MICROPHONE_NOISE_GATE_WORKLET_NAME = 'sharkord-noise-gate';
 const MICROPHONE_AUDIO_METER_WORKLET_NAME = 'sharkord-audio-meter';
+const RNNOISE_WORKLET_NAME = 'sharkord-rnnoise';
 
 const clampMicrophoneDecibels = (decibels: number) =>
   Math.max(
@@ -18,6 +19,7 @@ const microphoneDecibelsToPercent = (decibels: number) =>
   100;
 
 export {
+  RNNOISE_WORKLET_NAME,
   MICROPHONE_AUDIO_METER_WORKLET_NAME,
   MICROPHONE_GATE_CLOSE_HOLD_MS,
   MICROPHONE_GATE_DEFAULT_THRESHOLD_DB,
