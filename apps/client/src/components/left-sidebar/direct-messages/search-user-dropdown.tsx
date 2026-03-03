@@ -41,7 +41,7 @@ const SearchUserDropdown = memo(
             variant="ghost"
             size="sm"
             icon={Plus}
-            title="Create channel"
+            title="Start new conversation"
           />
         </DropdownMenuTrigger>
         <DropdownMenuContent
