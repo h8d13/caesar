@@ -1,6 +1,8 @@
 const RNNOISE_WORKLET_NAME = 'sharkord-rnnoise';
 const FRAME_SIZE = 480; // RNNoise processes 480 samples (10ms at 48kHz)
 const BYTES_PER_FLOAT = 4;
+// ring buffer size: must hold enough to cover latency (2 rnnoise frames)
+const RING_SIZE = FRAME_SIZE * 4;
 
 class RNNoiseProcessor extends AudioWorkletProcessor {
   constructor() {
@@ -9,12 +11,15 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
     this.enabled = true;
     this.ready = false;
 
-    // ring buffers for handling 128 <-> 480 sample mismatch
+    // input accumulator for building rnnoise frames
     this.inputBuffer = new Float32Array(FRAME_SIZE);
-    this.outputBuffer = new Float32Array(FRAME_SIZE);
     this.inputBufferOffset = 0;
-    this.outputBufferOffset = FRAME_SIZE; // start empty
-    this.outputBufferRemaining = 0;
+
+    // circular output buffer to decouple input/output timing
+    this.ringBuffer = new Float32Array(RING_SIZE);
+    this.ringWritePos = 0;
+    this.ringReadPos = 0;
+    this.ringAvailable = 0;
 
     // wasm state
     this.exports = null;
@@ -135,12 +140,15 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
     // when out==in it processes in place
     processFrame(this.denoiseState, this.pcmInputPtr, this.pcmInputPtr);
 
-    // read back and scale to float range
+    // read back, scale to float, and write into the output ring buffer
     const heapAfter = this.heapF32();
 
     for (let i = 0; i < FRAME_SIZE; i++) {
-      this.outputBuffer[i] = heapAfter[offset + i] / 32768.0;
+      this.ringBuffer[this.ringWritePos] = heapAfter[offset + i] / 32768.0;
+      this.ringWritePos = (this.ringWritePos + 1) % RING_SIZE;
     }
+
+    this.ringAvailable += FRAME_SIZE;
   }
 
   process(inputs, outputs) {
@@ -192,30 +200,26 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
       }
     }
 
-    // process samples through ring buffer
+    // feed samples into the input accumulator, process when full
     for (let i = 0; i < frameCount; i++) {
-      this.inputBuffer[this.inputBufferOffset] = monoInput[i];
-      this.inputBufferOffset++;
+      this.inputBuffer[this.inputBufferOffset++] = monoInput[i];
 
       if (this.inputBufferOffset >= FRAME_SIZE) {
         this._processFrame();
         this.inputBufferOffset = 0;
-        this.outputBufferOffset = 0;
-        this.outputBufferRemaining = FRAME_SIZE;
       }
     }
 
-    // output from the processed buffer
+    // read processed samples from the output ring buffer
     for (let i = 0; i < frameCount; i++) {
       let sample = 0;
 
-      if (this.outputBufferRemaining > 0) {
-        sample = this.outputBuffer[this.outputBufferOffset];
-        this.outputBufferOffset++;
-        this.outputBufferRemaining--;
+      if (this.ringAvailable > 0) {
+        sample = this.ringBuffer[this.ringReadPos];
+        this.ringReadPos = (this.ringReadPos + 1) % RING_SIZE;
+        this.ringAvailable--;
       }
 
-      // write same denoised mono to all output channels
       for (let ch = 0; ch < output.length; ch++) {
         output[ch][i] = sample;
       }
