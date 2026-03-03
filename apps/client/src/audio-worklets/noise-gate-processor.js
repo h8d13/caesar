@@ -34,7 +34,10 @@ class NoiseGateProcessor extends AudioWorkletProcessor {
         }
       }
 
-      if (typeof data.thresholdDb === 'number' && Number.isFinite(data.thresholdDb)) {
+      if (
+        typeof data.thresholdDb === 'number' &&
+        Number.isFinite(data.thresholdDb)
+      ) {
         this.thresholdDb = data.thresholdDb;
       }
 
@@ -118,8 +121,16 @@ class NoiseGateProcessor extends AudioWorkletProcessor {
       }
     }
 
-    for (let channelIndex = channelCount; channelIndex < output.length; channelIndex++) {
-      output[channelIndex].fill(0);
+    for (
+      let channelIndex = channelCount;
+      channelIndex < output.length;
+      channelIndex++
+    ) {
+      if (shouldPassThrough && input[0]) {
+        output[channelIndex].set(input[0]);
+      } else {
+        output[channelIndex].fill(0);
+      }
     }
 
     return true;
