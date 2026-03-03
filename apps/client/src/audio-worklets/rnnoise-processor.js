@@ -41,39 +41,45 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
 
   async _initWasm(binary) {
     try {
-      // emscripten-compiled rnnoise needs env imports
-      let memoryRef = null;
+      // @jitsi/rnnoise-wasm v0.2.1 uses minified emscripten output:
+      //   imports: module "a" with functions "a" (resize_heap) and "b" (memcpy)
+      //   exports: c=memory, d=__wasm_call_ctors, e=init, f=create, g=malloc,
+      //            h=destroy, i=free, j=process_frame
+      let instance = null;
 
       const importObject = {
-        env: {
-          memory: new WebAssembly.Memory({ initial: 256, maximum: 256 }),
-          emscripten_memcpy_js: (dest, src, num) => {
-            const heap = new Uint8Array(memoryRef.buffer);
-            heap.copyWithin(dest, src, src + num);
+        a: {
+          a: (requestedSize) => {
+            // emscripten_resize_heap
+            try {
+              const memory = instance.exports.c;
+              const needed = (requestedSize - memory.buffer.byteLength + 65535) >>> 16;
+              memory.grow(needed);
+              return 1;
+            } catch (e) {
+              return 0;
+            }
           },
-          __assert_fail: () => {},
-          abort: () => {},
-          emscripten_resize_heap: () => 0
-        },
-        wasi_snapshot_preview1: {
-          fd_close: () => 0,
-          fd_seek: () => 0,
-          fd_write: () => 0,
-          proc_exit: () => {}
+          b: (dest, src, num) => {
+            // emscripten_memcpy_big
+            const heap = new Uint8Array(instance.exports.c.buffer);
+            heap.copyWithin(dest, src, src + num);
+          }
         }
       };
 
       const result = await WebAssembly.instantiate(binary, importObject);
-      this.exports = result.instance.exports;
+      instance = result.instance;
+      this.exports = instance.exports;
 
-      // use wasm's own memory if it exports one, else use our provided one
-      memoryRef = this.exports.memory || importObject.env.memory;
+      // call __wasm_call_ctors to initialize the emscripten runtime
+      this.exports.d();
 
-      const malloc = this.exports._malloc || this.exports.malloc;
-      const rnnoiseCreate =
-        this.exports._rnnoise_create || this.exports.rnnoise_create;
+      const memory = this.exports.c;  // exported memory
+      const malloc = this.exports.g;  // _malloc
+      const rnnoiseCreate = this.exports.f;  // _rnnoise_create
 
-      if (!malloc || !rnnoiseCreate) {
+      if (!memory || !malloc || !rnnoiseCreate) {
         throw new Error('RNNoise WASM missing required exports');
       }
 
@@ -91,10 +97,7 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
         throw new Error('Failed to create RNNoise state');
       }
 
-      this.heapF32 = () =>
-        new Float32Array(
-          (this.exports.memory || importObject.env.memory).buffer
-        );
+      this.heapF32 = () => new Float32Array(this.exports.c.buffer);
 
       this.ready = true;
 
@@ -116,9 +119,7 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
   _processFrame() {
     if (!this.ready || !this.exports || !this.heapF32) return;
 
-    const processFrame =
-      this.exports._rnnoise_process_frame ||
-      this.exports.rnnoise_process_frame;
+    const processFrame = this.exports.j; // _rnnoise_process_frame
 
     if (!processFrame) return;
 
