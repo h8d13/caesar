@@ -42,6 +42,7 @@ const saveRecentEmojis = (emojis: TEmojiItem[]): void => {
     const toStore: StoredEmoji[] = emojis.map((e) => ({
         name: e.name,
         shortcodes: e.shortcodes,
+        fallbackImage: e.fallbackImage,
         emoji: e.emoji
     }));
 

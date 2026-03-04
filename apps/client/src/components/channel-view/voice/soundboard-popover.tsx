@@ -34,10 +34,10 @@ const SoundboardPopover = memo(() => {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-10 w-10 rounded-md"
+                        className="h-8 w-8 rounded-md bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-all duration-200"
                         aria-label="Soundboard"
                     >
-                        <Music size={20} />
+                        <Music className="h-4 w-4" />
                     </Button>
                 </PopoverTrigger>
             </Tooltip>

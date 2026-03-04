@@ -16,6 +16,7 @@ import {
     Wifi,
     WifiOff
 } from 'lucide-react';
+import { SoundboardPopover } from '../channel-view/voice/soundboard-popover';
 import { memo, useMemo } from 'react';
 import { ExternalAudioStreams } from '../channel-view/voice/external-audio-streams';
 import { VoiceAudioStreams } from '../channel-view/voice/voice-audio-streams';
@@ -87,6 +88,8 @@ const VoiceControl = memo(() => {
                     </Button>
 
                     <div className="flex gap-1">
+                        <SoundboardPopover />
+
                         <Button
                             variant="ghost"
                             size="icon"
