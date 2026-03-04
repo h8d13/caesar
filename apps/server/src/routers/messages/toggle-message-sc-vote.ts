@@ -15,7 +15,11 @@ const toggleMessageScVoteRoute = protectedProcedure
   )
   .mutation(async ({ input, ctx }) => {
     const message = await db
-      .select({ id: messages.id, userId: messages.userId, channelId: messages.channelId })
+      .select({
+        id: messages.id,
+        userId: messages.userId,
+        channelId: messages.channelId
+      })
       .from(messages)
       .where(eq(messages.id, input.messageId))
       .get();
