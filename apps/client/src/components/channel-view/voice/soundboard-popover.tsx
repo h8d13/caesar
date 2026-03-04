@@ -41,7 +41,7 @@ const SoundboardPopover = memo(() => {
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-md bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground transition-all duration-200"
+                        className="h-8 w-8 rounded-md transition-all duration-200 bg-secondary hover:bg-secondary/80! text-muted-foreground hover:text-foreground!"
                         aria-label="Soundboard"
                     >
                         <Music className="h-4 w-4" />
