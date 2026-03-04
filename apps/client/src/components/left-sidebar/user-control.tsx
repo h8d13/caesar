@@ -1,12 +1,20 @@
 import { openServerScreen } from '@/features/server-screens/actions';
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
+import { openCrashGame } from '@/features/server/crash/actions';
 import { useChannelCan } from '@/features/server/hooks';
 import { useOwnPublicUser } from '@/features/server/users/hooks';
 import { useVoice } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
 import { ChannelPermission } from '@sharkord/shared';
 import { Button } from '@sharkord/ui';
-import { HeadphoneOff, Headphones, Mic, MicOff, Settings } from 'lucide-react';
+import {
+    HeadphoneOff,
+    Headphones,
+    Mic,
+    MicOff,
+    Rocket,
+    Settings
+} from 'lucide-react';
 import { memo, useCallback } from 'react';
 import { ServerScreen } from '../server-screens/screens';
 import { UserAvatar } from '../user-avatar';
@@ -92,6 +100,16 @@ const UserControl = memo(() => {
                     ) : (
                         <Headphones className="h-4 w-4" />
                     )}
+                </Button>
+
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    onClick={openCrashGame}
+                    title="Crash game"
+                >
+                    <Rocket className="h-4 w-4" />
                 </Button>
 
                 <Button

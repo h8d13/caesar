@@ -12,6 +12,7 @@ import { soundsRouter } from './sounds';
 import { usersRouter } from './users';
 import { voiceRouter } from './voice';
 import { whiteboardRouter } from './whiteboard';
+import { crashRouter } from '../games/crash/router';
 
 const appRouter = t.router({
   others: othersRouter,
@@ -26,7 +27,8 @@ const appRouter = t.router({
   invites: invitesRouter,
   voice: voiceRouter,
   categories: categoriesRouter,
-  whiteboard: whiteboardRouter
+  whiteboard: whiteboardRouter,
+  crash: crashRouter
 });
 
 type AppRouter = typeof appRouter;

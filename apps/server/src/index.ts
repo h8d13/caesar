@@ -19,12 +19,14 @@ import { createServers } from './utils/create-servers';
 import { loadMediasoup } from './utils/mediasoup';
 import { printDebug } from './utils/print-debug';
 import './utils/updater';
+import { initCrash } from './games/crash/init';
 
 await loadDb();
 await createServers();
 await loadMediasoup();
 await initVoiceRuntimes();
 await loadCrons();
+await initCrash();
 
 const host = IS_PRODUCTION ? SERVER_PRIVATE_IP : 'localhost';
 const url = `http://${host}:${config.server.port}/`;
