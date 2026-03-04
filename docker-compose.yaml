@@ -1,5 +1,6 @@
 services:
   # Production: compiled binary with embedded frontend
+  # assumes x86_64 or change to .prod-arm
   sharkord:
     build:
       context: .
@@ -31,7 +32,7 @@ services:
       - caddy_data:/data
       - caddy_config:/config
 
-  # Dev: builds from source, runs Vite + Bun server
+  # Dev: Runs bun install then runs Vite + Bun server
   sharkord-dev:
     build:
       context: .
