@@ -34,10 +34,7 @@ let wss: WebSocketServer | undefined;
 
 const usersIpMap = new Map<number, string>();
 const connectedAt = new Map<number, number>();
-const dailyPassiveCredit = new Map<
-  number,
-  { earned: number; day: number }
->();
+const dailyPassiveCredit = new Map<number, { earned: number; day: number }>();
 
 const PASSIVE_CREDIT_PER_15_MIN = 1;
 const PASSIVE_CREDIT_DAILY_CAP = 50;
@@ -275,8 +272,7 @@ const createWsServer = async (server: http.Server) => {
           if (earned > 0) {
             const today = Math.floor(Date.now() / 86_400_000);
             const daily = dailyPassiveCredit.get(user.id);
-            const todayEarned =
-              daily && daily.day === today ? daily.earned : 0;
+            const todayEarned = daily && daily.day === today ? daily.earned : 0;
             const remaining = PASSIVE_CREDIT_DAILY_CAP - todayEarned;
             const award = Math.min(earned, remaining);
 

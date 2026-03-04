@@ -703,7 +703,10 @@ describe('/public', () => {
     const response = await fetch(
       `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
       {
-        headers: { Range: `bytes=${lastByteIndex}-${lastByteIndex}`, 'x-token': token }
+        headers: {
+          Range: `bytes=${lastByteIndex}-${lastByteIndex}`,
+          'x-token': token
+        }
       }
     );
 
@@ -723,7 +726,10 @@ describe('/public', () => {
     const response = await fetch(
       `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
       {
-        headers: { Range: `bytes=${totalSize}-${totalSize + 10}`, 'x-token': token }
+        headers: {
+          Range: `bytes=${totalSize}-${totalSize + 10}`,
+          'x-token': token
+        }
       }
     );
 
