@@ -2,9 +2,10 @@
 # GET INITIAL OWNER TOKEN
 # docker logs -f sharkord
 
-# MAGIC RESETS VOLUMES LINE
-# docker compose down -v (drop volumes)
-# rm -rf data && docker system prune -a --volumes
+# MAGIC RESETS VOLUMES LINE (drop volumes)
+# docker compose down -v && rm -rf data && docker system prune -a --volumes
+# OR just rebuild no cache
+# docker compose --profile prod down && docker system prune && docker compose --profile prod build --no-cache
 
 # convenience wrapper for prod builds
-SHARKORD_AUTOUPDATE=false docker compose --profile prod down && docker compose --profile prod up --build -d #--no-cache
+SHARKORD_AUTOUPDATE=false docker compose --profile prod up -d
