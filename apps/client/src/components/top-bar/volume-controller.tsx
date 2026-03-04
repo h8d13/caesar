@@ -58,15 +58,16 @@ const AudioStreamControl = memo(
                         <UserAvatar userId={user.id} className="h-6 w-6" />
                     ) : (
                         <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                            <Headphones className="h-3 w-3 text-muted-foreground" />
+                            {type === AudioStreamType.Soundboard ? (
+                                <Music className="h-3 w-3 text-muted-foreground" />
+                            ) : (
+                                <Headphones className="h-3 w-3 text-muted-foreground" />
+                            )}
                         </div>
                     )}
                     <span className="text-sm truncate flex-1">{name}</span>
                     {type === AudioStreamType.ScreenShare && (
                         <Monitor className="h-3 w-3 text-muted-foreground" />
-                    )}
-                    {type === AudioStreamType.Soundboard && (
-                        <Music className="h-3 w-3 text-muted-foreground" />
                     )}
                 </div>
 

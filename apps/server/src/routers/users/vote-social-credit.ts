@@ -74,7 +74,7 @@ const voteSocialCreditRoute = protectedProcedure
       })
       .where(eq(users.id, input.targetUserId));
 
-    publishUser(input.targetUserId, 'update');
+    await publishUser(input.targetUserId, 'update');
   });
 
 export { voteSocialCreditRoute };

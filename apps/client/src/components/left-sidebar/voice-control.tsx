@@ -16,9 +16,9 @@ import {
     Wifi,
     WifiOff
 } from 'lucide-react';
-import { SoundboardPopover } from '../channel-view/voice/soundboard-popover';
 import { memo, useMemo } from 'react';
 import { ExternalAudioStreams } from '../channel-view/voice/external-audio-streams';
+import { SoundboardPopover } from '../channel-view/voice/soundboard-popover';
 import { VoiceAudioStreams } from '../channel-view/voice/voice-audio-streams';
 import { StatsPopover } from './stats-popover';
 
