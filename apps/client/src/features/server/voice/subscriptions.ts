@@ -15,13 +15,10 @@ import {
     updateVoiceUserState
 } from './actions';
 
-let activeSoundboardAudio: HTMLAudioElement | null = null;
-
-const updateSoundboardVolume = (volume: number) => {
-    if (activeSoundboardAudio) {
-        activeSoundboardAudio.volume = volume / 100;
-    }
-};
+import {
+    getActiveSoundboardAudio,
+    setActiveSoundboardAudio
+} from './soundboard-audio';
 
 const subscribeToVoice = () => {
     const trpc = getTRPCClient();
@@ -139,16 +136,17 @@ const subscribeToVoice = () => {
                                 {}
                             ) ?? {};
                         const volume = volumes['soundboard'] ?? 100;
-                        if (activeSoundboardAudio) {
-                            activeSoundboardAudio.pause();
-                            activeSoundboardAudio = null;
+                        const current = getActiveSoundboardAudio();
+                        if (current) {
+                            current.pause();
+                            setActiveSoundboardAudio(null);
                         }
                         const audio = new Audio(url);
                         audio.volume = volume / 100;
-                        activeSoundboardAudio = audio;
-                        audio.addEventListener('ended', () => { if (activeSoundboardAudio === audio) activeSoundboardAudio = null; });
-                        audio.addEventListener('error', () => { if (activeSoundboardAudio === audio) activeSoundboardAudio = null; });
-                        audio.play().catch(() => { if (activeSoundboardAudio === audio) activeSoundboardAudio = null; });
+                        setActiveSoundboardAudio(audio);
+                        audio.addEventListener('ended', () => { if (getActiveSoundboardAudio() === audio) setActiveSoundboardAudio(null); });
+                        audio.addEventListener('error', () => { if (getActiveSoundboardAudio() === audio) setActiveSoundboardAudio(null); });
+                        audio.play().catch(() => { if (getActiveSoundboardAudio() === audio) setActiveSoundboardAudio(null); });
                     }
                 }
             },
@@ -169,4 +167,4 @@ const subscribeToVoice = () => {
     };
 };
 
-export { subscribeToVoice, updateSoundboardVolume };
+export { subscribeToVoice };

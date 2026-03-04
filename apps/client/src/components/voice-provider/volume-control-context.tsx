@@ -1,4 +1,4 @@
-import { updateSoundboardVolume } from '@/features/server/voice/subscriptions';
+import { updateSoundboardVolume } from '@/features/server/voice/soundboard-audio';
 import {
     getLocalStorageItemAsJSON,
     LocalStorageKey,
