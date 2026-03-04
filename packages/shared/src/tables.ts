@@ -18,6 +18,7 @@ import {
   roles,
   settings,
   socialCreditVotes,
+  sounds,
   userRoles,
   users
 } from '../../../apps/server/src/db/schema';
@@ -37,6 +38,7 @@ export type TMessage = InferSelectModel<typeof messages>;
 export type TMessageFile = InferSelectModel<typeof messageFiles>;
 export type TRolePermission = InferSelectModel<typeof rolePermissions>;
 export type TEmoji = InferSelectModel<typeof emojis>;
+export type TSound = InferSelectModel<typeof sounds>;
 export type TMessageReaction = InferSelectModel<typeof messageReactions>;
 export type TInvite = InferSelectModel<typeof invites>;
 export type TActivityLog = InferSelectModel<typeof activityLog>;
@@ -61,6 +63,7 @@ export type TIMessage = InferInsertModel<typeof messages>;
 export type TIMessageFile = InferInsertModel<typeof messageFiles>;
 export type TIRolePermission = InferInsertModel<typeof rolePermissions>;
 export type TIEmoji = InferInsertModel<typeof emojis>;
+export type TISound = InferInsertModel<typeof sounds>;
 export type TIMessageReaction = InferInsertModel<typeof messageReactions>;
 export type TIInvite = InferInsertModel<typeof invites>;
 export type TIActivityLog = InferInsertModel<typeof activityLog>;
@@ -125,6 +128,11 @@ export type TJoinedMessage = TMessage & {
 };
 
 export type TJoinedEmoji = TEmoji & {
+  file: TFile;
+  user: TPublicUser;
+};
+
+export type TJoinedSound = TSound & {
   file: TFile;
   user: TPublicUser;
 };

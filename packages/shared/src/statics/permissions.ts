@@ -12,6 +12,7 @@ export enum Permission {
   MANAGE_CATEGORIES = 'MANAGE_CATEGORIES',
   MANAGE_ROLES = 'MANAGE_ROLES',
   MANAGE_EMOJIS = 'MANAGE_EMOJIS',
+  MANAGE_SOUNDS = 'MANAGE_SOUNDS',
   MANAGE_SETTINGS = 'MANAGE_SETTINGS',
   MANAGE_USERS = 'MANAGE_USERS',
   MANAGE_MESSAGES = 'MANAGE_MESSAGES',
@@ -34,6 +35,7 @@ export const permissionLabels: Record<Permission, string> = {
   [Permission.MANAGE_CATEGORIES]: 'Manage categories',
   [Permission.MANAGE_ROLES]: 'Manage roles',
   [Permission.MANAGE_EMOJIS]: 'Manage emojis',
+  [Permission.MANAGE_SOUNDS]: 'Manage sounds',
   [Permission.MANAGE_SETTINGS]: 'Manage server settings',
   [Permission.MANAGE_USERS]: 'Manage users',
   [Permission.MANAGE_MESSAGES]: 'Manage messages',
@@ -63,6 +65,8 @@ export const permissionDescriptions: Record<Permission, string> = {
     'Grants the ability to create, update, and delete roles.',
   [Permission.MANAGE_EMOJIS]:
     'Grants the ability to create, update, and delete emojis.',
+  [Permission.MANAGE_SOUNDS]:
+    'Grants the ability to create, update, and delete sounds.',
   [Permission.MANAGE_SETTINGS]: 'Grants the ability to manage server settings.',
   [Permission.MANAGE_USERS]: 'Grants the ability to manage users.',
   [Permission.MANAGE_MESSAGES]:

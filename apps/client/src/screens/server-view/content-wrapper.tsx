@@ -6,8 +6,7 @@ import {
 } from '@/features/server/channels/hooks';
 import { useServerName } from '@/features/server/hooks';
 import { ChannelType } from '@sharkord/shared';
-import { Alert, AlertDescription } from '@sharkord/ui';
-import { AlertTriangle, ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { memo } from 'react';
 
 type TContentWrapperProps = {
@@ -65,7 +64,12 @@ const ContentWrapper = memo(
         } else {
             content = (
                 <>
-                    <div className="flex-col gap-2 h-full w-full hidden lg:flex overflow-auto" />
+                    <div className="flex-col gap-2 h-full w-full hidden lg:flex overflow-auto items-center justify-center">
+                        <h2 className="text-2xl font-semibold text-foreground">
+                            Welcome to{' '}
+                            <span className="bold">{serverName}</span>.
+                        </h2>
+                    </div>
                     <div className="flex flex-col items-center justify-center h-full gap-6 p-8 text-center md:hidden">
                         <div className="flex flex-col gap-2">
                             <h2 className="text-2xl font-semibold text-foreground">
@@ -73,13 +77,6 @@ const ContentWrapper = memo(
                                 <span className="bold">{serverName}</span>.
                             </h2>
                         </div>
-                        <Alert variant="destructive" className="max-w-md">
-                            <AlertTriangle />
-                            <AlertDescription>
-                                Sharkord is not optimized for mobile devices
-                                yet. The experience will not be ideal.
-                            </AlertDescription>
-                        </Alert>
                         <div className="flex flex-col gap-3 text-sm text-muted-foreground">
                             <div className="flex items-center gap-2">
                                 <span className="text-lg">

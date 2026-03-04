@@ -22,6 +22,7 @@ import {
     type TJoinedEmoji,
     type TJoinedInvite,
     type TJoinedRole,
+    type TJoinedSound,
     type TJoinedUser,
     type TLogin,
     type TMessage,
@@ -339,6 +340,44 @@ export const useAdminEmojis = () => {
     return {
         emojis,
         refetch: fetchEmojis,
+        loading,
+        errors,
+        onChange
+    };
+};
+
+export const useAdminSounds = () => {
+    const [loading, setLoading] = useState(true);
+    const [errors, setErrors] = useState<TTrpcErrors>({});
+    const [sounds, setSounds] = useState<TJoinedSound[]>([]);
+
+    const fetchSounds = useCallback(async () => {
+        setLoading(true);
+
+        const trpc = getTRPCClient();
+        const sounds = await trpc.sounds.getAll.query();
+
+        setSounds(sounds);
+        setLoading(false);
+    }, []);
+
+    const onChange = useCallback(
+        (field: keyof TJoinedSound, value: string | null) => {
+            if (!sounds) return;
+
+            setSounds((c) => (c ? { ...c, [field]: value } : c));
+            setErrors((e) => ({ ...e, [field]: undefined }));
+        },
+        [sounds]
+    );
+
+    useEffect(() => {
+        fetchSounds();
+    }, [fetchSounds]);
+
+    return {
+        sounds,
+        refetch: fetchSounds,
         loading,
         errors,
         onChange

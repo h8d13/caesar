@@ -305,6 +305,27 @@ const emojis = sqliteTable(
   ]
 );
 
+const sounds = sqliteTable(
+  'sounds',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    name: text('name').notNull().unique(),
+    fileId: integer('file_id')
+      .notNull()
+      .references(() => files.id, { onDelete: 'cascade' }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at')
+  },
+  (t) => [
+    index('sounds_user_idx').on(t.userId),
+    index('sounds_file_idx').on(t.fileId),
+    uniqueIndex('sounds_name_idx').on(t.name)
+  ]
+);
+
 const messageReactions = sqliteTable(
   'message_reactions',
   {
@@ -518,6 +539,7 @@ export {
   roles,
   settings,
   socialCreditVotes,
+  sounds,
   userRoles,
   users
 };
