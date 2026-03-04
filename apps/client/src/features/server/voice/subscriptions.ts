@@ -15,11 +15,11 @@ import {
     updateVoiceUserState
 } from './actions';
 
-const activeSoundboardAudios = new Set<HTMLAudioElement>();
+let activeSoundboardAudio: HTMLAudioElement | null = null;
 
 const updateSoundboardVolume = (volume: number) => {
-    for (const audio of activeSoundboardAudios) {
-        audio.volume = volume / 100;
+    if (activeSoundboardAudio) {
+        activeSoundboardAudio.volume = volume / 100;
     }
 };
 
@@ -139,12 +139,16 @@ const subscribeToVoice = () => {
                                 {}
                             ) ?? {};
                         const volume = volumes['soundboard'] ?? 100;
+                        if (activeSoundboardAudio) {
+                            activeSoundboardAudio.pause();
+                            activeSoundboardAudio = null;
+                        }
                         const audio = new Audio(url);
                         audio.volume = volume / 100;
-                        activeSoundboardAudios.add(audio);
-                        audio.addEventListener('ended', () => activeSoundboardAudios.delete(audio));
-                        audio.addEventListener('error', () => activeSoundboardAudios.delete(audio));
-                        audio.play().catch(() => activeSoundboardAudios.delete(audio));
+                        activeSoundboardAudio = audio;
+                        audio.addEventListener('ended', () => { if (activeSoundboardAudio === audio) activeSoundboardAudio = null; });
+                        audio.addEventListener('error', () => { if (activeSoundboardAudio === audio) activeSoundboardAudio = null; });
+                        audio.play().catch(() => { if (activeSoundboardAudio === audio) activeSoundboardAudio = null; });
                     }
                 }
             },
