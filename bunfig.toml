@@ -1,5 +1,6 @@
 telemetry = false
 
+# Change cpu to ["arm64"] for ARM builds, or remove this section
 [install.supportedArchitectures]
 os = ["linux"]
 cpu = ["x64"]

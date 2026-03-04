@@ -3,7 +3,7 @@ services:
   sharkord:
     build:
       context: .
-      dockerfile: Dockerfile.prod
+      dockerfile: Dockerfile.prod-64
     container_name: sharkord
     restart: unless-stopped
     stop_grace_period: 2s
