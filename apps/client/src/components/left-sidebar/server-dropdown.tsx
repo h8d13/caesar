@@ -58,7 +58,10 @@ const ServerDropdownMenu = memo(() => {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                 </Protect>
-                <DropdownMenuItem onClick={disconnectFromServer}>
+                <DropdownMenuItem
+                    onClick={disconnectFromServer}
+                    className="text-destructive focus:text-destructive"
+                >
                     Disconnect
                 </DropdownMenuItem>
             </DropdownMenuContent>
