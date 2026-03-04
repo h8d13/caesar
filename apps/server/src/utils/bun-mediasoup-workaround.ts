@@ -21,6 +21,12 @@ import { EventEmitter } from 'node:events';
 import { Readable } from 'node:stream';
 import { logger } from '../logger.js';
 
+type BunSocket = {
+  write: (chunk: Buffer | Uint8Array) => number;
+  flush: () => void;
+  end: () => void;
+};
+
 const isBun = typeof globalThis.Bun !== 'undefined';
 const isWindows = process.platform === 'win32';
 
@@ -58,8 +64,7 @@ function createBunPipeSocket(
     readableFlowing: boolean | null;
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let bunSocket: any = null;
+  let bunSocket: BunSocket | null = null;
   let destroyed = false;
 
   emitter.readable = mode === 'read';
@@ -113,10 +118,10 @@ function createBunPipeSocket(
   (Bun.connect as any)({
     fd,
     socket: {
-      open(socket: any) {
+      open(socket: BunSocket) {
         bunSocket = socket;
       },
-      data(_socket: any, data: Uint8Array) {
+      data(_socket: BunSocket, data: Uint8Array) {
         if (mode === 'read' && !destroyed) {
           emitter.emit('data', Buffer.from(data));
         }
@@ -126,7 +131,7 @@ function createBunPipeSocket(
           emitter.emit('end');
         }
       },
-      error(_socket: any, err: Error) {
+      error(_socket: BunSocket, err: Error) {
         if (!destroyed) {
           emitter.emit('error', err);
         }

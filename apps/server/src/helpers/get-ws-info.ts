@@ -3,6 +3,12 @@ import ipaddr from 'ipaddr.js';
 import { UAParser } from 'ua-parser-js';
 import type { TConnectionInfo } from '../types';
 
+/** Minimal shape we need from a WebSocket — internal properties not in the ws type defs */
+interface WsLike {
+  _socket?: { remoteAddress?: string };
+  socket?: { remoteAddress?: string };
+}
+
 // have no fucking idea what's going on in this file
 // 100% trusting AI on this one
 
@@ -125,7 +131,7 @@ const extractForwardedCandidates = (value: string): string[] =>
     .slice(0, MAX_IP_CANDIDATES);
 
 const getWsIp = (
-  ws: any | undefined,
+  ws: unknown,
   req: http.IncomingMessage | undefined
 ): string | undefined => {
   const headers = req?.headers ?? {};
@@ -154,9 +160,10 @@ const getWsIp = (
   }
 
   // 4. fallback to raw socket remote address
+  const wsObj = ws as WsLike | undefined;
   const socketCandidates = [
-    ws?._socket?.remoteAddress,
-    ws?.socket?.remoteAddress,
+    wsObj?._socket?.remoteAddress,
+    wsObj?.socket?.remoteAddress,
     req?.socket?.remoteAddress
   ].filter((v): v is string => typeof v === 'string' && v.length > 0);
 
@@ -164,7 +171,7 @@ const getWsIp = (
 };
 
 const getWsInfo = (
-  ws: any | undefined,
+  ws: unknown,
   req: http.IncomingMessage | undefined
 ): TConnectionInfo | undefined => {
   if (!ws && !req) return undefined;

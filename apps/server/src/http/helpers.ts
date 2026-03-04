@@ -7,7 +7,7 @@ type HttpRouteHandler<TContext = undefined> = (
   ctx: TContext
 ) => Promise<unknown> | unknown;
 
-const getJsonBody = async <T = any>(req: http.IncomingMessage): Promise<T> => {
+const getJsonBody = async <T = unknown>(req: http.IncomingMessage): Promise<T> => {
   return new Promise((resolve, reject) => {
     let body = '';
 
