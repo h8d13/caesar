@@ -91,7 +91,6 @@ CREATE TABLE `users` (
 	`ban_reason` text,
 	`banned_at` integer,
 	`banner_color` text,
-	`social_credit` integer DEFAULT 0 NOT NULL,
 	`last_login_at` integer NOT NULL,
 	`created_at` integer NOT NULL,
 	`updated_at` integer
@@ -189,18 +188,6 @@ CREATE TABLE `emojis` (
 CREATE INDEX `emojis_user_idx` ON `emojis` (`user_id`);--> statement-breakpoint
 CREATE INDEX `emojis_file_idx` ON `emojis` (`file_id`);--> statement-breakpoint
 CREATE UNIQUE INDEX `emojis_name_idx` ON `emojis` (`name`);--> statement-breakpoint
-CREATE TABLE `sounds` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`name` text NOT NULL,
-	`file_id` integer NOT NULL REFERENCES `files`(`id`) ON DELETE cascade,
-	`user_id` integer NOT NULL REFERENCES `users`(`id`) ON DELETE cascade,
-	`created_at` integer NOT NULL,
-	`updated_at` integer
-);
---> statement-breakpoint
-CREATE INDEX `sounds_user_idx` ON `sounds` (`user_id`);--> statement-breakpoint
-CREATE INDEX `sounds_file_idx` ON `sounds` (`file_id`);--> statement-breakpoint
-CREATE UNIQUE INDEX `sounds_name_idx` ON `sounds` (`name`);--> statement-breakpoint
 CREATE TABLE `message_reactions` (
 	`message_id` integer NOT NULL REFERENCES `messages`(`id`) ON DELETE cascade,
 	`user_id` integer NOT NULL REFERENCES `users`(`id`) ON DELETE cascade,
@@ -294,15 +281,4 @@ CREATE TABLE `direct_messages` (
 --> statement-breakpoint
 CREATE UNIQUE INDEX `direct_messages_pair_unique_idx` ON `direct_messages` (`user_one_id`, `user_two_id`);--> statement-breakpoint
 CREATE INDEX `direct_messages_user_one_idx` ON `direct_messages` (`user_one_id`);--> statement-breakpoint
-CREATE INDEX `direct_messages_user_two_idx` ON `direct_messages` (`user_two_id`);--> statement-breakpoint
-CREATE TABLE `social_credit_votes` (
-	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`voter_id` integer NOT NULL REFERENCES `users`(`id`) ON DELETE cascade,
-	`target_id` integer NOT NULL REFERENCES `users`(`id`) ON DELETE cascade,
-	`value` integer NOT NULL,
-	`created_at` integer NOT NULL
-);
---> statement-breakpoint
-CREATE INDEX `social_credit_votes_voter_idx` ON `social_credit_votes` (`voter_id`);--> statement-breakpoint
-CREATE INDEX `social_credit_votes_target_idx` ON `social_credit_votes` (`target_id`);--> statement-breakpoint
-CREATE INDEX `social_credit_votes_voter_target_created_idx` ON `social_credit_votes` (`voter_id`, `target_id`, `created_at`);
+CREATE INDEX `direct_messages_user_two_idx` ON `direct_messages` (`user_two_id`);
