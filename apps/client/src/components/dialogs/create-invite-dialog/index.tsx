@@ -61,11 +61,7 @@ const CreateInviteDialog = memo(
 
         return (
             <Dialog open={isOpen}>
-                <DialogContent
-                    onInteractOutside={close}
-                    close={close}
-                    aria-describedby={undefined}
-                >
+                <DialogContent onInteractOutside={close} close={close}>
                     <DialogHeader>
                         <DialogTitle>Create Server Invite</DialogTitle>
                         <DialogDescription>

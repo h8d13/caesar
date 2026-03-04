@@ -5,6 +5,7 @@ import {
     Button,
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -43,13 +44,12 @@ const CreateCategoryDialog = memo(
 
         return (
             <Dialog open={isOpen}>
-                <DialogContent
-                    onInteractOutside={close}
-                    close={close}
-                    aria-describedby={undefined}
-                >
+                <DialogContent onInteractOutside={close} close={close}>
                     <DialogHeader>
                         <DialogTitle>Create New Category</DialogTitle>
+                        <DialogDescription className="sr-only">
+                            Enter a name for the new category
+                        </DialogDescription>
                     </DialogHeader>
 
                     <Group label="Category name">

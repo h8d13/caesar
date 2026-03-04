@@ -8,6 +8,7 @@ import {
     AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
+    AlertDialogDescription,
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
@@ -67,9 +68,13 @@ const DeleteUserDialog = memo(
 
         return (
             <AlertDialog open={isOpen}>
-                <AlertDialogContent aria-describedby={undefined}>
+                <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete {user.name}</AlertDialogTitle>
+                        <AlertDialogDescription className="sr-only">
+                            Confirm deletion of user {user.name} and choose
+                            whether to wipe their data
+                        </AlertDialogDescription>
                     </AlertDialogHeader>
                     <div className="flex flex-col gap-4">
                         <Group label="Wipe All Data">

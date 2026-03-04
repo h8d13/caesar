@@ -10,6 +10,7 @@ import {
     Button,
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
@@ -89,13 +90,12 @@ const CreateChannelDialog = memo(
 
         return (
             <Dialog open={isOpen}>
-                <DialogContent
-                    onInteractOutside={close}
-                    close={close}
-                    aria-describedby={undefined}
-                >
+                <DialogContent onInteractOutside={close} close={close}>
                     <DialogHeader>
                         <DialogTitle>Create New Channel</DialogTitle>
+                        <DialogDescription className="sr-only">
+                            Choose a channel type and name for the new channel
+                        </DialogDescription>
                     </DialogHeader>
 
                     <Group label="Channel type">

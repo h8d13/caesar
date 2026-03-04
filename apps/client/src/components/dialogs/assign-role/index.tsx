@@ -10,6 +10,7 @@ import {
     AlertDialogAction,
     AlertDialogCancel,
     AlertDialogContent,
+    AlertDialogDescription,
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
@@ -73,11 +74,14 @@ const AssignRoleDialog = memo(
 
         return (
             <AlertDialog open={isOpen}>
-                <AlertDialogContent aria-describedby={undefined}>
+                <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>
                             Assign role to {user.name}
                         </AlertDialogTitle>
+                        <AlertDialogDescription className="sr-only">
+                            Select a role to assign to {user.name}
+                        </AlertDialogDescription>
                         {isOwnUser && (
                             <Alert variant="default">
                                 <Info />

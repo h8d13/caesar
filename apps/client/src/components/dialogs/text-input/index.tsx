@@ -54,11 +54,11 @@ const TextInputDialog = memo(
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>{title}</AlertDialogTitle>
-                        {message && (
-                            <AlertDialogDescription>
-                                {message}
-                            </AlertDialogDescription>
-                        )}
+                        <AlertDialogDescription
+                            className={message ? undefined : 'sr-only'}
+                        >
+                            {message ?? 'Enter a value'}
+                        </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AutoFocus>
                         <Input

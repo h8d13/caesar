@@ -6,6 +6,7 @@ import { getTRPCClient } from '@/lib/trpc';
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogTitle,
     Input,
     Spinner
@@ -141,11 +142,11 @@ const SearchDialog = ({ open, onClose }: TSearchDialogProps) => {
 
     return (
         <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-            <DialogContent
-                className="sm:max-w-lg p-0 gap-0 overflow-hidden"
-                aria-describedby={undefined}
-            >
+            <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
                 <DialogTitle className="sr-only">Search messages</DialogTitle>
+                <DialogDescription className="sr-only">
+                    Search through channel messages
+                </DialogDescription>
                 <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
                     <Search className="w-4 h-4 text-muted-foreground shrink-0" />
                     <Input
