@@ -219,8 +219,8 @@ describe('/interface', () => {
     expect(text).toBe('Version 1.0.0');
   });
 
-  test('should set correct Content-Length header', async () => {
-    const response = await fetch(`${testsBaseUrl}/index.html`);
+  test('should set correct Content-Length header for non-compressed files', async () => {
+    const response = await fetch(`${testsBaseUrl}/CHANGELOG`);
 
     expect(response.status).toBe(200);
     expect(response.headers.get('Content-Length')).toBeTruthy();

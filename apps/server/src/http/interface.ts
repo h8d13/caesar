@@ -2,10 +2,30 @@ import crypto from 'crypto';
 import fs from 'fs';
 import http from 'http';
 import path from 'path';
+import zlib from 'zlib';
 import { INTERFACE_PATH } from '../helpers/paths';
 import { logger } from '../logger';
 import { IS_DEVELOPMENT, IS_TEST } from '../utils/env';
 import { buildCsp } from './helpers';
+
+const COMPRESSIBLE_TYPES = new Set([
+  'text/html',
+  'text/css',
+  'text/javascript',
+  'application/javascript',
+  'application/json',
+  'image/svg+xml',
+  'text/plain',
+  'text/xml',
+  'application/xml'
+]);
+
+const getEncoding = (req: http.IncomingMessage): 'br' | 'gzip' | null => {
+  const accept = req.headers['accept-encoding'] || '';
+  if (accept.includes('br')) return 'br';
+  if (accept.includes('gzip')) return 'gzip';
+  return null;
+};
 
 const interfaceRouteHandler = (
   req: http.IncomingMessage,
@@ -49,6 +69,8 @@ const interfaceRouteHandler = (
     return res;
   }
 
+  const encoding = getEncoding(req);
+
   if (cleanSubPath === 'index.html') {
     try {
       const html = fs.readFileSync(requestedPath, 'utf-8');
@@ -58,8 +80,25 @@ const interfaceRouteHandler = (
         .replace(/<style/g, `<style nonce="${nonce}"`);
 
       res.setHeader('Content-Security-Policy', buildCsp(nonce));
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(nonced);
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Vary', 'Accept-Encoding');
+
+      if (encoding) {
+        const compressed =
+          encoding === 'br'
+            ? zlib.brotliCompressSync(Buffer.from(nonced))
+            : zlib.gzipSync(Buffer.from(nonced));
+
+        res.writeHead(200, {
+          'Content-Type': 'text/html',
+          'Content-Encoding': encoding,
+          'Content-Length': compressed.length
+        });
+        res.end(compressed);
+      } else {
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(nonced);
+      }
     } catch (err) {
       logger.error('Error serving index.html:', err);
       if (!res.headersSent) {
@@ -70,30 +109,82 @@ const interfaceRouteHandler = (
     return res;
   }
 
+  // Static assets — hashed filenames (assets/) can be cached immutably
+  const isHashed = cleanSubPath.startsWith('assets/');
+  res.setHeader(
+    'Cache-Control',
+    isHashed ? 'public, max-age=31536000, immutable' : 'public, max-age=3600'
+  );
+
   const file = Bun.file(requestedPath);
-  const fileStream = fs.createReadStream(requestedPath);
+  const contentType = file.type;
+  const baseType = contentType.split(';')[0]?.trim() || '';
+  const shouldCompress = encoding && COMPRESSIBLE_TYPES.has(baseType);
 
-  fileStream.on('open', () => {
-    res.writeHead(200, {
-      'Content-Type': file.type,
-      'Content-Length': file.size
+  if (shouldCompress) {
+    res.setHeader('Vary', 'Accept-Encoding');
+
+    const compress =
+      encoding === 'br' ? zlib.createBrotliCompress() : zlib.createGzip();
+    const fileStream = fs.createReadStream(requestedPath);
+
+    fileStream.on('open', () => {
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Content-Encoding': encoding
+      });
+      fileStream.pipe(compress).pipe(res);
     });
-    fileStream.pipe(res);
-  });
 
-  fileStream.on('error', (err) => {
-    logger.error('Error serving file:', err);
-    if (!res.headersSent) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Internal server error' }));
-    } else {
-      res.destroy();
-    }
-  });
+    fileStream.on('error', (err) => {
+      logger.error('Error serving file:', err);
+      if (!res.headersSent) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Internal server error' }));
+      } else {
+        res.destroy();
+      }
+    });
 
-  res.on('close', () => {
-    fileStream.destroy();
-  });
+    compress.on('error', (err) => {
+      logger.error('Compression error:', err);
+      if (!res.headersSent) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Internal server error' }));
+      } else {
+        res.destroy();
+      }
+    });
+
+    res.on('close', () => {
+      fileStream.destroy();
+      compress.destroy();
+    });
+  } else {
+    const fileStream = fs.createReadStream(requestedPath);
+
+    fileStream.on('open', () => {
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Content-Length': file.size
+      });
+      fileStream.pipe(res);
+    });
+
+    fileStream.on('error', (err) => {
+      logger.error('Error serving file:', err);
+      if (!res.headersSent) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Internal server error' }));
+      } else {
+        res.destroy();
+      }
+    });
+
+    res.on('close', () => {
+      fileStream.destroy();
+    });
+  }
 
   return res;
 };
