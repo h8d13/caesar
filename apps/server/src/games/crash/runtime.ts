@@ -6,8 +6,8 @@ import {
   type TCrashRoundResult,
   type TCrashStateUpdate,
 } from '@sharkord/shared/games/crash';
-import { crashDb } from './db';
-import { crashBets, crashRounds } from './schema';
+import { db } from '../../db';
+import { crashBets, crashRounds } from '../../db/schema';
 import type { TCrashLedgerCallbacks } from './types';
 import {
   BETTING_PHASE_DURATION_MS,
@@ -78,7 +78,7 @@ class CrashRuntime {
   }
 
   getHistory(limit: number = 20): TCrashRoundHistory[] {
-    return crashDb
+    return db
       .select({
         id: crashRounds.id,
         crashPoint: crashRounds.crashPoint,
@@ -120,7 +120,7 @@ class CrashRuntime {
       this.roundId
     );
 
-    const bet = crashDb
+    const bet = db
       .insert(crashBets)
       .values({
         roundId: this.roundId,
@@ -167,7 +167,7 @@ class CrashRuntime {
 
     await this.callbacks.updateLedgerEntry(bet.ledgerEntryId, profit);
 
-    crashDb
+    db
       .update(crashBets)
       .set({ cashedOutAt: currentMultiplier, profit })
       .where(eq(crashBets.id, bet.betId))
@@ -186,7 +186,7 @@ class CrashRuntime {
     this.crashPoint = this.generateCrashPoint();
     this.phaseStartedAt = Date.now();
 
-    const round = crashDb
+    const round = db
       .insert(crashRounds)
       .values({
         crashPoint: this.crashPoint,
@@ -257,7 +257,7 @@ class CrashRuntime {
     this.phase = CrashPhase.CRASHED;
     this.phaseStartedAt = Date.now();
 
-    crashDb
+    db
       .update(crashRounds)
       .set({ endedAt: Date.now() })
       .where(eq(crashRounds.id, this.roundId))

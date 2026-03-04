@@ -2,13 +2,10 @@ import { eq, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { socialCreditLedger } from '../../db/schema';
 import { publishUser } from '../../db/publishers';
-import { initCrashDb } from './db';
 import { CrashRuntime } from './runtime';
 import { setRuntime } from './router';
 
 const initCrash = async () => {
-  await initCrashDb();
-
   const runtime = new CrashRuntime({
     createLedgerEntry: async (userId, amount, roundId) => {
       const entry = db
