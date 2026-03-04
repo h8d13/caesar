@@ -66,7 +66,7 @@ const buildCsp = (nonce?: string): string => {
   const scriptSrc = nonce
     ? `'self' blob: data: 'unsafe-eval' 'nonce-${nonce}'`
     : "'self' blob: data: 'unsafe-eval'";
-  const styleSrc = nonce ? `'self' 'nonce-${nonce}'` : "'self'";
+  const styleSrc = "'self' 'unsafe-inline'";
 
   return [
     "default-src 'self'",

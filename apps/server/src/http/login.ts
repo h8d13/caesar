@@ -231,6 +231,10 @@ const loginRouteHandler = async (
     expiresIn: '604800s' // 7 days
   });
 
+  res.setHeader(
+    'Set-Cookie',
+    `sharkord-token=${token}; HttpOnly; SameSite=Strict; Path=/public; Max-Age=604800`
+  );
   res.writeHead(200, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ success: true, token }));
 

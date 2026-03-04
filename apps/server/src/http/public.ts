@@ -79,8 +79,13 @@ const publicRouteHandler = async (
   if (!isServerLogo) {
     // all non-logo files require authentication
     const token =
-      url.searchParams.get('token') ||
-      (req.headers['x-token'] as string | undefined);
+      (req.headers['x-token'] as string | undefined) ||
+      req.headers.cookie
+        ?.split('; ')
+        .find((c) => c.startsWith('sharkord-token='))
+        ?.split('=')
+        .slice(1)
+        .join('=');
     const user = await getUserByToken(token || undefined);
 
     if (!user) {

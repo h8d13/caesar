@@ -75,9 +75,7 @@ const interfaceRouteHandler = (
     try {
       const html = fs.readFileSync(requestedPath, 'utf-8');
       const nonce = crypto.randomBytes(16).toString('base64');
-      const nonced = html
-        .replace(/<script/g, `<script nonce="${nonce}"`)
-        .replace(/<style/g, `<style nonce="${nonce}"`);
+      const nonced = html.replace(/<script/g, `<script nonce="${nonce}"`);
 
       res.setHeader('Content-Security-Policy', buildCsp(nonce));
       res.setHeader('Cache-Control', 'no-cache');

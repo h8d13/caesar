@@ -74,15 +74,38 @@ const uploadFileRouteHandler = async (
 
   const safePath = await fileManager.getSafeUploadPath(originalName);
   const fileStream = fs.createWriteStream(safePath);
+  const maxSize = settings.storageUploadMaxFileSize;
+  let bytesReceived = 0;
+  let limitExceeded = false;
+
+  req.on('data', (chunk: Buffer) => {
+    bytesReceived += chunk.length;
+
+    if (!limitExceeded && bytesReceived > maxSize) {
+      limitExceeded = true;
+      req.unpipe(fileStream);
+      req.resume();
+      fileStream.destroy();
+      fs.unlink(safePath, () => {});
+      res.writeHead(413, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          error: `File ${originalName} exceeds the maximum allowed size`
+        })
+      );
+    }
+  });
 
   req.pipe(fileStream);
 
   fileStream.on('finish', async () => {
+    if (limitExceeded) return;
+
     try {
       const tempFile = await fileManager.addTemporaryFile({
         originalName,
         filePath: safePath,
-        size: contentLength,
+        size: bytesReceived,
         userId: user.id
       });
 
@@ -96,6 +119,8 @@ const uploadFileRouteHandler = async (
   });
 
   fileStream.on('error', (err) => {
+    if (limitExceeded) return;
+
     logger.error('Error uploading file:', err);
 
     res.writeHead(500, { 'Content-Type': 'application/json' });
