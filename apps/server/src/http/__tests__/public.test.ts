@@ -134,7 +134,8 @@ describe('/public', () => {
     expect(dbFile?.name).toBeDefined();
 
     const response = await fetch(
-      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`
+      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
+      { headers: { 'x-token': token } }
     );
 
     expect(response.status).toBe(200);
@@ -144,9 +145,9 @@ describe('/public', () => {
     );
     const disposition = response.headers.get('Content-Disposition');
 
-    expect(disposition).toInclude(`filename="${dbFile!.name}"`);
+    expect(disposition).toInclude(`filename="${dbFile!.originalName}"`);
     expect(disposition).toInclude(
-      `filename*=UTF-8''${encodeURIComponent(dbFile!.name)}`
+      `filename*=UTF-8''${encodeURIComponent(dbFile!.originalName)}`
     );
 
     const responseText = await response.text();
@@ -224,7 +225,8 @@ describe('/public', () => {
     });
 
     const response = await fetch(
-      `${testsBaseUrl}/public/${encodeURIComponent(missingFileName)}`
+      `${testsBaseUrl}/public/${encodeURIComponent(missingFileName)}`,
+      { headers: { 'x-token': token } }
     );
 
     expect(response.status).toBe(404);
@@ -344,7 +346,8 @@ describe('/public', () => {
     expect(dbFile).toBeDefined();
 
     const response = await fetch(
-      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`
+      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
+      { headers: { 'x-token': token } }
     );
 
     expect(response.status).toBe(403);
@@ -386,7 +389,8 @@ describe('/public', () => {
     expect(dbFile).toBeDefined();
 
     const response = await fetch(
-      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}?accessToken=invalid-token-xyz`
+      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}?accessToken=invalid-token-xyz`,
+      { headers: { 'x-token': token } }
     );
 
     expect(response.status).toBe(403);
@@ -440,7 +444,8 @@ describe('/public', () => {
 
     const validToken = generateFileToken(dbFile!.id, channel!.fileAccessToken);
     const response = await fetch(
-      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}?accessToken=${validToken}`
+      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}?accessToken=${validToken}`,
+      { headers: { 'x-token': token } }
     );
 
     expect(response.status).toBe(200);
@@ -515,7 +520,8 @@ describe('/public', () => {
     );
 
     const response = await fetch(
-      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}?accessToken=${wrongChannelToken}`
+      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}?accessToken=${wrongChannelToken}`,
+      { headers: { 'x-token': token } }
     );
 
     expect(response.status).toBe(403);
@@ -525,7 +531,7 @@ describe('/public', () => {
     expect(data).toHaveProperty('error', 'Forbidden');
   });
 
-  test('should allow access to public channel files without token', async () => {
+  test('should allow access to public channel files with auth token', async () => {
     const { caller } = await initTest();
 
     const channelId = await caller.channels.add({
@@ -562,7 +568,8 @@ describe('/public', () => {
     expect(dbFile).toBeDefined();
 
     const response = await fetch(
-      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`
+      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
+      { headers: { 'x-token': token } }
     );
 
     expect(response.status).toBe(200);
@@ -572,7 +579,7 @@ describe('/public', () => {
     expect(responseText).toBe(fileContent);
   });
 
-  test('should allow access to non-message files without token', async () => {
+  test('should return 401 when accessing files without auth token', async () => {
     const file = filesToCreate[0];
 
     expect(file).toBeDefined();
@@ -586,11 +593,11 @@ describe('/public', () => {
       `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`
     );
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(401);
 
-    const responseText = await response.text();
+    const data = (await response.json()) as { error: string };
 
-    expect(responseText).toBe(file!.content);
+    expect(data).toHaveProperty('error', 'Unauthorized');
   });
 
   test('should sanitize Content-Disposition header against injection', async () => {
@@ -604,7 +611,8 @@ describe('/public', () => {
     expect(dbFile).toBeDefined();
 
     const response = await fetch(
-      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`
+      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
+      { headers: { 'x-token': token } }
     );
 
     expect(response.status).toBe(200);
@@ -628,7 +636,8 @@ describe('/public', () => {
     const dbFile = await getFileByMessageId(file!.messageId!);
 
     const response = await fetch(
-      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`
+      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
+      { headers: { 'x-token': token } }
     );
 
     expect(response.status).toBe(200);
@@ -644,7 +653,7 @@ describe('/public', () => {
     const response = await fetch(
       `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
       {
-        headers: { Range: 'bytes=0-4' }
+        headers: { Range: 'bytes=0-4', 'x-token': token }
       }
     );
 
@@ -670,7 +679,7 @@ describe('/public', () => {
     const response = await fetch(
       `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
       {
-        headers: { Range: 'bytes=5-' }
+        headers: { Range: 'bytes=5-', 'x-token': token }
       }
     );
 
@@ -694,7 +703,7 @@ describe('/public', () => {
     const response = await fetch(
       `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
       {
-        headers: { Range: `bytes=${lastByteIndex}-${lastByteIndex}` }
+        headers: { Range: `bytes=${lastByteIndex}-${lastByteIndex}`, 'x-token': token }
       }
     );
 
@@ -714,7 +723,7 @@ describe('/public', () => {
     const response = await fetch(
       `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
       {
-        headers: { Range: `bytes=${totalSize}-${totalSize + 10}` }
+        headers: { Range: `bytes=${totalSize}-${totalSize + 10}`, 'x-token': token }
       }
     );
 
@@ -730,7 +739,7 @@ describe('/public', () => {
     const response = await fetch(
       `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
       {
-        headers: { Range: 'bytes=abc-def' }
+        headers: { Range: 'bytes=abc-def', 'x-token': token }
       }
     );
 
@@ -746,7 +755,7 @@ describe('/public', () => {
     const response = await fetch(
       `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
       {
-        headers: { Range: 'bytes=10-5' }
+        headers: { Range: 'bytes=10-5', 'x-token': token }
       }
     );
 

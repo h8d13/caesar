@@ -64,8 +64,8 @@ describe('sanitize-html', () => {
     ).toBe('');
   });
 
-  test('should strip <h1>-<h6> tags but keep content', () => {
-    expect(sanitizeMessageHtml('<h1>heading</h1>')).toBe('heading');
+  test('should preserve <h1>-<h6> tags', () => {
+    expect(sanitizeMessageHtml('<h1>heading</h1>')).toBe('<h1>heading</h1>');
   });
 
   test('should strip event handler attributes', () => {

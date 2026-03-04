@@ -178,7 +178,7 @@ describe('file manager', () => {
 
     expect(savedFile).toBeDefined();
     expect(savedFile.id).toBeGreaterThan(0);
-    expect(savedFile.name).toBe(testFileName);
+    expect(savedFile.name).toMatch(/^[0-9a-f-]+\.txt$/);
     expect(savedFile.originalName).toBe(testFileName);
     expect(savedFile.extension).toBe('.txt');
     expect(savedFile.size).toBe(stats.size);
@@ -470,7 +470,7 @@ describe('file manager', () => {
     expect(path1).not.toBe(path3);
   });
 
-  test('should append counter when same original name already exists', async () => {
+  test('should generate unique UUID names for same original name', async () => {
     const fileAPath = path.join(UPLOADS_PATH, `dup-${Date.now()}.txt`);
 
     await fs.writeFile(fileAPath, 'first');
@@ -505,8 +505,11 @@ describe('file manager', () => {
 
     tempFilesToCleanup.push(path.join(PUBLIC_PATH, savedB.name));
 
-    expect(savedA.name).toBe('my-file.txt');
-    expect(savedB.name).toBe('my-file-2.txt');
+    expect(savedA.name).toMatch(/^[0-9a-f-]+\.txt$/);
+    expect(savedB.name).toMatch(/^[0-9a-f-]+\.txt$/);
+    expect(savedA.name).not.toBe(savedB.name);
+    expect(savedA.originalName).toBe('my-file.txt');
+    expect(savedB.originalName).toBe('my-file.txt');
 
     const dbA = await tdb
       .select()
@@ -521,9 +524,10 @@ describe('file manager', () => {
       .get();
 
     expect(dbA).toBeDefined();
-    expect(dbA?.name).toBe('my-file.txt');
+    expect(dbA?.name).toMatch(/^[0-9a-f-]+\.txt$/);
     expect(dbB).toBeDefined();
-    expect(dbB?.name).toBe('my-file-2.txt');
+    expect(dbB?.name).toMatch(/^[0-9a-f-]+\.txt$/);
+    expect(dbA?.name).not.toBe(dbB?.name);
   });
 
   test('temporaryFileExists returns correct boolean', async () => {
@@ -637,7 +641,7 @@ describe('file manager', () => {
     expect(p).not.toContain('.JPEG');
   });
 
-  test('should handle duplicate names with uppercase extensions', async () => {
+  test('should handle duplicate names with uppercase extensions using UUID names', async () => {
     const file1Path = path.join(UPLOADS_PATH, `dup-uc-${Date.now()}.txt`);
     const file2Path = path.join(UPLOADS_PATH, `dup-uc2-${Date.now()}.txt`);
 
@@ -669,7 +673,8 @@ describe('file manager', () => {
 
     tempFilesToCleanup.push(path.join(PUBLIC_PATH, saved2.name));
 
-    expect(saved1.name).toBe('report.txt');
-    expect(saved2.name).toBe('report-2.txt');
+    expect(saved1.name).toMatch(/^[0-9a-f-]+\.txt$/);
+    expect(saved2.name).toMatch(/^[0-9a-f-]+\.txt$/);
+    expect(saved1.name).not.toBe(saved2.name);
   });
 });
