@@ -62,7 +62,27 @@ const sanitizeFileName = (name: string): string | null => {
   return baseName;
 };
 
+const buildCsp = (nonce?: string): string => {
+  const scriptSrc = nonce
+    ? `'self' blob: data: 'unsafe-eval' 'nonce-${nonce}'`
+    : "'self' blob: data: 'unsafe-eval'";
+  const styleSrc = nonce ? `'self' 'nonce-${nonce}'` : "'self'";
+
+  return [
+    "default-src 'self'",
+    `script-src ${scriptSrc}`,
+    `style-src ${styleSrc}`,
+    "img-src 'self' data: blob: https:",
+    "connect-src 'self' wss: ws:",
+    "media-src 'self' blob:",
+    "font-src 'self'",
+    'frame-src https://www.youtube-nocookie.com',
+    "frame-ancestors 'none'"
+  ].join('; ');
+};
+
 export {
+  buildCsp,
   getJsonBody,
   getRequestPathname,
   hasPrefixPathSegment,

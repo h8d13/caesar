@@ -6,6 +6,7 @@ import { getWsInfo } from '../helpers/get-ws-info';
 import { logger } from '../logger';
 import { healthRouteHandler } from './healthz';
 import {
+  buildCsp,
   getRequestPathname,
   hasPrefixPathSegment,
   type HttpRouteHandler
@@ -88,10 +89,7 @@ const createHttpServer = async (port: number = config.server.port) => {
           'Strict-Transport-Security',
           'max-age=31536000; includeSubDomains'
         );
-        res.setHeader(
-          'Content-Security-Policy',
-          "default-src 'self'; script-src 'self' blob: data: 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' wss: ws:; media-src 'self' blob:; font-src 'self'; frame-src https://www.youtube-nocookie.com; frame-ancestors 'none'"
-        );
+        res.setHeader('Content-Security-Policy', buildCsp());
 
         const info = getWsInfo(undefined, req);
 
