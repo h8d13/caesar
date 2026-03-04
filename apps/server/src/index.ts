@@ -13,13 +13,13 @@ import chalk from 'chalk';
 import { config, SERVER_PRIVATE_IP } from './config';
 import { loadCrons } from './crons';
 import { loadDb } from './db';
+import { initCrash } from './games/crash/init';
 import { enqueueActivityLog } from './queues/activity-log';
 import { initVoiceRuntimes } from './runtimes';
 import { createServers } from './utils/create-servers';
 import { loadMediasoup } from './utils/mediasoup';
 import { printDebug } from './utils/print-debug';
 import './utils/updater';
-import { initCrash } from './games/crash/init';
 
 await loadDb();
 await createServers();

@@ -1,7 +1,7 @@
 export enum CrashPhase {
   BETTING = 'betting',
   FLYING = 'flying',
-  CRASHED = 'crashed',
+  CRASHED = 'crashed'
 }
 
 export type TCrashActiveBet = {

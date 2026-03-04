@@ -1,14 +1,13 @@
-import { eq, desc } from 'drizzle-orm';
 import {
   CrashPhase,
   type TCrashActiveBet,
   type TCrashRoundHistory,
   type TCrashRoundResult,
-  type TCrashStateUpdate,
+  type TCrashStateUpdate
 } from '@sharkord/shared/games/crash';
+import { desc, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { crashBets, crashRounds } from '../../db/schema';
-import type { TCrashLedgerCallbacks } from './types';
 import {
   BETTING_PHASE_DURATION_MS,
   CRASHED_PHASE_DURATION_MS,
@@ -16,8 +15,9 @@ import {
   MAX_BET,
   MIN_BET,
   MULTIPLIER_GROWTH_RATE,
-  MULTIPLIER_TICK_INTERVAL_MS,
+  MULTIPLIER_TICK_INTERVAL_MS
 } from './constants';
+import type { TCrashLedgerCallbacks } from './types';
 
 type ActiveBetInternal = {
   betId: number;
@@ -73,7 +73,7 @@ class CrashRuntime {
       multiplier: this.multiplier,
       phaseStartedAt: this.phaseStartedAt,
       phaseDuration: this.getPhaseDuration(),
-      bets: this.getPublicBets(),
+      bets: this.getPublicBets()
     };
   }
 
@@ -82,7 +82,7 @@ class CrashRuntime {
       .select({
         id: crashRounds.id,
         crashPoint: crashRounds.crashPoint,
-        createdAt: crashRounds.startedAt,
+        createdAt: crashRounds.startedAt
       })
       .from(crashRounds)
       .where(eq(crashRounds.endedAt, crashRounds.endedAt)) // just need non-null, use IS NOT NULL via raw
@@ -127,7 +127,7 @@ class CrashRuntime {
         userId,
         amount,
         ledgerEntryId,
-        createdAt: Date.now(),
+        createdAt: Date.now()
       })
       .returning({ id: crashBets.id })
       .get();
@@ -139,7 +139,7 @@ class CrashRuntime {
       amount,
       ledgerEntryId,
       cashedOutAt: null,
-      profit: null,
+      profit: null
     });
 
     this.notifyStateSubscribers();
@@ -167,8 +167,7 @@ class CrashRuntime {
 
     await this.callbacks.updateLedgerEntry(bet.ledgerEntryId, profit);
 
-    db
-      .update(crashBets)
+    db.update(crashBets)
       .set({ cashedOutAt: currentMultiplier, profit })
       .where(eq(crashBets.id, bet.betId))
       .run();
@@ -191,7 +190,7 @@ class CrashRuntime {
       .values({
         crashPoint: this.crashPoint,
         hash: this.hashCrashPoint(this.crashPoint),
-        startedAt: this.phaseStartedAt,
+        startedAt: this.phaseStartedAt
       })
       .returning({ id: crashRounds.id })
       .get();
@@ -257,8 +256,7 @@ class CrashRuntime {
     this.phase = CrashPhase.CRASHED;
     this.phaseStartedAt = Date.now();
 
-    db
-      .update(crashRounds)
+    db.update(crashRounds)
       .set({ endedAt: Date.now() })
       .where(eq(crashRounds.id, this.roundId))
       .run();
@@ -266,7 +264,7 @@ class CrashRuntime {
     const result: TCrashRoundResult = {
       roundId: this.roundId,
       crashPoint: this.crashPoint,
-      bets: this.getPublicBets(),
+      bets: this.getPublicBets()
     };
 
     this.notifyStateSubscribers();
@@ -279,10 +277,7 @@ class CrashRuntime {
 
   private generateCrashPoint(): number {
     const r = Math.random();
-    return Math.max(
-      1,
-      Math.floor(((1 - HOUSE_EDGE) / r) * 100) / 100
-    );
+    return Math.max(1, Math.floor(((1 - HOUSE_EDGE) / r) * 100) / 100);
   }
 
   private hashCrashPoint(point: number): string {
@@ -297,7 +292,7 @@ class CrashRuntime {
       userName: b.userName,
       amount: b.amount,
       cashedOutAt: b.cashedOutAt,
-      profit: b.profit,
+      profit: b.profit
     }));
   }
 

@@ -1,16 +1,12 @@
-import { observable } from '@trpc/server/observable';
-import { TRPCError } from '@trpc/server';
-import { z } from 'zod';
 import type {
   TCrashRoundResult,
-  TCrashStateUpdate,
+  TCrashStateUpdate
 } from '@sharkord/shared/games/crash';
-import {
-  protectedProcedure,
-  rateLimitedProcedure,
-  t,
-} from '../../utils/trpc';
-import { MIN_BET, MAX_BET } from './constants';
+import { TRPCError } from '@trpc/server';
+import { observable } from '@trpc/server/observable';
+import { z } from 'zod';
+import { protectedProcedure, rateLimitedProcedure, t } from '../../utils/trpc';
+import { MAX_BET, MIN_BET } from './constants';
 import type { CrashRuntime } from './runtime';
 
 let runtime: CrashRuntime;
@@ -32,7 +28,7 @@ const getHistoryRoute = protectedProcedure
 const placeBetRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: 5,
   windowMs: 10_000,
-  logLabel: 'crash.placeBet',
+  logLabel: 'crash.placeBet'
 })
   .input(z.object({ amount: z.number().int().min(MIN_BET).max(MAX_BET) }))
   .mutation(async ({ ctx, input }) => {
@@ -41,7 +37,7 @@ const placeBetRoute = rateLimitedProcedure(protectedProcedure, {
     } catch (e) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: e instanceof Error ? e.message : 'Failed to place bet',
+        message: e instanceof Error ? e.message : 'Failed to place bet'
       });
     }
   });
@@ -49,18 +45,17 @@ const placeBetRoute = rateLimitedProcedure(protectedProcedure, {
 const cashOutRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: 5,
   windowMs: 10_000,
-  logLabel: 'crash.cashOut',
-})
-  .mutation(async ({ ctx }) => {
-    try {
-      await runtime.cashOut(ctx.userId);
-    } catch (e) {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: e instanceof Error ? e.message : 'Failed to cash out',
-      });
-    }
-  });
+  logLabel: 'crash.cashOut'
+}).mutation(async ({ ctx }) => {
+  try {
+    await runtime.cashOut(ctx.userId);
+  } catch (e) {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: e instanceof Error ? e.message : 'Failed to cash out'
+    });
+  }
+});
 
 const onStateUpdateRoute = protectedProcedure.subscription(() => {
   return observable<TCrashStateUpdate>((observer) => {
@@ -82,7 +77,7 @@ const crashRouter = t.router({
   placeBet: placeBetRoute,
   cashOut: cashOutRoute,
   onStateUpdate: onStateUpdateRoute,
-  onRoundResult: onRoundResultRoute,
+  onRoundResult: onRoundResultRoute
 });
 
 export { crashRouter, setRuntime };

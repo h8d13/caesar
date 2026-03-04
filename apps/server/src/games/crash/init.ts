@@ -1,9 +1,9 @@
 import { eq, sql } from 'drizzle-orm';
 import { db } from '../../db';
-import { socialCreditLedger } from '../../db/schema';
 import { publishUser } from '../../db/publishers';
-import { CrashRuntime } from './runtime';
+import { socialCreditLedger } from '../../db/schema';
 import { setRuntime } from './router';
+import { CrashRuntime } from './runtime';
 
 const initCrash = async () => {
   const runtime = new CrashRuntime({
@@ -15,7 +15,7 @@ const initCrash = async () => {
           ledgerableType: 'crash',
           ledgerableId: roundId,
           amount,
-          createdAt: Date.now(),
+          createdAt: Date.now()
         })
         .returning({ id: socialCreditLedger.id })
         .get();
@@ -33,13 +33,13 @@ const initCrash = async () => {
     getBalance: async (userId) => {
       const result = db
         .select({
-          balance: sql<number>`COALESCE(SUM(${socialCreditLedger.amount}), 0)`,
+          balance: sql<number>`COALESCE(SUM(${socialCreditLedger.amount}), 0)`
         })
         .from(socialCreditLedger)
         .where(eq(socialCreditLedger.targetId, userId))
         .get();
       return result?.balance ?? 0;
-    },
+    }
   });
 
   setRuntime(runtime);
