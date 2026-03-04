@@ -8,11 +8,14 @@ import {
     Tooltip
 } from '@sharkord/ui';
 import { Music, Search, Volume2 } from 'lucide-react';
-import { memo, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
+
+const COOLDOWN_MS = 500;
 
 const SoundboardPopover = memo(() => {
     const sounds = useSounds();
     const [search, setSearch] = useState('');
+    const lastPlayedRef = useRef(0);
 
     const filtered = useMemo(
         () =>
@@ -22,10 +25,14 @@ const SoundboardPopover = memo(() => {
         [sounds, search]
     );
 
-    const playSound = (soundId: number) => {
+    const playSound = useCallback((soundId: number) => {
+        const now = Date.now();
+        if (now - lastPlayedRef.current < COOLDOWN_MS) return;
+        lastPlayedRef.current = now;
+
         const trpc = getTRPCClient();
         trpc.voice.playSoundboard.mutate({ soundId });
-    };
+    }, []);
 
     return (
         <Popover>

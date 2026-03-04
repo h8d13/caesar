@@ -14,7 +14,7 @@ import {
     Slider,
     Tooltip
 } from '@sharkord/ui';
-import { Headphones, Monitor, Volume2, VolumeX } from 'lucide-react';
+import { Headphones, Monitor, Music, Volume2, VolumeX } from 'lucide-react';
 import { memo, useMemo } from 'react';
 
 type AudioStreamControlProps = {
@@ -31,8 +31,11 @@ type VolumeControllerProps = {
 enum AudioStreamType {
     Voice = 0,
     External = 1,
-    ScreenShare = 2
+    ScreenShare = 2,
+    Soundboard = 3
 }
+
+const SOUNDBOARD_VOLUME_KEY = 'soundboard' as const;
 
 type AudioStream = {
     volumeKey: TVolumeKey;
@@ -61,6 +64,9 @@ const AudioStreamControl = memo(
                     <span className="text-sm truncate flex-1">{name}</span>
                     {type === AudioStreamType.ScreenShare && (
                         <Monitor className="h-3 w-3 text-muted-foreground" />
+                    )}
+                    {type === AudioStreamType.Soundboard && (
+                        <Music className="h-3 w-3 text-muted-foreground" />
                     )}
                 </div>
 
@@ -135,6 +141,12 @@ const VolumeController = memo(({ channelId }: VolumeControllerProps) => {
                 name: stream.title || 'External Audio',
                 type: AudioStreamType.External
             });
+        });
+
+        streams.push({
+            volumeKey: SOUNDBOARD_VOLUME_KEY,
+            name: 'Soundboard',
+            type: AudioStreamType.Soundboard
         });
 
         return streams;
