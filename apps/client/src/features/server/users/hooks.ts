@@ -1,7 +1,6 @@
 import type { IRootState } from '@/features/store';
 import { useSelector } from 'react-redux';
 import {
-    filteredUsersSelector,
     isOwnUserSelector,
     ownPublicUserSelector,
     ownUserIdSelector,
@@ -32,4 +31,3 @@ export const useUserStatus = (userId: number) =>
 
 export const useUsernames = () => useSelector(usernamesSelector);
 
-export const useFilteredUsers = () => useSelector(filteredUsersSelector);

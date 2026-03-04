@@ -5,7 +5,6 @@ import {
     autoJoinLastChannelSelector,
     browserNotificationsForMentionsSelector,
     browserNotificationsSelector,
-    devicesSelector,
     dmsOpenSelector,
     isAutoConnectingSelector,
     modViewOpenSelector,
@@ -17,8 +16,6 @@ import {
 export const useIsAppLoading = () => useSelector(appLoadingSelector);
 
 export const useIsAutoConnecting = () => useSelector(isAutoConnectingSelector);
-
-export const useDevices = () => useSelector(devicesSelector);
 
 export const useModViewOpen = () => {
     const isOpen = useSelector(modViewOpenSelector);

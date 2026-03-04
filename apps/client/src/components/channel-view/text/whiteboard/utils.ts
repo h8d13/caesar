@@ -161,19 +161,6 @@ export function resizeBounds(
     return result;
 }
 
-export function randomBorderColor(): string {
-    const borderColors = [
-        'border-red-500',
-        'border-blue-500',
-        'border-green-500',
-        'border-purple-500',
-        'border-yellow-500',
-        'border-pink-500',
-        'border-cyan-500'
-    ];
-    return borderColors[Math.floor(Math.random() * borderColors.length)];
-}
-
 export function calculateFontSize(width: number, height: number): number {
     const maxFontSize = 36;
     const scaleFactor = 0.15;

@@ -60,6 +60,4 @@ const setTestDb = (newDb: BunSQLiteDatabase) => {
   tdb = newDb;
 };
 
-const getTestDb = () => tdb;
-
-export { DRIZZLE_PATH, getTestDb, setTestDb };
+export { DRIZZLE_PATH, setTestDb };

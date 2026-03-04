@@ -12,10 +12,6 @@ export const addChannelUnreadMention = (channelId: number) => {
     store.dispatch(serverSliceActions.addChannelUnreadMention(channelId));
 };
 
-export const setChannels = (channels: TChannel[]) => {
-    store.dispatch(serverSliceActions.setChannels(channels));
-};
-
 export const setSelectedChannelId = (channelId: number | undefined) => {
     store.dispatch(serverSliceActions.setSelectedChannelId(channelId));
 };

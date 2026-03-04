@@ -4,7 +4,6 @@ import { getTRPCClient } from '@/lib/trpc';
 import {
     DELETED_USER_IDENTITY_AND_NAME,
     parseTrpcErrors,
-    Permission,
     STORAGE_DEFAULT_MAX_AVATAR_SIZE,
     STORAGE_DEFAULT_MAX_BANNER_SIZE,
     STORAGE_DEFAULT_MAX_FILES_PER_MESSAGE,
@@ -33,8 +32,6 @@ import {
 import { filesize } from 'filesize';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { useCan } from '../hooks';
-
 // TODO: review this whole file for optimizations and improvements
 
 export const useAdminGeneral = () => {
@@ -171,31 +168,6 @@ export const useAdminUpdates = () => {
         errors,
         update
     };
-};
-
-export const useHasUpdates = () => {
-    const can = useCan();
-    const [hasUpdates, setHasUpdates] = useState(false);
-
-    const fetchHasUpdates = useCallback(async () => {
-        if (!can(Permission.MANAGE_UPDATES)) return;
-
-        const trpc = getTRPCClient();
-
-        try {
-            const { hasUpdate } = await trpc.others.getUpdate.query();
-
-            setHasUpdates(hasUpdate);
-        } catch (error) {
-            console.error('Error fetching update status:', error);
-        }
-    }, [can]);
-
-    useEffect(() => {
-        fetchHasUpdates();
-    }, [fetchHasUpdates]);
-
-    return hasUpdates;
 };
 
 export const useAdminChannelGeneral = (channelId: number) => {

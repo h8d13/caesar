@@ -36,4 +36,7 @@ jobs:
       - name: Run tests
         run: bun run test
 
+      - name: Check unused code
+        run: bunx knip
+
 

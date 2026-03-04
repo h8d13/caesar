@@ -13,24 +13,12 @@ import { type TDisconnectInfo } from './types';
 
 let unsubscribeFromServer: (() => void) | null = null;
 
-export const setConnected = (status: boolean) => {
-    store.dispatch(serverSliceActions.setConnected(status));
-};
-
 export const resetServerState = () => {
     store.dispatch(serverSliceActions.resetState());
 };
 
 export const setDisconnectInfo = (info: TDisconnectInfo | undefined) => {
     store.dispatch(serverSliceActions.setDisconnectInfo(info));
-};
-
-export const setConnecting = (status: boolean) => {
-    store.dispatch(serverSliceActions.setConnecting(status));
-};
-
-export const setServerId = (id: string) => {
-    store.dispatch(serverSliceActions.setServerId(id));
 };
 
 export const setPublicServerSettings = (

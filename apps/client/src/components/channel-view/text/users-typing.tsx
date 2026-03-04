@@ -1,5 +1,4 @@
 import { TypingDots } from '@/components/typing-dots';
-import { useTypingUsersByChannelId } from '@/features/server/hooks';
 import type { TJoinedPublicUser } from '@sharkord/shared';
 import { memo } from 'react';
 
@@ -28,14 +27,4 @@ const UsersTypingIndicator = memo(
     }
 );
 
-type TUsersTypingProps = {
-    channelId: number;
-};
-
-const UsersTyping = memo(({ channelId }: TUsersTypingProps) => {
-    const typingUsers = useTypingUsersByChannelId(channelId);
-
-    return <UsersTypingIndicator typingUsers={typingUsers} />;
-});
-
-export { UsersTyping, UsersTypingIndicator };
+export { UsersTypingIndicator };

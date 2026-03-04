@@ -2,10 +2,6 @@ import { store } from '@/features/store';
 import type { TJoinedSound } from '@sharkord/shared';
 import { serverSliceActions } from '../slice';
 
-export const setSounds = (sounds: TJoinedSound[]) => {
-    store.dispatch(serverSliceActions.setSounds(sounds));
-};
-
 export const addSound = (sound: TJoinedSound) => {
     store.dispatch(serverSliceActions.addSound(sound));
 };

@@ -3,8 +3,6 @@ import { createCachedSelector } from 're-reselect';
 
 const DEFAULT_OBJECT = {};
 
-export const voiceMapSelector = (state: IRootState) => state.server.voiceMap;
-
 export const ownVoiceStateSelector = (state: IRootState) => {
     return state.server.ownVoiceState;
 };

@@ -35,9 +35,6 @@ export const connectingSelector = (state: IRootState) =>
 export const serverNameSelector = (state: IRootState) =>
     state.server.publicSettings?.name;
 
-export const serverIdSelector = (state: IRootState) =>
-    state.server.publicSettings?.serverId;
-
 export const publicServerSettingsSelector = (state: IRootState) =>
     state.server.publicSettings;
 
@@ -85,11 +82,6 @@ export const userRolesSelector = createSelector(
         if (!user?.roleIds) return [];
         return roles.filter((role) => user.roleIds.includes(role.id));
     }
-);
-
-export const userRolesIdsSelector = createSelector(
-    [userByIdSelector],
-    (user) => user?.roleIds || []
 );
 
 export const typingUsersByChannelIdSelector = createCachedSelector(

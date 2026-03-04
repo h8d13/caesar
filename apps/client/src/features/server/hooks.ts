@@ -9,7 +9,6 @@ import {
 } from './channels/selectors';
 import {
     connectedSelector,
-    connectingSelector,
     disconnectInfoSelector,
     hasUnreadMentionsSelector,
     hasVisibleChannelsInCategorySelector,
@@ -27,8 +26,6 @@ import {
 import { hasSharingScreenUsersSelector } from './voice/selectors';
 
 export const useIsConnected = () => useSelector(connectedSelector);
-
-export const useIsConnecting = () => useSelector(connectingSelector);
 
 export const useDisconnectInfo = () => useSelector(disconnectInfoSelector);
 
