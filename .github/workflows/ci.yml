@@ -9,7 +9,7 @@ on:
 
 jobs:
   ci:
-    name: - Lint | Typecheck | Format | Tests
+    name: Lint | Typecheck | Format | Tests
     runs-on: ubuntu-latest
 
     steps:
