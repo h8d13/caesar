@@ -52,7 +52,15 @@ const MessageScVotes = memo(
 
         return (
             <div className="flex items-center gap-0.5 select-none">
-                <Tooltip content={isOwnMessage ? "Can't vote on your own message" : ownVote === 1 ? 'Remove upvote' : 'Upvote (+1 SC)'}>
+                <Tooltip
+                    content={
+                        isOwnMessage
+                            ? "Can't vote on your own message"
+                            : ownVote === 1
+                              ? 'Remove upvote'
+                              : 'Upvote (+1 SC)'
+                    }
+                >
                     <button
                         type="button"
                         disabled={isOwnMessage}
@@ -78,7 +86,15 @@ const MessageScVotes = memo(
                         {score > 0 ? `+${score}` : score}
                     </span>
                 )}
-                <Tooltip content={isOwnMessage ? "Can't vote on your own message" : ownVote === -1 ? 'Remove downvote' : 'Downvote (-1 SC)'}>
+                <Tooltip
+                    content={
+                        isOwnMessage
+                            ? "Can't vote on your own message"
+                            : ownVote === -1
+                              ? 'Remove downvote'
+                              : 'Downvote (-1 SC)'
+                    }
+                >
                     <button
                         type="button"
                         disabled={isOwnMessage}

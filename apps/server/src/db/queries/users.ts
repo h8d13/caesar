@@ -9,9 +9,9 @@ import jwt from 'jsonwebtoken';
 import { db } from '..';
 import type { TTokenPayload } from '../../types';
 import { files, userRoles, users } from '../schema';
+import { getServerToken } from './server';
 
 const socialCreditSubquery = sql<number>`(SELECT COALESCE(SUM(amount), 0) FROM social_credit_ledger WHERE target_id = ${users.id})`;
-import { getServerToken } from './server';
 
 const getPublicUserById = async (
   userId: number
