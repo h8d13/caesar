@@ -2,7 +2,6 @@ import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
 import { playSound } from '@/features/server/sounds/actions';
 import { SoundType } from '@/features/server/types';
 import { useOwnVoiceState } from '@/features/server/voice/hooks';
-import { soundboardAudioRef } from '@/features/server/voice/soundboard-audio';
 import {
     MICROPHONE_GATE_CLOSE_HOLD_MS,
     MICROPHONE_GATE_DEFAULT_THRESHOLD_DB,
@@ -813,11 +812,6 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
         clearRemoteUserStreams();
         clearExternalStreams();
         cleanupTransports();
-
-        if (soundboardAudioRef.current) {
-            soundboardAudioRef.current.pause();
-            soundboardAudioRef.current = null;
-        }
 
         setConnectionStatus(ConnectionStatus.DISCONNECTED);
     }, [
