@@ -69,6 +69,10 @@ type Events = {
     channelId: number;
     userId: number;
   };
+  [ServerEvents.VOICE_CHANNEL_STATE_UPDATE]: {
+    channelId: number;
+    activeSince: number | null;
+  };
   [ServerEvents.USER_VOICE_STATE_UPDATE]: {
     channelId: number;
     userId: number;

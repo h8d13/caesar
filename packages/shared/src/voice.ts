@@ -24,6 +24,7 @@ export type TExternalStream = {
 export type TChannelState = {
   users: TVoiceUser[];
   externalStreams: { [streamId: number]: TExternalStream };
+  activeSince: number | null;
 };
 
 export type TTransportParams = {
@@ -33,12 +34,15 @@ export type TTransportParams = {
   dtlsParameters: any;
 };
 
-export type TVoiceMap = {
-  [channelId: number]: {
-    users: {
-      [userId: number]: TVoiceUserState;
-    };
+export type TPublicVoiceChannelState = {
+  users: {
+    [userId: number]: TVoiceUserState;
   };
+  activeSince: number | null;
+};
+
+export type TVoiceMap = {
+  [channelId: number]: TPublicVoiceChannelState;
 };
 
 export type TExternalStreamsMap = {

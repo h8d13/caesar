@@ -1,13 +1,7 @@
 import { ensureHljsTheme } from '@/components/hljs-theme';
-import {
-    audioExtensions,
-    imageExtensions,
-    parseDomCommand,
-    videoExtensions
-} from '@sharkord/shared';
+import { audioExtensions, imageExtensions, videoExtensions } from '@sharkord/shared';
 import hljs from 'highlight.js/lib/common';
 import { Element, type DOMNode } from 'html-react-parser';
-import { CommandOverride } from '../overrides/command';
 import { LinkOverride } from '../overrides/link';
 import { MentionOverride } from '../overrides/mention';
 import type { TFoundMedia } from './types';
@@ -106,10 +100,6 @@ const serializer = (
                 const label = getTextContent(domNode);
                 return <LinkOverride link={href} label={label || undefined} />;
             }
-        } else if (domNode instanceof Element && domNode.name === 'command') {
-            const command = parseDomCommand(domNode);
-
-            return <CommandOverride command={command} />;
         } else if (
             domNode instanceof Element &&
             domNode.name === 'span' &&

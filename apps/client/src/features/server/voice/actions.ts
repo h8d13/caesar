@@ -66,6 +66,15 @@ export const removeUserFromVoiceChannel = (
     }
 };
 
+export const updateVoiceChannelState = (
+    channelId: number,
+    activeSince: number | null
+): void => {
+    store.dispatch(
+        serverSliceActions.updateVoiceChannelState({ channelId, activeSince })
+    );
+};
+
 export const addExternalStreamToVoiceChannel = (
     channelId: number,
     streamId: number,

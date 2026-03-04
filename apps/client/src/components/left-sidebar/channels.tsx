@@ -43,6 +43,7 @@ import { memo, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { ChannelContextMenu } from '../context-menus/channel';
 import { UnreadCount } from '../unread-count';
+import { CallTime } from './call-time';
 import { ExternalStream } from './external-stream';
 import { useSelectChannel } from './hooks';
 import { VoiceUser } from './voice-user';
@@ -77,7 +78,10 @@ const Voice = memo(({ channel, ...props }: TVoiceProps) => {
                 ) : (
                     <Volume2 className="h-4 w-4" />
                 )}
-                <span className="flex-1 truncate">{channel.name}</span>
+                <span className="flex items-center flex-1">
+                    <span className="truncate">{channel.name}</span>
+                    <CallTime channelId={channel.id} />
+                </span>
                 {hasUnreadMention && (
                     <span
                         className="ml-1 h-2 w-2 shrink-0 rounded-full bg-red-500"

@@ -11,6 +11,7 @@ import {
     removeExternalStreamFromVoiceChannel,
     removeUserFromVoiceChannel,
     updateExternalStreamInVoiceChannel,
+    updateVoiceChannelState,
     updateVoiceUserState
 } from './actions';
 
@@ -47,6 +48,17 @@ const subscribeToVoice = () => {
         onError: (err) =>
             console.error('onUserUpdateVoice subscription error:', err)
     });
+
+    const onVoiceChannelStateSub = trpc.voice.onChannelState.subscribe(
+        undefined,
+        {
+            onData: ({ channelId, activeSince }) => {
+                updateVoiceChannelState(channelId, activeSince);
+            },
+            onError: (err) =>
+                console.error('onVoiceChannelStateSub subscription error:', err)
+        }
+    );
 
     const onVoiceAddExternalStreamSub =
         trpc.voice.onAddExternalStream.subscribe(undefined, {
@@ -134,6 +146,7 @@ const subscribeToVoice = () => {
         onUserJoinVoiceSub.unsubscribe();
         onUserLeaveVoiceSub.unsubscribe();
         onUserUpdateVoiceSub.unsubscribe();
+        onVoiceChannelStateSub.unsubscribe();
         onVoiceAddExternalStreamSub.unsubscribe();
         onVoiceUpdateExternalStreamSub.unsubscribe();
         onVoiceRemoveExternalStreamSub.unsubscribe();
