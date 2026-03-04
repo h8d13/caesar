@@ -1,5 +1,5 @@
 import type { TInvite, TJoinedInvite } from '@sharkord/shared';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { db } from '..';
 import { files, invites, roles, userRoles, users } from '../schema';
@@ -48,7 +48,7 @@ const getInvites = async (): Promise<TJoinedInvite[]> => {
         createdAt: users.createdAt,
         avatarId: users.avatarId,
         bannerId: users.bannerId,
-        socialCredit: users.socialCredit
+        socialCredit: sql<number>`(SELECT COALESCE(SUM(amount), 0) FROM social_credit_ledger WHERE target_id = ${users.id})`
       },
       avatar: avatarFiles,
       banner: bannerFiles,

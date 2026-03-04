@@ -17,6 +17,7 @@ import {
   rolePermissions,
   roles,
   settings,
+  socialCreditLedger,
   socialCreditVotes,
   sounds,
   userRoles,
@@ -78,6 +79,8 @@ export type TIChannelReadState = InferInsertModel<typeof channelReadStates>;
 export type TIDirectMessage = InferInsertModel<typeof directMessages>;
 export type TSocialCreditVote = InferSelectModel<typeof socialCreditVotes>;
 export type TISocialCreditVote = InferInsertModel<typeof socialCreditVotes>;
+export type TSocialCreditLedger = InferSelectModel<typeof socialCreditLedger>;
+export type TISocialCreditLedger = InferInsertModel<typeof socialCreditLedger>;
 
 export type TStorageSettings = Pick<
   TSettings,
@@ -120,9 +123,15 @@ export type TJoinedMessageReaction = TMessageReaction & {
   file: TFile | null;
 };
 
+export type TMessageScVote = {
+  voterId: number;
+  value: number;
+};
+
 export type TJoinedMessage = TMessage & {
   files: TFile[];
   reactions: TJoinedMessageReaction[];
+  scVotes: TMessageScVote[];
   replyCount?: number;
   replyTo?: { id: number; content: string | null; userId: number } | null;
 };
@@ -141,6 +150,7 @@ export type TJoinedUser = TUser & {
   avatar: TFile | null;
   banner: TFile | null;
   roleIds: number[];
+  socialCredit: number;
 };
 
 export type TJoinedPublicUser = TPublicUser & {

@@ -3,12 +3,14 @@ import {
   type TJoinedUser,
   type TStorageData
 } from '@sharkord/shared';
-import { count, eq, sum } from 'drizzle-orm';
+import { count, eq, sql, sum } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import jwt from 'jsonwebtoken';
 import { db } from '..';
 import type { TTokenPayload } from '../../types';
 import { files, userRoles, users } from '../schema';
+
+const socialCreditSubquery = sql<number>`(SELECT COALESCE(SUM(amount), 0) FROM social_credit_ledger WHERE target_id = ${users.id})`;
 import { getServerToken } from './server';
 
 const getPublicUserById = async (
@@ -28,7 +30,7 @@ const getPublicUserById = async (
       bannerId: users.bannerId,
       avatar: avatarFiles,
       banner: bannerFiles,
-      socialCredit: users.socialCredit,
+      socialCredit: socialCreditSubquery,
       createdAt: users.createdAt
     })
     .from(users)
@@ -79,7 +81,7 @@ const getPublicUsers = async (
         bannerId: users.bannerId,
         avatar: avatarFiles,
         banner: bannerFiles,
-        socialCredit: users.socialCredit,
+        socialCredit: socialCreditSubquery,
         createdAt: users.createdAt,
         _identity: users.identity
       })
@@ -132,7 +134,7 @@ const getPublicUsers = async (
         bannerId: users.bannerId,
         avatar: avatarFiles,
         banner: bannerFiles,
-        socialCredit: users.socialCredit,
+        socialCredit: socialCreditSubquery,
         createdAt: users.createdAt
       })
       .from(users)
@@ -215,7 +217,7 @@ const getUserById = async (
       banned: users.banned,
       banReason: users.banReason,
       bannedAt: users.bannedAt,
-      socialCredit: users.socialCredit,
+      socialCredit: socialCreditSubquery,
       avatar: avatarFiles,
       banner: bannerFiles
     })
@@ -264,7 +266,7 @@ const getUserByIdentity = async (
       banned: users.banned,
       banReason: users.banReason,
       bannedAt: users.bannedAt,
-      socialCredit: users.socialCredit,
+      socialCredit: socialCreditSubquery,
       avatar: avatarFiles,
       banner: bannerFiles
     })
@@ -323,7 +325,7 @@ const getUsers = async (): Promise<TJoinedUser[]> => {
       banned: users.banned,
       banReason: users.banReason,
       bannedAt: users.bannedAt,
-      socialCredit: users.socialCredit,
+      socialCredit: socialCreditSubquery,
       avatar: avatarFiles,
       banner: bannerFiles
     })

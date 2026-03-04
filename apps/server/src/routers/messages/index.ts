@@ -17,6 +17,7 @@ import { sendMessageRoute } from './send-message';
 import { signalTypingRoute } from './signal-typing';
 import { toggleMessagePinRoute } from './toggle-message-pin';
 import { toggleMessageReactionRoute } from './toggle-message-reaction';
+import { toggleMessageScVoteRoute } from './toggle-message-sc-vote';
 
 export const messagesRouter = t.router({
   search: searchMessagesRoute,
@@ -28,6 +29,7 @@ export const messagesRouter = t.router({
   getOne: getMessageRoute,
   getThread: getThreadMessagesRoute,
   toggleReaction: toggleMessageReactionRoute,
+  toggleScVote: toggleMessageScVoteRoute,
   togglePin: toggleMessagePinRoute,
   signalTyping: signalTypingRoute,
   onNew: onMessageRoute,
