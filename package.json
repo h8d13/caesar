@@ -22,7 +22,5 @@
   "devDependencies": {
     "knip": "^5.85.0"
   },
-  "dependencies": {
-    "systeminformation": "^5.31.2"
-  }
+  "dependencies": {}
 }
