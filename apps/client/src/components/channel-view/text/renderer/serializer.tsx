@@ -1,5 +1,9 @@
 import { ensureHljsTheme } from '@/components/hljs-theme';
-import { audioExtensions, imageExtensions, videoExtensions } from '@sharkord/shared';
+import {
+    audioExtensions,
+    imageExtensions,
+    videoExtensions
+} from '@sharkord/shared';
 import hljs from 'highlight.js/lib/common';
 import { Element, type DOMNode } from 'html-react-parser';
 import { LinkOverride } from '../overrides/link';
