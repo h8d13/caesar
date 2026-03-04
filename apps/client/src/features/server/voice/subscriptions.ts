@@ -144,9 +144,18 @@ const subscribeToVoice = () => {
                         const audio = new Audio(url);
                         audio.volume = volume / 100;
                         setActiveSoundboardAudio(audio);
-                        audio.addEventListener('ended', () => { if (getActiveSoundboardAudio() === audio) setActiveSoundboardAudio(null); });
-                        audio.addEventListener('error', () => { if (getActiveSoundboardAudio() === audio) setActiveSoundboardAudio(null); });
-                        audio.play().catch(() => { if (getActiveSoundboardAudio() === audio) setActiveSoundboardAudio(null); });
+                        audio.addEventListener('ended', () => {
+                            if (getActiveSoundboardAudio() === audio)
+                                setActiveSoundboardAudio(null);
+                        });
+                        audio.addEventListener('error', () => {
+                            if (getActiveSoundboardAudio() === audio)
+                                setActiveSoundboardAudio(null);
+                        });
+                        audio.play().catch(() => {
+                            if (getActiveSoundboardAudio() === audio)
+                                setActiveSoundboardAudio(null);
+                        });
                     }
                 }
             },

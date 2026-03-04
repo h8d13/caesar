@@ -7,7 +7,14 @@ import { useVoice } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
 import { ChannelPermission } from '@sharkord/shared';
 import { Button } from '@sharkord/ui';
-import { HeadphoneOff, Headphones, Mic, MicOff, Rocket, Settings } from 'lucide-react';
+import {
+    HeadphoneOff,
+    Headphones,
+    Mic,
+    MicOff,
+    Rocket,
+    Settings
+} from 'lucide-react';
 import { memo, useCallback } from 'react';
 import { ServerScreen } from '../server-screens/screens';
 import { UserAvatar } from '../user-avatar';

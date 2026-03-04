@@ -1,5 +1,5 @@
 import { Protect } from '@/components/protect';
-import { Permission } from '@sharkord/shared/src/statics/permissions';
+import { Permission } from '@sharkord/shared';
 import {
     Card,
     CardContent,
