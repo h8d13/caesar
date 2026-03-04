@@ -12,14 +12,14 @@ import {
   applyWSSHandler,
   type CreateWSSContextFnOptions
 } from '@trpc/server/adapters/ws';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import http from 'http';
 import { WebSocketServer } from 'ws';
 import { db } from '../db';
 import { getAllChannelUserPermissions } from '../db/queries/channels';
 import { isUserDmParticipant } from '../db/queries/dms';
 import { getUserById, getUserByToken } from '../db/queries/users';
-import { channels, users } from '../db/schema';
+import { channels, socialCreditLedger } from '../db/schema';
 import { getWsInfo } from '../helpers/get-ws-info';
 import { logger } from '../logger';
 import { enqueueActivityLog } from '../queues/activity-log';
@@ -277,12 +277,14 @@ const createWsServer = async (server: http.Server) => {
             const award = Math.min(earned, remaining);
 
             if (award > 0) {
-              await db
-                .update(users)
-                .set({
-                  socialCredit: sql`${users.socialCredit} + ${award}`
-                })
-                .where(eq(users.id, user.id));
+              await db.insert(socialCreditLedger).values({
+                targetId: user.id,
+                voterId: null,
+                ledgerableType: 'passive',
+                ledgerableId: null,
+                amount: award,
+                createdAt: Date.now()
+              });
 
               dailyPassiveCredit.set(user.id, {
                 earned: todayEarned + award,

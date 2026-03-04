@@ -19,6 +19,7 @@ import { memo, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { FileCard } from '../file-card';
 import { MessageReactions } from '../message-reactions';
+import { MessageScVotes } from '../message-sc-votes';
 import { AudioOverride } from '../overrides/audio';
 import { EmbedOverride } from '../overrides/embed';
 import { ImageOverride } from '../overrides/image';
@@ -189,10 +190,17 @@ const MessageRenderer = memo(
                 ))}
 
                 {!disableReactions && (
-                    <MessageReactions
-                        reactions={message.reactions}
-                        messageId={message.id}
-                    />
+                    <div className="flex items-center gap-2 mt-1">
+                        <MessageScVotes
+                            messageId={message.id}
+                            messageUserId={message.userId}
+                            scVotes={message.scVotes}
+                        />
+                        <MessageReactions
+                            reactions={message.reactions}
+                            messageId={message.id}
+                        />
+                    </div>
                 )}
 
                 {message.files.length > 0 && !disableFiles && (

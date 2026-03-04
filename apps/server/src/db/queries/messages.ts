@@ -3,7 +3,8 @@ import type {
   TJoinedMessage,
   TJoinedMessageReaction,
   TMessage,
-  TMessageReaction
+  TMessageReaction,
+  TMessageScVote
 } from '@sharkord/shared';
 import { and, count, desc, eq, inArray, notExists } from 'drizzle-orm';
 import { db } from '..';
@@ -14,7 +15,8 @@ import {
   files,
   messageFiles,
   messageReactions,
-  messages
+  messages,
+  socialCreditLedger
 } from '../schema';
 
 const getMessageByFileId = async (
@@ -95,6 +97,26 @@ const getMessage = async (
     file: r.file
   }));
 
+  const scVoteRows = await db
+    .select({
+      voterId: socialCreditLedger.voterId,
+      amount: socialCreditLedger.amount
+    })
+    .from(socialCreditLedger)
+    .where(
+      and(
+        eq(socialCreditLedger.ledgerableType, 'message_vote'),
+        eq(socialCreditLedger.ledgerableId, messageId)
+      )
+    );
+
+  const scVotes: TMessageScVote[] = scVoteRows
+    .filter((r): r is typeof r & { voterId: number } => r.voterId !== null)
+    .map((r) => ({
+      voterId: r.voterId,
+      value: r.amount
+    }));
+
   let replyCount = 0;
 
   if (!message.parentMessageId) {
@@ -129,6 +151,7 @@ const getMessage = async (
     ...message,
     files: filesForMessage ?? [],
     reactions: reactions ?? [],
+    scVotes,
     replyCount,
     replyTo
   };
@@ -181,7 +204,7 @@ const joinMessagesWithRelations = async (
 
   const messageIds = rows.map((m) => m.id);
 
-  const [fileRows, reactionRows] = await Promise.all([
+  const [fileRows, reactionRows, scVoteRows] = await Promise.all([
     db
       .select({
         messageId: messageFiles.messageId,
@@ -201,7 +224,20 @@ const joinMessagesWithRelations = async (
       })
       .from(messageReactions)
       .leftJoin(files, eq(messageReactions.fileId, files.id))
-      .where(inArray(messageReactions.messageId, messageIds))
+      .where(inArray(messageReactions.messageId, messageIds)),
+    db
+      .select({
+        ledgerableId: socialCreditLedger.ledgerableId,
+        voterId: socialCreditLedger.voterId,
+        amount: socialCreditLedger.amount
+      })
+      .from(socialCreditLedger)
+      .where(
+        and(
+          eq(socialCreditLedger.ledgerableType, 'message_vote'),
+          inArray(socialCreditLedger.ledgerableId, messageIds)
+        )
+      )
   ]);
 
   const filesByMessage = fileRows.reduce<Record<number, TFile[]>>(
@@ -247,6 +283,24 @@ const joinMessagesWithRelations = async (
     return acc;
   }, {});
 
+  const scVotesByMessage = scVoteRows.reduce<Record<number, TMessageScVote[]>>(
+    (acc, r) => {
+      if (r.ledgerableId == null || r.voterId == null) return acc;
+
+      if (!acc[r.ledgerableId]) {
+        acc[r.ledgerableId] = [];
+      }
+
+      acc[r.ledgerableId]!.push({
+        voterId: r.voterId,
+        value: r.amount
+      });
+
+      return acc;
+    },
+    {}
+  );
+
   const replyToIds = rows
     .map((m) => m.replyToMessageId)
     .filter((id): id is number => id != null);
@@ -279,6 +333,7 @@ const joinMessagesWithRelations = async (
     ...msg,
     files: filesByMessage[msg.id] ?? [],
     reactions: reactionsByMessage[msg.id] ?? [],
+    scVotes: scVotesByMessage[msg.id] ?? [],
     replyTo: msg.replyToMessageId
       ? (replyToByMessage[msg.replyToMessageId] ?? null)
       : null

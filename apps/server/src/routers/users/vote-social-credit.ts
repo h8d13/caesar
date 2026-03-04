@@ -1,8 +1,8 @@
-import { and, eq, gte, sql } from 'drizzle-orm';
+import { and, eq, gte } from 'drizzle-orm';
 import z from 'zod';
 import { db } from '../../db';
 import { publishUser } from '../../db/publishers';
-import { socialCreditVotes, users } from '../../db/schema';
+import { socialCreditLedger, socialCreditVotes, users } from '../../db/schema';
 import { invariant } from '../../utils/invariant';
 import { protectedProcedure } from '../../utils/trpc';
 
@@ -60,19 +60,23 @@ const voteSocialCreditRoute = protectedProcedure
 
     const value = input.type === 'upvote' ? UPVOTE_VALUE : DOWNVOTE_VALUE;
 
+    const now = Date.now();
+
     await db.insert(socialCreditVotes).values({
       voterId: ctx.user.id,
       targetId: input.targetUserId,
       value,
-      createdAt: Date.now()
+      createdAt: now
     });
 
-    await db
-      .update(users)
-      .set({
-        socialCredit: sql`${users.socialCredit} + ${value}`
-      })
-      .where(eq(users.id, input.targetUserId));
+    await db.insert(socialCreditLedger).values({
+      targetId: input.targetUserId,
+      voterId: ctx.user.id,
+      ledgerableType: 'user_vote',
+      ledgerableId: input.targetUserId,
+      amount: value,
+      createdAt: now
+    });
 
     await publishUser(input.targetUserId, 'update');
   });

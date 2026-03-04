@@ -222,7 +222,7 @@ const MessageReactions = memo(
         if (!aggregatedReactions.length) return null;
 
         return (
-            <div className="mt-1 flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1">
                 {aggregatedReactions.map((reaction) => (
                     <Reaction
                         key={reaction.emoji}
