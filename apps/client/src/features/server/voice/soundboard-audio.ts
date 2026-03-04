@@ -1,13 +1,5 @@
-let activeSoundboardAudio: HTMLAudioElement | null = null;
-
-export const getActiveSoundboardAudio = () => activeSoundboardAudio;
-
-export const setActiveSoundboardAudio = (audio: HTMLAudioElement | null) => {
-    activeSoundboardAudio = audio;
-};
-
-export const updateSoundboardVolume = (volume: number) => {
-    if (activeSoundboardAudio) {
-        activeSoundboardAudio.volume = volume / 100;
-    }
+// Shared ref for the active soundboard audio element.
+// Accessed by subscriptions.ts (writes) and SoundboardVolumeSync (reads volume reactively).
+export const soundboardAudioRef: { current: HTMLAudioElement | null } = {
+    current: null
 };

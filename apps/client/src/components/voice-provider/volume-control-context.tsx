@@ -1,4 +1,4 @@
-import { updateSoundboardVolume } from '@/features/server/voice/soundboard-audio';
+import { soundboardAudioRef } from '@/features/server/voice/soundboard-audio';
 import {
     getLocalStorageItemAsJSON,
     LocalStorageKey,
@@ -9,6 +9,7 @@ import {
     memo,
     useCallback,
     useContext,
+    useEffect,
     useRef,
     useState
 } from 'react';
@@ -56,6 +57,21 @@ const saveVolumesToStorage = (volumes: TVolumeSettings) => {
     }
 };
 
+// Syncs soundboard volume to the active audio element reactively,
+// same pattern as useVoiceRefs does for user/screen/external streams.
+const SoundboardVolumeSync = memo(() => {
+    const { getVolume } = useVolumeControl();
+    const volume = getVolume('soundboard');
+
+    useEffect(() => {
+        if (soundboardAudioRef.current) {
+            soundboardAudioRef.current.volume = volume / 100;
+        }
+    }, [volume]);
+
+    return null;
+});
+
 const VolumeControlProvider = memo(
     ({ children }: TVolumeControlProviderProps) => {
         const [volumes, setVolumes] = useState<TVolumeSettings>(
@@ -78,10 +94,6 @@ const VolumeControlProvider = memo(
                 return next;
             });
 
-            if (key === 'soundboard') {
-                updateSoundboardVolume(volume);
-            }
-
             if (volume > 0) {
                 previousVolumesRef.current[key] = volume;
             }
@@ -97,10 +109,6 @@ const VolumeControlProvider = memo(
 
                 if (!isMuted) {
                     previousVolumesRef.current[key] = currentVolume;
-                }
-
-                if (key === 'soundboard') {
-                    updateSoundboardVolume(newVolume);
                 }
 
                 const next = { ...prev, [key]: newVolume };
@@ -139,6 +147,7 @@ const VolumeControlProvider = memo(
                     getExternalVolumeKey
                 }}
             >
+                <SoundboardVolumeSync />
                 {children}
             </VolumeControlContext.Provider>
         );

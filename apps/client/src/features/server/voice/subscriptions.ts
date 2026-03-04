@@ -15,10 +15,7 @@ import {
     updateVoiceUserState
 } from './actions';
 
-import {
-    getActiveSoundboardAudio,
-    setActiveSoundboardAudio
-} from './soundboard-audio';
+import { soundboardAudioRef } from './soundboard-audio';
 
 const subscribeToVoice = () => {
     const trpc = getTRPCClient();
@@ -136,25 +133,24 @@ const subscribeToVoice = () => {
                                 {}
                             ) ?? {};
                         const volume = volumes['soundboard'] ?? 100;
-                        const current = getActiveSoundboardAudio();
-                        if (current) {
-                            current.pause();
-                            setActiveSoundboardAudio(null);
+                        if (soundboardAudioRef.current) {
+                            soundboardAudioRef.current.pause();
+                            soundboardAudioRef.current = null;
                         }
                         const audio = new Audio(url);
                         audio.volume = volume / 100;
-                        setActiveSoundboardAudio(audio);
+                        soundboardAudioRef.current = audio;
                         audio.addEventListener('ended', () => {
-                            if (getActiveSoundboardAudio() === audio)
-                                setActiveSoundboardAudio(null);
+                            if (soundboardAudioRef.current === audio)
+                                soundboardAudioRef.current = null;
                         });
                         audio.addEventListener('error', () => {
-                            if (getActiveSoundboardAudio() === audio)
-                                setActiveSoundboardAudio(null);
+                            if (soundboardAudioRef.current === audio)
+                                soundboardAudioRef.current = null;
                         });
                         audio.play().catch(() => {
-                            if (getActiveSoundboardAudio() === audio)
-                                setActiveSoundboardAudio(null);
+                            if (soundboardAudioRef.current === audio)
+                                soundboardAudioRef.current = null;
                         });
                     }
                 }
