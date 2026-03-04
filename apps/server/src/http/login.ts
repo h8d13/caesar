@@ -1,7 +1,6 @@
 import {
   ActivityLogType,
   DELETED_USER_IDENTITY_AND_NAME,
-  sha256,
   type TJoinedUser
 } from '@sharkord/shared';
 import chalk from 'chalk';
@@ -18,7 +17,6 @@ import { getServerToken, getSettings } from '../db/queries/server';
 import { getUserByIdentity } from '../db/queries/users';
 import { invites, userRoles, users } from '../db/schema';
 import { getWsInfo } from '../helpers/get-ws-info';
-import { safeCompare } from '../helpers/safe-compare';
 import { logger } from '../logger';
 import { enqueueActivityLog } from '../queues/activity-log';
 import { invariant } from '../utils/invariant';
@@ -188,36 +186,10 @@ const loginRouteHandler = async (
     );
   }
 
-  // temporary logic to migrate old SHA256 password hashes to argon2 on login
-  const isPasswordArgon = existingUser.password.startsWith('$argon2');
-
-  let passwordMatches = false;
-
-  if (isPasswordArgon) {
-    passwordMatches = await Bun.password.verify(
-      data.password,
-      existingUser.password
-    );
-  } else {
-    logger.info(
-      `${chalk.dim('[Auth]')} User "${existingUser.identity}" is using legacy SHA256 password hash, upgrading to argon2...`
-    );
-
-    const hashInputPassword = await sha256(data.password);
-
-    passwordMatches = safeCompare(hashInputPassword, existingUser.password);
-
-    if (passwordMatches) {
-      const argon2Password = await Bun.password.hash(data.password);
-
-      await db
-        .update(users)
-        .set({
-          password: argon2Password
-        })
-        .where(eq(users.id, existingUser.id));
-    }
-  }
+  const passwordMatches = await Bun.password.verify(
+    data.password,
+    existingUser.password
+  );
 
   if (!passwordMatches) {
     logger.info(
