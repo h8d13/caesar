@@ -30,4 +30,3 @@ export const useUserStatus = (userId: number) =>
     useSelector((state: IRootState) => userStatusSelector(state, userId));
 
 export const useUsernames = () => useSelector(usernamesSelector);
-
