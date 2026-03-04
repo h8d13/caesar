@@ -15,6 +15,14 @@ import {
     updateVoiceUserState
 } from './actions';
 
+const activeSoundboardAudios = new Set<HTMLAudioElement>();
+
+const updateSoundboardVolume = (volume: number) => {
+    for (const audio of activeSoundboardAudios) {
+        audio.volume = volume / 100;
+    }
+};
+
 const subscribeToVoice = () => {
     const trpc = getTRPCClient();
 
@@ -133,7 +141,10 @@ const subscribeToVoice = () => {
                         const volume = volumes['soundboard'] ?? 100;
                         const audio = new Audio(url);
                         audio.volume = volume / 100;
-                        audio.play().catch(() => {});
+                        activeSoundboardAudios.add(audio);
+                        audio.addEventListener('ended', () => activeSoundboardAudios.delete(audio));
+                        audio.addEventListener('error', () => activeSoundboardAudios.delete(audio));
+                        audio.play().catch(() => activeSoundboardAudios.delete(audio));
                     }
                 }
             },
@@ -154,4 +165,4 @@ const subscribeToVoice = () => {
     };
 };
 
-export { subscribeToVoice };
+export { subscribeToVoice, updateSoundboardVolume };

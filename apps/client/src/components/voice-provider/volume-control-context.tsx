@@ -1,3 +1,4 @@
+import { updateSoundboardVolume } from '@/features/server/voice/subscriptions';
 import {
     getLocalStorageItemAsJSON,
     LocalStorageKey,
@@ -77,6 +78,10 @@ const VolumeControlProvider = memo(
                 return next;
             });
 
+            if (key === 'soundboard') {
+                updateSoundboardVolume(volume);
+            }
+
             if (volume > 0) {
                 previousVolumesRef.current[key] = volume;
             }
@@ -92,6 +97,10 @@ const VolumeControlProvider = memo(
 
                 if (!isMuted) {
                     previousVolumesRef.current[key] = currentVolume;
+                }
+
+                if (key === 'soundboard') {
+                    updateSoundboardVolume(newVolume);
                 }
 
                 const next = { ...prev, [key]: newVolume };
