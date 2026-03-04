@@ -2,6 +2,7 @@ import { getFileUrl } from '@/helpers/get-file-url';
 import { logDebug } from '@/helpers/browser-logger';
 import { getTRPCClient } from '@/lib/trpc';
 import { store } from '@/features/store';
+import { currentVoiceChannelIdSelector } from '../channels/selectors';
 import { soundsSelector } from '../sounds/selectors';
 import {
     addExternalStreamToVoiceChannel,
@@ -99,7 +100,12 @@ const subscribeToVoice = () => {
     const onSoundboardPlaySub = trpc.voice.onSoundboardPlay.subscribe(
         undefined,
         {
-            onData: ({ soundId }) => {
+            onData: ({ channelId, soundId }) => {
+                const currentChannelId = currentVoiceChannelIdSelector(
+                    store.getState()
+                );
+                if (currentChannelId !== channelId) return;
+
                 logDebug('[EVENTS] voice.onSoundboardPlay', { soundId });
                 const sounds = soundsSelector(store.getState());
                 const sound = sounds.find((s) => s.id === soundId);

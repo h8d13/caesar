@@ -23,14 +23,10 @@ const playSoundboardRoute = protectedProcedure
       message: 'Voice runtime not found for this channel'
     });
 
-    ctx.pubsub.publishForChannel(
-      ctx.currentVoiceChannelId,
-      ServerEvents.SOUNDBOARD_PLAY,
-      {
-        channelId: ctx.currentVoiceChannelId,
-        soundId: input.soundId
-      }
-    );
+    ctx.pubsub.publish(ServerEvents.SOUNDBOARD_PLAY, {
+      channelId: ctx.currentVoiceChannelId,
+      soundId: input.soundId
+    });
   });
 
 export { playSoundboardRoute };
