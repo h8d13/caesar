@@ -55,7 +55,9 @@ export enum ServerEvents {
   WHITEBOARD_CURSOR_UPDATE = 'whiteboardCursorUpdate',
   WHITEBOARD_CLEAR = 'whiteboardClear',
 
-  DM_CONVERSATION_OPEN = 'dmConversationOpen'
+  DM_CONVERSATION_OPEN = 'dmConversationOpen',
+
+  SOUNDBOARD_PLAY = 'soundboardPlay'
 }
 
 export type TNewMessage = {

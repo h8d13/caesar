@@ -1,5 +1,5 @@
 import { useSounds } from '@/features/server/sounds/hooks';
-import { getFileUrl } from '@/helpers/get-file-url';
+import { getTRPCClient } from '@/lib/trpc';
 import {
     Button,
     Popover,
@@ -22,11 +22,9 @@ const SoundboardPopover = memo(() => {
         [sounds, search]
     );
 
-    const playSound = (sound: (typeof sounds)[number]) => {
-        const url = getFileUrl(sound.file);
-        if (url) {
-            new Audio(url).play();
-        }
+    const playSound = (soundId: number) => {
+        const trpc = getTRPCClient();
+        trpc.voice.playSoundboard.mutate({ soundId });
     };
 
     return (
@@ -70,7 +68,7 @@ const SoundboardPopover = memo(() => {
                         filtered.map((sound) => (
                             <button
                                 key={sound.id}
-                                onClick={() => playSound(sound)}
+                                onClick={() => playSound(sound.id)}
                                 className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
                             >
                                 <Volume2

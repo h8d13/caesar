@@ -1,5 +1,8 @@
+import { getFileUrl } from '@/helpers/get-file-url';
 import { logDebug } from '@/helpers/browser-logger';
 import { getTRPCClient } from '@/lib/trpc';
+import { store } from '@/features/store';
+import { soundsSelector } from '../sounds/selectors';
 import {
     addExternalStreamToVoiceChannel,
     addUserToVoiceChannel,
@@ -93,6 +96,25 @@ const subscribeToVoice = () => {
                 )
         });
 
+    const onSoundboardPlaySub = trpc.voice.onSoundboardPlay.subscribe(
+        undefined,
+        {
+            onData: ({ soundId }) => {
+                logDebug('[EVENTS] voice.onSoundboardPlay', { soundId });
+                const sounds = soundsSelector(store.getState());
+                const sound = sounds.find((s) => s.id === soundId);
+                if (sound) {
+                    const url = getFileUrl(sound.file);
+                    if (url) {
+                        new Audio(url).play();
+                    }
+                }
+            },
+            onError: (err) =>
+                console.error('onSoundboardPlay subscription error:', err)
+        }
+    );
+
     return () => {
         onUserJoinVoiceSub.unsubscribe();
         onUserLeaveVoiceSub.unsubscribe();
@@ -100,6 +122,7 @@ const subscribeToVoice = () => {
         onVoiceAddExternalStreamSub.unsubscribe();
         onVoiceUpdateExternalStreamSub.unsubscribe();
         onVoiceRemoveExternalStreamSub.unsubscribe();
+        onSoundboardPlaySub.unsubscribe();
     };
 };
 

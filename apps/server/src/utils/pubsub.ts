@@ -145,6 +145,11 @@ type Events = {
   };
 
   [ServerEvents.DM_CONVERSATION_OPEN]: { channelId: number };
+
+  [ServerEvents.SOUNDBOARD_PLAY]: {
+    channelId: number;
+    soundId: number;
+  };
 };
 
 class PubSub {

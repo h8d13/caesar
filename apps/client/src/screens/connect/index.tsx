@@ -26,6 +26,7 @@ import {
     Input,
     Switch
 } from '@sharkord/ui';
+import { ShieldCheck } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -157,7 +158,7 @@ const Connect = memo(() => {
                     >
                         <Group
                             label="Identity"
-                            help="A unique identifier for your account on this server. You can use whatever you like, such as an email address or a username. This won't be shared publicly."
+                            help="A username you would like to login with. You can edit your display name later."
                         >
                             <Input
                                 {...r('identity')}
@@ -190,7 +191,7 @@ const Connect = memo(() => {
                     </div>
 
                     <div className="flex flex-col gap-2">
-                        {!window.isSecureContext && (
+                        {!window.isSecureContext ? (
                             <Alert variant="destructive">
                                 <AlertTitle>Insecure Connection</AlertTitle>
                                 <AlertDescription>
@@ -206,6 +207,11 @@ const Connect = memo(() => {
                                     documentation.
                                 </AlertDescription>
                             </Alert>
+                        ) : (
+                            <div className="flex items-center gap-2 text-sm text-green-500">
+                                <ShieldCheck size={16} />
+                                <span>Secure connection</span>
+                            </div>
                         )}
 
                         <Button

@@ -61,6 +61,19 @@ const onVoiceNewProducerRoute = protectedProcedure.subscription(
   }
 );
 
+const onSoundboardPlayRoute = protectedProcedure.subscription(
+  async ({ ctx }) => {
+    if (!ctx.currentVoiceChannelId) {
+      return observable<{ channelId: number; soundId: number }>(() => () => {});
+    }
+
+    return ctx.pubsub.subscribeForChannel(
+      ctx.currentVoiceChannelId,
+      ServerEvents.SOUNDBOARD_PLAY
+    );
+  }
+);
+
 const onVoiceProducerClosedRoute = protectedProcedure.subscription(
   async ({ ctx }) => {
     if (!ctx.currentVoiceChannelId) {
@@ -75,6 +88,7 @@ const onVoiceProducerClosedRoute = protectedProcedure.subscription(
 );
 
 export {
+  onSoundboardPlayRoute,
   onUserJoinVoiceRoute,
   onUserLeaveVoiceRoute,
   onUserUpdateVoiceStateRoute,
