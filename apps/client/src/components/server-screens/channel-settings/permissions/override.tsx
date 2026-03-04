@@ -3,7 +3,14 @@ import { useRoleById } from '@/features/server/roles/hooks';
 import { useUserById } from '@/features/server/users/hooks';
 import { getTRPCClient } from '@/lib/trpc';
 import { ChannelPermission, getTrpcError } from '@sharkord/shared';
-import { Button, Card, CardContent, CardHeader, CardTitle } from '@sharkord/ui';
+import {
+    Button,
+    Card,
+    CardAction,
+    CardContent,
+    CardHeader,
+    CardTitle
+} from '@sharkord/ui';
 import { Trash2 } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';
@@ -160,22 +167,25 @@ const Override = memo(
                             <Trash2 className="h-4 w-4" />
                         </Button>
                     </div>
+                    <CardAction>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => setSelectedOverrideId(undefined)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button onClick={onUpdateOverride}>
+                                Save Changes
+                            </Button>
+                        </div>
+                    </CardAction>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <ChannelPermissionList
                         permissions={localPermissions}
                         onTogglePermission={onTogglePermission}
                     />
-
-                    <div className="flex justify-end gap-2 pt-4">
-                        <Button
-                            variant="outline"
-                            onClick={() => setSelectedOverrideId(undefined)}
-                        >
-                            Cancel
-                        </Button>
-                        <Button onClick={onUpdateOverride}>Save Changes</Button>
-                    </div>
                 </CardContent>
             </Card>
         );

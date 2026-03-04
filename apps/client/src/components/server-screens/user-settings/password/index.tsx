@@ -4,6 +4,7 @@ import { getTRPCClient } from '@/lib/trpc';
 import {
     Button,
     Card,
+    CardAction,
     CardContent,
     CardDescription,
     CardHeader,
@@ -39,6 +40,14 @@ const Password = memo(() => {
                 <CardDescription>
                     In this section, you can update your password.
                 </CardDescription>
+                <CardAction>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={closeServerScreens}>
+                            Cancel
+                        </Button>
+                        <Button onClick={updatePassword}>Save Changes</Button>
+                    </div>
+                </CardAction>
             </CardHeader>
             <CardContent className="space-y-4">
                 <Group label="Current Password">
@@ -52,13 +61,6 @@ const Password = memo(() => {
                 <Group label="Confirm New Password">
                     <Input {...r('confirmNewPassword', 'password')} />
                 </Group>
-
-                <div className="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" onClick={closeServerScreens}>
-                        Cancel
-                    </Button>
-                    <Button onClick={updatePassword}>Save Changes</Button>
-                </div>
             </CardContent>
         </Card>
     );

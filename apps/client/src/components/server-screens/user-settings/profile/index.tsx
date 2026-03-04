@@ -5,6 +5,7 @@ import { getTRPCClient } from '@/lib/trpc';
 import {
     Button,
     Card,
+    CardAction,
     CardContent,
     CardDescription,
     CardHeader,
@@ -47,6 +48,14 @@ const Profile = memo(() => {
                 <CardDescription>
                     Update your personal information and settings here.
                 </CardDescription>
+                <CardAction>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={closeServerScreens}>
+                            Cancel
+                        </Button>
+                        <Button onClick={onUpdateUser}>Save Changes</Button>
+                    </div>
+                </CardAction>
             </CardHeader>
             <CardContent className="space-y-4">
                 <AvatarManager user={ownPublicUser} />
@@ -67,13 +76,6 @@ const Profile = memo(() => {
                 </Group>
 
                 <BannerManager user={ownPublicUser} />
-
-                <div className="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" onClick={closeServerScreens}>
-                        Cancel
-                    </Button>
-                    <Button onClick={onUpdateUser}>Save Changes</Button>
-                </div>
             </CardContent>
         </Card>
     );

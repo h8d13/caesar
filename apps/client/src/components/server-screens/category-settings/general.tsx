@@ -3,6 +3,7 @@ import { useAdminCategoryGeneral } from '@/features/server/admin/hooks';
 import {
     Button,
     Card,
+    CardAction,
     CardContent,
     CardDescription,
     CardHeader,
@@ -29,6 +30,16 @@ const General = memo(({ categoryId }: TGeneralProps) => {
                 <CardDescription>
                     Manage your category's basic information
                 </CardDescription>
+                <CardAction>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={closeServerScreens}>
+                            Cancel
+                        </Button>
+                        <Button onClick={submit} disabled={loading}>
+                            Save Changes
+                        </Button>
+                    </div>
+                </CardAction>
             </CardHeader>
             <CardContent className="space-y-4">
                 <Group label="Name">
@@ -39,15 +50,6 @@ const General = memo(({ categoryId }: TGeneralProps) => {
                         error={errors.name}
                     />
                 </Group>
-
-                <div className="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" onClick={closeServerScreens}>
-                        Cancel
-                    </Button>
-                    <Button onClick={submit} disabled={loading}>
-                        Save Changes
-                    </Button>
-                </div>
             </CardContent>
         </Card>
     );

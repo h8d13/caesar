@@ -9,6 +9,7 @@ import {
 import {
     Button,
     Card,
+    CardAction,
     CardContent,
     CardHeader,
     CardTitle,
@@ -89,6 +90,22 @@ const UpdateEmoji = memo(
                             <Trash2 className="h-4 w-4" />
                         </Button>
                     </div>
+                    <CardAction>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => setSelectedEmojiId(undefined)}
+                            >
+                                Close
+                            </Button>
+                            <Button
+                                onClick={onUpdateEmoji}
+                                disabled={selectedEmoji.name === name}
+                            >
+                                Save Changes
+                            </Button>
+                        </div>
+                    </CardAction>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="flex items-center gap-4 p-4 rounded-lg bg-muted">
@@ -123,21 +140,6 @@ const UpdateEmoji = memo(
                                 messages
                             </p>
                         </div>
-                    </div>
-
-                    <div className="flex justify-end gap-2 pt-4">
-                        <Button
-                            variant="outline"
-                            onClick={() => setSelectedEmojiId(undefined)}
-                        >
-                            Close
-                        </Button>
-                        <Button
-                            onClick={onUpdateEmoji}
-                            disabled={selectedEmoji.name === name}
-                        >
-                            Save Changes
-                        </Button>
                     </div>
                 </CardContent>
             </Card>

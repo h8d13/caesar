@@ -21,6 +21,7 @@ import {
     AlertDescription,
     Button,
     Card,
+    CardAction,
     CardContent,
     CardDescription,
     CardHeader,
@@ -245,6 +246,16 @@ const Devices = memo(() => {
                 <CardDescription>
                     Manage your peripheral devices and their settings.
                 </CardDescription>
+                <CardAction>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={closeServerScreens}>
+                            Cancel
+                        </Button>
+                        <Button onClick={saveDeviceSettings}>
+                            Save Changes
+                        </Button>
+                    </div>
+                </CardAction>
             </CardHeader>
             <CardContent className="space-y-6">
                 {currentVoiceChannelId && (
@@ -676,12 +687,6 @@ const Devices = memo(() => {
                             </Group>
                         </div>
                     </Group>
-                </div>
-                <div className="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" onClick={closeServerScreens}>
-                        Cancel
-                    </Button>
-                    <Button onClick={saveDeviceSettings}>Save Changes</Button>
                 </div>
             </CardContent>
         </Card>

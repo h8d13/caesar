@@ -3,6 +3,7 @@ import { useAdminGeneral } from '@/features/server/admin/hooks';
 import {
     Button,
     Card,
+    CardAction,
     CardContent,
     CardDescription,
     CardHeader,
@@ -31,6 +32,16 @@ const General = memo(() => {
                 <CardDescription>
                     Manage your server's basic information
                 </CardDescription>
+                <CardAction>
+                    <div className="flex gap-2">
+                        <Button variant="outline" onClick={closeServerScreens}>
+                            Cancel
+                        </Button>
+                        <Button onClick={submit} disabled={loading}>
+                            Save Changes
+                        </Button>
+                    </div>
+                </CardAction>
             </CardHeader>
             <CardContent className="space-y-4">
                 <Group label="Name">
@@ -88,15 +99,6 @@ const General = memo(() => {
                         }
                     />
                 </Group>
-
-                <div className="flex justify-end gap-2 pt-4">
-                    <Button variant="outline" onClick={closeServerScreens}>
-                        Cancel
-                    </Button>
-                    <Button onClick={submit} disabled={loading}>
-                        Save Changes
-                    </Button>
-                </div>
             </CardContent>
         </Card>
     );
