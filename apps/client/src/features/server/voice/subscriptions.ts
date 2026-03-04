@@ -1,7 +1,6 @@
 import { store } from '@/features/store';
 import { logDebug } from '@/helpers/browser-logger';
 import { getFileUrl } from '@/helpers/get-file-url';
-import { getLocalStorageItemAsJSON, LocalStorageKey } from '@/helpers/storage';
 import { getTRPCClient } from '@/lib/trpc';
 import { currentVoiceChannelIdSelector } from '../channels/selectors';
 import { soundsSelector } from '../sounds/selectors';
@@ -15,7 +14,7 @@ import {
     updateVoiceUserState
 } from './actions';
 
-import { soundboardAudioRef } from './soundboard-audio';
+import { emitSoundboardPlay } from './soundboard-audio';
 
 const subscribeToVoice = () => {
     const trpc = getTRPCClient();
@@ -127,22 +126,7 @@ const subscribeToVoice = () => {
                 if (sound) {
                     const url = getFileUrl(sound.file);
                     if (url) {
-                        const volumes =
-                            getLocalStorageItemAsJSON<Record<string, number>>(
-                                LocalStorageKey.VOLUME_SETTINGS,
-                                {}
-                            ) ?? {};
-                        const volume = volumes['soundboard'] ?? 100;
-                        if (soundboardAudioRef.current) {
-                            soundboardAudioRef.current.pause();
-                            soundboardAudioRef.current = null;
-                        }
-                        const audio = new Audio(url);
-                        audio.volume = volume / 100;
-                        soundboardAudioRef.current = audio;
-                        audio.addEventListener('ended', () => { if (soundboardAudioRef.current === audio) soundboardAudioRef.current = null; });
-                        audio.addEventListener('error', () => { if (soundboardAudioRef.current === audio) soundboardAudioRef.current = null; });
-                        audio.play().catch(() => { if (soundboardAudioRef.current === audio) soundboardAudioRef.current = null; });
+                        emitSoundboardPlay(url);
                     }
                 }
             },

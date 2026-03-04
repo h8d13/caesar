@@ -1,4 +1,4 @@
-import { soundboardAudioRef } from '@/features/server/voice/soundboard-audio';
+import { onSoundboardPlay } from '@/features/server/voice/soundboard-audio';
 import {
     getLocalStorageItemAsJSON,
     LocalStorageKey,
@@ -57,17 +57,56 @@ const saveVolumesToStorage = (volumes: TVolumeSettings) => {
     }
 };
 
-// Syncs soundboard volume to the active audio element reactively,
-// same pattern as useVoiceRefs does for user/screen/external streams.
-const SoundboardVolumeSync = memo(() => {
+// Manages soundboard audio playback inside React so volume control
+// works the same way as voice/screen/external streams in use-voice-refs.
+const SoundboardPlayer = memo(() => {
     const { getVolume } = useVolumeControl();
     const volume = getVolume('soundboard');
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
+    // Listen for soundboard play events from the subscription
     useEffect(() => {
-        if (soundboardAudioRef.current) {
-            soundboardAudioRef.current.volume = volume / 100;
+        return onSoundboardPlay((url) => {
+            // Stop previous sound (limit to one at a time)
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+            }
+
+            const audio = new Audio(url);
+            audio.volume = volume / 100;
+            audioRef.current = audio;
+
+            audio.addEventListener('ended', () => {
+                if (audioRef.current === audio) audioRef.current = null;
+            });
+            audio.addEventListener('error', () => {
+                if (audioRef.current === audio) audioRef.current = null;
+            });
+
+            audio.play().catch(() => {
+                if (audioRef.current === audio) audioRef.current = null;
+            });
+        });
+    });
+
+    // Update volume on the active audio element reactively,
+    // same pattern as use-voice-refs: audioRef.current.volume = userVolume / 100
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.volume = volume / 100;
         }
     }, [volume]);
+
+    // Stop playback on unmount
+    useEffect(() => {
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+            }
+        };
+    }, []);
 
     return null;
 });
@@ -147,7 +186,7 @@ const VolumeControlProvider = memo(
                     getExternalVolumeKey
                 }}
             >
-                <SoundboardVolumeSync />
+                <SoundboardPlayer />
                 {children}
             </VolumeControlContext.Provider>
         );
