@@ -36,7 +36,7 @@ RUN cd apps/server && bun -e "\
       'process.env.CURRENT_VERSION': JSON.stringify(version), \
     } \
   }); \
-  " && mkdir -p build/out
+  "
 
 # --- Runtime stage ---
 FROM debian:bookworm-slim
