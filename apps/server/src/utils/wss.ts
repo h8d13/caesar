@@ -12,14 +12,14 @@ import {
   applyWSSHandler,
   type CreateWSSContextFnOptions
 } from '@trpc/server/adapters/ws';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import http from 'http';
 import { WebSocketServer } from 'ws';
 import { db } from '../db';
 import { getAllChannelUserPermissions } from '../db/queries/channels';
 import { isUserDmParticipant } from '../db/queries/dms';
 import { getUserById, getUserByToken } from '../db/queries/users';
-import { channels } from '../db/schema';
+import { channels, users } from '../db/schema';
 import { getWsInfo } from '../helpers/get-ws-info';
 import { logger } from '../logger';
 import { enqueueActivityLog } from '../queues/activity-log';
@@ -33,6 +33,18 @@ import type { Context } from './trpc';
 let wss: WebSocketServer | undefined;
 
 const usersIpMap = new Map<number, string>();
+const connectedAt = new Map<number, number>();
+const dailyPassiveCredit = new Map<
+  number,
+  { earned: number; day: number }
+>();
+
+const PASSIVE_CREDIT_PER_15_MIN = 1;
+const PASSIVE_CREDIT_DAILY_CAP = 50;
+
+const trackUserConnect = (userId: number) => {
+  connectedAt.set(userId, Date.now());
+};
 
 const getUserIp = (userId: number): string | undefined => {
   return usersIpMap.get(userId);
@@ -254,6 +266,38 @@ const createWsServer = async (server: http.Server) => {
 
         if (!user) return;
 
+        // Award passive social credit based on time connected
+        const joinTime = connectedAt.get(user.id);
+        if (joinTime) {
+          const minutes = (Date.now() - joinTime) / 60_000;
+          const earned = Math.floor(minutes / 15) * PASSIVE_CREDIT_PER_15_MIN;
+
+          if (earned > 0) {
+            const today = Math.floor(Date.now() / 86_400_000);
+            const daily = dailyPassiveCredit.get(user.id);
+            const todayEarned =
+              daily && daily.day === today ? daily.earned : 0;
+            const remaining = PASSIVE_CREDIT_DAILY_CAP - todayEarned;
+            const award = Math.min(earned, remaining);
+
+            if (award > 0) {
+              await db
+                .update(users)
+                .set({
+                  socialCredit: sql`${users.socialCredit} + ${award}`
+                })
+                .where(eq(users.id, user.id));
+
+              dailyPassiveCredit.set(user.id, {
+                earned: todayEarned + award,
+                day: today
+              });
+            }
+          }
+
+          connectedAt.delete(user.id);
+        }
+
         const voiceRuntime = VoiceRuntime.findRuntimeByUserId(user.id);
 
         if (voiceRuntime) {
@@ -304,4 +348,4 @@ const createWsServer = async (server: http.Server) => {
   });
 };
 
-export { createContext, createWsServer, getUserIp };
+export { createContext, createWsServer, getUserIp, trackUserConnect };

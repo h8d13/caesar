@@ -18,6 +18,7 @@ import { enqueueLogin } from '../../queues/logins';
 import { VoiceRuntime } from '../../runtimes/voice';
 import { invariant } from '../../utils/invariant';
 import { rateLimitedProcedure, t } from '../../utils/trpc';
+import { trackUserConnect } from '../../utils/wss';
 
 const joinServerRoute = rateLimitedProcedure(t.procedure, {
   maxRequests: 5,
@@ -57,6 +58,7 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
 
     ctx.authenticated = true;
     ctx.setWsUserId(ctx.user.id);
+    trackUserConnect(ctx.user.id);
 
     const [
       allCategories,
