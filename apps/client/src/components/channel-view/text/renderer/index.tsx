@@ -116,7 +116,7 @@ const MessageRenderer = memo(
             <div className="flex flex-col gap-1">
                 <div
                     className={cn(
-                        'prose max-w-full wrap-break-word msg-content',
+                        'prose max-w-full overflow-hidden wrap-break-word msg-content',
                         emojiOnly && 'emoji-only'
                     )}
                 >
