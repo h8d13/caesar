@@ -45,18 +45,20 @@ const Games = memo(({ close }: TGamesProps) => {
                         </button>
                     </div>
                 </div>
-                {tab === 'games' ? (
-                    <div className="flex gap-6 flex-1 min-h-0">
-                        <div className="w-4/5 min-w-0 overflow-auto">
-                            <RouletteGameContent />
-                        </div>
-                        <div className="w-1/5 min-w-0">
-                            <CrashGameContent />
-                        </div>
+                <div
+                    className={cn(
+                        'flex gap-6 flex-1 min-h-0',
+                        tab !== 'games' && 'hidden'
+                    )}
+                >
+                    <div className="w-4/5 min-w-0 overflow-auto">
+                        <RouletteGameContent />
                     </div>
-                ) : (
-                    <TopWins />
-                )}
+                    <div className="w-1/5 min-w-0">
+                        <CrashGameContent />
+                    </div>
+                </div>
+                {tab === 'history' && <TopWins />}
             </div>
         </ServerScreenLayout>
     );

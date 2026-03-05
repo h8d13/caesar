@@ -1,5 +1,12 @@
-import { useRouletteBets } from '@/features/server/roulette/hooks';
+import { removeRouletteBet } from '@/features/server/roulette/actions';
+import {
+    useRouletteBets,
+    useRoulettePhase
+} from '@/features/server/roulette/hooks';
+import { RoulettePhase } from '@sharkord/shared/games/roulette';
+import { X } from 'lucide-react';
 import { memo } from 'react';
+import { toast } from 'sonner';
 
 const formatBetType = (betType: string, betValue: number | null): string => {
     if (betType === 'straight') return `#${betValue}`;
@@ -8,6 +15,8 @@ const formatBetType = (betType: string, betValue: number | null): string => {
 
 const RoulettePlayerBets = memo(() => {
     const bets = useRouletteBets();
+    const phase = useRoulettePhase();
+    const isBetting = phase === RoulettePhase.BETTING;
 
     if (bets.length === 0) return null;
 
@@ -39,6 +48,24 @@ const RoulettePlayerBets = memo(() => {
                                 <span className="text-red-500 text-xs font-medium">
                                     Lost
                                 </span>
+                            )}
+                            {isBetting && bet.profit === null && (
+                                <button
+                                    onClick={async () => {
+                                        try {
+                                            await removeRouletteBet(bet.betId);
+                                        } catch (e) {
+                                            toast.error(
+                                                e instanceof Error
+                                                    ? e.message
+                                                    : 'Failed to remove bet'
+                                            );
+                                        }
+                                    }}
+                                    className="text-muted-foreground hover:text-red-500 transition-colors"
+                                >
+                                    <X className="w-3 h-3" />
+                                </button>
                             )}
                         </div>
                     </div>

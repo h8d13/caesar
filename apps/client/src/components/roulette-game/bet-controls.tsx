@@ -132,8 +132,8 @@ const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
                     )}
                 </div>
 
-                {/* Chip selector + auto */}
-                <div className="flex flex-wrap gap-2">
+                {/* Chip selector + custom + auto */}
+                <div className="flex flex-wrap items-center gap-2">
                     {CHIP_PRESETS.map((chip) => (
                         <Button
                             key={chip}
@@ -151,6 +151,17 @@ const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
                             {chip}
                         </Button>
                     ))}
+                    <input
+                        type="number"
+                        min={1}
+                        max={10000}
+                        value={selectedChip}
+                        onChange={(e) => {
+                            const v = parseInt(e.target.value, 10);
+                            if (!isNaN(v) && v > 0) setSelectedChip(v);
+                        }}
+                        className="w-20 h-8 px-2 text-sm rounded border border-input bg-background tabular-nums"
+                    />
                     <Button
                         variant={autoBet ? 'default' : 'outline'}
                         size="sm"
