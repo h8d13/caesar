@@ -6,7 +6,8 @@ import {
     crashPhaseDurationSelector,
     crashPhaseSelector,
     crashPhaseStartedAtSelector,
-    crashRoundHistorySelector
+    crashRoundHistorySelector,
+    crashTopWinsSelector
 } from './selectors';
 
 export const useCrashPhase = () => useSelector(crashPhaseSelector);
@@ -14,6 +15,7 @@ export const useCrashMultiplier = () => useSelector(crashMultiplierSelector);
 export const useCrashBets = () => useSelector(crashBetsSelector);
 export const useCrashRoundHistory = () =>
     useSelector(crashRoundHistorySelector);
+export const useCrashTopWins = () => useSelector(crashTopWinsSelector);
 export const useCrashIsOpen = () => useSelector(crashIsOpenSelector);
 export const useCrashPhaseStartedAt = () =>
     useSelector(crashPhaseStartedAtSelector);

@@ -206,6 +206,7 @@ class CrashRuntime {
 
   private startFlyingPhase() {
     if (this.activeBets.length === 0) {
+      this.multiplier = this.crashPoint;
       this.startCrashedPhase();
       return;
     }

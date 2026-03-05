@@ -15,9 +15,6 @@ const RoundHistory = memo(() => {
     return (
         <div className="flex flex-col gap-1">
             <div className="flex items-center justify-between px-4">
-                <span className="text-xs text-muted-foreground">
-                    Last {history.length} rounds
-                </span>
                 {best !== null && (
                     <span className="text-xs text-muted-foreground">
                         Best:{' '}
@@ -26,6 +23,9 @@ const RoundHistory = memo(() => {
                         </span>
                     </span>
                 )}
+                <span className="text-xs text-muted-foreground">
+                    Last {history.length} rounds
+                </span>
             </div>
             <div className="flex gap-1.5 px-4 overflow-x-auto py-1">
                 {history.slice(0, 20).map((round) => (

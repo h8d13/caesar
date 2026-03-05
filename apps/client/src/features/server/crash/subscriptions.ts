@@ -24,6 +24,7 @@ const subscribeToCrash = () => {
                     roundId: result.roundId
                 })
             );
+            store.dispatch(crashSliceActions.addRoundWins(result.bets));
         },
         onError: (err) => console.error('crash.onRoundResult error:', err)
     });

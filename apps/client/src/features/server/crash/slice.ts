@@ -6,6 +6,15 @@ import {
     type TCrashStateUpdate
 } from '@sharkord/shared/games/crash';
 
+export type TCrashTopWin = {
+    userName: string;
+    amount: number;
+    profit: number;
+    cashedOutAt: number;
+};
+
+const MAX_TOP_WINS = 5;
+
 export interface TCrashState {
     phase: CrashPhase | null;
     roundId: number | null;
@@ -15,6 +24,7 @@ export interface TCrashState {
     bets: TCrashActiveBet[];
     roundHistory: TCrashRoundHistory[];
     lastCrashPoint: number | null;
+    topWins: TCrashTopWin[];
     isOpen: boolean;
 }
 
@@ -27,6 +37,7 @@ const initialState: TCrashState = {
     bets: [],
     roundHistory: [],
     lastCrashPoint: null,
+    topWins: [],
     isOpen: false
 };
 
@@ -61,6 +72,30 @@ export const crashSlice = createSlice({
             if (state.roundHistory.length > 50) {
                 state.roundHistory.pop();
             }
+        },
+        addRoundWins: (
+            state,
+            action: PayloadAction<TCrashActiveBet[]>
+        ) => {
+            const wins: TCrashTopWin[] = action.payload
+                .filter(
+                    (b) =>
+                        b.profit !== null &&
+                        b.profit > 0 &&
+                        b.cashedOutAt !== null
+                )
+                .map((b) => ({
+                    userName: b.userName,
+                    amount: b.amount,
+                    profit: b.profit!,
+                    cashedOutAt: b.cashedOutAt!
+                }));
+
+            const combined = [...state.topWins, ...wins]
+                .sort((a, b) => b.profit - a.profit)
+                .slice(0, MAX_TOP_WINS);
+
+            state.topWins = combined;
         },
         setIsOpen: (state, action: PayloadAction<boolean>) => {
             state.isOpen = action.payload;
