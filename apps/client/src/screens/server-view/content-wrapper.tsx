@@ -5,9 +5,95 @@ import {
     useSelectedChannelType
 } from '@/features/server/channels/hooks';
 import { useServerName } from '@/features/server/hooks';
+import { getTRPCClient } from '@/lib/trpc';
 import { ChannelType } from '@sharkord/shared';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { memo } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
+
+const usePing = () => {
+    const [serverPing, setServerPing] = useState<number | null>(null);
+    const [dbPing, setDbPing] = useState<number | null>(null);
+
+    const refresh = useCallback(async () => {
+        const trpc = getTRPCClient();
+        const start = performance.now();
+        try {
+            const result = await trpc.others.ping.query();
+            const roundTrip = Math.round(performance.now() - start);
+            setServerPing(roundTrip);
+            setDbPing(result.dbPing);
+        } catch {
+            setServerPing(null);
+            setDbPing(null);
+        }
+    }, []);
+
+    useEffect(() => {
+        refresh();
+        const interval = setInterval(refresh, 10_000);
+        return () => clearInterval(interval);
+    }, [refresh]);
+
+    return { serverPing, dbPing };
+};
+
+const PingInfo = memo(() => {
+    const { serverPing, dbPing } = usePing();
+
+    return (
+        <div className="flex gap-4 text-xs text-muted-foreground mt-3">
+            <span>
+                Server:{' '}
+                <span className="tabular-nums font-medium text-foreground">
+                    {serverPing !== null ? `${serverPing}ms` : '...'}
+                </span>
+            </span>
+            <span>
+                DB:{' '}
+                <span className="tabular-nums font-medium text-foreground">
+                    {dbPing !== null ? `${dbPing}ms` : '...'}
+                </span>
+            </span>
+        </div>
+    );
+});
+
+const WelcomeScreen = memo(
+    ({ serverName }: { serverName: string | undefined }) => (
+        <>
+            <div className="flex-col gap-2 h-full w-full hidden lg:flex overflow-auto items-center justify-center">
+                <h2 className="text-2xl font-semibold text-foreground">
+                    Welcome to{' '}
+                    <span className="bold">{serverName}</span>.
+                </h2>
+                <PingInfo />
+            </div>
+            <div className="flex flex-col items-center justify-center h-full gap-6 p-8 text-center md:hidden">
+                <div className="flex flex-col gap-2">
+                    <h2 className="text-2xl font-semibold text-foreground">
+                        Welcome to{' '}
+                        <span className="bold">{serverName}</span>.
+                    </h2>
+                    <PingInfo />
+                </div>
+                <div className="flex flex-col gap-3 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                        <span className="text-lg">
+                            <ArrowRight />
+                        </span>
+                        <span>Swipe right to open the channel list</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-lg">
+                            <ArrowLeft />
+                        </span>
+                        <span>Swipe left to open the user list</span>
+                    </div>
+                </div>
+            </div>
+        </>
+    )
+);
 
 type TContentWrapperProps = {
     isDmMode: boolean;
@@ -62,40 +148,7 @@ const ContentWrapper = memo(
                 );
             }
         } else {
-            content = (
-                <>
-                    <div className="flex-col gap-2 h-full w-full hidden lg:flex overflow-auto items-center justify-center">
-                        <h2 className="text-2xl font-semibold text-foreground">
-                            Welcome to{' '}
-                            <span className="bold">{serverName}</span>.
-                        </h2>
-                    </div>
-                    <div className="flex flex-col items-center justify-center h-full gap-6 p-8 text-center md:hidden">
-                        <div className="flex flex-col gap-2">
-                            <h2 className="text-2xl font-semibold text-foreground">
-                                Welcome to{' '}
-                                <span className="bold">{serverName}</span>.
-                            </h2>
-                        </div>
-                        <div className="flex flex-col gap-3 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-2">
-                                <span className="text-lg">
-                                    <ArrowRight />
-                                </span>
-                                <span>
-                                    Swipe right to open the channel list
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-lg">
-                                    <ArrowLeft />
-                                </span>
-                                <span>Swipe left to open the user list</span>
-                            </div>
-                        </div>
-                    </div>
-                </>
-            );
+            content = <WelcomeScreen serverName={serverName} />;
         }
 
         return (
