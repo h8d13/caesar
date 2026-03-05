@@ -5,7 +5,7 @@ import { Button, Input } from '@sharkord/ui';
 import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
-const PRESETS = [10, 25, 50, 100, 250, 500, 1000];
+const PRESETS = [10, 50, 100, 250, 500, 1000];
 
 const BetControls = memo(() => {
     const phase = useCrashPhase();
