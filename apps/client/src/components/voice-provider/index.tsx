@@ -258,6 +258,9 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
 
     const cleanupMicProcessingResources = useCallback(() => {
         if (microphoneRNNoiseWorkletNodeRef.current) {
+            microphoneRNNoiseWorkletNodeRef.current.port.postMessage({
+                type: 'cleanup'
+            });
             microphoneRNNoiseWorkletNodeRef.current.disconnect();
             microphoneRNNoiseWorkletNodeRef.current = null;
         }

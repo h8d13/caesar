@@ -3,6 +3,8 @@ const FRAME_SIZE = 480; // RNNoise processes 480 samples (10ms at 48kHz)
 const BYTES_PER_FLOAT = 4;
 // ring buffer size: must hold enough to cover latency (2 rnnoise frames)
 const RING_SIZE = FRAME_SIZE * 4;
+// pre-allocated mono downmix buffer (128 = default AudioWorklet render quantum)
+const MAX_RENDER_QUANTUM = 128;
 
 class RNNoiseProcessor extends AudioWorkletProcessor {
   constructor() {
@@ -15,6 +17,9 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
     this.inputBuffer = new Float32Array(FRAME_SIZE);
     this.inputBufferOffset = 0;
 
+    // pre-allocated mono downmix buffer — avoids per-call allocation on the audio thread
+    this.monoBuffer = new Float32Array(MAX_RENDER_QUANTUM);
+
     // circular output buffer to decouple input/output timing
     this.ringBuffer = new Float32Array(RING_SIZE);
     this.ringWritePos = 0;
@@ -23,7 +28,8 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
 
     // wasm state
     this.exports = null;
-    this.heapF32 = null;
+    this._cachedHeapF32 = null;
+    this._cachedHeapBuffer = null;
     this.denoiseState = 0;
     this.pcmInputPtr = 0;
 
@@ -41,7 +47,44 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
       if (data.type === 'wasm-binary') {
         this._initWasm(data.binary);
       }
+
+      if (data.type === 'cleanup') {
+        this._cleanup();
+      }
     };
+  }
+
+  _getHeapF32() {
+    const currentBuffer = this.exports.c.buffer;
+
+    if (this._cachedHeapBuffer !== currentBuffer) {
+      this._cachedHeapBuffer = currentBuffer;
+      this._cachedHeapF32 = new Float32Array(currentBuffer);
+    }
+
+    return this._cachedHeapF32;
+  }
+
+  _cleanup() {
+    if (!this.exports) return;
+
+    const rnnoiseDestroy = this.exports.h;
+    const free = this.exports.i;
+
+    if (rnnoiseDestroy && this.denoiseState) {
+      rnnoiseDestroy(this.denoiseState);
+    }
+
+    if (free && this.pcmInputPtr) {
+      free(this.pcmInputPtr);
+    }
+
+    this.ready = false;
+    this.denoiseState = 0;
+    this.pcmInputPtr = 0;
+    this._cachedHeapF32 = null;
+    this._cachedHeapBuffer = null;
+    this.exports = null;
   }
 
   async _initWasm(binary) {
@@ -52,6 +95,8 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
       //            h=destroy, i=free, j=process_frame
       let instance = null;
 
+      const self = this;
+
       const importObject = {
         a: {
           a: (requestedSize) => {
@@ -60,6 +105,9 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
               const memory = instance.exports.c;
               const needed = (requestedSize - memory.buffer.byteLength + 65535) >>> 16;
               memory.grow(needed);
+              // invalidate cached heap view since buffer has been detached
+              self._cachedHeapBuffer = null;
+              self._cachedHeapF32 = null;
               return 1;
             } catch (e) {
               return 0;
@@ -102,7 +150,10 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
         throw new Error('Failed to create RNNoise state');
       }
 
-      this.heapF32 = () => new Float32Array(this.exports.c.buffer);
+      // prime the cached heap view
+      this._cachedHeapBuffer = null;
+      this._cachedHeapF32 = null;
+      this._getHeapF32();
 
       this.ready = true;
 
@@ -122,13 +173,13 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
   }
 
   _processFrame() {
-    if (!this.ready || !this.exports || !this.heapF32) return;
+    if (!this.ready || !this.exports) return;
 
     const processFrame = this.exports.j; // _rnnoise_process_frame
 
     if (!processFrame) return;
 
-    const heap = this.heapF32();
+    const heap = this._getHeapF32();
     const offset = this.pcmInputPtr >> 2;
 
     // rnnoise expects values in short range (-32768..32767)
@@ -140,15 +191,16 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
     // when out==in it processes in place
     processFrame(this.denoiseState, this.pcmInputPtr, this.pcmInputPtr);
 
-    // read back, scale to float, and write into the output ring buffer
-    const heapAfter = this.heapF32();
+    // re-fetch heap view in case memory.grow() was called during processFrame
+    const heapAfter = this._getHeapF32();
 
     for (let i = 0; i < FRAME_SIZE; i++) {
       this.ringBuffer[this.ringWritePos] = heapAfter[offset + i] / 32768.0;
       this.ringWritePos = (this.ringWritePos + 1) % RING_SIZE;
     }
 
-    this.ringAvailable += FRAME_SIZE;
+    // cap ringAvailable so it never exceeds buffer capacity
+    this.ringAvailable = Math.min(this.ringAvailable + FRAME_SIZE, RING_SIZE);
   }
 
   process(inputs, outputs) {
@@ -184,7 +236,13 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
     }
 
     // rnnoise is mono — downmix input channels to mono
-    const monoInput = new Float32Array(frameCount);
+    // re-use pre-allocated buffer to avoid GC pressure on the audio thread
+    let monoInput = this.monoBuffer;
+
+    if (frameCount > monoInput.length) {
+      monoInput = new Float32Array(frameCount);
+      this.monoBuffer = monoInput;
+    }
 
     if (input.length === 1) {
       monoInput.set(input[0]);
