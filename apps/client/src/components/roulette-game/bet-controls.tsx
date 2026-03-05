@@ -159,9 +159,11 @@ const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
                         {autoBet ? 'Auto •' : 'Auto'}
                     </Button>
                 </div>
-
-                {/* Clear bets */}
-                {bets.length > 0 && phase === RoulettePhase.BETTING && (
+            </div>
+            {children}
+            {/* Clear bets */}
+            {bets.length > 0 && phase === RoulettePhase.BETTING && (
+                <div className="px-4">
                     <Button
                         variant="outline"
                         size="sm"
@@ -169,9 +171,8 @@ const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
                     >
                         Clear All Bets ({bets.length})
                     </Button>
-                )}
-            </div>
-            {children}
+                </div>
+            )}
         </ChipAmountContext.Provider>
     );
 });

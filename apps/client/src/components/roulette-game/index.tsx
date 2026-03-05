@@ -6,7 +6,7 @@ import { subscribeToRoulette } from '@/features/server/roulette/subscriptions';
 import { memo, useEffect } from 'react';
 import { BetControls } from './bet-controls';
 import { BettingBoard } from './betting-board';
-import { PlayerBets } from './player-bets';
+import { RoulettePlayerBets } from './player-bets';
 import { RouletteWheel } from './roulette-wheel';
 import { RoundHistory } from './round-history';
 
@@ -19,13 +19,13 @@ const RouletteGameContent = memo(() => {
     }, []);
 
     return (
-        <div className="flex flex-col gap-4 h-full pt-12">
+        <div className="flex flex-col gap-3 h-full pt-12">
             <RoundHistory />
             <RouletteWheel />
             <BetControls>
                 <BettingBoard />
             </BetControls>
-            <PlayerBets />
+            <RoulettePlayerBets />
         </div>
     );
 });

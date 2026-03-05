@@ -57,12 +57,12 @@ const RouletteWheel = memo(() => {
     const isResult = phase === RoulettePhase.RESULT;
 
     return (
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-1">
             {/* Pointer */}
-            <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[16px] border-l-transparent border-r-transparent border-t-yellow-400 z-10" />
+            <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[12px] border-l-transparent border-r-transparent border-t-yellow-400 z-10" />
 
             {/* Wheel container */}
-            <div className="relative -mt-2 w-64 h-64">
+            <div className="relative -mt-1 w-48 h-48">
                 <div
                     className="w-full h-full rounded-full border-4 border-yellow-400/50 shadow-lg"
                     style={{
@@ -84,7 +84,7 @@ const RouletteWheel = memo(() => {
                                     transform: `rotate(${deg}deg)`
                                 }}
                             >
-                                <span className="text-[9px] font-bold text-white mt-3 select-none">
+                                <span className="text-[7px] font-bold text-white mt-2 select-none">
                                     {num}
                                 </span>
                             </div>
@@ -93,7 +93,7 @@ const RouletteWheel = memo(() => {
 
                     {/* Center hub */}
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-12 h-12 rounded-full bg-background border-2 border-yellow-400/50" />
+                        <div className="w-9 h-9 rounded-full bg-background border-2 border-yellow-400/50" />
                     </div>
                 </div>
             </div>
@@ -101,7 +101,7 @@ const RouletteWheel = memo(() => {
             {/* Winning number display */}
             <div
                 className={cn(
-                    'text-2xl font-bold tabular-nums mt-1',
+                    'text-lg font-bold tabular-nums mt-1',
                     isResult && winningNumber !== null
                         ? getNumberColor(winningNumber) === 'red'
                             ? 'text-red-500'

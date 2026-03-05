@@ -7,7 +7,7 @@ import { memo, useEffect } from 'react';
 import { BetControls } from './bet-controls';
 import { CountdownTimer } from './countdown-timer';
 import { MultiplierDisplay } from './multiplier-display';
-import { PlayerBetsList } from './player-bets-list';
+import { CrashPlayerBets } from './player-bets-list';
 import { RoundHistory } from './round-history';
 
 const CrashGameContent = memo(() => {
@@ -24,7 +24,7 @@ const CrashGameContent = memo(() => {
             <MultiplierDisplay />
             <CountdownTimer />
             <BetControls />
-            <PlayerBetsList />
+            <CrashPlayerBets />
         </div>
     );
 });
