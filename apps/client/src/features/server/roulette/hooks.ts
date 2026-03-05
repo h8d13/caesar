@@ -20,4 +20,3 @@ export const useRoulettePhaseStartedAt = () =>
     useSelector(roulettePhaseStartedAtSelector);
 export const useRoulettePhaseDuration = () =>
     useSelector(roulettePhaseDurationSelector);
-
