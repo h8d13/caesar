@@ -17,8 +17,7 @@ const [SERVER_PUBLIC_IP, SERVER_PRIVATE_IP] = await Promise.all([
 const zConfig = z.object({
   server: z.object({
     port: z.coerce.number().int().positive(),
-    debug: z.coerce.boolean(),
-    autoupdate: z.coerce.boolean()
+    debug: z.coerce.boolean()
   }),
   webRtc: z.object({
     port: z.coerce.number().int().positive(),
@@ -46,8 +45,7 @@ type TConfig = z.infer<typeof zConfig>;
 const defaultConfig: TConfig = {
   server: {
     port: 4991,
-    debug: IS_DEVELOPMENT,
-    autoupdate: false
+    debug: IS_DEVELOPMENT
   },
   webRtc: {
     port: 40000,
@@ -107,7 +105,6 @@ if (!configExists) {
 config = applyEnvOverrides(config, {
   'server.port': 'SHARKORD_PORT',
   'server.debug': 'SHARKORD_DEBUG',
-  'server.autoupdate': 'SHARKORD_AUTOUPDATE',
   'webRtc.port': 'SHARKORD_WEBRTC_PORT',
   'webRtc.announcedAddress': 'SHARKORD_WEBRTC_ANNOUNCED_ADDRESS',
   'webRtc.maxBitrate': 'SHARKORD_WEBRTC_MAX_BITRATE'

@@ -107,12 +107,6 @@ export type TArtifact = {
   checksum: string;
 };
 
-export type TVersionInfo = {
-  version: string;
-  releaseDate: string;
-  artifacts: TArtifact[];
-};
-
 export type TIpInfo = {
   ip: string;
   hostname: string;

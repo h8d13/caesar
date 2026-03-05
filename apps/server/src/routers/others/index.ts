@@ -3,11 +3,9 @@ import { changeLogoRoute } from './change-logo';
 import { onServerSettingsUpdateRoute } from './events';
 import { getSettingsRoute } from './get-settings';
 import { getStorageSettingsRoute } from './get-storage-settings';
-import { getUpdateRoute } from './get-update';
 import { handshakeRoute } from './handshake';
 import { joinServerRoute } from './join';
 import { pingRoute } from './ping';
-import { updateServerRoute } from './update-server';
 import { updateSettingsRoute } from './update-settings';
 import { useSecretTokenRoute } from './use-secret-token';
 
@@ -20,7 +18,5 @@ export const othersRouter = t.router({
   getSettings: getSettingsRoute,
   onServerSettingsUpdate: onServerSettingsUpdateRoute,
   useSecretToken: useSecretTokenRoute,
-  getStorageSettings: getStorageSettingsRoute,
-  getUpdate: getUpdateRoute,
-  updateServer: updateServerRoute
+  getStorageSettings: getStorageSettingsRoute
 });

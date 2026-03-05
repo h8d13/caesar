@@ -18,7 +18,6 @@ export enum Permission {
   MANAGE_MESSAGES = 'MANAGE_MESSAGES',
   MANAGE_STORAGE = 'MANAGE_STORAGE',
   MANAGE_INVITES = 'MANAGE_INVITES',
-  MANAGE_UPDATES = 'MANAGE_UPDATES',
   VIEW_USER_SENSITIVE_DATA = 'VIEW_USER_SENSITIVE_DATA'
 }
 
@@ -41,7 +40,6 @@ export const permissionLabels: Record<Permission, string> = {
   [Permission.MANAGE_MESSAGES]: 'Manage messages',
   [Permission.MANAGE_STORAGE]: 'Manage storage',
   [Permission.MANAGE_INVITES]: 'Manage invites',
-  [Permission.MANAGE_UPDATES]: 'Manage updates',
   [Permission.VIEW_USER_SENSITIVE_DATA]: 'View user sensitive data'
 };
 
@@ -75,7 +73,6 @@ export const permissionDescriptions: Record<Permission, string> = {
     'Grants the ability to manage storage, such as enabling or disabling uploads.',
   [Permission.MANAGE_INVITES]:
     'Grants the ability to create, edit, and delete server invites.',
-  [Permission.MANAGE_UPDATES]: 'Grants the ability to perform updates.',
   [Permission.VIEW_USER_SENSITIVE_DATA]:
     'Grants the ability to view user sensitive data like identity, IP address, and location.'
 };

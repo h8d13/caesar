@@ -10,8 +10,8 @@ import { Invites } from './invites';
 import { Roles } from './roles';
 import { Sounds } from './sounds';
 import { Storage } from './storage';
-import { Updates } from './updates';
 import { Users } from './users';
+import { Version } from './version';
 
 type TServerSettingsProps = TServerScreenBaseProps;
 
@@ -26,7 +26,6 @@ const ServerSettings = memo(({ close }: TServerSettingsProps) => {
         if (can(Permission.MANAGE_STORAGE)) return 'storage';
         if (can(Permission.MANAGE_USERS)) return 'users';
         if (can(Permission.MANAGE_INVITES)) return 'invites';
-        if (can(Permission.MANAGE_UPDATES)) return 'updates';
         return 'general';
     }, [can]);
 
@@ -77,12 +76,7 @@ const ServerSettings = memo(({ close }: TServerSettingsProps) => {
                         >
                             Invites
                         </TabsTrigger>
-                        <TabsTrigger
-                            value="updates"
-                            disabled={!can(Permission.MANAGE_UPDATES)}
-                        >
-                            Updates
-                        </TabsTrigger>
+                        <TabsTrigger value="version">Version</TabsTrigger>
                     </TabsList>
                     <TabsContent value="general" className="space-y-6">
                         {can(Permission.MANAGE_SETTINGS) && <General />}
@@ -105,8 +99,8 @@ const ServerSettings = memo(({ close }: TServerSettingsProps) => {
                     <TabsContent value="invites" className="space-y-6">
                         {can(Permission.MANAGE_INVITES) && <Invites />}
                     </TabsContent>
-                    <TabsContent value="updates" className="space-y-6">
-                        {can(Permission.MANAGE_UPDATES) && <Updates />}
+                    <TabsContent value="version" className="space-y-6">
+                        <Version />
                     </TabsContent>
                 </Tabs>
             </div>

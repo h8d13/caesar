@@ -36,9 +36,7 @@ const loadRecentEmojis = (): TEmojiItem[] => {
         []
     );
 
-    recentEmojisCache = (stored ?? []).filter(
-        (emoji) => !isCustomEmoji(emoji)
-    );
+    recentEmojisCache = (stored ?? []).filter((emoji) => !isCustomEmoji(emoji));
 
     return recentEmojisCache;
 };
