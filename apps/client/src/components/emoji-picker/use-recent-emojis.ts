@@ -1,11 +1,10 @@
 import type { TEmojiItem } from '@/components/tiptap-input/helpers';
-import { useCustomEmojis } from '@/features/server/emojis/hooks';
 import {
     getLocalStorageItemAsJSON,
     LocalStorageKey,
     setLocalStorageItemAsJSON
 } from '@/helpers/storage';
-import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
 const MAX_RECENT_EMOJIS = 32;
 
@@ -24,6 +23,9 @@ const notifySubscribers = () => {
     subscribers.forEach((callback) => callback());
 };
 
+const isCustomEmoji = (emoji: TEmojiItem): boolean =>
+    !!emoji.fallbackImage && !emoji.emoji;
+
 const loadRecentEmojis = (): TEmojiItem[] => {
     if (recentEmojisCache !== null) {
         return recentEmojisCache;
@@ -34,7 +36,9 @@ const loadRecentEmojis = (): TEmojiItem[] => {
         []
     );
 
-    recentEmojisCache = stored ?? [];
+    recentEmojisCache = (stored ?? []).filter(
+        (emoji) => !isCustomEmoji(emoji)
+    );
 
     return recentEmojisCache;
 };
@@ -73,33 +77,15 @@ const getSnapshot = (): TEmojiItem[] => {
     return loadRecentEmojis();
 };
 
-const isCustomEmoji = (emoji: TEmojiItem): boolean =>
-    !!emoji.fallbackImage && !emoji.emoji;
-
 const useRecentEmojis = () => {
-    const storedRecents = useSyncExternalStore(
+    const recentEmojis = useSyncExternalStore(
         subscribe,
         getSnapshot,
         getSnapshot
     );
-    const customEmojis = useCustomEmojis();
-
-    const recentEmojis = useMemo(() => {
-        const customMap = new Map(customEmojis.map((e) => [e.name, e]));
-
-        return storedRecents
-            .filter(
-                (emoji) => !isCustomEmoji(emoji) || customMap.has(emoji.name)
-            )
-            .map((emoji) => {
-                if (!isCustomEmoji(emoji)) return emoji;
-                const fresh = customMap.get(emoji.name);
-                if (!fresh) return emoji;
-                return { ...emoji, fallbackImage: fresh.fallbackImage };
-            });
-    }, [storedRecents, customEmojis]);
 
     const addRecent = useCallback((emoji: TEmojiItem) => {
+        if (isCustomEmoji(emoji)) return;
         addRecentEmoji(emoji);
     }, []);
 
