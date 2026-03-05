@@ -172,6 +172,9 @@ class RouletteRuntime {
     }
 
     const bet = this.activeBets[betIndex];
+    if (!bet) {
+      throw new Error('Bet not found');
+    }
 
     // Refund by setting ledger entry to 0
     await this.callbacks.updateLedgerEntry(bet.ledgerEntryId, 0);
