@@ -91,19 +91,14 @@ const RightSidebar = memo(
                 (user) => user.name !== DELETED_USER_IDENTITY_AND_NAME
             );
 
-            if (filterMode === 'channel') {
-                if (isVoiceChannel) {
-                    const voiceUserIds = new Set(
-                        voiceUsers.map((vu) => vu.id)
-                    );
-                    filtered = filtered.filter((user) =>
-                        voiceUserIds.has(user.id)
-                    );
-                } else if (isPrivateChannel && channelMemberIds.size > 0) {
-                    filtered = filtered.filter((user) =>
-                        channelMemberIds.has(user.id)
-                    );
-                }
+            if (
+                filterMode === 'channel' &&
+                isPrivateChannel &&
+                channelMemberIds.size > 0
+            ) {
+                filtered = filtered.filter((user) =>
+                    channelMemberIds.has(user.id)
+                );
             }
 
             return {
