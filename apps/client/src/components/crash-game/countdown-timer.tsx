@@ -29,7 +29,9 @@ const CountdownTimer = memo(() => {
         return () => clearInterval(interval);
     }, [phaseStartedAt, phaseDuration]);
 
-    if (remaining === null || phase === CrashPhase.FLYING) return null;
+    if (remaining === null || phase === CrashPhase.FLYING) {
+        return <div className="text-center text-sm invisible">&nbsp;</div>;
+    }
 
     const seconds = (remaining / 1000).toFixed(1);
     const label =

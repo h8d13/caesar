@@ -8,7 +8,7 @@ const RoundHistory = memo(() => {
     if (history.length === 0) return null;
 
     return (
-        <div className="flex gap-1.5 px-4 overflow-x-auto py-2">
+        <div className="flex gap-1.5 pl-4 pr-10 overflow-x-auto py-2">
             {history.slice(0, 20).map((round) => (
                 <span
                     key={round.id}

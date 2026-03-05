@@ -29,5 +29,3 @@ export const cashOut = async () => {
     const trpc = getTRPCClient();
     await trpc.crash.cashOut.mutate();
 };
-
-export const resetCrashState = () => store.dispatch(crashSliceActions.reset());

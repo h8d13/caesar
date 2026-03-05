@@ -60,16 +60,22 @@ const MultiplierDisplay = memo(() => {
             >
                 {displayMultiplier.toFixed(2)}x
             </span>
-            {phase === CrashPhase.CRASHED && (
-                <span className="mt-2 text-sm text-red-500 font-medium">
-                    CRASHED
-                </span>
-            )}
-            {phase === CrashPhase.BETTING && (
-                <span className="mt-2 text-sm text-muted-foreground">
-                    Waiting for bets...
-                </span>
-            )}
+            <span
+                className={cn(
+                    'mt-2 text-sm font-medium',
+                    phase === CrashPhase.CRASHED
+                        ? 'text-red-500'
+                        : phase === CrashPhase.BETTING
+                          ? 'text-muted-foreground'
+                          : 'invisible'
+                )}
+            >
+                {phase === CrashPhase.CRASHED
+                    ? 'CRASHED'
+                    : phase === CrashPhase.BETTING
+                      ? 'Waiting for bets...'
+                      : '\u00A0'}
+            </span>
         </div>
     );
 });
