@@ -1,7 +1,5 @@
 FROM oven/bun:latest
 
-ENV RUNNING_IN_DOCKER=true
-
 WORKDIR /app
 
 # Copy everything

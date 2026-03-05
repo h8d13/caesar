@@ -8,4 +8,4 @@
 # docker compose --profile prod down && docker system prune && docker compose --profile prod build --no-cache
 
 # convenience wrapper for prod builds
-SHARKORD_AUTOUPDATE=false docker compose --profile prod up -d
+docker compose --profile prod up -d
