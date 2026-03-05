@@ -14,6 +14,7 @@ import { config, SERVER_PRIVATE_IP } from './config';
 import { loadCrons } from './crons';
 import { loadDb } from './db';
 import { initCrash } from './games/crash/init';
+import { initRoulette } from './games/roulette/init';
 import { enqueueActivityLog } from './queues/activity-log';
 import { initVoiceRuntimes } from './runtimes';
 import { createServers } from './utils/create-servers';
@@ -26,6 +27,7 @@ await loadMediasoup();
 await initVoiceRuntimes();
 await loadCrons();
 await initCrash();
+await initRoulette();
 
 const host = IS_PRODUCTION ? SERVER_PRIVATE_IP : 'localhost';
 const url = `http://${host}:${config.server.port}/`;

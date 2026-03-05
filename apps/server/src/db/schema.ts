@@ -582,6 +582,43 @@ const crashBets = sqliteTable(
   ]
 );
 
+const rouletteRounds = sqliteTable(
+  'roulette_rounds',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    winningNumber: integer('winning_number').notNull(),
+    hash: text('hash').notNull(),
+    startedAt: integer('started_at').notNull(),
+    endedAt: integer('ended_at')
+  },
+  (t) => [
+    index('roulette_rounds_started_idx').on(t.startedAt),
+    index('roulette_rounds_ended_idx').on(t.endedAt)
+  ]
+);
+
+const rouletteBets = sqliteTable(
+  'roulette_bets',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    roundId: integer('round_id')
+      .notNull()
+      .references(() => rouletteRounds.id, { onDelete: 'cascade' }),
+    userId: integer('user_id').notNull(),
+    betType: text('bet_type').notNull(),
+    betValue: integer('bet_value'),
+    amount: integer('amount').notNull(),
+    profit: integer('profit'),
+    ledgerEntryId: integer('ledger_entry_id'),
+    createdAt: integer('created_at').notNull()
+  },
+  (t) => [
+    index('roulette_bets_round_idx').on(t.roundId),
+    index('roulette_bets_user_idx').on(t.userId),
+    index('roulette_bets_round_user_idx').on(t.roundId, t.userId)
+  ]
+);
+
 export {
   activityLog,
   categories,
@@ -601,6 +638,8 @@ export {
   messages,
   rolePermissions,
   roles,
+  rouletteBets,
+  rouletteRounds,
   settings,
   socialCreditLedger,
   socialCreditVotes,

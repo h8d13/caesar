@@ -102,7 +102,7 @@ const BetControls = memo(() => {
                     size="sm"
                     onClick={() => setAutoBet((prev) => !prev)}
                 >
-                    {autoBet ? 'Auto •' : 'Auto'}
+                    {autoBet ? 'Auto•' : 'Auto'}
                 </Button>
             </div>
             {phase === CrashPhase.FLYING ? (

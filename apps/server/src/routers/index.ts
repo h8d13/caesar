@@ -1,4 +1,5 @@
 import { crashRouter } from '../games/crash/router';
+import { rouletteRouter } from '../games/roulette/router';
 import { t } from '../utils/trpc';
 import { categoriesRouter } from './categories';
 import { channelsRouter } from './channels';
@@ -28,7 +29,8 @@ const appRouter = t.router({
   voice: voiceRouter,
   categories: categoriesRouter,
   whiteboard: whiteboardRouter,
-  crash: crashRouter
+  crash: crashRouter,
+  roulette: rouletteRouter
 });
 
 type AppRouter = typeof appRouter;

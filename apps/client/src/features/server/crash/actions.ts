@@ -2,12 +2,6 @@ import { getTRPCClient } from '@/lib/trpc';
 import { store } from '../../store';
 import { crashSliceActions } from './slice';
 
-export const openCrashGame = () =>
-    store.dispatch(crashSliceActions.setIsOpen(true));
-
-export const closeCrashGame = () =>
-    store.dispatch(crashSliceActions.setIsOpen(false));
-
 export const fetchCrashState = async () => {
     const trpc = getTRPCClient();
     const state = await trpc.crash.getState.query();

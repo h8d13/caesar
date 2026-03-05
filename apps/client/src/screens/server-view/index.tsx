@@ -1,4 +1,3 @@
-import { CrashGameSheet } from '@/components/crash-game';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { ModViewSheet } from '@/components/mod-view-sheet';
 import { Protect } from '@/components/protect';
@@ -135,7 +134,6 @@ const ServerView = memo(() => {
                     <Protect permission={Permission.MANAGE_USERS}>
                         <ModViewSheet />
                     </Protect>
-                    <CrashGameSheet />
                 </div>
             </div>
         </VoiceProvider>

@@ -4,16 +4,16 @@ import { publishUser } from '../../db/publishers';
 import { socialCreditLedger } from '../../db/schema';
 import { gameCoordinator } from '../coordinator';
 import { setRuntime } from './router';
-import { CrashRuntime } from './runtime';
+import { RouletteRuntime } from './runtime';
 
-const initCrash = async () => {
-  const runtime = new CrashRuntime({
+const initRoulette = async () => {
+  const runtime = new RouletteRuntime({
     createLedgerEntry: async (userId, amount, roundId) => {
       const entry = db
         .insert(socialCreditLedger)
         .values({
           targetId: userId,
-          ledgerableType: 'crash',
+          ledgerableType: 'roulette',
           ledgerableId: roundId,
           amount,
           createdAt: Date.now()
@@ -43,9 +43,9 @@ const initCrash = async () => {
     }
   });
 
-  gameCoordinator.register('crash');
+  gameCoordinator.register('roulette');
   setRuntime(runtime);
   await runtime.start();
 };
 
-export { initCrash };
+export { initRoulette };

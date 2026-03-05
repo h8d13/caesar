@@ -3,6 +3,7 @@ import { appSliceReducer } from './app/slice';
 import { dialogSliceReducer } from './dialogs/slice';
 import { serverScreenSliceReducer } from './server-screens/slice';
 import { crashSliceReducer } from './server/crash/slice';
+import { rouletteSliceReducer } from './server/roulette/slice';
 import { serverSliceReducer } from './server/slice';
 
 export const store = configureStore({
@@ -11,7 +12,8 @@ export const store = configureStore({
         server: serverSliceReducer,
         dialog: dialogSliceReducer,
         serverScreen: serverScreenSliceReducer,
-        crash: crashSliceReducer
+        crash: crashSliceReducer,
+        roulette: rouletteSliceReducer
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

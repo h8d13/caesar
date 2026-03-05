@@ -1,89 +1,93 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import {
-    type CrashPhase,
-    type TCrashActiveBet,
-    type TCrashRoundHistory,
-    type TCrashStateUpdate
-} from '@sharkord/shared/games/crash';
+    type RoulettePhase,
+    type TRouletteActiveBet,
+    type TRouletteRoundHistory,
+    type TRouletteStateUpdate
+} from '@sharkord/shared/games/roulette';
 
-export type TCrashTopWin = {
+export type TRouletteTopWin = {
     userName: string;
     amount: number;
     profit: number;
-    cashedOutAt: number;
+    betType: string;
 };
 
 const MAX_TOP_WINS = 5;
 
-export interface TCrashState {
-    phase: CrashPhase | null;
+export interface TRouletteState {
+    phase: RoulettePhase | null;
     roundId: number | null;
-    multiplier: number;
     phaseStartedAt: number | null;
     phaseDuration: number | null;
-    bets: TCrashActiveBet[];
-    roundHistory: TCrashRoundHistory[];
-    lastCrashPoint: number | null;
-    topWins: TCrashTopWin[];
+    winningNumber: number | null;
+    bets: TRouletteActiveBet[];
+    roundHistory: TRouletteRoundHistory[];
+    lastWinningNumber: number | null;
+    topWins: TRouletteTopWin[];
 }
 
-const initialState: TCrashState = {
+const initialState: TRouletteState = {
     phase: null,
     roundId: null,
-    multiplier: 1,
     phaseStartedAt: null,
     phaseDuration: null,
+    winningNumber: null,
     bets: [],
     roundHistory: [],
-    lastCrashPoint: null,
+    lastWinningNumber: null,
     topWins: []
 };
 
-export const crashSlice = createSlice({
-    name: 'crash',
+export const rouletteSlice = createSlice({
+    name: 'roulette',
     initialState,
     reducers: {
-        setStateUpdate: (state, action: PayloadAction<TCrashStateUpdate>) => {
+        setStateUpdate: (
+            state,
+            action: PayloadAction<TRouletteStateUpdate>
+        ) => {
             state.phase = action.payload.phase;
             state.roundId = action.payload.roundId;
-            state.multiplier = action.payload.multiplier;
             state.phaseStartedAt = action.payload.phaseStartedAt;
             state.phaseDuration = action.payload.phaseDuration;
+            state.winningNumber = action.payload.winningNumber;
             state.bets = action.payload.bets;
         },
         setRoundHistory: (
             state,
-            action: PayloadAction<TCrashRoundHistory[]>
+            action: PayloadAction<TRouletteRoundHistory[]>
         ) => {
             state.roundHistory = action.payload;
         },
         addRoundToHistory: (
             state,
-            action: PayloadAction<{ crashPoint: number; roundId: number }>
+            action: PayloadAction<{
+                winningNumber: number;
+                roundId: number;
+            }>
         ) => {
-            state.lastCrashPoint = action.payload.crashPoint;
+            state.lastWinningNumber = action.payload.winningNumber;
             state.roundHistory.unshift({
                 id: action.payload.roundId,
-                crashPoint: action.payload.crashPoint,
+                winningNumber: action.payload.winningNumber,
                 createdAt: Date.now()
             });
             if (state.roundHistory.length > 50) {
                 state.roundHistory.pop();
             }
         },
-        addRoundWins: (state, action: PayloadAction<TCrashActiveBet[]>) => {
-            const wins: TCrashTopWin[] = action.payload
-                .filter(
-                    (b) =>
-                        b.profit !== null &&
-                        b.profit > 0 &&
-                        b.cashedOutAt !== null
-                )
+        addRoundWins: (
+            state,
+            action: PayloadAction<TRouletteActiveBet[]>
+        ) => {
+            const wins: TRouletteTopWin[] = action.payload
+                .filter((b) => b.profit !== null && b.profit > 0)
                 .map((b) => ({
                     userName: b.userName,
                     amount: b.amount,
                     profit: b.profit!,
-                    cashedOutAt: b.cashedOutAt!
+                    betType: b.betType
                 }));
 
             const combined = [...state.topWins, ...wins]
@@ -96,7 +100,7 @@ export const crashSlice = createSlice({
     }
 });
 
-const crashSliceActions = crashSlice.actions;
-const crashSliceReducer = crashSlice.reducer;
+const rouletteSliceActions = rouletteSlice.actions;
+const rouletteSliceReducer = rouletteSlice.reducer;
 
-export { crashSliceActions, crashSliceReducer };
+export { rouletteSliceActions, rouletteSliceReducer };

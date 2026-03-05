@@ -1,6 +1,5 @@
 import { openServerScreen } from '@/features/server-screens/actions';
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
-import { openCrashGame } from '@/features/server/crash/actions';
 import { useChannelCan } from '@/features/server/hooks';
 import { useOwnPublicUser } from '@/features/server/users/hooks';
 import { useVoice } from '@/features/server/voice/hooks';
@@ -28,6 +27,10 @@ const UserControl = memo(() => {
 
     const handleSettingsClick = useCallback(() => {
         openServerScreen(ServerScreen.USER_SETTINGS);
+    }, []);
+
+    const handleGamesClick = useCallback(() => {
+        openServerScreen(ServerScreen.GAMES);
     }, []);
 
     if (!ownPublicUser) return null;
@@ -106,8 +109,8 @@ const UserControl = memo(() => {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    onClick={openCrashGame}
-                    title="Crash game"
+                    onClick={handleGamesClick}
+                    title="Games"
                 >
                     <Rocket className="h-4 w-4" />
                 </Button>

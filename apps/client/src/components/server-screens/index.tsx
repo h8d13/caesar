@@ -29,6 +29,9 @@ const ScreensMap = {
         import('./category-settings').then((m) => ({
             default: m.CategorySettings
         }))
+    ),
+    [ServerScreen.GAMES]: lazy(() =>
+        import('./games').then((m) => ({ default: m.Games }))
     )
 };
 

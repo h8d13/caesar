@@ -18,6 +18,7 @@ import {
   MULTIPLIER_GROWTH_RATE,
   MULTIPLIER_TICK_INTERVAL_MS
 } from './constants';
+import { gameCoordinator } from '../coordinator';
 import type { TCrashLedgerCallbacks } from './types';
 
 type ActiveBetInternal = {
@@ -283,7 +284,7 @@ class CrashRuntime {
     this.notifyResultSubscribers(result);
 
     setTimeout(() => {
-      this.startBettingPhase();
+      gameCoordinator.requestNextRound('crash', () => this.startBettingPhase());
     }, CRASHED_PHASE_DURATION_MS);
   }
 
