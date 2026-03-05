@@ -5,7 +5,6 @@ import {
     useSelectedChannelId,
     useSelectedChannelType
 } from '@/features/server/channels/hooks';
-import { useVoiceUsersByChannelId } from '@/features/server/hooks';
 import { useUsers } from '@/features/server/users/hooks';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
 import { getSocialCreditColor } from '@/helpers/get-social-credit-color';
@@ -65,7 +64,7 @@ const RightSidebar = memo(
         const selectedChannelId = useSelectedChannelId();
         const selectedChannelType = useSelectedChannelType();
         const selectedChannel = useChannelById(selectedChannelId ?? -1);
-        const voiceUsers = useVoiceUsersByChannelId(selectedChannelId ?? -1);
+
         const [channelMemberIds, setChannelMemberIds] = useState<Set<number>>(
             new Set()
         );
@@ -105,14 +104,7 @@ const RightSidebar = memo(
                 usersToShow: filtered.slice(0, MAX_USERS_TO_SHOW),
                 usersCount: filtered.length
             };
-        }, [
-            users,
-            isVoiceChannel,
-            isPrivateChannel,
-            channelMemberIds,
-            filterMode,
-            voiceUsers
-        ]);
+        }, [users, isPrivateChannel, channelMemberIds, filterMode]);
 
         const hasHiddenUsers = usersToShow.length < usersCount;
 
