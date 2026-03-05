@@ -8,7 +8,6 @@ import {
 import { desc, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { crashBets, crashRounds } from '../../db/schema';
-import { gameCoordinator } from '../coordinator';
 import {
   BETTING_PHASE_DURATION_MS,
   CASHOUT_GRACE_PERIOD_MS,
@@ -284,7 +283,7 @@ class CrashRuntime {
     this.notifyResultSubscribers(result);
 
     setTimeout(() => {
-      gameCoordinator.requestNextRound('crash', () => this.startBettingPhase());
+      this.startBettingPhase();
     }, CRASHED_PHASE_DURATION_MS);
   }
 

@@ -11,7 +11,6 @@ import {
 import { desc, eq, isNotNull } from 'drizzle-orm';
 import { db } from '../../db';
 import { rouletteBets, rouletteRounds } from '../../db/schema';
-import { gameCoordinator } from '../coordinator';
 import {
   BETTING_PHASE_DURATION_MS,
   MAX_BET,
@@ -268,9 +267,7 @@ class RouletteRuntime {
     this.notifyResultSubscribers(result);
 
     setTimeout(() => {
-      gameCoordinator.requestNextRound('roulette', () =>
-        this.startBettingPhase()
-      );
+      this.startBettingPhase();
     }, RESULT_PHASE_DURATION_MS);
   }
 

@@ -2,7 +2,6 @@ import { eq, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { publishUser } from '../../db/publishers';
 import { socialCreditLedger } from '../../db/schema';
-import { gameCoordinator } from '../coordinator';
 import { setRuntime } from './router';
 import { CrashRuntime } from './runtime';
 
@@ -43,7 +42,6 @@ const initCrash = async () => {
     }
   });
 
-  gameCoordinator.register('crash');
   setRuntime(runtime);
   await runtime.start();
 };
