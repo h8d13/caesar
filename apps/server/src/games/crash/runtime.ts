@@ -10,6 +10,7 @@ import { db } from '../../db';
 import { crashBets, crashRounds } from '../../db/schema';
 import {
   BETTING_PHASE_DURATION_MS,
+  CASHOUT_GRACE_PERIOD_MS,
   CRASHED_PHASE_DURATION_MS,
   HOUSE_EDGE,
   MAX_BET,
@@ -37,6 +38,7 @@ class CrashRuntime {
   private multiplier: number = 1;
   private phaseStartedAt: number = 0;
   private flyingStartedAt: number = 0;
+  private crashedAt: number = 0;
   private activeBets: ActiveBetInternal[] = [];
   private tickInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -147,7 +149,11 @@ class CrashRuntime {
   }
 
   async cashOut(userId: number): Promise<void> {
-    if (this.phase !== CrashPhase.FLYING) {
+    const withinGracePeriod =
+      this.phase === CrashPhase.CRASHED &&
+      Date.now() - this.crashedAt <= CASHOUT_GRACE_PERIOD_MS;
+
+    if (this.phase !== CrashPhase.FLYING && !withinGracePeriod) {
       throw new Error('Can only cash out during the flying phase');
     }
 
@@ -158,17 +164,20 @@ class CrashRuntime {
       throw new Error('No active bet to cash out');
     }
 
-    const currentMultiplier = this.multiplier;
-    const payout = Math.floor(bet.amount * currentMultiplier);
+    // Grace period cashouts use the crash point as the multiplier
+    const cashoutMultiplier = withinGracePeriod
+      ? this.crashPoint
+      : this.multiplier;
+    const payout = Math.floor(bet.amount * cashoutMultiplier);
     const profit = payout - bet.amount;
 
-    bet.cashedOutAt = currentMultiplier;
+    bet.cashedOutAt = cashoutMultiplier;
     bet.profit = profit;
 
     await this.callbacks.updateLedgerEntry(bet.ledgerEntryId, profit);
 
     db.update(crashBets)
-      .set({ cashedOutAt: currentMultiplier, profit })
+      .set({ cashedOutAt: cashoutMultiplier, profit })
       .where(eq(crashBets.id, bet.betId))
       .run();
 
@@ -243,7 +252,9 @@ class CrashRuntime {
       this.tickInterval = null;
     }
 
-    // Mark all uncashed bets as busted
+    this.crashedAt = Date.now();
+
+    // Mark all uncashed bets as busted (can be reversed by grace period cashout)
     for (const bet of this.activeBets) {
       if (bet.cashedOutAt === null) {
         bet.profit = -bet.amount;
