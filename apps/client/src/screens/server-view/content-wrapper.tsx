@@ -30,8 +30,6 @@ const usePing = () => {
 
     useEffect(() => {
         refresh();
-        const interval = setInterval(refresh, 10_000);
-        return () => clearInterval(interval);
     }, [refresh]);
 
     return { serverPing, dbPing };
@@ -41,9 +39,9 @@ const PingInfo = memo(() => {
     const { serverPing, dbPing } = usePing();
 
     return (
-        <div className="flex gap-4 text-xs text-muted-foreground mt-3">
+        <div className="flex gap-4 text-xs text-muted-foreground mt-3 justify-center">
             <span>
-                Server:{' '}
+                RT:{' '}
                 <span className="tabular-nums font-medium text-foreground">
                     {serverPing !== null ? `${serverPing}ms` : '...'}
                 </span>
