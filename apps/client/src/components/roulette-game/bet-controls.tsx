@@ -14,19 +14,11 @@ import {
     RoulettePhase
 } from '@sharkord/shared/games/roulette';
 import { Button } from '@sharkord/ui';
-import {
-    createContext,
-    memo,
-    useCallback,
-    useEffect,
-    useRef,
-    useState
-} from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { ChipAmountContext } from './chip-amount-context';
 
 const CHIP_PRESETS = [1, 5, 10, 25, 50, 100];
-
-export const ChipAmountContext = createContext<number>(10);
 
 type SavedBet = {
     betType: RouletteBetType;

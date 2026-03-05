@@ -8,7 +8,7 @@ import {
     RoulettePhase
 } from '@sharkord/shared/games/roulette';
 import { memo, useCallback, useContext } from 'react';
-import { ChipAmountContext } from './bet-controls';
+import { ChipAmountContext } from './chip-amount-context';
 import { BOARD_ROWS, getNumberColor } from './constants';
 
 type TBoardCellProps = {

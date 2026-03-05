@@ -13,5 +13,3 @@ export const rouletteRoundHistorySelector = (state: IRootState) =>
     state.roulette.roundHistory;
 export const rouletteTopWinsSelector = (state: IRootState) =>
     state.roulette.topWins;
-export const rouletteLastWinningNumberSelector = (state: IRootState) =>
-    state.roulette.lastWinningNumber;

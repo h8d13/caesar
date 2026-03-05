@@ -23,7 +23,6 @@ export interface TRouletteState {
     winningNumber: number | null;
     bets: TRouletteActiveBet[];
     roundHistory: TRouletteRoundHistory[];
-    lastWinningNumber: number | null;
     topWins: TRouletteTopWin[];
 }
 
@@ -35,7 +34,6 @@ const initialState: TRouletteState = {
     winningNumber: null,
     bets: [],
     roundHistory: [],
-    lastWinningNumber: null,
     topWins: []
 };
 
@@ -67,7 +65,6 @@ export const rouletteSlice = createSlice({
                 roundId: number;
             }>
         ) => {
-            state.lastWinningNumber = action.payload.winningNumber;
             state.roundHistory.unshift({
                 id: action.payload.roundId,
                 winningNumber: action.payload.winningNumber,
