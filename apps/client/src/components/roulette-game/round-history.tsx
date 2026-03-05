@@ -23,12 +23,9 @@ const RoundHistory = memo(() => {
                             key={round.id}
                             className={cn(
                                 'text-xs font-bold tabular-nums w-7 h-7 rounded-full flex items-center justify-center shrink-0',
-                                color === 'red' &&
-                                    'bg-red-600 text-white',
-                                color === 'black' &&
-                                    'bg-zinc-800 text-white',
-                                color === 'green' &&
-                                    'bg-green-600 text-white'
+                                color === 'red' && 'bg-red-600 text-white',
+                                color === 'black' && 'bg-zinc-800 text-white',
+                                color === 'green' && 'bg-green-600 text-white'
                             )}
                         >
                             {round.winningNumber}

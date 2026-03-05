@@ -1,17 +1,17 @@
 import {
+  isBetWinner,
+  PAYOUT_MAP,
   type RouletteBetType,
   RoulettePhase,
   type TRouletteActiveBet,
   type TRouletteRoundHistory,
   type TRouletteRoundResult,
-  type TRouletteStateUpdate,
-  isBetWinner,
-  PAYOUT_MAP
+  type TRouletteStateUpdate
 } from '@sharkord/shared/games/roulette';
 import { desc, eq, isNotNull } from 'drizzle-orm';
-import { gameCoordinator } from '../coordinator';
 import { db } from '../../db';
 import { rouletteBets, rouletteRounds } from '../../db/schema';
+import { gameCoordinator } from '../coordinator';
 import {
   BETTING_PHASE_DURATION_MS,
   MAX_BET,
@@ -74,7 +74,8 @@ class RouletteRuntime {
       roundId: this.roundId,
       phaseStartedAt: this.phaseStartedAt,
       phaseDuration: this.getPhaseDuration(),
-      winningNumber: this.phase === RoulettePhase.BETTING ? null : this.winningNumber,
+      winningNumber:
+        this.phase === RoulettePhase.BETTING ? null : this.winningNumber,
       bets: this.getPublicBets()
     };
   }
@@ -264,7 +265,9 @@ class RouletteRuntime {
     this.notifyResultSubscribers(result);
 
     setTimeout(() => {
-      gameCoordinator.requestNextRound('roulette', () => this.startBettingPhase());
+      gameCoordinator.requestNextRound('roulette', () =>
+        this.startBettingPhase()
+      );
     }, RESULT_PHASE_DURATION_MS);
   }
 
@@ -292,7 +295,8 @@ class RouletteRuntime {
 
   private getPhaseDuration(): number {
     if (this.phase === RoulettePhase.BETTING) return BETTING_PHASE_DURATION_MS;
-    if (this.phase === RoulettePhase.SPINNING) return SPINNING_PHASE_DURATION_MS;
+    if (this.phase === RoulettePhase.SPINNING)
+      return SPINNING_PHASE_DURATION_MS;
     return RESULT_PHASE_DURATION_MS;
   }
 

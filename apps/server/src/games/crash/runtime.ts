@@ -8,6 +8,7 @@ import {
 import { desc, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { crashBets, crashRounds } from '../../db/schema';
+import { gameCoordinator } from '../coordinator';
 import {
   BETTING_PHASE_DURATION_MS,
   CASHOUT_GRACE_PERIOD_MS,
@@ -18,7 +19,6 @@ import {
   MULTIPLIER_GROWTH_RATE,
   MULTIPLIER_TICK_INTERVAL_MS
 } from './constants';
-import { gameCoordinator } from '../coordinator';
 import type { TCrashLedgerCallbacks } from './types';
 
 type ActiveBetInternal = {

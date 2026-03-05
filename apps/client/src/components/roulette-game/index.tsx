@@ -7,8 +7,8 @@ import { memo, useEffect } from 'react';
 import { BetControls } from './bet-controls';
 import { BettingBoard } from './betting-board';
 import { PlayerBets } from './player-bets';
-import { RoundHistory } from './round-history';
 import { RouletteWheel } from './roulette-wheel';
+import { RoundHistory } from './round-history';
 
 const RouletteGameContent = memo(() => {
     useEffect(() => {

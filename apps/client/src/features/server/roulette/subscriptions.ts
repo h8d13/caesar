@@ -13,8 +13,7 @@ const subscribeToRoulette = () => {
         onData: (state: TRouletteStateUpdate) => {
             store.dispatch(rouletteSliceActions.setStateUpdate(state));
         },
-        onError: (err) =>
-            console.error('roulette.onStateUpdate error:', err)
+        onError: (err) => console.error('roulette.onStateUpdate error:', err)
     });
 
     const resultSub = trpc.roulette.onRoundResult.subscribe(undefined, {
@@ -27,8 +26,7 @@ const subscribeToRoulette = () => {
             );
             store.dispatch(rouletteSliceActions.addRoundWins(result.bets));
         },
-        onError: (err) =>
-            console.error('roulette.onRoundResult error:', err)
+        onError: (err) => console.error('roulette.onRoundResult error:', err)
     });
 
     return () => {

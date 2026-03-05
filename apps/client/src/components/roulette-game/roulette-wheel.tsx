@@ -17,7 +17,11 @@ const RouletteWheel = memo(() => {
     const hasSpunRef = useRef(false);
 
     useEffect(() => {
-        if (phase === RoulettePhase.SPINNING && winningNumber !== null && !hasSpunRef.current) {
+        if (
+            phase === RoulettePhase.SPINNING &&
+            winningNumber !== null &&
+            !hasSpunRef.current
+        ) {
             hasSpunRef.current = true;
             const winIndex = WHEEL_ORDER.indexOf(winningNumber);
             const segmentCenter = winIndex * SEGMENT_ANGLE + SEGMENT_ANGLE / 2;

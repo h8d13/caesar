@@ -79,7 +79,8 @@ export const isBetWinner = (
   betValue: number | null,
   winningNumber: number
 ): boolean => {
-  if (winningNumber === 0) return betType === RouletteBetType.STRAIGHT && betValue === 0;
+  if (winningNumber === 0)
+    return betType === RouletteBetType.STRAIGHT && betValue === 0;
 
   switch (betType) {
     case RouletteBetType.STRAIGHT:

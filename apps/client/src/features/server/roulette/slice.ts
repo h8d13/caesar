@@ -77,10 +77,7 @@ export const rouletteSlice = createSlice({
                 state.roundHistory.pop();
             }
         },
-        addRoundWins: (
-            state,
-            action: PayloadAction<TRouletteActiveBet[]>
-        ) => {
+        addRoundWins: (state, action: PayloadAction<TRouletteActiveBet[]>) => {
             const wins: TRouletteTopWin[] = action.payload
                 .filter((b) => b.profit !== null && b.profit > 0)
                 .map((b) => ({

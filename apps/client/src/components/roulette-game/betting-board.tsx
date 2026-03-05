@@ -3,10 +3,13 @@ import {
     useRoulettePhase
 } from '@/features/server/roulette/hooks';
 import { cn } from '@/lib/utils';
-import { RouletteBetType, RoulettePhase } from '@sharkord/shared/games/roulette';
+import {
+    RouletteBetType,
+    RoulettePhase
+} from '@sharkord/shared/games/roulette';
 import { memo, useCallback, useContext } from 'react';
-import { BOARD_ROWS, getNumberColor } from './constants';
 import { ChipAmountContext } from './bet-controls';
+import { BOARD_ROWS, getNumberColor } from './constants';
 
 type TBoardCellProps = {
     label: string;
@@ -18,7 +21,14 @@ type TBoardCellProps = {
 };
 
 const BoardCell = memo(
-    ({ label, color = 'none', onClick, disabled, hasChip, className }: TBoardCellProps) => {
+    ({
+        label,
+        color = 'none',
+        onClick,
+        disabled,
+        hasChip,
+        className
+    }: TBoardCellProps) => {
         const bgColor =
             color === 'red'
                 ? 'bg-red-700 hover:bg-red-600'
@@ -66,9 +76,8 @@ const BettingBoard = memo(() => {
     const onPlaceBet = useCallback(
         async (betType: RouletteBetType, betValue: number | null) => {
             if (disabled || !chipAmount) return;
-            const { placeRouletteBet } = await import(
-                '@/features/server/roulette/actions'
-            );
+            const { placeRouletteBet } =
+                await import('@/features/server/roulette/actions');
             try {
                 await placeRouletteBet(betType, betValue, chipAmount);
             } catch (e) {
@@ -81,7 +90,11 @@ const BettingBoard = memo(() => {
         [disabled, chipAmount]
     );
 
-    const columnBetTypes = [RouletteBetType.COLUMN_3, RouletteBetType.COLUMN_2, RouletteBetType.COLUMN_1];
+    const columnBetTypes = [
+        RouletteBetType.COLUMN_3,
+        RouletteBetType.COLUMN_2,
+        RouletteBetType.COLUMN_1
+    ];
 
     return (
         <div className="px-4 overflow-x-auto">
@@ -92,9 +105,7 @@ const BettingBoard = memo(() => {
                     <BoardCell
                         label="0"
                         color="green"
-                        onClick={() =>
-                            onPlaceBet(RouletteBetType.STRAIGHT, 0)
-                        }
+                        onClick={() => onPlaceBet(RouletteBetType.STRAIGHT, 0)}
                         disabled={disabled}
                         hasChip={hasBetOn(RouletteBetType.STRAIGHT, 0)}
                         className="row-span-3 h-full"
@@ -102,7 +113,10 @@ const BettingBoard = memo(() => {
                     {/* Numbers + 2:1 for each row */}
                     {BOARD_ROWS.map((row, rowIndex) => (
                         <>
-                            <div key={`row-${rowIndex}`} className="grid grid-cols-12">
+                            <div
+                                key={`row-${rowIndex}`}
+                                className="grid grid-cols-12"
+                            >
                                 {row.map((num) => (
                                     <BoardCell
                                         key={num}
@@ -129,7 +143,10 @@ const BettingBoard = memo(() => {
                                     onPlaceBet(columnBetTypes[rowIndex]!, null)
                                 }
                                 disabled={disabled}
-                                hasChip={hasBetOn(columnBetTypes[rowIndex]!, null)}
+                                hasChip={hasBetOn(
+                                    columnBetTypes[rowIndex]!,
+                                    null
+                                )}
                             />
                         </>
                     ))}
