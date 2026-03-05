@@ -101,15 +101,11 @@ const BetControls = memo(() => {
                     </Button>
                 ))}
                 <Button
-                    variant="outline"
+                    variant={autoBet ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setAutoBet((prev) => !prev)}
-                    className={cn(
-                        autoBet &&
-                            'bg-yellow-500/20 text-yellow-400 border-yellow-500/50'
-                    )}
                 >
-                    {autoBet ? 'Auto: ON' : 'Auto'}
+                    Auto
                 </Button>
             </div>
             {phase === CrashPhase.FLYING ? (
