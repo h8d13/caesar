@@ -5,7 +5,7 @@ import { Button, Input } from '@sharkord/ui';
 import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
-const PRESETS = [10, 50, 100, 500];
+const PRESETS = [10, 25, 50, 100, 250, 500, 1000];
 
 const BetControls = memo(() => {
     const phase = useCrashPhase();
@@ -57,7 +57,7 @@ const BetControls = memo(() => {
                     }
                 />
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
                 {PRESETS.map((preset) => (
                     <Button
                         key={preset}
