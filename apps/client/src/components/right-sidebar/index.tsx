@@ -68,9 +68,7 @@ const RightSidebar = memo(
 
         const { usersToShow, usersCount } = useMemo(() => {
             if (isVoiceChannel && filterMode === 'channel') {
-                const voiceUserIds = new Set(
-                    voiceUsers.map((vu) => vu.id)
-                );
+                const voiceUserIds = new Set(voiceUsers.map((vu) => vu.id));
                 const filtered = users.filter(
                     (user) =>
                         user.name !== DELETED_USER_IDENTITY_AND_NAME &&

@@ -73,10 +73,7 @@ export const crashSlice = createSlice({
                 state.roundHistory.pop();
             }
         },
-        addRoundWins: (
-            state,
-            action: PayloadAction<TCrashActiveBet[]>
-        ) => {
+        addRoundWins: (state, action: PayloadAction<TCrashActiveBet[]>) => {
             const wins: TCrashTopWin[] = action.payload
                 .filter(
                     (b) =>

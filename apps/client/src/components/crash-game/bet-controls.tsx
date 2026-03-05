@@ -1,6 +1,5 @@
 import { cashOut, placeBet } from '@/features/server/crash/actions';
 import { useCrashPhase } from '@/features/server/crash/hooks';
-import { cn } from '@/lib/utils';
 import { CrashPhase } from '@sharkord/shared/games/crash';
 import { Button, Input } from '@sharkord/ui';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
@@ -60,9 +59,7 @@ const BetControls = memo(() => {
                     await placeBet(parsed);
                 } catch (e) {
                     toast.error(
-                        e instanceof Error
-                            ? e.message
-                            : 'Auto-bet failed'
+                        e instanceof Error ? e.message : 'Auto-bet failed'
                     );
                     setAutoBet(false);
                 } finally {
