@@ -68,7 +68,7 @@ const buildCsp = (nonce?: string): string => {
   const scriptSrc = nonce
     ? `'self' blob: data: 'unsafe-eval' 'nonce-${nonce}'`
     : "'self' blob: data: 'unsafe-eval'";
-  const styleSrc = "'self' 'unsafe-inline'";
+  const styleSrc = "'self' 'unsafe-inline' https://cdnjs.cloudflare.com";
 
   return [
     "default-src 'self'",

@@ -85,11 +85,21 @@ const useRecentEmojis = () => {
     const customEmojis = useCustomEmojis();
 
     const recentEmojis = useMemo(() => {
-        const customNames = new Set(customEmojis.map((e) => e.name));
-
-        return storedRecents.filter(
-            (emoji) => !isCustomEmoji(emoji) || customNames.has(emoji.name)
+        const customMap = new Map(
+            customEmojis.map((e) => [e.name, e])
         );
+
+        return storedRecents
+            .filter(
+                (emoji) =>
+                    !isCustomEmoji(emoji) || customMap.has(emoji.name)
+            )
+            .map((emoji) => {
+                if (!isCustomEmoji(emoji)) return emoji;
+                const fresh = customMap.get(emoji.name);
+                if (!fresh) return emoji;
+                return { ...emoji, fallbackImage: fresh.fallbackImage };
+            });
     }, [storedRecents, customEmojis]);
 
     const addRecent = useCallback((emoji: TEmojiItem) => {

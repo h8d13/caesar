@@ -1,6 +1,7 @@
 import { ResizableSidebar } from '@/components/resizable-sidebar';
 import { UserAvatar } from '@/components/user-avatar';
 import {
+    useChannelById,
     useSelectedChannelId,
     useSelectedChannelType
 } from '@/features/server/channels/hooks';
@@ -9,9 +10,10 @@ import { useUsers } from '@/features/server/users/hooks';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
 import { getSocialCreditColor } from '@/helpers/get-social-credit-color';
 import { LocalStorageKey } from '@/helpers/storage';
+import { getTRPCClient } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
 import { ChannelType, DELETED_USER_IDENTITY_AND_NAME } from '@sharkord/shared';
-import { memo, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { UserPopover } from '../user-popover';
 
 const MAX_USERS_TO_SHOW = 100;
@@ -62,9 +64,27 @@ const RightSidebar = memo(
         const users = useUsers();
         const selectedChannelId = useSelectedChannelId();
         const selectedChannelType = useSelectedChannelType();
+        const selectedChannel = useChannelById(selectedChannelId ?? -1);
         const voiceUsers = useVoiceUsersByChannelId(selectedChannelId ?? -1);
+        const [channelMemberIds, setChannelMemberIds] = useState<Set<number>>(
+            new Set()
+        );
 
         const isVoiceChannel = selectedChannelType === ChannelType.VOICE;
+        const isPrivateChannel = selectedChannel?.private === true;
+
+        useEffect(() => {
+            if (!selectedChannelId || !isPrivateChannel) {
+                setChannelMemberIds(new Set());
+                return;
+            }
+
+            const trpc = getTRPCClient();
+            trpc.channels.getMembers
+                .query({ channelId: selectedChannelId })
+                .then((ids) => setChannelMemberIds(new Set(ids)))
+                .catch(() => setChannelMemberIds(new Set()));
+        }, [selectedChannelId, isPrivateChannel]);
 
         const { usersToShow, usersCount } = useMemo(() => {
             if (isVoiceChannel && filterMode === 'channel') {
@@ -81,15 +101,28 @@ const RightSidebar = memo(
                 };
             }
 
-            const filtered = users.filter(
+            let filtered = users.filter(
                 (user) => user.name !== DELETED_USER_IDENTITY_AND_NAME
             );
+
+            if (isPrivateChannel && channelMemberIds.size > 0) {
+                filtered = filtered.filter((user) =>
+                    channelMemberIds.has(user.id)
+                );
+            }
 
             return {
                 usersToShow: filtered.slice(0, MAX_USERS_TO_SHOW),
                 usersCount: filtered.length
             };
-        }, [users, isVoiceChannel, filterMode, voiceUsers]);
+        }, [
+            users,
+            isVoiceChannel,
+            isPrivateChannel,
+            channelMemberIds,
+            filterMode,
+            voiceUsers
+        ]);
 
         const hasHiddenUsers = usersToShow.length < usersCount;
 
