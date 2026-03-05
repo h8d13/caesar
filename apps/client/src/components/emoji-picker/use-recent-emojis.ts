@@ -85,14 +85,11 @@ const useRecentEmojis = () => {
     const customEmojis = useCustomEmojis();
 
     const recentEmojis = useMemo(() => {
-        const customMap = new Map(
-            customEmojis.map((e) => [e.name, e])
-        );
+        const customMap = new Map(customEmojis.map((e) => [e.name, e]));
 
         return storedRecents
             .filter(
-                (emoji) =>
-                    !isCustomEmoji(emoji) || customMap.has(emoji.name)
+                (emoji) => !isCustomEmoji(emoji) || customMap.has(emoji.name)
             )
             .map((emoji) => {
                 if (!isCustomEmoji(emoji)) return emoji;

@@ -61,16 +61,14 @@ const WelcomeScreen = memo(
         <>
             <div className="flex-col gap-2 h-full w-full hidden lg:flex overflow-auto items-center justify-center">
                 <h2 className="text-2xl font-semibold text-foreground">
-                    Welcome to{' '}
-                    <span className="bold">{serverName}</span>.
+                    Welcome to <span className="bold">{serverName}</span>.
                 </h2>
                 <PingInfo />
             </div>
             <div className="flex flex-col items-center justify-center h-full gap-6 p-8 text-center md:hidden">
                 <div className="flex flex-col gap-2">
                     <h2 className="text-2xl font-semibold text-foreground">
-                        Welcome to{' '}
-                        <span className="bold">{serverName}</span>.
+                        Welcome to <span className="bold">{serverName}</span>.
                     </h2>
                     <PingInfo />
                 </div>
