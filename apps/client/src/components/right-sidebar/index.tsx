@@ -87,28 +87,23 @@ const RightSidebar = memo(
         }, [selectedChannelId, isPrivateChannel]);
 
         const { usersToShow, usersCount } = useMemo(() => {
-            if (isVoiceChannel && filterMode === 'channel') {
-                const voiceUserIds = new Set(voiceUsers.map((vu) => vu.id));
-                const filtered = users.filter(
-                    (user) =>
-                        user.name !== DELETED_USER_IDENTITY_AND_NAME &&
-                        voiceUserIds.has(user.id)
-                );
-
-                return {
-                    usersToShow: filtered.slice(0, MAX_USERS_TO_SHOW),
-                    usersCount: filtered.length
-                };
-            }
-
             let filtered = users.filter(
                 (user) => user.name !== DELETED_USER_IDENTITY_AND_NAME
             );
 
-            if (isPrivateChannel && channelMemberIds.size > 0) {
-                filtered = filtered.filter((user) =>
-                    channelMemberIds.has(user.id)
-                );
+            if (filterMode === 'channel') {
+                if (isVoiceChannel) {
+                    const voiceUserIds = new Set(
+                        voiceUsers.map((vu) => vu.id)
+                    );
+                    filtered = filtered.filter((user) =>
+                        voiceUserIds.has(user.id)
+                    );
+                } else if (isPrivateChannel && channelMemberIds.size > 0) {
+                    filtered = filtered.filter((user) =>
+                        channelMemberIds.has(user.id)
+                    );
+                }
             }
 
             return {
@@ -140,7 +135,7 @@ const RightSidebar = memo(
                     <h3 className="text-sm font-semibold text-foreground">
                         Members — {usersCount}
                     </h3>
-                    {isVoiceChannel && (
+                    {(isPrivateChannel || isVoiceChannel) && (
                         <div className="flex gap-1">
                             <button
                                 onClick={() => setFilterMode('all')}
