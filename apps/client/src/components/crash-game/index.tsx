@@ -22,7 +22,7 @@ const CrashGameContent = memo(() => {
     }, []);
 
     return (
-        <div className="flex flex-col gap-4 h-full pt-8">
+        <div className="flex flex-col gap-4 h-full pt-12">
             <RoundHistory />
             <MultiplierDisplay />
             <CountdownTimer />

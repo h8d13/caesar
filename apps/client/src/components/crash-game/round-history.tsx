@@ -5,9 +5,13 @@ import { memo, useMemo } from 'react';
 const RoundHistory = memo(() => {
     const history = useCrashRoundHistory();
 
-    const best = useMemo(() => {
-        if (history.length === 0) return null;
-        return Math.max(...history.map((r) => r.crashPoint));
+    const { best, avg } = useMemo(() => {
+        if (history.length === 0) return { best: null, avg: null };
+        const points = history.map((r) => r.crashPoint);
+        return {
+            best: Math.max(...points),
+            avg: points.reduce((a, b) => a + b, 0) / points.length
+        };
     }, [history]);
 
     if (history.length === 0) return null;
@@ -20,6 +24,10 @@ const RoundHistory = memo(() => {
                         Best:{' '}
                         <span className="text-green-400 font-medium tabular-nums">
                             {best.toFixed(2)}x
+                        </span>
+                        {' · '}Avg:{' '}
+                        <span className="font-medium tabular-nums">
+                            {avg!.toFixed(2)}x
                         </span>
                     </span>
                 )}
