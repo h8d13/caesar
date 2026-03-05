@@ -12,11 +12,11 @@ const RoulettePlayerBets = memo(() => {
     if (bets.length === 0) return null;
 
     return (
-        <div className="flex flex-col gap-1 px-4 overflow-y-auto">
+        <div className="flex flex-col gap-1 px-4">
             <div className="text-xs font-medium text-muted-foreground mb-1">
                 Bets ({bets.length})
             </div>
-            <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
+            <div className="flex flex-col gap-1 max-h-24 overflow-y-auto">
                 {bets.map((bet) => (
                     <div
                         key={bet.betId}
