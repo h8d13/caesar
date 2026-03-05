@@ -63,7 +63,7 @@ const toggleMessageScVoteRoute = protectedProcedure
     if (!existingVote) {
       const startOfDay = getStartOfDay();
 
-      const [{ total }] = await db
+      const [{ total } = { total: 0 }] = await db
         .select({ total: count() })
         .from(socialCreditLedger)
         .where(
