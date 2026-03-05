@@ -26,7 +26,7 @@ const RoundHistory = memo(() => {
                             {best.toFixed(2)}x
                         </span>
                         {' · '}Avg:{' '}
-                        <span className="font-medium tabular-nums">
+                        <span className="text-green-400 font-medium tabular-nums">
                             {avg!.toFixed(2)}x
                         </span>
                     </span>
