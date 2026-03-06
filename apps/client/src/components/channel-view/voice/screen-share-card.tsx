@@ -1,7 +1,7 @@
 import {
-    useVolumeControl,
+    useMediaControl,
     type TVolumeKey
-} from '@/components/voice-provider/volume-control-context';
+} from '@/components/voice-provider/media-control-context';
 import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
 import { useVoice } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
@@ -84,7 +84,7 @@ const ScreenShareCard = memo(
     }: TScreenShareCardProps) => {
         const user = useUserById(userId);
         const ownUserId = useOwnUserId();
-        const { getUserScreenVolumeKey } = useVolumeControl();
+        const { getUserScreenVolumeKey } = useMediaControl();
         const isOwnUser = ownUserId === userId;
         const volumeKey = getUserScreenVolumeKey(userId);
         const {

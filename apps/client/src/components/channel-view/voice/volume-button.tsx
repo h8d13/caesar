@@ -1,7 +1,7 @@
 import {
-    useVolumeControl,
+    useMediaControl,
     type TVolumeKey
-} from '@/components/voice-provider/volume-control-context';
+} from '@/components/voice-provider/media-control-context';
 import {
     IconButton,
     Popover,
@@ -17,7 +17,7 @@ type TVolumeButtonProps = {
 };
 
 const VolumeButton = memo(({ volumeKey }: TVolumeButtonProps) => {
-    const { getVolume, setVolume, toggleMute } = useVolumeControl();
+    const { getVolume, setVolume, toggleMute } = useMediaControl();
     const volume = getVolume(volumeKey);
     const isMuted = volume === 0;
 

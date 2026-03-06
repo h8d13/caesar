@@ -21,7 +21,7 @@ type TVolumeKey = string;
 
 type TVolumeSettings = Record<TVolumeKey, number>;
 
-type TVolumeControlContext = {
+type TMediaControlContext = {
     volumes: TVolumeSettings;
     getVolume: (key: TVolumeKey) => number;
     setVolume: (key: TVolumeKey, volume: number) => void;
@@ -35,9 +35,9 @@ type TVolumeControlContext = {
     getUserScreenVideoKey: (userId: number) => string;
 };
 
-const VolumeControlContext = createContext<TVolumeControlContext | null>(null);
+const MediaControlContext = createContext<TMediaControlContext | null>(null);
 
-type TVolumeControlProviderProps = {
+type TMediaControlProviderProps = {
     children: React.ReactNode;
 };
 
@@ -87,7 +87,7 @@ const saveHiddenStreamsToStorage = (hidden: Set<string>) => {
 // Manages soundboard audio playback inside React so volume control
 // works the same way as voice/screen/external streams in use-media-refs.
 const SoundboardPlayer = memo(() => {
-    const { getVolume } = useVolumeControl();
+    const { getVolume } = useMediaControl();
     const volume = getVolume('soundboard');
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -138,8 +138,8 @@ const SoundboardPlayer = memo(() => {
     return null;
 });
 
-const VolumeControlProvider = memo(
-    ({ children }: TVolumeControlProviderProps) => {
+const MediaControlProvider = memo(
+    ({ children }: TMediaControlProviderProps) => {
         const [volumes, setVolumes] = useState<TVolumeSettings>(
             loadVolumesFromStorage
         );
@@ -233,7 +233,7 @@ const VolumeControlProvider = memo(
         }, []);
 
         return (
-            <VolumeControlContext.Provider
+            <MediaControlContext.Provider
                 value={{
                     volumes,
                     getVolume,
@@ -250,17 +250,17 @@ const VolumeControlProvider = memo(
             >
                 <SoundboardPlayer />
                 {children}
-            </VolumeControlContext.Provider>
+            </MediaControlContext.Provider>
         );
     }
 );
 
-const useVolumeControl = () => {
-    const context = useContext(VolumeControlContext);
+const useMediaControl = () => {
+    const context = useContext(MediaControlContext);
 
     if (!context) {
         throw new Error(
-            'useVolumeControl must be used within VolumeControlProvider'
+            'useMediaControl must be used within MediaControlProvider'
         );
     }
 
@@ -268,5 +268,5 @@ const useVolumeControl = () => {
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
-export { useVolumeControl, VolumeControlContext, VolumeControlProvider };
-export type { TVolumeControlContext, TVolumeKey };
+export { useMediaControl, MediaControlContext, MediaControlProvider };
+export type { TMediaControlContext, TVolumeKey };

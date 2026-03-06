@@ -1,5 +1,5 @@
 import { useDevices } from '@/components/devices-provider/hooks/use-devices';
-import { useVolumeControl } from '@/components/voice-provider/volume-control-context';
+import { useMediaControl } from '@/components/voice-provider/media-control-context';
 import { useIsOwnUser } from '@/features/server/users/hooks';
 import { useVoice } from '@/features/server/voice/hooks';
 import { applyAudioOutputDevice } from '@/helpers/audio-output';
@@ -30,7 +30,7 @@ const useMediaRefs = (
         isStreamHidden,
         getUserVideoKey,
         getUserScreenVideoKey
-    } = useVolumeControl();
+    } = useMediaControl();
     const { devices } = useDevices();
 
     const {

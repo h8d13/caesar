@@ -7,7 +7,7 @@ import { Button, Tooltip } from '@sharkord/ui';
 import { PanelRight, PanelRightClose, Search } from 'lucide-react';
 import { memo, useState } from 'react';
 import { VoiceOptionsController } from './voice-options-controller';
-import { VolumeController } from './controllers';
+import { MediaController } from './controllers';
 
 type TTopBarProps = {
     onToggleRightSidebar: () => void;
@@ -23,7 +23,7 @@ const TopBar = memo(({ onToggleRightSidebar, isOpen }: TTopBarProps) => {
             {isCurrentVoiceChannelSelected && currentVoiceChannelId && (
                 <>
                     <VoiceOptionsController />
-                    <VolumeController channelId={currentVoiceChannelId} />
+                    <MediaController channelId={currentVoiceChannelId} />
                 </>
             )}
             <Tooltip content="Search Messages">

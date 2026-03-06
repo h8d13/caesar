@@ -57,7 +57,7 @@ import {
 import { useTransports } from './hooks/use-transports';
 import { useVoiceControls } from './hooks/use-voice-controls';
 import { useVoiceEvents } from './hooks/use-voice-events';
-import { VolumeControlProvider } from './volume-control-context';
+import { MediaControlProvider } from './media-control-context';
 
 type AudioVideoRefs = {
     videoRef: React.RefObject<HTMLVideoElement | null>;
@@ -1001,7 +1001,7 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
 
     return (
         <VoiceProviderContext.Provider value={contextValue}>
-            <VolumeControlProvider>
+            <MediaControlProvider>
                 <div className="relative">
                     <FloatingPinnedCard
                         remoteUserStreams={remoteUserStreams}
@@ -1011,7 +1011,7 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
                     />
                     {children}
                 </div>
-            </VolumeControlProvider>
+            </MediaControlProvider>
         </VoiceProviderContext.Provider>
     );
 });

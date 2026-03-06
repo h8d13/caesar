@@ -1,8 +1,8 @@
 import { UserAvatar } from '@/components/user-avatar';
 import {
-    useVolumeControl,
+    useMediaControl,
     type TVolumeKey
-} from '@/components/voice-provider/volume-control-context';
+} from '@/components/voice-provider/media-control-context';
 import { useVoiceUsersByChannelId } from '@/features/server/hooks';
 import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
 import { useVoiceChannelAudioExternalStreams } from '@/features/server/voice/hooks';
@@ -34,7 +34,7 @@ type AudioAudioStreamControlProps = {
     type: AudioStreamType;
 };
 
-type VolumeControllerProps = {
+type MediaControllerProps = {
     channelId: number;
 };
 
@@ -73,7 +73,7 @@ type ControlStream = AudioStream | VideoStream;
 const AudioStreamControl = memo(
     ({ userId, volumeKey, type, name }: AudioStreamControlProps) => {
         const user = useUserById(userId || 0);
-        const { getVolume, setVolume, toggleMute } = useVolumeControl();
+        const { getVolume, setVolume, toggleMute } = useMediaControl();
         const volume = getVolume(volumeKey);
         const isMuted = volume === 0;
 
@@ -143,7 +143,7 @@ type VideoAudioStreamControlProps = {
 const VideoAudioStreamControl = memo(
     ({ userId, visibilityKey, type, name }: VideoAudioStreamControlProps) => {
         const user = useUserById(userId);
-        const { isStreamHidden, toggleStreamVisibility } = useVolumeControl();
+        const { isStreamHidden, toggleStreamVisibility } = useMediaControl();
         const hidden = isStreamHidden(visibilityKey);
 
         const isWebcam = type === VideoStreamType.Webcam;
@@ -186,7 +186,7 @@ const VideoAudioStreamControl = memo(
     }
 );
 
-const VolumeController = memo(({ channelId }: VolumeControllerProps) => {
+const MediaController = memo(({ channelId }: MediaControllerProps) => {
     const voiceUsers = useVoiceUsersByChannelId(channelId);
     const externalAudioStreams = useVoiceChannelAudioExternalStreams(channelId);
     const {
@@ -195,7 +195,7 @@ const VolumeController = memo(({ channelId }: VolumeControllerProps) => {
         getExternalVolumeKey,
         getUserVideoKey,
         getUserScreenVideoKey
-    } = useVolumeControl();
+    } = useMediaControl();
     const ownUserId = useOwnUserId();
     const controlStreams = useMemo(() => {
         const streams: ControlStream[] = [];
@@ -325,4 +325,4 @@ const VolumeController = memo(({ channelId }: VolumeControllerProps) => {
     );
 });
 
-export { VolumeController };
+export { MediaController };

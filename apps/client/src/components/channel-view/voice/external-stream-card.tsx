@@ -1,4 +1,4 @@
-import { useVolumeControl } from '@/components/voice-provider/volume-control-context';
+import { useMediaControl } from '@/components/voice-provider/media-control-context';
 import { cn } from '@/lib/utils';
 import type { TExternalStream } from '@sharkord/shared';
 import { Avatar, AvatarFallback, AvatarImage, IconButton } from '@sharkord/ui';
@@ -100,7 +100,7 @@ const ExternalStreamCard = memo(
         } = useMediaRefs(streamId, stream.sourceId, stream.key);
 
         const { getVolume, setVolume, toggleMute, getExternalVolumeKey } =
-            useVolumeControl();
+            useMediaControl();
 
         const volumeKey = getExternalVolumeKey(stream.sourceId, stream.key);
         const volume = getVolume(volumeKey);
