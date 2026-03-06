@@ -52,6 +52,7 @@ services:
       # here named volume would be more appropriate
 
 volumes:
-  #sharkord_data:
   caddy_data:
   caddy_config:
+
+#sharkord_data:
