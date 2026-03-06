@@ -441,7 +441,7 @@ const useTransports = ({
 
                 try {
                     const trpc = getTRPCClient();
-                    await trpc.voice.pauseConsumer.mutate({ remoteId });
+                    await trpc.voice.pauseConsumer.mutate({ remoteId, kind });
                 } catch (error) {
                     logVoice('Error pausing server consumer', { error });
                 }
@@ -460,7 +460,7 @@ const useTransports = ({
 
                 try {
                     const trpc = getTRPCClient();
-                    await trpc.voice.resumeConsumer.mutate({ remoteId });
+                    await trpc.voice.resumeConsumer.mutate({ remoteId, kind });
                 } catch (error) {
                     logVoice('Error resuming server consumer', { error });
                 }

@@ -111,7 +111,7 @@ type TProducerMap = {
 
 type TConsumerMap = {
   [userId: number]: {
-    [remoteId: number]: Consumer<AppData>;
+    [key: string]: Consumer<AppData>;
   };
 };
 
@@ -320,12 +320,14 @@ class VoiceRuntime {
 
     Object.keys(this.consumers).forEach((consumerUserIdStr) => {
       const consumerId = parseInt(consumerUserIdStr);
+      if (consumerId === userId || !this.consumers[consumerId]) return;
 
-      if (consumerId !== userId && this.consumers[consumerId]?.[userId]) {
-        this.consumers[consumerId][userId].close();
-
-        delete this.consumers[consumerId][userId];
-      }
+      Object.keys(this.consumers[consumerId]).forEach((key) => {
+        if (key.startsWith(`${userId}-`)) {
+          this.consumers[consumerId][key].close();
+          delete this.consumers[consumerId][key];
+        }
+      });
     });
   };
 
@@ -537,24 +539,27 @@ class VoiceRuntime {
 
   public getConsumer = (
     userId: number,
-    remoteId: number
+    remoteId: number,
+    kind: string
   ): Consumer<AppData> | undefined => {
-    return this.consumers[userId]?.[remoteId];
+    return this.consumers[userId]?.[`${remoteId}-${kind}`];
   };
 
   public addConsumer = (
     userId: number,
     remoteId: number,
+    kind: string,
     consumer: Consumer<AppData>
   ) => {
     if (!this.consumers[userId]) {
       this.consumers[userId] = {};
     }
 
-    this.consumers[userId][remoteId] = consumer;
+    const key = `${remoteId}-${kind}`;
+    this.consumers[userId][key] = consumer;
 
     consumer.observer.on('close', () => {
-      delete this.consumers[userId]?.[remoteId];
+      delete this.consumers[userId]?.[key];
     });
   };
 
