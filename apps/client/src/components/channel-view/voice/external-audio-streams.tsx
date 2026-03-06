@@ -1,6 +1,6 @@
 import { useVoiceChannelExternalStreamsList } from '@/features/server/voice/hooks';
 import { memo } from 'react';
-import { useVoiceRefs } from './hooks/use-voice-refs';
+import { useMediaRefs } from './hooks/use-media-refs';
 
 type TExternalAudioStreamProps = {
     streamId: number;
@@ -10,7 +10,7 @@ type TExternalAudioStreamProps = {
 
 const ExternalAudioStream = memo(
     ({ streamId, sourceId, streamKey }: TExternalAudioStreamProps) => {
-        const { externalAudioRef, hasExternalAudioStream } = useVoiceRefs(
+        const { externalAudioRef, hasExternalAudioStream } = useMediaRefs(
             streamId,
             sourceId,
             streamKey

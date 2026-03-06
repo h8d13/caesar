@@ -11,7 +11,7 @@ import { memo, useCallback, useRef } from 'react';
 import { CardControls } from './card-controls';
 import { CardGradient } from './card-gradient';
 import { FullscreenButton } from './fullscreen-button';
-import { useVoiceRefs } from './hooks/use-voice-refs';
+import { useMediaRefs } from './hooks/use-media-refs';
 import { PinButton } from './pin-button';
 import { VolumeButton } from './volume-button';
 
@@ -36,7 +36,7 @@ const VoiceUserCard = memo(
         voiceUser
     }: TVoiceUserCardProps) => {
         const { videoRef, hasVideoStream, isSpeaking, speakingIntensity } =
-            useVoiceRefs(userId);
+            useMediaRefs(userId);
         const { getUserVolumeKey } = useVolumeControl();
         const { devices } = useDevices();
         const ownUserId = useOwnUserId();

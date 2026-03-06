@@ -7,7 +7,7 @@ import { StreamKind } from '@sharkord/shared';
 import { useEffect, useMemo } from 'react';
 import { useAudioLevel } from './use-audio-level';
 
-const useVoiceRefs = (
+const useMediaRefs = (
     remoteId: number,
     sourceId?: string,
     streamKey?: string
@@ -113,7 +113,7 @@ const useVoiceRefs = (
         if (!videoStream || !videoRef.current) return;
 
         videoRef.current.srcObject = videoStream;
-    }, [videoStream, videoRef]);
+    }, [videoStream, videoRef, videoHidden]);
 
     useEffect(() => {
         if (!audioStream || !audioRef.current) return;
@@ -159,7 +159,7 @@ const useVoiceRefs = (
         if (screenShareRef.current.srcObject !== screenShareStream) {
             screenShareRef.current.srcObject = screenShareStream;
         }
-    }, [screenShareStream, screenShareRef]);
+    }, [screenShareStream, screenShareRef, screenVideoHidden]);
 
     useEffect(() => {
         if (!externalAudioStream || !externalAudioRef.current) return;
@@ -229,4 +229,4 @@ const useVoiceRefs = (
     };
 };
 
-export { useVoiceRefs };
+export { useMediaRefs };

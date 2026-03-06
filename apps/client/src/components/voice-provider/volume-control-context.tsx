@@ -85,7 +85,7 @@ const saveHiddenStreamsToStorage = (hidden: Set<string>) => {
 };
 
 // Manages soundboard audio playback inside React so volume control
-// works the same way as voice/screen/external streams in use-voice-refs.
+// works the same way as voice/screen/external streams in use-media-refs.
 const SoundboardPlayer = memo(() => {
     const { getVolume } = useVolumeControl();
     const volume = getVolume('soundboard');
@@ -118,7 +118,7 @@ const SoundboardPlayer = memo(() => {
     });
 
     // Update volume on the active audio element reactively,
-    // same pattern as use-voice-refs: audioRef.current.volume = userVolume / 100
+    // same pattern as use-media-refs: audioRef.current.volume = userVolume / 100
     useEffect(() => {
         if (audioRef.current) {
             audioRef.current.volume = volume / 100;

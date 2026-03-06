@@ -8,7 +8,7 @@ import { CardControls } from './card-controls';
 import { CardGradient } from './card-gradient';
 import { FullscreenButton } from './fullscreen-button';
 import { useScreenShareZoom } from './hooks/use-screen-share-zoom';
-import { useVoiceRefs } from './hooks/use-voice-refs';
+import { useMediaRefs } from './hooks/use-media-refs';
 import { PinButton } from './pin-button';
 import { StreamSettingsPopover } from './stream-settings-popover';
 
@@ -97,7 +97,7 @@ const ExternalStreamCard = memo(
             externalVideoRef,
             hasExternalVideoStream,
             hasExternalAudioStream
-        } = useVoiceRefs(streamId, stream.sourceId, stream.key);
+        } = useMediaRefs(streamId, stream.sourceId, stream.key);
 
         const { getVolume, setVolume, toggleMute, getExternalVolumeKey } =
             useVolumeControl();

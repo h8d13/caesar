@@ -1,13 +1,13 @@
 import { useVoiceUsersByChannelId } from '@/features/server/hooks';
 import { memo } from 'react';
-import { useVoiceRefs } from './hooks/use-voice-refs';
+import { useMediaRefs } from './hooks/use-media-refs';
 
 type TVoiceUserAudioStreamProps = {
     userId: number;
 };
 
 const VoiceUserAudioStream = memo(({ userId }: TVoiceUserAudioStreamProps) => {
-    const { audioRef, hasAudioStream } = useVoiceRefs(userId);
+    const { audioRef, hasAudioStream } = useMediaRefs(userId);
 
     return (
         <>

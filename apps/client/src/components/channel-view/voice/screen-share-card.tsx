@@ -14,7 +14,7 @@ import { CardGradient } from './card-gradient';
 import { FullscreenButton } from './fullscreen-button';
 import { useScreenShareZoom } from './hooks/use-screen-share-zoom';
 import { useVideoStats } from './hooks/use-video-stats';
-import { useVoiceRefs } from './hooks/use-voice-refs';
+import { useMediaRefs } from './hooks/use-media-refs';
 import { PinButton } from './pin-button';
 import { VolumeButton } from './volume-button';
 
@@ -92,7 +92,7 @@ const ScreenShareCard = memo(
             screenShareAudioRef,
             hasScreenShareStream,
             hasScreenShareAudioStream
-        } = useVoiceRefs(userId);
+        } = useMediaRefs(userId);
         const { transportStats, getConsumerCodec } = useVoice();
         const videoStats = useVideoStats(screenShareRef, hasScreenShareStream);
 
