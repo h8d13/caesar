@@ -48,9 +48,10 @@ services:
     environment:
       SHARKORD_PORT: "4991"
     volumes:
-      - sharkord_data:/home/bun/.config/sharkord
+      - ./data:/home/bun/.config/sharkord 
+      # here named volume would be more appropriate
 
 volumes:
-  sharkord_data:
+  #sharkord_data:
   caddy_data:
   caddy_config:
