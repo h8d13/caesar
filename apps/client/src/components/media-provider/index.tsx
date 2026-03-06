@@ -22,7 +22,7 @@ import {
 import { logVoice } from '@/helpers/browser-logger';
 import { getResWidthHeight } from '@/helpers/get-res-with-height';
 import { getTRPCClient } from '@/lib/trpc';
-import { type TRemoteUserStreamKinds, VideoCodec } from '@/types';
+import { VideoCodec, type TRemoteUserStreamKinds } from '@/types';
 import {
     DEFAULT_BITRATE,
     StreamKind,
