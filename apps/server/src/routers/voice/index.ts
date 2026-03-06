@@ -23,6 +23,7 @@ import { leaveVoiceRoute } from './leave';
 import { pauseConsumerRoute } from './pause-consumer';
 import { playSoundboardRoute } from './play-soundboard';
 import { produceRoute } from './produce';
+import { requestKeyFrameRoute } from './request-keyframe';
 import { resumeConsumerRoute } from './resume-consumer';
 import { updateVoiceStateRoute } from './update-state';
 
@@ -49,6 +50,7 @@ export const voiceRouter = t.router({
   onRemoveExternalStream: onVoiceRemoveExternalStreamRoute,
   pauseConsumer: pauseConsumerRoute,
   resumeConsumer: resumeConsumerRoute,
+  requestKeyFrame: requestKeyFrameRoute,
   playSoundboard: playSoundboardRoute,
   onSoundboardPlay: onSoundboardPlayRoute
 });

@@ -48,6 +48,80 @@ const useTransports = ({
     }>({});
     const consumerCodecs = useRef<Map<string, string>>(new Map());
     const consumeOperationsInProgress = useRef<Set<string>>(new Set());
+    const packetLossMonitors = useRef<
+        Map<string, ReturnType<typeof setInterval>>
+    >(new Map());
+
+    const VIDEO_KINDS = new Set([
+        StreamKind.VIDEO,
+        StreamKind.SCREEN,
+        StreamKind.EXTERNAL_VIDEO
+    ]);
+
+    const LOSS_CHECK_INTERVAL = 3000;
+    const LOSS_THRESHOLD = 5;
+
+    const startPacketLossMonitor = useCallback(
+        (remoteId: number, kind: StreamKind, consumer: Consumer<AppData>) => {
+            if (!VIDEO_KINDS.has(kind)) return;
+
+            const monitorKey = `${remoteId}-${kind}`;
+            const existing = packetLossMonitors.current.get(monitorKey);
+            if (existing) clearInterval(existing);
+
+            let prevPacketsLost = 0;
+
+            const interval = setInterval(async () => {
+                if (consumer.closed || consumer.paused) return;
+
+                try {
+                    const stats = await consumer.getStats();
+
+                    for (const report of stats.values()) {
+                        if (report.type !== 'inbound-rtp') continue;
+
+                        const currentLost = report.packetsLost ?? 0;
+                        const delta = currentLost - prevPacketsLost;
+                        prevPacketsLost = currentLost;
+
+                        if (delta >= LOSS_THRESHOLD) {
+                            logVoice(
+                                'Packet loss detected, requesting keyframe',
+                                {
+                                    remoteId,
+                                    kind,
+                                    delta
+                                }
+                            );
+
+                            const trpc = getTRPCClient();
+                            await trpc.voice.requestKeyFrame.mutate({
+                                remoteId,
+                                kind
+                            });
+                        }
+                    }
+                } catch {
+                    // consumer may have closed during stats check
+                }
+            }, LOSS_CHECK_INTERVAL);
+
+            packetLossMonitors.current.set(monitorKey, interval);
+        },
+        []
+    );
+
+    const stopPacketLossMonitor = useCallback(
+        (remoteId: number, kind: string) => {
+            const monitorKey = `${remoteId}-${kind}`;
+            const interval = packetLossMonitors.current.get(monitorKey);
+            if (interval) {
+                clearInterval(interval);
+                packetLossMonitors.current.delete(monitorKey);
+            }
+        },
+        []
+    );
 
     const createProducerTransport = useCallback(async (device: Device) => {
         logVoice('Creating producer transport', { device });
@@ -312,10 +386,12 @@ const useTransports = ({
                         }
 
                         consumerCodecs.current.delete(`${remoteId}-${kind}`);
+                        stopPacketLossMonitor(remoteId, kind);
                     });
                 });
 
                 consumers.current[remoteId][consumerKind] = newConsumer;
+                startPacketLossMonitor(remoteId, kind, newConsumer);
 
                 const codecKey = `${remoteId}-${kind}`;
 
@@ -348,7 +424,9 @@ const useTransports = ({
             addRemoteUserStream,
             removeRemoteUserStream,
             addExternalStreamTrack,
-            removeExternalStreamTrack
+            removeExternalStreamTrack,
+            startPacketLossMonitor,
+            stopPacketLossMonitor
         ]
     );
 
@@ -482,6 +560,11 @@ const useTransports = ({
 
         consumers.current = {};
         consumerCodecs.current.clear();
+
+        packetLossMonitors.current.forEach((interval) =>
+            clearInterval(interval)
+        );
+        packetLossMonitors.current.clear();
 
         consumeOperationsInProgress.current.clear();
 
