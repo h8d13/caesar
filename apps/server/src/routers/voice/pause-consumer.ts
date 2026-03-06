@@ -26,7 +26,11 @@ const pauseConsumerRoute = protectedProcedure
       message: 'Voice runtime not found for this channel'
     });
 
-    const consumer = runtime.getConsumer(ctx.user.id, input.remoteId, input.kind);
+    const consumer = runtime.getConsumer(
+      ctx.user.id,
+      input.remoteId,
+      input.kind
+    );
 
     if (consumer && !consumer.closed && !consumer.paused) {
       await consumer.pause();
