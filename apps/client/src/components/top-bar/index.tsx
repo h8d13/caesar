@@ -4,64 +4,101 @@ import {
     useIsCurrentVoiceChannelSelected
 } from '@/features/server/channels/hooks';
 import { Button, Tooltip } from '@sharkord/ui';
-import { PanelRight, PanelRightClose, Search } from 'lucide-react';
+import {
+    PanelLeft,
+    PanelLeftClose,
+    PanelRight,
+    PanelRightClose,
+    Search
+} from 'lucide-react';
 import { memo, useState } from 'react';
 import { MediaController } from './controllers';
 import { VoiceOptionsController } from './voice-options-controller';
 
 type TTopBarProps = {
+    onToggleLeftSidebar: () => void;
+    isLeftSidebarOpen: boolean;
     onToggleRightSidebar: () => void;
-    isOpen: boolean;
+    isRightSidebarOpen: boolean;
 };
 
-const TopBar = memo(({ onToggleRightSidebar, isOpen }: TTopBarProps) => {
-    const isCurrentVoiceChannelSelected = useIsCurrentVoiceChannelSelected();
-    const currentVoiceChannelId = useCurrentVoiceChannelId();
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
-    return (
-        <div className="hidden lg:flex h-8 w-full bg-card border-b border-border items-center justify-end px-4 transition-all duration-300 ease-in-out gap-2">
-            {isCurrentVoiceChannelSelected && currentVoiceChannelId && (
-                <>
-                    <VoiceOptionsController />
-                    <MediaController channelId={currentVoiceChannelId} />
-                </>
-            )}
-            <Tooltip content="Search Messages">
+const TopBar = memo(
+    ({
+        onToggleLeftSidebar,
+        isLeftSidebarOpen,
+        onToggleRightSidebar,
+        isRightSidebarOpen
+    }: TTopBarProps) => {
+        const isCurrentVoiceChannelSelected =
+            useIsCurrentVoiceChannelSelected();
+        const currentVoiceChannelId = useCurrentVoiceChannelId();
+        const [isSearchOpen, setIsSearchOpen] = useState(false);
+        return (
+            <div className="hidden lg:flex h-8 w-full bg-card border-b border-border items-center px-4 transition-all duration-300 ease-in-out gap-2">
                 <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setIsSearchOpen(true)}
+                    onClick={onToggleLeftSidebar}
                     className="h-6 px-2 transition-all duration-200 ease-in-out"
                 >
-                    <Search className="w-4 h-4" />
+                    {isLeftSidebarOpen ? (
+                        <Tooltip content="Close Channels Sidebar">
+                            <div>
+                                <PanelLeftClose className="w-4 h-4 transition-transform duration-200 ease-in-out" />
+                            </div>
+                        </Tooltip>
+                    ) : (
+                        <Tooltip content="Open Channels Sidebar">
+                            <div>
+                                <PanelLeft className="w-4 h-4 transition-transform duration-200 ease-in-out" />
+                            </div>
+                        </Tooltip>
+                    )}
                 </Button>
-            </Tooltip>
-            <SearchDialog
-                open={isSearchOpen}
-                onClose={() => setIsSearchOpen(false)}
-            />
-            <Button
-                variant="ghost"
-                size="sm"
-                onClick={onToggleRightSidebar}
-                className="h-6 px-2 transition-all duration-200 ease-in-out"
-            >
-                {isOpen ? (
-                    <Tooltip content="Close Members Sidebar">
-                        <div>
-                            <PanelRightClose className="w-4 h-4 transition-transform duration-200 ease-in-out" />
-                        </div>
-                    </Tooltip>
-                ) : (
-                    <Tooltip content="Open Members Sidebar">
-                        <div>
-                            <PanelRight className="w-4 h-4 transition-transform duration-200 ease-in-out" />
-                        </div>
-                    </Tooltip>
+                <div className="flex-1" />
+                {isCurrentVoiceChannelSelected && currentVoiceChannelId && (
+                    <>
+                        <VoiceOptionsController />
+                        <MediaController channelId={currentVoiceChannelId} />
+                    </>
                 )}
-            </Button>
-        </div>
-    );
-});
+                <Tooltip content="Search Messages">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsSearchOpen(true)}
+                        className="h-6 px-2 transition-all duration-200 ease-in-out"
+                    >
+                        <Search className="w-4 h-4" />
+                    </Button>
+                </Tooltip>
+                <SearchDialog
+                    open={isSearchOpen}
+                    onClose={() => setIsSearchOpen(false)}
+                />
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onToggleRightSidebar}
+                    className="h-6 px-2 transition-all duration-200 ease-in-out"
+                >
+                    {isRightSidebarOpen ? (
+                        <Tooltip content="Close Members Sidebar">
+                            <div>
+                                <PanelRightClose className="w-4 h-4 transition-transform duration-200 ease-in-out" />
+                            </div>
+                        </Tooltip>
+                    ) : (
+                        <Tooltip content="Open Members Sidebar">
+                            <div>
+                                <PanelRight className="w-4 h-4 transition-transform duration-200 ease-in-out" />
+                            </div>
+                        </Tooltip>
+                    )}
+                </Button>
+            </div>
+        );
+    }
+);
 
 export { TopBar };

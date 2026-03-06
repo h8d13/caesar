@@ -21,9 +21,10 @@ const DEFAULT_WIDTH = 288; // w-72 = 288px
 
 type TLeftSidebarProps = {
     className?: string;
+    isOpen?: boolean;
 };
 
-const LeftSidebar = memo(({ className }: TLeftSidebarProps) => {
+const LeftSidebar = memo(({ className, isOpen = true }: TLeftSidebarProps) => {
     const serverName = useServerName();
     const dmsOpen = useDmsOpen();
     const publicSettings = usePublicServerSettings();
@@ -35,6 +36,7 @@ const LeftSidebar = memo(({ className }: TLeftSidebarProps) => {
             maxWidth={MAX_WIDTH}
             defaultWidth={DEFAULT_WIDTH}
             edge="right"
+            isOpen={isOpen}
             className={cn('h-full', className)}
         >
             <div className="flex w-full justify-between h-12 items-center border-b border-border px-4">

@@ -9,3 +9,6 @@
 
 # convenience wrapper for prod builds
 docker compose --profile prod up -d
+
+# dev oneliner 
+# cd apps/client && bun run dev --host 0.0.0.0 & cd apps/server && bun run dev

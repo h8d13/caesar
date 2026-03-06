@@ -24,6 +24,9 @@ import { PreventBrowser } from './prevent-browser';
 const ServerView = memo(() => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isMobileUsersOpen, setIsMobileUsersOpen] = useState(false);
+    const [isDesktopLeftSidebarOpen, setIsDesktopLeftSidebarOpen] = useState(
+        getLocalStorageItemBool(LocalStorageKey.LEFT_SIDEBAR_STATE, true)
+    );
     const [isDesktopRightSidebarOpen, setIsDesktopRightSidebarOpen] = useState(
         getLocalStorageItemBool(LocalStorageKey.RIGHT_SIDEBAR_STATE, true)
     );
@@ -32,6 +35,14 @@ const ServerView = memo(() => {
     const publicSettings = usePublicServerSettings();
     const previousServerChannelIdRef = useRef<number | undefined>(undefined);
     const { isOpen: isThreadSidebarOpen } = useThreadSidebar();
+
+    const handleDesktopLeftSidebarToggle = useCallback(() => {
+        setIsDesktopLeftSidebarOpen((prev) => !prev);
+        localStorage.setItem(
+            LocalStorageKey.LEFT_SIDEBAR_STATE,
+            !isDesktopLeftSidebarOpen ? 'true' : 'false'
+        );
+    }, [isDesktopLeftSidebarOpen]);
 
     const handleDesktopRightSidebarToggle = useCallback(() => {
         setIsDesktopRightSidebarOpen((prev) => !prev);
@@ -84,8 +95,10 @@ const ServerView = memo(() => {
                 {...swipeHandlers}
             >
                 <TopBar
+                    onToggleLeftSidebar={handleDesktopLeftSidebarToggle}
+                    isLeftSidebarOpen={isDesktopLeftSidebarOpen}
                     onToggleRightSidebar={handleDesktopRightSidebarToggle}
-                    isOpen={isDesktopRightSidebarOpen}
+                    isRightSidebarOpen={isDesktopRightSidebarOpen}
                 />
                 <div className="relative flex min-h-0 flex-1 overflow-hidden">
                     <PreventBrowser />
@@ -106,11 +119,12 @@ const ServerView = memo(() => {
 
                     <LeftSidebar
                         className={cn(
-                            'md:relative md:flex fixed inset-0 left-0 h-full z-40 md:z-0 transition-transform duration-300 ease-in-out',
+                            'md:relative md:flex fixed inset-0 left-0 h-full z-40 md:z-0',
                             isMobileMenuOpen
                                 ? 'translate-x-0'
                                 : '-translate-x-full md:translate-x-0'
                         )}
+                        isOpen={isMobileMenuOpen || isDesktopLeftSidebarOpen}
                     />
 
                     <ContentWrapper
