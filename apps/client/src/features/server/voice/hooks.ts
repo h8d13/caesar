@@ -1,4 +1,4 @@
-import { VoiceProviderContext } from '@/components/voice-provider';
+import { MediaProviderContext } from '@/components/media-provider';
 import type { IRootState } from '@/features/store';
 import { useContext } from 'react';
 import { useSelector } from 'react-redux';
@@ -27,12 +27,12 @@ export const useVoiceChannelAudioExternalStreams = (channelId: number) =>
         voiceChannelAudioExternalStreamsSelector(state, channelId)
     );
 
-export const useVoice = () => {
-    const context = useContext(VoiceProviderContext);
+export const useMedia = () => {
+    const context = useContext(MediaProviderContext);
 
     if (!context) {
         throw new Error(
-            'useVoice must be used within a MediasoupProvider component'
+            'useMedia must be used within a MediasoupProvider component'
         );
     }
 

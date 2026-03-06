@@ -1,5 +1,5 @@
 import { useDevices } from '@/components/devices-provider/hooks/use-devices';
-import { getVoiceControlsBridge } from '@/components/voice-provider/controls-bridge';
+import { getVoiceControlsBridge } from '@/components/media-provider/controls-bridge';
 import { closeServerScreens } from '@/features/server-screens/actions';
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
 import { usePublicServerSettings } from '@/features/server/hooks';

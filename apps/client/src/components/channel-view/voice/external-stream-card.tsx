@@ -1,4 +1,4 @@
-import { useMediaControl } from '@/components/voice-provider/media-control-context';
+import { useMediaControl } from '@/components/media-provider/media-control-context';
 import { cn } from '@/lib/utils';
 import type { TExternalStream } from '@sharkord/shared';
 import { Avatar, AvatarFallback, AvatarImage, IconButton } from '@sharkord/ui';

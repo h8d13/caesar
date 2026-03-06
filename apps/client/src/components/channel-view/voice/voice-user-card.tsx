@@ -1,6 +1,6 @@
 import { useDevices } from '@/components/devices-provider/hooks/use-devices';
 import { UserAvatar } from '@/components/user-avatar';
-import { useMediaControl } from '@/components/voice-provider/media-control-context';
+import { useMediaControl } from '@/components/media-provider/media-control-context';
 import type { TVoiceUser } from '@/features/server/types';
 import { useOwnUserId } from '@/features/server/users/hooks';
 import { useShowUserBannersInVoice } from '@/features/server/voice/hooks';

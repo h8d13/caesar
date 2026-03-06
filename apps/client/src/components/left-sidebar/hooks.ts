@@ -5,7 +5,7 @@ import {
     useCurrentVoiceChannelId
 } from '@/features/server/channels/hooks';
 import { joinVoice } from '@/features/server/voice/actions';
-import { useVoice } from '@/features/server/voice/hooks';
+import { useMedia } from '@/features/server/voice/hooks';
 import { getLocalStorageItemAsJSON, LocalStorageKey } from '@/helpers/storage';
 import { ChannelType } from '@sharkord/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -57,7 +57,7 @@ const useCategoryExpanded = (categoryId: number) => {
 };
 
 const useSelectChannel = () => {
-    const { init } = useVoice();
+    const { init } = useMedia();
     const currentVoiceChannelId = useCurrentVoiceChannelId();
     const autoJoinLastChannel = useAutoJoinLastChannel();
     const channelsMap = useChannelsMap();

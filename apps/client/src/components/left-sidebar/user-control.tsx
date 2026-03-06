@@ -2,7 +2,7 @@ import { openServerScreen } from '@/features/server-screens/actions';
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
 import { useChannelCan } from '@/features/server/hooks';
 import { useOwnPublicUser } from '@/features/server/users/hooks';
-import { useVoice } from '@/features/server/voice/hooks';
+import { useMedia } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
 import { ChannelPermission } from '@sharkord/shared';
 import { Button } from '@sharkord/ui';
@@ -22,7 +22,7 @@ import { UserPopover } from '../user-popover';
 const UserControl = memo(() => {
     const ownPublicUser = useOwnPublicUser();
     const currentVoiceChannelId = useCurrentVoiceChannelId();
-    const { ownVoiceState, toggleMic, toggleSound } = useVoice();
+    const { ownVoiceState, toggleMic, toggleSound } = useMedia();
     const channelCan = useChannelCan(currentVoiceChannelId);
 
     const handleSettingsClick = useCallback(() => {

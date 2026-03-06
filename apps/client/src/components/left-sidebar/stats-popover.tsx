@@ -1,4 +1,4 @@
-import { useVoice } from '@/features/server/voice/hooks';
+import { useMedia } from '@/features/server/voice/hooks';
 import { formatBigNumber } from '@/helpers/format-big-number';
 import { Popover, PopoverContent, PopoverTrigger } from '@sharkord/ui';
 import { filesize } from 'filesize';
@@ -22,7 +22,7 @@ const hardwareEncoders = [
 const softwareEncoders = ['libvpx', 'openh264', 'libaom', 'software'];
 
 const StatsPopover = memo(({ children }: StatsPopoverProps) => {
-    const { transportStats } = useVoice();
+    const { transportStats } = useMedia();
 
     const {
         producer,

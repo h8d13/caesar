@@ -1,7 +1,7 @@
 import { useDevices } from '@/components/devices-provider/hooks/use-devices';
-import { useMediaControl } from '@/components/voice-provider/media-control-context';
+import { useMediaControl } from '@/components/media-provider/media-control-context';
 import { useIsOwnUser } from '@/features/server/users/hooks';
-import { useVoice } from '@/features/server/voice/hooks';
+import { useMedia } from '@/features/server/voice/hooks';
 import { applyAudioOutputDevice } from '@/helpers/audio-output';
 import { StreamKind } from '@sharkord/shared';
 import { useEffect, useMemo } from 'react';
@@ -19,8 +19,10 @@ const useMediaRefs = (
         localVideoStream,
         localScreenShareStream,
         ownVoiceState,
-        getOrCreateRefs
-    } = useVoice();
+        getOrCreateRefs,
+        pauseConsumer,
+        resumeConsumer
+    } = useMedia();
     const isOwnUser = useIsOwnUser(remoteId);
     const {
         getVolume,
@@ -99,6 +101,32 @@ const useMediaRefs = (
 
     const videoHidden = isStreamHidden(getUserVideoKey(remoteId));
     const screenVideoHidden = isStreamHidden(getUserScreenVideoKey(remoteId));
+
+    useEffect(() => {
+        if (isOwnUser) return;
+
+        if (videoHidden) {
+            pauseConsumer(remoteId, StreamKind.VIDEO);
+        } else {
+            resumeConsumer(remoteId, StreamKind.VIDEO);
+        }
+    }, [videoHidden, remoteId, isOwnUser, pauseConsumer, resumeConsumer]);
+
+    useEffect(() => {
+        if (isOwnUser) return;
+
+        if (screenVideoHidden) {
+            pauseConsumer(remoteId, StreamKind.SCREEN);
+        } else {
+            resumeConsumer(remoteId, StreamKind.SCREEN);
+        }
+    }, [
+        screenVideoHidden,
+        remoteId,
+        isOwnUser,
+        pauseConsumer,
+        resumeConsumer
+    ]);
 
     const externalVolumeKey =
         sourceId && streamKey

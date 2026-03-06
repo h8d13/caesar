@@ -1,7 +1,7 @@
 import {
     useMediaControl,
     type TVolumeKey
-} from '@/components/voice-provider/media-control-context';
+} from '@/components/media-provider/media-control-context';
 import {
     IconButton,
     Popover,

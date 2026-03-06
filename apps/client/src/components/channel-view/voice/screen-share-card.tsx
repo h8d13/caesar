@@ -1,9 +1,9 @@
 import {
     useMediaControl,
     type TVolumeKey
-} from '@/components/voice-provider/media-control-context';
+} from '@/components/media-provider/media-control-context';
 import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
-import { useVoice } from '@/features/server/voice/hooks';
+import { useMedia } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
 import { StreamKind } from '@sharkord/shared';
 import { IconButton } from '@sharkord/ui';
@@ -93,7 +93,7 @@ const ScreenShareCard = memo(
             hasScreenShareStream,
             hasScreenShareAudioStream
         } = useMediaRefs(userId);
-        const { transportStats, getConsumerCodec } = useVoice();
+        const { transportStats, getConsumerCodec } = useMedia();
         const videoStats = useVideoStats(screenShareRef, hasScreenShareStream);
 
         const codec = useMemo(() => {

@@ -2,7 +2,7 @@ import { UserAvatar } from '@/components/user-avatar';
 import {
     useMediaControl,
     type TVolumeKey
-} from '@/components/voice-provider/media-control-context';
+} from '@/components/media-provider/media-control-context';
 import { useVoiceUsersByChannelId } from '@/features/server/hooks';
 import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
 import { useVoiceChannelAudioExternalStreams } from '@/features/server/voice/hooks';

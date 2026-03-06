@@ -1,7 +1,7 @@
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
 import { useChannelCan } from '@/features/server/hooks';
 import { leaveVoice } from '@/features/server/voice/actions';
-import { useVoice } from '@/features/server/voice/hooks';
+import { useMedia } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
 import { ChannelPermission } from '@sharkord/shared';
 import { Button } from '@sharkord/ui';
@@ -26,7 +26,7 @@ const VoiceControl = memo(() => {
     const voiceChannelId = useCurrentVoiceChannelId();
     const channelCan = useChannelCan(voiceChannelId);
     const { ownVoiceState, toggleWebcam, toggleScreenShare, connectionStatus } =
-        useVoice();
+        useMedia();
 
     const connectionInfo = useMemo(() => {
         switch (connectionStatus) {

@@ -77,7 +77,7 @@ enum ConnectionStatus {
     FAILED = 'failed'
 }
 
-export type TVoiceProvider = {
+export type TMediaProvider = {
     loading: boolean;
     connectionStatus: ConnectionStatus;
     transportStats: TransportStatsData;
@@ -88,6 +88,8 @@ export type TVoiceProvider = {
         remoteId: number,
         kind: StreamKind
     ) => string | undefined;
+    pauseConsumer: (remoteId: number, kind: string) => void;
+    resumeConsumer: (remoteId: number, kind: string) => void;
     init: (
         routerRtpCapabilities: RtpCapabilities,
         channelId: number
@@ -105,7 +107,7 @@ export type TVoiceProvider = {
     > &
     ReturnType<typeof useVoiceControls>;
 
-const VoiceProviderContext = createContext<TVoiceProvider>({
+const MediaProviderContext = createContext<TMediaProvider>({
     loading: false,
     connectionStatus: ConnectionStatus.DISCONNECTED,
     transportStats: {
@@ -130,6 +132,8 @@ const VoiceProviderContext = createContext<TVoiceProvider>({
         externalVideoRef: { current: null }
     }),
     getConsumerCodec: () => undefined,
+    pauseConsumer: () => {},
+    resumeConsumer: () => {},
     init: () => Promise.resolve(),
     toggleMic: () => Promise.resolve(),
     toggleSound: () => Promise.resolve(),
@@ -150,11 +154,11 @@ const VoiceProviderContext = createContext<TVoiceProvider>({
     externalStreams: {}
 });
 
-type TVoiceProviderProps = {
+type TMediaProviderProps = {
     children: React.ReactNode;
 };
 
-const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
+const MediaProvider = memo(({ children }: TMediaProviderProps) => {
     const [loading, setLoading] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>(
         ConnectionStatus.DISCONNECTED
@@ -216,7 +220,9 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
         consume,
         consumeExistingProducers,
         cleanupTransports,
-        getConsumerCodec
+        getConsumerCodec,
+        pauseConsumer,
+        resumeConsumer
     } = useTransports({
         addExternalStreamTrack,
         removeExternalStreamTrack,
@@ -952,7 +958,7 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
         }
     }, [currentVoiceChannelId, cleanup]);
 
-    const contextValue = useMemo<TVoiceProvider>(
+    const contextValue = useMemo<TMediaProvider>(
         () => ({
             loading,
             connectionStatus,
@@ -960,6 +966,8 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
             audioVideoRefsMap: audioVideoRefsMap.current,
             getOrCreateRefs,
             getConsumerCodec,
+            pauseConsumer,
+            resumeConsumer,
             init,
 
             toggleMic,
@@ -982,6 +990,8 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
             transportStats,
             getOrCreateRefs,
             getConsumerCodec,
+            pauseConsumer,
+            resumeConsumer,
             init,
 
             toggleMic,
@@ -1000,7 +1010,7 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
     );
 
     return (
-        <VoiceProviderContext.Provider value={contextValue}>
+        <MediaProviderContext.Provider value={contextValue}>
             <MediaControlProvider>
                 <div className="relative">
                     <FloatingPinnedCard
@@ -1012,8 +1022,8 @@ const VoiceProvider = memo(({ children }: TVoiceProviderProps) => {
                     {children}
                 </div>
             </MediaControlProvider>
-        </VoiceProviderContext.Provider>
+        </MediaProviderContext.Provider>
     );
 });
 
-export { VoiceProvider, VoiceProviderContext };
+export { MediaProvider, MediaProviderContext };

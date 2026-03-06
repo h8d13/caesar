@@ -4,7 +4,7 @@ import { Protect } from '@/components/protect';
 import { RightSidebar } from '@/components/right-sidebar';
 import { ThreadSidebar } from '@/components/thread-sidebar';
 import { TopBar } from '@/components/top-bar';
-import { VoiceProvider } from '@/components/voice-provider';
+import { MediaProvider } from '@/components/media-provider';
 import { setDmsOpen } from '@/features/app/actions';
 import {
     useDmsOpen,
@@ -78,7 +78,7 @@ const ServerView = memo(() => {
     }, [publicSettings?.directMessagesEnabled, dmsOpen]);
 
     return (
-        <VoiceProvider>
+        <MediaProvider>
             <div
                 className="flex h-dvh flex-col bg-background text-foreground dark"
                 {...swipeHandlers}
@@ -136,7 +136,7 @@ const ServerView = memo(() => {
                     </Protect>
                 </div>
             </div>
-        </VoiceProvider>
+        </MediaProvider>
     );
 });
 
