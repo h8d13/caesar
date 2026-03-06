@@ -20,8 +20,10 @@ import {
 import { getProducersRoute } from './get-producers';
 import { joinVoiceRoute } from './join';
 import { leaveVoiceRoute } from './leave';
+import { pauseConsumerRoute } from './pause-consumer';
 import { playSoundboardRoute } from './play-soundboard';
 import { produceRoute } from './produce';
+import { resumeConsumerRoute } from './resume-consumer';
 import { updateVoiceStateRoute } from './update-state';
 
 export const voiceRouter = t.router({
@@ -45,6 +47,8 @@ export const voiceRouter = t.router({
   onAddExternalStream: onVoiceAddExternalStreamRoute,
   onUpdateExternalStream: onVoiceUpdateExternalStreamRoute,
   onRemoveExternalStream: onVoiceRemoveExternalStreamRoute,
+  pauseConsumer: pauseConsumerRoute,
+  resumeConsumer: resumeConsumerRoute,
   playSoundboard: playSoundboardRoute,
   onSoundboardPlay: onSoundboardPlayRoute
 });

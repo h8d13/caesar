@@ -535,6 +535,13 @@ class VoiceRuntime {
     }
   }
 
+  public getConsumer = (
+    userId: number,
+    remoteId: number
+  ): Consumer<AppData> | undefined => {
+    return this.consumers[userId]?.[remoteId];
+  };
+
   public addConsumer = (
     userId: number,
     remoteId: number,

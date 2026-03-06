@@ -431,23 +431,43 @@ const useTransports = ({
         []
     );
 
-    const pauseConsumer = useCallback((remoteId: number, kind: string) => {
-        const consumer = consumers.current[remoteId]?.[kind];
+    const pauseConsumer = useCallback(
+        async (remoteId: number, kind: string) => {
+            const consumer = consumers.current[remoteId]?.[kind];
 
-        if (consumer && !consumer.closed && !consumer.paused) {
-            consumer.pause();
-            logVoice('Paused consumer', { remoteId, kind });
-        }
-    }, []);
+            if (consumer && !consumer.closed && !consumer.paused) {
+                consumer.pause();
+                logVoice('Paused consumer', { remoteId, kind });
 
-    const resumeConsumer = useCallback((remoteId: number, kind: string) => {
-        const consumer = consumers.current[remoteId]?.[kind];
+                try {
+                    const trpc = getTRPCClient();
+                    await trpc.voice.pauseConsumer.mutate({ remoteId });
+                } catch (error) {
+                    logVoice('Error pausing server consumer', { error });
+                }
+            }
+        },
+        []
+    );
 
-        if (consumer && !consumer.closed && consumer.paused) {
-            consumer.resume();
-            logVoice('Resumed consumer', { remoteId, kind });
-        }
-    }, []);
+    const resumeConsumer = useCallback(
+        async (remoteId: number, kind: string) => {
+            const consumer = consumers.current[remoteId]?.[kind];
+
+            if (consumer && !consumer.closed && consumer.paused) {
+                consumer.resume();
+                logVoice('Resumed consumer', { remoteId, kind });
+
+                try {
+                    const trpc = getTRPCClient();
+                    await trpc.voice.resumeConsumer.mutate({ remoteId });
+                } catch (error) {
+                    logVoice('Error resuming server consumer', { error });
+                }
+            }
+        },
+        []
+    );
 
     const cleanupTransports = useCallback(() => {
         logVoice('Cleaning up transports');
