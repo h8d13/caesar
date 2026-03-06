@@ -18,6 +18,9 @@ const { values } = parseArgs({
     bump: {
       type: 'string',
       default: 'none'
+    },
+    target: {
+      type: 'string'
     }
   },
   strict: true,
@@ -80,13 +83,22 @@ await zipDirectory(drizzleMigrationsPath, drizzleZipPath);
 
 console.log('Compiling server with Bun...');
 
-const targets: TTarget[] = [
+const allTargets: TTarget[] = [
   { out: 'sharkord-linux-x64', target: 'bun-linux-x64' },
   { out: 'sharkord-linux-arm64', target: 'bun-linux-arm64' },
   { out: 'sharkord-windows-x64.exe', target: 'bun-windows-x64' },
   { out: 'sharkord-macos-arm64', target: 'bun-darwin-arm64' }
   // mediasoup doesn't support macOS x64
 ];
+
+const targets = values.target
+  ? allTargets.filter((t) => t.target === values.target)
+  : allTargets;
+
+if (targets.length === 0) {
+  console.error(`Unknown target: ${values.target}`);
+  process.exit(1);
+}
 
 for (const target of targets) {
   console.log(`Building for target: ${target.target}...`);
@@ -97,9 +109,16 @@ for (const target of targets) {
   });
 }
 
-const releaseInfo = await getVersionInfo(targets, outPath);
+if (!values.target) {
+  const releaseInfo = await getVersionInfo(targets, outPath);
 
-await fs.writeFile(releasePath, JSON.stringify(releaseInfo, null, 2), 'utf8');
+  await fs.writeFile(
+    releasePath,
+    JSON.stringify(releaseInfo, null, 2),
+    'utf8'
+  );
+}
+
 await fs.rm(buildTempPath, { recursive: true, force: true });
 
 console.log('Sharkord built.');

@@ -1,10 +1,10 @@
 services:
   # Production: compiled binary with embedded frontend
-  # assumes x86_64 or change to .prod-arm
+  # assumes x86_64 or adapt bungig.toml and mediasoup download
   sharkord:
     build:
       context: .
-      dockerfile: Dockerfile.prod-64
+      dockerfile: Dockerfile.prod
     container_name: sharkord
     restart: unless-stopped
     stop_grace_period: 2s
@@ -15,9 +15,9 @@ services:
     environment:
       SHARKORD_PORT: "4991"
     volumes:
-      - ./data:/home/sharkord/.config/sharkord
+      - sharkord_data:/home/sharkord/.config/sharkord
 
-  # HTTPS reverse proxy
+  # HTTPS reverse proxy see caddy/Caddyfile
   caddy:
     image: caddy:alpine
     container_name: sharkord-caddy
@@ -48,8 +48,9 @@ services:
     environment:
       SHARKORD_PORT: "4991"
     volumes:
-      - ./data:/home/bun/.config/sharkord
+      - sharkord_data:/home/bun/.config/sharkord
 
 volumes:
+  sharkord_data:
   caddy_data:
   caddy_config:

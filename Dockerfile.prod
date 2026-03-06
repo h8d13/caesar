@@ -1,0 +1,28 @@
+ARG TARGET=bun-linux-x64
+
+FROM oven/bun:latest AS builder
+ARG TARGET
+
+WORKDIR /app
+COPY . .
+RUN bun install
+
+# Build using the build script
+RUN cd apps/server && bun ./build/build.ts --target $TARGET
+
+# --- Runtime stage ---
+FROM debian:bookworm-slim
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd -m -s /sbin/nologin sharkord
+
+COPY --from=builder --chown=sharkord:sharkord --chmod=755 /app/apps/server/build/out/sharkord-* /usr/local/bin/sharkord
+
+USER sharkord
+WORKDIR /home/sharkord
+
+EXPOSE 4991 40000
+
+CMD ["sharkord"]
