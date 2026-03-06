@@ -112,11 +112,7 @@ for (const target of targets) {
 if (!values.target) {
   const releaseInfo = await getVersionInfo(targets, outPath);
 
-  await fs.writeFile(
-    releasePath,
-    JSON.stringify(releaseInfo, null, 2),
-    'utf8'
-  );
+  await fs.writeFile(releasePath, JSON.stringify(releaseInfo, null, 2), 'utf8');
 }
 
 await fs.rm(buildTempPath, { recursive: true, force: true });
