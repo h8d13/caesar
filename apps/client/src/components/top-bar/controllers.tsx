@@ -1,8 +1,8 @@
-import { UserAvatar } from '@/components/user-avatar';
 import {
     useMediaControl,
     type TVolumeKey
 } from '@/components/media-provider/media-control-context';
+import { UserAvatar } from '@/components/user-avatar';
 import { useVoiceUsersByChannelId } from '@/features/server/hooks';
 import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
 import { useVoiceChannelAudioExternalStreams } from '@/features/server/voice/hooks';

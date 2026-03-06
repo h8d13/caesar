@@ -431,29 +431,23 @@ const useTransports = ({
         []
     );
 
-    const pauseConsumer = useCallback(
-        (remoteId: number, kind: string) => {
-            const consumer = consumers.current[remoteId]?.[kind];
+    const pauseConsumer = useCallback((remoteId: number, kind: string) => {
+        const consumer = consumers.current[remoteId]?.[kind];
 
-            if (consumer && !consumer.closed && !consumer.paused) {
-                consumer.pause();
-                logVoice('Paused consumer', { remoteId, kind });
-            }
-        },
-        []
-    );
+        if (consumer && !consumer.closed && !consumer.paused) {
+            consumer.pause();
+            logVoice('Paused consumer', { remoteId, kind });
+        }
+    }, []);
 
-    const resumeConsumer = useCallback(
-        (remoteId: number, kind: string) => {
-            const consumer = consumers.current[remoteId]?.[kind];
+    const resumeConsumer = useCallback((remoteId: number, kind: string) => {
+        const consumer = consumers.current[remoteId]?.[kind];
 
-            if (consumer && !consumer.closed && consumer.paused) {
-                consumer.resume();
-                logVoice('Resumed consumer', { remoteId, kind });
-            }
-        },
-        []
-    );
+        if (consumer && !consumer.closed && consumer.paused) {
+            consumer.resume();
+            logVoice('Resumed consumer', { remoteId, kind });
+        }
+    }, []);
 
     const cleanupTransports = useCallback(() => {
         logVoice('Cleaning up transports');

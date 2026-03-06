@@ -1,10 +1,10 @@
 import { LeftSidebar } from '@/components/left-sidebar';
+import { MediaProvider } from '@/components/media-provider';
 import { ModViewSheet } from '@/components/mod-view-sheet';
 import { Protect } from '@/components/protect';
 import { RightSidebar } from '@/components/right-sidebar';
 import { ThreadSidebar } from '@/components/thread-sidebar';
 import { TopBar } from '@/components/top-bar';
-import { MediaProvider } from '@/components/media-provider';
 import { setDmsOpen } from '@/features/app/actions';
 import {
     useDmsOpen,

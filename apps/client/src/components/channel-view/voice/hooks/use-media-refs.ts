@@ -120,13 +120,7 @@ const useMediaRefs = (
         } else {
             resumeConsumer(remoteId, StreamKind.SCREEN);
         }
-    }, [
-        screenVideoHidden,
-        remoteId,
-        isOwnUser,
-        pauseConsumer,
-        resumeConsumer
-    ]);
+    }, [screenVideoHidden, remoteId, isOwnUser, pauseConsumer, resumeConsumer]);
 
     const externalVolumeKey =
         sourceId && streamKey
