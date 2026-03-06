@@ -15,7 +15,7 @@ services:
     environment:
       SHARKORD_PORT: "4991"
     volumes:
-      - sharkord_data:/home/sharkord/.config/sharkord
+      - ./data:/home/sharkord/.config/sharkord
 
   # HTTPS reverse proxy see caddy/Caddyfile
   caddy:
