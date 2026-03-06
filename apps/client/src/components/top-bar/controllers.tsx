@@ -14,10 +14,20 @@ import {
     Slider,
     Tooltip
 } from '@sharkord/ui';
-import { Headphones, Monitor, Music, Volume2, VolumeX } from 'lucide-react';
+import {
+    Headphones,
+    Monitor,
+    MonitorOff,
+    Music,
+    Settings2,
+    Video,
+    VideoOff,
+    Volume2,
+    VolumeX
+} from 'lucide-react';
 import { memo, useMemo } from 'react';
 
-type AudioStreamControlProps = {
+type AudioAudioStreamControlProps = {
     userId?: number;
     volumeKey: TVolumeKey;
     name: string;
@@ -35,14 +45,30 @@ enum AudioStreamType {
     Soundboard = 3
 }
 
+enum VideoStreamType {
+    Webcam = 0,
+    ScreenShare = 1
+}
+
 const SOUNDBOARD_VOLUME_KEY = 'soundboard' as const;
 
 type AudioStream = {
+    kind: 'audio';
     volumeKey: TVolumeKey;
     userId?: number;
     name: string;
     type: AudioStreamType;
 };
+
+type VideoStream = {
+    kind: 'video';
+    visibilityKey: string;
+    userId: number;
+    name: string;
+    type: VideoStreamType;
+};
+
+type ControlStream = AudioStream | VideoStream;
 
 const AudioStreamControl = memo(
     ({ userId, volumeKey, type, name }: AudioStreamControlProps) => {
@@ -107,37 +133,116 @@ const AudioStreamControl = memo(
     }
 );
 
+type VideoAudioStreamControlProps = {
+    userId: number;
+    visibilityKey: string;
+    name: string;
+    type: VideoStreamType;
+};
+
+const VideoAudioStreamControl = memo(
+    ({ userId, visibilityKey, type, name }: VideoAudioStreamControlProps) => {
+        const user = useUserById(userId);
+        const { isStreamHidden, toggleStreamVisibility } = useVolumeControl();
+        const hidden = isStreamHidden(visibilityKey);
+
+        const isWebcam = type === VideoStreamType.Webcam;
+        const IconOn = isWebcam ? Video : Monitor;
+        const IconOff = isWebcam ? VideoOff : MonitorOff;
+        const label = isWebcam ? 'Webcam' : 'Screen Share';
+
+        return (
+            <div className="flex items-center gap-3 py-2">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                    {user ? (
+                        <UserAvatar userId={user.id} className="h-6 w-6" />
+                    ) : (
+                        <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                            <IconOn className="h-3 w-3 text-muted-foreground" />
+                        </div>
+                    )}
+                    <span className="text-sm truncate flex-1">{name}</span>
+                    <span className="text-xs text-muted-foreground">
+                        {label}
+                    </span>
+                </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleStreamVisibility(visibilityKey)}
+                        className="h-6 w-6 p-0"
+                    >
+                        {hidden ? (
+                            <IconOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                            <IconOn className="h-4 w-4" />
+                        )}
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+);
+
 const VolumeController = memo(({ channelId }: VolumeControllerProps) => {
     const voiceUsers = useVoiceUsersByChannelId(channelId);
     const externalAudioStreams = useVoiceChannelAudioExternalStreams(channelId);
-    const { getUserVolumeKey, getUserScreenVolumeKey, getExternalVolumeKey } =
-        useVolumeControl();
+    const {
+        getUserVolumeKey,
+        getUserScreenVolumeKey,
+        getExternalVolumeKey,
+        getUserVideoKey,
+        getUserScreenVideoKey
+    } = useVolumeControl();
     const ownUserId = useOwnUserId();
-    const audioStreams = useMemo(() => {
-        const streams: AudioStream[] = [];
+    const controlStreams = useMemo(() => {
+        const streams: ControlStream[] = [];
 
         voiceUsers.forEach((voiceUser) => {
             if (voiceUser.id === ownUserId) return;
 
             streams.push({
+                kind: 'audio',
                 volumeKey: getUserVolumeKey(voiceUser.id),
                 userId: voiceUser.id,
                 name: voiceUser.name,
                 type: AudioStreamType.Voice
             });
 
+            if (voiceUser.state.webcamEnabled) {
+                streams.push({
+                    kind: 'video',
+                    visibilityKey: getUserVideoKey(voiceUser.id),
+                    userId: voiceUser.id,
+                    name: voiceUser.name,
+                    type: VideoStreamType.Webcam
+                });
+            }
+
             if (voiceUser.state.sharingScreen) {
                 streams.push({
+                    kind: 'audio',
                     volumeKey: getUserScreenVolumeKey(voiceUser.id),
                     userId: voiceUser.id,
                     name: voiceUser.name,
                     type: AudioStreamType.ScreenShare
+                });
+
+                streams.push({
+                    kind: 'video',
+                    visibilityKey: getUserScreenVideoKey(voiceUser.id),
+                    userId: voiceUser.id,
+                    name: voiceUser.name,
+                    type: VideoStreamType.ScreenShare
                 });
             }
         });
 
         externalAudioStreams.forEach((stream) => {
             streams.push({
+                kind: 'audio',
                 volumeKey: getExternalVolumeKey(stream.sourceId, stream.key),
                 name: stream.title || 'External Audio',
                 type: AudioStreamType.External
@@ -145,6 +250,7 @@ const VolumeController = memo(({ channelId }: VolumeControllerProps) => {
         });
 
         streams.push({
+            kind: 'audio',
             volumeKey: SOUNDBOARD_VOLUME_KEY,
             name: 'Soundboard',
             type: AudioStreamType.Soundboard
@@ -157,7 +263,9 @@ const VolumeController = memo(({ channelId }: VolumeControllerProps) => {
         ownUserId,
         getUserVolumeKey,
         getUserScreenVolumeKey,
-        getExternalVolumeKey
+        getExternalVolumeKey,
+        getUserVideoKey,
+        getUserScreenVideoKey
     ]);
 
     return (
@@ -168,34 +276,46 @@ const VolumeController = memo(({ channelId }: VolumeControllerProps) => {
                     size="sm"
                     className="h-6 px-2 transition-all duration-200 ease-in-out"
                 >
-                    <Tooltip content="Volume Controls" asChild={false}>
-                        <Volume2 className="w-4 h-4" />
+                    <Tooltip content="Controls" asChild={false}>
+                        <Settings2 className="w-4 h-4" />
                     </Tooltip>
                 </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-80">
+            <PopoverContent align="end" className="w-96">
                 <div className="space-y-2">
                     <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-medium text-sm">Audio Controls</h4>
+                        <h4 className="font-medium text-sm">Controls</h4>
                         <span className="text-xs text-muted-foreground">
-                            {audioStreams.length}{' '}
-                            {audioStreams.length === 1 ? 'stream' : 'streams'}
+                            {controlStreams.length}{' '}
+                            {controlStreams.length === 1
+                                ? 'stream'
+                                : 'streams'}
                         </span>
                     </div>
 
                     <div className="space-y-1 max-h-96 overflow-y-auto">
-                        {audioStreams.map((stream) => (
-                            <AudioStreamControl
-                                key={stream.volumeKey}
-                                userId={stream.userId}
-                                volumeKey={stream.volumeKey}
-                                name={stream.name}
-                                type={stream.type}
-                            />
-                        ))}
-                        {audioStreams.length === 0 && (
+                        {controlStreams.map((stream) =>
+                            stream.kind === 'audio' ? (
+                                <AudioStreamControl
+                                    key={stream.volumeKey}
+                                    userId={stream.userId}
+                                    volumeKey={stream.volumeKey}
+                                    name={stream.name}
+                                    type={stream.type}
+                                />
+                            ) : (
+                                <VideoAudioStreamControl
+                                    key={stream.visibilityKey}
+                                    userId={stream.userId}
+                                    visibilityKey={stream.visibilityKey}
+                                    name={stream.name}
+                                    type={stream.type}
+                                />
+                            )
+                        )}
+                        {controlStreams.length === 0 && (
                             <div className="text-sm text-muted-foreground py-4 text-center">
-                                No remote audio streams available.
+                                No remote streams available.
                             </div>
                         )}
                     </div>

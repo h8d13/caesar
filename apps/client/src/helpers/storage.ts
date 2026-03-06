@@ -25,7 +25,8 @@ export enum LocalStorageKey {
     NICKNAMES = 'sharkord-nicknames',
     WHITEBOARD_SIDEBAR_WIDTH = 'sharkord-whiteboard-sidebar-width',
     VOICE_CHAT_SIDEBAR_WIDTH = 'sharkord-voice-chat-sidebar-width',
-    BROWSER_NOTIFICATIONS_FOR_MENTIONS = 'sharkord-browser-notifications-for-mentions'
+    BROWSER_NOTIFICATIONS_FOR_MENTIONS = 'sharkord-browser-notifications-for-mentions',
+    HIDDEN_STREAMS = 'sharkord-hidden-streams'
 }
 
 export enum SessionStorageKey {

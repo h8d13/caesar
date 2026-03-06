@@ -26,7 +26,10 @@ const useVoiceRefs = (
         getVolume,
         getUserVolumeKey,
         getUserScreenVolumeKey,
-        getExternalVolumeKey
+        getExternalVolumeKey,
+        isStreamHidden,
+        getUserVideoKey,
+        getUserScreenVideoKey
     } = useVolumeControl();
     const { devices } = useDevices();
 
@@ -93,6 +96,9 @@ const useVoiceRefs = (
 
     const userScreenVolumeKey = getUserScreenVolumeKey(remoteId);
     const userScreenVolume = getVolume(userScreenVolumeKey);
+
+    const videoHidden = isStreamHidden(getUserVideoKey(remoteId));
+    const screenVideoHidden = isStreamHidden(getUserScreenVideoKey(remoteId));
 
     const externalVolumeKey =
         sourceId && streamKey
@@ -212,8 +218,8 @@ const useVoiceRefs = (
         externalAudioRef,
         externalVideoRef,
         hasAudioStream: !!audioStream,
-        hasVideoStream: !!videoStream,
-        hasScreenShareStream: !!screenShareStream,
+        hasVideoStream: !!videoStream && !videoHidden,
+        hasScreenShareStream: !!screenShareStream && !screenVideoHidden,
         hasScreenShareAudioStream: !!screenShareAudioStream,
         hasExternalAudioStream: !!externalAudioStream,
         hasExternalVideoStream: !!externalVideoStream,

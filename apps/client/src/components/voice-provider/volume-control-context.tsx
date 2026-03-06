@@ -29,6 +29,10 @@ type TVolumeControlContext = {
     getUserVolumeKey: (userId: number) => TVolumeKey;
     getUserScreenVolumeKey: (userId: number) => TVolumeKey;
     getExternalVolumeKey: (sourceId: string, key: string) => TVolumeKey;
+    isStreamHidden: (key: string) => boolean;
+    toggleStreamVisibility: (key: string) => void;
+    getUserVideoKey: (userId: number) => string;
+    getUserScreenVideoKey: (userId: number) => string;
 };
 
 const VolumeControlContext = createContext<TVolumeControlContext | null>(null);
@@ -52,6 +56,29 @@ const loadVolumesFromStorage = (): TVolumeSettings => {
 const saveVolumesToStorage = (volumes: TVolumeSettings) => {
     try {
         setLocalStorageItemAsJSON(LocalStorageKey.VOLUME_SETTINGS, volumes);
+    } catch {
+        // ignore
+    }
+};
+
+const loadHiddenStreamsFromStorage = (): Set<string> => {
+    try {
+        const arr =
+            getLocalStorageItemAsJSON<string[]>(
+                LocalStorageKey.HIDDEN_STREAMS
+            ) ?? [];
+        return new Set(arr);
+    } catch {
+        return new Set();
+    }
+};
+
+const saveHiddenStreamsToStorage = (hidden: Set<string>) => {
+    try {
+        setLocalStorageItemAsJSON(
+            LocalStorageKey.HIDDEN_STREAMS,
+            [...hidden]
+        );
     } catch {
         // ignore
     }
@@ -116,6 +143,9 @@ const VolumeControlProvider = memo(
         const [volumes, setVolumes] = useState<TVolumeSettings>(
             loadVolumesFromStorage
         );
+        const [hiddenStreams, setHiddenStreams] = useState<Set<string>>(
+            loadHiddenStreamsFromStorage
+        );
 
         const previousVolumesRef = useRef<TVolumeSettings>({});
 
@@ -174,6 +204,34 @@ const VolumeControlProvider = memo(
             []
         );
 
+        const isStreamHidden = useCallback(
+            (key: string): boolean => {
+                return hiddenStreams.has(key);
+            },
+            [hiddenStreams]
+        );
+
+        const toggleStreamVisibility = useCallback((key: string) => {
+            setHiddenStreams((prev) => {
+                const next = new Set(prev);
+                if (next.has(key)) {
+                    next.delete(key);
+                } else {
+                    next.add(key);
+                }
+                saveHiddenStreamsToStorage(next);
+                return next;
+            });
+        }, []);
+
+        const getUserVideoKey = useCallback((userId: number): string => {
+            return `uservideo-${userId}`;
+        }, []);
+
+        const getUserScreenVideoKey = useCallback((userId: number): string => {
+            return `userscreenvideo-${userId}`;
+        }, []);
+
         return (
             <VolumeControlContext.Provider
                 value={{
@@ -183,7 +241,11 @@ const VolumeControlProvider = memo(
                     toggleMute,
                     getUserVolumeKey,
                     getUserScreenVolumeKey,
-                    getExternalVolumeKey
+                    getExternalVolumeKey,
+                    isStreamHidden,
+                    toggleStreamVisibility,
+                    getUserVideoKey,
+                    getUserScreenVideoKey
                 }}
             >
                 <SoundboardPlayer />
