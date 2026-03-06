@@ -6,8 +6,8 @@ import {
 import { Button, Tooltip } from '@sharkord/ui';
 import { PanelRight, PanelRightClose, Search } from 'lucide-react';
 import { memo, useState } from 'react';
-import { VoiceOptionsController } from './voice-options-controller';
 import { MediaController } from './controllers';
+import { VoiceOptionsController } from './voice-options-controller';
 
 type TTopBarProps = {
     onToggleRightSidebar: () => void;

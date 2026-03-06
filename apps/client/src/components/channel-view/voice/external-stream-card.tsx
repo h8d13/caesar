@@ -7,8 +7,8 @@ import { memo, useCallback, type RefObject } from 'react';
 import { CardControls } from './card-controls';
 import { CardGradient } from './card-gradient';
 import { FullscreenButton } from './fullscreen-button';
-import { useScreenShareZoom } from './hooks/use-screen-share-zoom';
 import { useMediaRefs } from './hooks/use-media-refs';
+import { useScreenShareZoom } from './hooks/use-screen-share-zoom';
 import { PinButton } from './pin-button';
 import { StreamSettingsPopover } from './stream-settings-popover';
 

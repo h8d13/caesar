@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { memo, useMemo } from 'react';
 
-type AudioAudioStreamControlProps = {
+type AudioStreamControlProps = {
     userId?: number;
     volumeKey: TVolumeKey;
     name: string;
@@ -287,9 +287,7 @@ const MediaController = memo(({ channelId }: MediaControllerProps) => {
                         <h4 className="font-medium text-sm">Controls</h4>
                         <span className="text-xs text-muted-foreground">
                             {controlStreams.length}{' '}
-                            {controlStreams.length === 1
-                                ? 'stream'
-                                : 'streams'}
+                            {controlStreams.length === 1 ? 'stream' : 'streams'}
                         </span>
                     </div>
 

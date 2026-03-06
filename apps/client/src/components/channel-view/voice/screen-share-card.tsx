@@ -12,9 +12,9 @@ import { memo, useCallback, useMemo, type RefObject } from 'react';
 import { CardControls } from './card-controls';
 import { CardGradient } from './card-gradient';
 import { FullscreenButton } from './fullscreen-button';
+import { useMediaRefs } from './hooks/use-media-refs';
 import { useScreenShareZoom } from './hooks/use-screen-share-zoom';
 import { useVideoStats } from './hooks/use-video-stats';
-import { useMediaRefs } from './hooks/use-media-refs';
 import { PinButton } from './pin-button';
 import { VolumeButton } from './volume-button';
 

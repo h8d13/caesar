@@ -75,10 +75,7 @@ const loadHiddenStreamsFromStorage = (): Set<string> => {
 
 const saveHiddenStreamsToStorage = (hidden: Set<string>) => {
     try {
-        setLocalStorageItemAsJSON(
-            LocalStorageKey.HIDDEN_STREAMS,
-            [...hidden]
-        );
+        setLocalStorageItemAsJSON(LocalStorageKey.HIDDEN_STREAMS, [...hidden]);
     } catch {
         // ignore
     }
@@ -268,5 +265,5 @@ const useMediaControl = () => {
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
-export { useMediaControl, MediaControlContext, MediaControlProvider };
+export { MediaControlContext, MediaControlProvider, useMediaControl };
 export type { TMediaControlContext, TVolumeKey };
