@@ -33,6 +33,15 @@ type TUseTransportParams = {
     ) => void;
 };
 
+const VIDEO_KINDS: Set<StreamKind> = new Set([
+    StreamKind.VIDEO,
+    StreamKind.SCREEN,
+    StreamKind.EXTERNAL_VIDEO
+]);
+
+const LOSS_CHECK_INTERVAL = 3000;
+const LOSS_THRESHOLD = 5;
+
 const useTransports = ({
     addRemoteUserStream,
     removeRemoteUserStream,
@@ -51,15 +60,6 @@ const useTransports = ({
     const packetLossMonitors = useRef<
         Map<string, ReturnType<typeof setInterval>>
     >(new Map());
-
-    const VIDEO_KINDS = new Set([
-        StreamKind.VIDEO,
-        StreamKind.SCREEN,
-        StreamKind.EXTERNAL_VIDEO
-    ]);
-
-    const LOSS_CHECK_INTERVAL = 3000;
-    const LOSS_THRESHOLD = 5;
 
     const startPacketLossMonitor = useCallback(
         (remoteId: number, kind: StreamKind, consumer: Consumer<AppData>) => {
