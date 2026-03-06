@@ -320,12 +320,13 @@ class VoiceRuntime {
 
     Object.keys(this.consumers).forEach((consumerUserIdStr) => {
       const consumerId = parseInt(consumerUserIdStr);
-      if (consumerId === userId || !this.consumers[consumerId]) return;
+      const userConsumers = this.consumers[consumerId];
+      if (consumerId === userId || !userConsumers) return;
 
-      Object.keys(this.consumers[consumerId]).forEach((key) => {
+      Object.keys(userConsumers).forEach((key) => {
         if (key.startsWith(`${userId}-`)) {
-          this.consumers[consumerId][key].close();
-          delete this.consumers[consumerId][key];
+          userConsumers[key]?.close();
+          delete userConsumers[key];
         }
       });
     });
