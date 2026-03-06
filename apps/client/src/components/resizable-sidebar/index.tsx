@@ -51,18 +51,23 @@ const ResizableSidebar = memo(
                 }}
             >
                 {isOpen && (
-                    <>
-                        <div
-                            className={cn(
-                                'absolute top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 transition-colors z-50',
-                                isLeftEdge ? 'left-0' : 'right-0',
-                                isResizing && 'bg-primary'
-                            )}
-                            onMouseDown={handleMouseDown}
-                        />
-                        {children}
-                    </>
+                    <div
+                        className={cn(
+                            'absolute top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 transition-colors z-50',
+                            isLeftEdge ? 'left-0' : 'right-0',
+                            isResizing && 'bg-primary'
+                        )}
+                        onMouseDown={handleMouseDown}
+                    />
                 )}
+                <div
+                    className={cn(
+                        'flex flex-col flex-1 min-h-0',
+                        !isOpen && 'invisible'
+                    )}
+                >
+                    {children}
+                </div>
             </div>
         );
     }
