@@ -432,7 +432,7 @@ const useTransports = ({
     );
 
     const pauseConsumer = useCallback(
-        async (remoteId: number, kind: string) => {
+        async (remoteId: number, kind: TRemoteUserStreamKinds) => {
             const consumer = consumers.current[remoteId]?.[kind];
 
             if (consumer && !consumer.closed && !consumer.paused) {
@@ -451,7 +451,7 @@ const useTransports = ({
     );
 
     const resumeConsumer = useCallback(
-        async (remoteId: number, kind: string) => {
+        async (remoteId: number, kind: TRemoteUserStreamKinds) => {
             const consumer = consumers.current[remoteId]?.[kind];
 
             if (consumer && !consumer.closed && consumer.paused) {
