@@ -6,12 +6,10 @@
       "project": []
     },
     "apps/server": {
-      "entry": ["src/__tests__/prepare.ts", "src/**/__tests__/**/*.test.ts", "build/**/*.ts"],
-      "project": ["src/**/*.ts"],
-      "ignore": ["src/db/migrations/**"]
+      "entry": ["src/**/__tests__/**/*.test.ts", "build/**/*.ts"],
+      "project": ["src/**/*.ts"]
     },
     "apps/client": {
-      "entry": ["src/main.tsx"],
       "project": ["src/**/*.{ts,tsx}"]
     },
     "packages/shared": {
@@ -25,6 +23,6 @@
   },
   "ignore": ["**/*.d.ts"],
   "ignoreBinaries": ["tsc", "prettier", "eslint"],
-  "ignoreDependencies": ["tailwindcss", "tw-animate-css"],
+  "ignoreDependencies": ["tailwindcss", "tw-animate-css", "buffer"],
   "ignoreExportsUsedInFile": true
 }
