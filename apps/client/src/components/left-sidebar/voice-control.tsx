@@ -45,10 +45,8 @@ const VoiceControl = memo(() => {
                 const { isMonitoring, producer, consumer } = transportStats;
 
                 if (isMonitoring) {
-                    const noOutgoing =
-                        producer && producer.bytesSent === 0;
-                    const noIncoming =
-                        consumer && consumer.bytesReceived === 0;
+                    const noOutgoing = producer && producer.bytesSent === 0;
+                    const noIncoming = consumer && consumer.bytesReceived === 0;
 
                     if (noOutgoing && noIncoming) {
                         return {
@@ -87,9 +85,7 @@ const VoiceControl = memo(() => {
 
                     if (highPacketLoss) {
                         return {
-                            icon: (
-                                <Wifi className="h-4 w-4 text-yellow-500" />
-                            ),
+                            icon: <Wifi className="h-4 w-4 text-yellow-500" />,
                             text: 'Poor connection',
                             color: 'text-yellow-500'
                         };
@@ -142,7 +138,11 @@ const VoiceControl = memo(() => {
                 </StatsPopover>
 
                 <div className="flex items-center justify-between px-2 py-2">
-                    <Button variant="destructive" size="sm" onClick={leaveVoice}>
+                    <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={leaveVoice}
+                    >
                         <PhoneOff className="h-3.5 w-3.5 mr-1.5" />
                         Disconnect
                     </Button>

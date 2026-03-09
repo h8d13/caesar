@@ -205,7 +205,9 @@ const useUploadFiles = (
 
         const handlePaste = async (event: ClipboardEvent) => {
             const items = event.clipboardData?.items ?? [];
-            const hasFiles = Array.from(items).some((item) => item.kind === 'file');
+            const hasFiles = Array.from(items).some(
+                (item) => item.kind === 'file'
+            );
 
             if (hasFiles && !checkPermissions()) return;
 

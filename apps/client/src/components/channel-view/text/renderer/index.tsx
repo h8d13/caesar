@@ -36,7 +36,12 @@ type TMessageRendererProps = {
 };
 
 const MessageRenderer = memo(
-    ({ message, disableFiles, disableReactions, disableVotes }: TMessageRendererProps) => {
+    ({
+        message,
+        disableFiles,
+        disableReactions,
+        disableVotes
+    }: TMessageRendererProps) => {
         const ownUserId = useOwnUserId();
         const editedByUser = useUserById(message.editedBy ?? -1);
         const isOwnMessage = useMemo(
