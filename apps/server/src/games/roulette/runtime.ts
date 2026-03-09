@@ -79,7 +79,8 @@ class RouletteRuntime {
       winningNumber:
         this.phase === RoulettePhase.BETTING ? null : this.winningNumber,
       bets: this.getPublicBets(),
-      lightningNumbers: this.lightningNumbers
+      lightningNumbers:
+        this.phase === RoulettePhase.BETTING ? [] : this.lightningNumbers
     };
   }
 
