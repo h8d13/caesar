@@ -1,4 +1,9 @@
+import { Buffer } from 'buffer';
 import http from 'isomorphic-git/http/web';
+
+if (!globalThis.Buffer) {
+    globalThis.Buffer = Buffer;
+}
 
 const STORAGE_PREFIX = 'sharkord:git:';
 
