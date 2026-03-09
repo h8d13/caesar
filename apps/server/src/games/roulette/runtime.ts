@@ -304,7 +304,7 @@ class RouletteRuntime {
       const multiplier =
         LIGHTNING_MULTIPLIERS[
           Math.floor(Math.random() * LIGHTNING_MULTIPLIERS.length)
-        ];
+        ]!;
       selected.push({ number: num, multiplier });
     }
 

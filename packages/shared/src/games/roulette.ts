@@ -28,7 +28,7 @@ export const BLACK_NUMBERS = [
 ];
 
 export const PAYOUT_MAP: Record<RouletteBetType, number> = {
-  [RouletteBetType.STRAIGHT]: 29,
+  [RouletteBetType.STRAIGHT]: 35,
   [RouletteBetType.RED]: 1,
   [RouletteBetType.BLACK]: 1,
   [RouletteBetType.ODD]: 1,

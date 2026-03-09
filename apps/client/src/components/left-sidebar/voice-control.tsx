@@ -82,7 +82,7 @@ const VoiceControl = memo(() => {
                 </StatsPopover>
 
                 <div className="flex items-center justify-between px-2 py-2">
-                    <Button variant="outline" size="sm" onClick={leaveVoice}>
+                    <Button variant="destructive" size="sm" onClick={leaveVoice}>
                         <PhoneOff className="h-3.5 w-3.5 mr-1.5" />
                         Disconnect
                     </Button>
