@@ -33,6 +33,7 @@ export default defineConfig({
         }
     },
     define: {
-        VITE_APP_VERSION: JSON.stringify(pkg.version)
+        VITE_APP_VERSION: JSON.stringify(pkg.version),
+        VITE_GITHUB_URL: JSON.stringify(process.env.VITE_GITHUB_URL || 'https://github.com/h8d13/2pac4shakur')
     }
 });
