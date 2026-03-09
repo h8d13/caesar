@@ -103,6 +103,7 @@ class NoiseGateProcessor extends AudioWorkletProcessor {
       }
     }
 
+    const shouldPassThrough = !this.enabled || this.gateOpen;
     const channelCount = Math.min(input.length, output.length);
 
     for (let channelIndex = 0; channelIndex < channelCount; channelIndex++) {
