@@ -66,6 +66,12 @@ const MessageActions = memo(
 
             if (!choice) return;
 
+            // Local-only messages have negative IDs — just remove from state
+            if (messageId < 0) {
+                deleteMessage(channelId, messageId);
+                return;
+            }
+
             const trpc = getTRPCClient();
 
             try {
