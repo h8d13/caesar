@@ -19,6 +19,7 @@ type TMessageProps = {
     disableActions?: boolean;
     disableFiles?: boolean;
     disableReactions?: boolean;
+    disableVotes?: boolean;
     onReply?: (message: TJoinedMessage) => void;
     onScrollToMessage?: (messageId: number) => void;
 };
@@ -29,6 +30,7 @@ const Message = memo(
         disableActions,
         disableFiles,
         disableReactions,
+        disableVotes,
         onReply,
         onScrollToMessage
     }: TMessageProps) => {
@@ -103,6 +105,7 @@ const Message = memo(
                             message={message}
                             disableFiles={disableFiles}
                             disableReactions={disableReactions}
+                            disableVotes={disableVotes}
                         />
                         {!isThreadReply && replyCount > 0 && (
                             <button

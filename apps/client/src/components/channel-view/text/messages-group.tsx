@@ -77,7 +77,7 @@ const MessagesGroup = memo(
                         </RelativeTime>
                     </div>
                     <div className="flex min-w-0 flex-col">
-                        {group.map((message) => (
+                        {group.map((message, index) => (
                             <div
                                 key={message.id}
                                 id={`message-${message.id}`}
@@ -89,6 +89,9 @@ const MessagesGroup = memo(
                                     disableActions={disableActions}
                                     disableFiles={disableFiles}
                                     disableReactions={disableReactions}
+                                    disableVotes={
+                                        index !== group.length - 1
+                                    }
                                     onReply={onReply}
                                     onScrollToMessage={onScrollToMessage}
                                 />

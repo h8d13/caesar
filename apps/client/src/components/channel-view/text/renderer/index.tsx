@@ -32,10 +32,11 @@ type TMessageRendererProps = {
     message: TJoinedMessage;
     disableFiles?: boolean;
     disableReactions?: boolean;
+    disableVotes?: boolean;
 };
 
 const MessageRenderer = memo(
-    ({ message, disableFiles, disableReactions }: TMessageRendererProps) => {
+    ({ message, disableFiles, disableReactions, disableVotes }: TMessageRendererProps) => {
         const ownUserId = useOwnUserId();
         const editedByUser = useUserById(message.editedBy ?? -1);
         const isOwnMessage = useMemo(
@@ -191,11 +192,13 @@ const MessageRenderer = memo(
 
                 {!disableReactions && (
                     <div className="flex items-center gap-2 mt-1">
-                        <MessageScVotes
-                            messageId={message.id}
-                            messageUserId={message.userId}
-                            scVotes={message.scVotes}
-                        />
+                        {!disableVotes && (
+                            <MessageScVotes
+                                messageId={message.id}
+                                messageUserId={message.userId}
+                                scVotes={message.scVotes}
+                            />
+                        )}
                         <MessageReactions
                             reactions={message.reactions}
                             messageId={message.id}
