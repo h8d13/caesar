@@ -4,7 +4,7 @@ import { leaveVoice } from '@/features/server/voice/actions';
 import { useMedia } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
 import { ChannelPermission } from '@sharkord/shared';
-import { Button } from '@sharkord/ui';
+import { Button, Tooltip } from '@sharkord/ui';
 import {
     AlertTriangle,
     Loader2,
@@ -90,55 +90,61 @@ const VoiceControl = memo(() => {
                     <div className="flex gap-1">
                         <SoundboardPopover />
 
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className={cn(
-                                'h-8 w-8 rounded-md transition-all duration-200',
-                                ownVoiceState.webcamEnabled
-                                    ? 'bg-green-500/15 hover:bg-green-500/25 text-green-400 hover:text-green-300'
-                                    : 'bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground'
-                            )}
-                            onClick={toggleWebcam}
-                            title={
+                        <Tooltip
+                            content={
                                 ownVoiceState.webcamEnabled
                                     ? 'Turn off camera'
                                     : 'Turn on camera'
                             }
-                            disabled={!channelCan(ChannelPermission.WEBCAM)}
                         >
-                            {ownVoiceState.webcamEnabled ? (
-                                <Video className="h-4 w-4" />
-                            ) : (
-                                <VideoOff className="h-4 w-4" />
-                            )}
-                        </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className={cn(
+                                    'h-8 w-8 rounded-md transition-all duration-200',
+                                    ownVoiceState.webcamEnabled
+                                        ? 'bg-green-500/15 hover:bg-green-500/25 text-green-400 hover:text-green-300'
+                                        : 'bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground'
+                                )}
+                                onClick={toggleWebcam}
+                                disabled={!channelCan(ChannelPermission.WEBCAM)}
+                            >
+                                {ownVoiceState.webcamEnabled ? (
+                                    <Video className="h-4 w-4" />
+                                ) : (
+                                    <VideoOff className="h-4 w-4" />
+                                )}
+                            </Button>
+                        </Tooltip>
 
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className={cn(
-                                'h-8 w-8 rounded-md transition-all duration-200',
-                                ownVoiceState.sharingScreen
-                                    ? 'bg-blue-500/15 hover:bg-blue-500/25 text-blue-400 hover:text-blue-300'
-                                    : 'bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground'
-                            )}
-                            onClick={toggleScreenShare}
-                            title={
+                        <Tooltip
+                            content={
                                 ownVoiceState.sharingScreen
                                     ? 'Stop screen share'
                                     : 'Start screen share'
                             }
-                            disabled={
-                                !channelCan(ChannelPermission.SHARE_SCREEN)
-                            }
                         >
-                            {ownVoiceState.sharingScreen ? (
-                                <Monitor className="h-4 w-4" />
-                            ) : (
-                                <MonitorOff className="h-4 w-4" />
-                            )}
-                        </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className={cn(
+                                    'h-8 w-8 rounded-md transition-all duration-200',
+                                    ownVoiceState.sharingScreen
+                                        ? 'bg-blue-500/15 hover:bg-blue-500/25 text-blue-400 hover:text-blue-300'
+                                        : 'bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground'
+                                )}
+                                onClick={toggleScreenShare}
+                                disabled={
+                                    !channelCan(ChannelPermission.SHARE_SCREEN)
+                                }
+                            >
+                                {ownVoiceState.sharingScreen ? (
+                                    <Monitor className="h-4 w-4" />
+                                ) : (
+                                    <MonitorOff className="h-4 w-4" />
+                                )}
+                            </Button>
+                        </Tooltip>
                     </div>
                 </div>
             </div>

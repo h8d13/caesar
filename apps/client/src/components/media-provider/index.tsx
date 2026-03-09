@@ -388,11 +388,15 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                                 microphoneRNNoiseWorkletNodeRef.current =
                                     rnnoiseNode;
 
-                                logVoice('RNNoise worklet initialized');
+                                console.log(
+                                    '%c[RNNOISE] Initialized — noise suppression is active',
+                                    'color: lime; font-weight: bold;'
+                                );
                             } catch (error) {
-                                logVoice(
-                                    'Failed to initialize RNNoise worklet, continuing without it',
-                                    { error }
+                                console.error(
+                                    '%c[RNNOISE] Failed to initialize — noise suppression is NOT active',
+                                    'color: red; font-weight: bold;',
+                                    error
                                 );
                                 markRNNoiseWorkletUnavailable(
                                     'Failed to initialize the RNNoise audio processor.'
@@ -402,11 +406,10 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                             shouldUseRNNoise &&
                             !rnnoiseAvailability.available
                         ) {
-                            logVoice(
-                                'RNNoise unavailable, skipping AI noise suppression',
-                                {
-                                    reason: rnnoiseAvailability.reason
-                                }
+                            console.warn(
+                                '%c[RNNOISE] Unavailable — skipping noise suppression:',
+                                'color: orange; font-weight: bold;',
+                                rnnoiseAvailability.reason
                             );
                         }
 

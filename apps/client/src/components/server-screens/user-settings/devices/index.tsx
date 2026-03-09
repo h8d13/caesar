@@ -592,7 +592,8 @@ const Devices = memo(() => {
                                         }
                                     />
 
-                                    <div className="ml-2">
+                                    <div className="ml-2 flex flex-col gap-1">
+                                        <span className="text-sm font-medium">Codec</span>
                                         <Select
                                             value={
                                                 values.screenCodec ??
