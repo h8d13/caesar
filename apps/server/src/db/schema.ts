@@ -587,6 +587,7 @@ const rouletteRounds = sqliteTable(
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
     winningNumber: integer('winning_number').notNull(),
+    lightningNumbers: text('lightning_numbers').default('[]').notNull(),
     hash: text('hash').notNull(),
     startedAt: integer('started_at').notNull(),
     endedAt: integer('ended_at')

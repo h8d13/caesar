@@ -8,6 +8,7 @@ import {
     useRoulettePhaseDuration,
     useRoulettePhaseStartedAt
 } from '@/features/server/roulette/hooks';
+import { useOwnUserId } from '@/features/server/users/hooks';
 import { cn } from '@/lib/utils';
 import {
     type RouletteBetType,
@@ -29,6 +30,7 @@ type SavedBet = {
 const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
     const phase = useRoulettePhase();
     const bets = useRouletteBets();
+    const ownUserId = useOwnUserId();
     const phaseStartedAt = useRoulettePhaseStartedAt();
     const phaseDuration = useRoulettePhaseDuration();
     const [selectedChip, setSelectedChip] = useState(10);
@@ -36,16 +38,19 @@ const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
     const [autoBet, setAutoBet] = useState(false);
     const lastBets = useRef<SavedBet[]>([]);
 
-    // Save bets when spinning starts (end of betting phase)
+    // Save own bets when spinning starts (end of betting phase)
     useEffect(() => {
         if (phase === RoulettePhase.SPINNING && bets.length > 0) {
-            lastBets.current = bets.map((b) => ({
-                betType: b.betType,
-                betValue: b.betValue,
-                amount: b.amount
-            }));
+            const ownBets = bets.filter((b) => b.userId === ownUserId);
+            if (ownBets.length > 0) {
+                lastBets.current = ownBets.map((b) => ({
+                    betType: b.betType,
+                    betValue: b.betValue,
+                    amount: b.amount
+                }));
+            }
         }
-    }, [phase, bets]);
+    }, [phase, bets, ownUserId]);
 
     // Auto rebet when new betting phase starts
     useEffect(() => {

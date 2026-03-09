@@ -1,6 +1,7 @@
 import { useSelector } from 'react-redux';
 import {
     rouletteBetsSelector,
+    rouletteLightningNumbersSelector,
     roulettePhaseDurationSelector,
     roulettePhaseSelector,
     roulettePhaseStartedAtSelector,
@@ -15,6 +16,8 @@ export const useRouletteWinningNumber = () =>
     useSelector(rouletteWinningNumberSelector);
 export const useRouletteRoundHistory = () =>
     useSelector(rouletteRoundHistorySelector);
+export const useRouletteLightningNumbers = () =>
+    useSelector(rouletteLightningNumbersSelector);
 export const useRouletteTopWins = () => useSelector(rouletteTopWinsSelector);
 export const useRoulettePhaseStartedAt = () =>
     useSelector(roulettePhaseStartedAtSelector);

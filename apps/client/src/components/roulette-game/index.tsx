@@ -7,7 +7,7 @@ import { memo, useEffect } from 'react';
 import { BetControls } from './bet-controls';
 import { BettingBoard } from './betting-board';
 import { RoulettePlayerBets } from './player-bets';
-import { RouletteWheel } from './roulette-wheel';
+import { LightningDisplay, RouletteWheel } from './roulette-wheel';
 import { RoundHistory } from './round-history';
 
 const RouletteGameContent = memo(() => {
@@ -21,7 +21,10 @@ const RouletteGameContent = memo(() => {
     return (
         <div className="flex flex-col gap-3 h-full pt-12">
             <RoundHistory />
-            <RouletteWheel />
+            <div className="flex items-center justify-center gap-6">
+                <RouletteWheel />
+                <LightningDisplay />
+            </div>
             <BetControls>
                 <BettingBoard />
             </BetControls>

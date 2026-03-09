@@ -1,5 +1,6 @@
 import {
     useRouletteBets,
+    useRouletteLightningNumbers,
     useRoulettePhase
 } from '@/features/server/roulette/hooks';
 import { cn } from '@/lib/utils';
@@ -7,6 +8,7 @@ import {
     RouletteBetType,
     RoulettePhase
 } from '@sharkord/shared/games/roulette';
+import { Zap } from 'lucide-react';
 import { memo, useCallback, useContext } from 'react';
 import { ChipAmountContext } from './chip-amount-context';
 import { BOARD_ROWS, getNumberColor } from './constants';
@@ -18,6 +20,7 @@ type TBoardCellProps = {
     disabled: boolean;
     hasChip: boolean;
     className?: string;
+    lightningMultiplier?: number;
 };
 
 const BoardCell = memo(
@@ -27,29 +30,43 @@ const BoardCell = memo(
         onClick,
         disabled,
         hasChip,
-        className
+        className,
+        lightningMultiplier
     }: TBoardCellProps) => {
-        const bgColor =
-            color === 'red'
-                ? 'bg-red-700 hover:bg-red-600'
-                : color === 'black'
-                  ? 'bg-zinc-800 hover:bg-zinc-700'
-                  : color === 'green'
-                    ? 'bg-green-700 hover:bg-green-600'
-                    : 'bg-zinc-900 hover:bg-zinc-800';
+        const isLightning = !!lightningMultiplier;
+        const bgColor = isLightning
+            ? 'bg-yellow-900/80 hover:bg-yellow-800/80'
+            : color === 'red'
+              ? 'bg-red-700 hover:bg-red-600'
+              : color === 'black'
+                ? 'bg-zinc-800 hover:bg-zinc-700'
+                : color === 'green'
+                  ? 'bg-green-700 hover:bg-green-600'
+                  : 'bg-zinc-900 hover:bg-zinc-800';
 
         return (
             <button
                 onClick={onClick}
                 disabled={disabled}
                 className={cn(
-                    'relative flex items-center justify-center border border-zinc-600 text-xs font-bold text-white transition-colors min-h-[32px]',
+                    'relative flex items-center justify-center border text-xs font-bold text-white transition-colors min-h-[32px]',
+                    isLightning
+                        ? 'border-yellow-400/60 shadow-[inset_0_0_8px_rgba(250,204,21,0.2)]'
+                        : 'border-zinc-600',
                     bgColor,
                     disabled && 'opacity-50 cursor-not-allowed',
                     className
                 )}
             >
-                {label}
+                <span className="flex flex-col items-center leading-tight">
+                    {label}
+                    {isLightning && (
+                        <span className="flex items-center gap-0.5 text-yellow-400 text-[8px]">
+                            <Zap className="size-2 fill-yellow-400" />
+                            {lightningMultiplier}x
+                        </span>
+                    )}
+                </span>
                 {hasChip && (
                     <div className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-yellow-400 border border-yellow-600" />
                 )}
@@ -61,8 +78,15 @@ const BoardCell = memo(
 const BettingBoard = memo(() => {
     const phase = useRoulettePhase();
     const bets = useRouletteBets();
+    const lightningNumbers = useRouletteLightningNumbers();
     const chipAmount = useContext(ChipAmountContext);
     const disabled = phase !== RoulettePhase.BETTING;
+
+    const getLightningMultiplier = useCallback(
+        (num: number) =>
+            lightningNumbers.find((ln) => ln.number === num)?.multiplier,
+        [lightningNumbers]
+    );
 
     const hasBetOn = useCallback(
         (betType: RouletteBetType, betValue: number | null) => {
@@ -131,6 +155,9 @@ const BettingBoard = memo(() => {
                                         disabled={disabled}
                                         hasChip={hasBetOn(
                                             RouletteBetType.STRAIGHT,
+                                            num
+                                        )}
+                                        lightningMultiplier={getLightningMultiplier(
                                             num
                                         )}
                                     />

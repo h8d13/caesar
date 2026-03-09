@@ -1,6 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import {
     type RoulettePhase,
+    type TLightningNumber,
     type TRouletteActiveBet,
     type TRouletteRoundHistory,
     type TRouletteStateUpdate
@@ -22,6 +23,7 @@ export interface TRouletteState {
     phaseDuration: number | null;
     winningNumber: number | null;
     bets: TRouletteActiveBet[];
+    lightningNumbers: TLightningNumber[];
     roundHistory: TRouletteRoundHistory[];
     topWins: TRouletteTopWin[];
 }
@@ -33,6 +35,7 @@ const initialState: TRouletteState = {
     phaseDuration: null,
     winningNumber: null,
     bets: [],
+    lightningNumbers: [],
     roundHistory: [],
     topWins: []
 };
@@ -51,6 +54,7 @@ export const rouletteSlice = createSlice({
             state.phaseDuration = action.payload.phaseDuration;
             state.winningNumber = action.payload.winningNumber;
             state.bets = action.payload.bets;
+            state.lightningNumbers = action.payload.lightningNumbers;
         },
         setRoundHistory: (
             state,
@@ -63,12 +67,14 @@ export const rouletteSlice = createSlice({
             action: PayloadAction<{
                 winningNumber: number;
                 roundId: number;
+                lightningNumbers: TLightningNumber[];
             }>
         ) => {
             state.roundHistory.unshift({
                 id: action.payload.roundId,
                 winningNumber: action.payload.winningNumber,
-                createdAt: Date.now()
+                createdAt: Date.now(),
+                lightningNumbers: action.payload.lightningNumbers
             });
             if (state.roundHistory.length > 50) {
                 state.roundHistory.pop();

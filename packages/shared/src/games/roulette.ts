@@ -28,7 +28,7 @@ export const BLACK_NUMBERS = [
 ];
 
 export const PAYOUT_MAP: Record<RouletteBetType, number> = {
-  [RouletteBetType.STRAIGHT]: 35,
+  [RouletteBetType.STRAIGHT]: 29,
   [RouletteBetType.RED]: 1,
   [RouletteBetType.BLACK]: 1,
   [RouletteBetType.ODD]: 1,
@@ -41,6 +41,13 @@ export const PAYOUT_MAP: Record<RouletteBetType, number> = {
   [RouletteBetType.COLUMN_1]: 2,
   [RouletteBetType.COLUMN_2]: 2,
   [RouletteBetType.COLUMN_3]: 2
+};
+
+export const LIGHTNING_MULTIPLIERS = [50, 100, 200, 500] as const;
+
+export type TLightningNumber = {
+  number: number;
+  multiplier: number;
 };
 
 export type TRouletteActiveBet = {
@@ -60,18 +67,21 @@ export type TRouletteStateUpdate = {
   phaseDuration: number;
   winningNumber: number | null; // only revealed during RESULT phase
   bets: TRouletteActiveBet[];
+  lightningNumbers: TLightningNumber[];
 };
 
 export type TRouletteRoundResult = {
   roundId: number;
   winningNumber: number;
   bets: TRouletteActiveBet[];
+  lightningNumbers: TLightningNumber[];
 };
 
 export type TRouletteRoundHistory = {
   id: number;
   winningNumber: number;
   createdAt: number;
+  lightningNumbers: TLightningNumber[];
 };
 
 export const isBetWinner = (

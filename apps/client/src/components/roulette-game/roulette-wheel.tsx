@@ -1,11 +1,56 @@
 import {
+    useRouletteLightningNumbers,
     useRoulettePhase,
     useRouletteWinningNumber
 } from '@/features/server/roulette/hooks';
 import { cn } from '@/lib/utils';
 import { RoulettePhase } from '@sharkord/shared/games/roulette';
+import { Zap } from 'lucide-react';
 import { memo, useEffect, useRef, useState } from 'react';
 import { getNumberColor, WHEEL_ORDER } from './constants';
+
+const LightningDisplay = memo(() => {
+    const lightningNumbers = useRouletteLightningNumbers();
+
+    if (lightningNumbers.length === 0) return null;
+
+    return (
+        <div className="flex flex-col items-center gap-1.5">
+            <div className="flex items-center gap-1 text-yellow-400">
+                <Zap className="size-4 fill-yellow-400" />
+                <span className="text-xs font-bold uppercase tracking-wider">
+                    Lightning
+                </span>
+                <Zap className="size-4 fill-yellow-400" />
+            </div>
+            <div className="flex flex-wrap justify-center gap-1.5">
+                {lightningNumbers.map((ln) => {
+                    const color = getNumberColor(ln.number);
+                    return (
+                        <div
+                            key={ln.number}
+                            className="flex flex-col items-center"
+                        >
+                            <div
+                                className={cn(
+                                    'w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white border-2 border-yellow-400/60 shadow-[0_0_12px_rgba(250,204,21,0.4)]',
+                                    color === 'red' && 'bg-red-700',
+                                    color === 'black' && 'bg-zinc-800',
+                                    color === 'green' && 'bg-green-700'
+                                )}
+                            >
+                                {ln.number}
+                            </div>
+                            <span className="text-[10px] font-bold text-yellow-400 tabular-nums">
+                                {ln.multiplier}x
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+});
 
 const SEGMENT_ANGLE = 360 / 37;
 
@@ -121,4 +166,4 @@ const RouletteWheel = memo(() => {
     );
 });
 
-export { RouletteWheel };
+export { LightningDisplay, RouletteWheel };

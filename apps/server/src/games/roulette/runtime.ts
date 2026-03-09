@@ -1,8 +1,10 @@
 import {
   isBetWinner,
+  LIGHTNING_MULTIPLIERS,
   PAYOUT_MAP,
   type RouletteBetType,
   RoulettePhase,
+  type TLightningNumber,
   type TRouletteActiveBet,
   type TRouletteRoundHistory,
   type TRouletteRoundResult,
@@ -39,6 +41,7 @@ class RouletteRuntime {
   private winningNumber: number = 0;
   private phaseStartedAt: number = 0;
   private activeBets: ActiveBetInternal[] = [];
+  private lightningNumbers: TLightningNumber[] = [];
 
   private stateSubscribers: Set<(state: TRouletteStateUpdate) => void> =
     new Set();
@@ -75,15 +78,17 @@ class RouletteRuntime {
       phaseDuration: this.getPhaseDuration(),
       winningNumber:
         this.phase === RoulettePhase.BETTING ? null : this.winningNumber,
-      bets: this.getPublicBets()
+      bets: this.getPublicBets(),
+      lightningNumbers: this.lightningNumbers
     };
   }
 
   getHistory(limit: number = 20): TRouletteRoundHistory[] {
-    return db
+    const rows = db
       .select({
         id: rouletteRounds.id,
         winningNumber: rouletteRounds.winningNumber,
+        lightningNumbers: rouletteRounds.lightningNumbers,
         createdAt: rouletteRounds.startedAt
       })
       .from(rouletteRounds)
@@ -91,6 +96,13 @@ class RouletteRuntime {
       .orderBy(desc(rouletteRounds.id))
       .limit(limit)
       .all();
+
+    return rows.map((row) => ({
+      id: row.id,
+      winningNumber: row.winningNumber,
+      createdAt: row.createdAt,
+      lightningNumbers: JSON.parse(row.lightningNumbers) as TLightningNumber[]
+    }));
   }
 
   async placeBet(
@@ -192,12 +204,14 @@ class RouletteRuntime {
     this.phase = RoulettePhase.BETTING;
     this.activeBets = [];
     this.winningNumber = this.generateWinningNumber();
+    this.lightningNumbers = this.generateLightningNumbers();
     this.phaseStartedAt = Date.now();
 
     const round = db
       .insert(rouletteRounds)
       .values({
         winningNumber: this.winningNumber,
+        lightningNumbers: JSON.stringify(this.lightningNumbers),
         hash: this.hashWinningNumber(this.winningNumber),
         startedAt: this.phaseStartedAt
       })
@@ -232,7 +246,14 @@ class RouletteRuntime {
     for (const bet of this.activeBets) {
       const won = isBetWinner(bet.betType, bet.betValue, this.winningNumber);
       if (won) {
-        const payoutMultiplier = PAYOUT_MAP[bet.betType];
+        // Check if this is a STRAIGHT bet on a lightning number
+        const lightning = this.lightningNumbers.find(
+          (ln) => ln.number === bet.betValue
+        );
+        const payoutMultiplier =
+          bet.betType === 'straight' && lightning
+            ? lightning.multiplier
+            : PAYOUT_MAP[bet.betType];
         const profit = bet.amount * payoutMultiplier;
         bet.profit = profit;
         await this.callbacks.updateLedgerEntry(bet.ledgerEntryId, profit);
@@ -254,7 +275,8 @@ class RouletteRuntime {
     const result: TRouletteRoundResult = {
       roundId: this.roundId,
       winningNumber: this.winningNumber,
-      bets: this.getPublicBets()
+      bets: this.getPublicBets(),
+      lightningNumbers: this.lightningNumbers
     };
 
     // Notify balance changes for all users who had bets
@@ -269,6 +291,24 @@ class RouletteRuntime {
     setTimeout(() => {
       this.startBettingPhase();
     }, RESULT_PHASE_DURATION_MS);
+  }
+
+  private generateLightningNumbers(): TLightningNumber[] {
+    const count = Math.floor(Math.random() * 6); // 0-5 lightning numbers
+    const available = Array.from({ length: 37 }, (_, i) => i); // 0-36
+    const selected: TLightningNumber[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const idx = Math.floor(Math.random() * available.length);
+      const num = available.splice(idx, 1)[0]!;
+      const multiplier =
+        LIGHTNING_MULTIPLIERS[
+          Math.floor(Math.random() * LIGHTNING_MULTIPLIERS.length)
+        ];
+      selected.push({ number: num, multiplier });
+    }
+
+    return selected;
   }
 
   private generateWinningNumber(): number {

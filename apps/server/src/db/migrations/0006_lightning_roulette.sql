@@ -1,0 +1,1 @@
+ALTER TABLE `roulette_rounds` ADD `lightning_numbers` text NOT NULL DEFAULT '[]';

@@ -21,7 +21,8 @@ const subscribeToRoulette = () => {
             store.dispatch(
                 rouletteSliceActions.addRoundToHistory({
                     winningNumber: result.winningNumber,
-                    roundId: result.roundId
+                    roundId: result.roundId,
+                    lightningNumbers: result.lightningNumbers
                 })
             );
             store.dispatch(rouletteSliceActions.addRoundWins(result.bets));
