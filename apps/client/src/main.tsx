@@ -14,7 +14,6 @@ import { ThemeProvider } from './components/theme-provider/index.tsx';
 import { store } from './features/store.ts';
 import { LocalStorageKey } from './helpers/storage.ts';
 import './index.css';
-import './patch-canvas';
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
