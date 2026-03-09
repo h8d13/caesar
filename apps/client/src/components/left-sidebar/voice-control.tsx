@@ -25,8 +25,13 @@ import { StatsPopover } from './stats-popover';
 const VoiceControl = memo(() => {
     const voiceChannelId = useCurrentVoiceChannelId();
     const channelCan = useChannelCan(voiceChannelId);
-    const { ownVoiceState, toggleWebcam, toggleScreenShare, connectionStatus } =
-        useMedia();
+    const {
+        ownVoiceState,
+        toggleWebcam,
+        toggleScreenShare,
+        connectionStatus,
+        transportStats
+    } = useMedia();
 
     const connectionInfo = useMemo(() => {
         switch (connectionStatus) {
@@ -36,12 +41,67 @@ const VoiceControl = memo(() => {
                     text: 'Connecting...',
                     color: 'text-yellow-500'
                 };
-            case 'connected':
+            case 'connected': {
+                const { isMonitoring, producer, consumer } = transportStats;
+
+                if (isMonitoring) {
+                    const noOutgoing =
+                        producer && producer.bytesSent === 0;
+                    const noIncoming =
+                        consumer && consumer.bytesReceived === 0;
+
+                    if (noOutgoing && noIncoming) {
+                        return {
+                            icon: (
+                                <AlertTriangle className="h-4 w-4 text-red-500" />
+                            ),
+                            text: 'No data flowing',
+                            color: 'text-red-500'
+                        };
+                    }
+
+                    if (noOutgoing) {
+                        return {
+                            icon: (
+                                <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                            ),
+                            text: 'No outgoing stream',
+                            color: 'text-yellow-500'
+                        };
+                    }
+
+                    if (noIncoming) {
+                        return {
+                            icon: (
+                                <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                            ),
+                            text: 'No incoming stream',
+                            color: 'text-yellow-500'
+                        };
+                    }
+
+                    const highPacketLoss =
+                        consumer &&
+                        consumer.packetsReceived > 0 &&
+                        consumer.packetsLost / consumer.packetsReceived > 0.05;
+
+                    if (highPacketLoss) {
+                        return {
+                            icon: (
+                                <Wifi className="h-4 w-4 text-yellow-500" />
+                            ),
+                            text: 'Poor connection',
+                            color: 'text-yellow-500'
+                        };
+                    }
+                }
+
                 return {
                     icon: <Wifi className="h-4 w-4 text-green-600" />,
                     text: 'Voice connected',
                     color: 'text-green-600'
                 };
+            }
             case 'failed':
                 return {
                     icon: <AlertTriangle className="h-4 w-4 text-red-500" />,
@@ -56,7 +116,7 @@ const VoiceControl = memo(() => {
                     color: 'text-red-500'
                 };
         }
-    }, [connectionStatus]);
+    }, [connectionStatus, transportStats]);
 
     if (!voiceChannelId) {
         return null;
