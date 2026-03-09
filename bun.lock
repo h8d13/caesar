@@ -86,6 +86,7 @@
         "mediasoup": "^3.19.17",
         "queue": "^7.0.0",
         "sanitize-html": "^2.17.0",
+        "semver": "^7.7.4",
         "systeminformation": "^5.27.11",
         "ua-parser-js": "^2.0.6",
         "winston": "^3.17.0",
