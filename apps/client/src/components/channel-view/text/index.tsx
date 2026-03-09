@@ -129,7 +129,10 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
         async (message: string, files: { id: string }[]) => {
             sendTypingSignal.cancel();
 
-            if (files.length === 0 && handleBuiltInCommand(message, channelId)) {
+            if (
+                files.length === 0 &&
+                handleBuiltInCommand(message, channelId)
+            ) {
                 setNewMessageHandler('');
                 return true;
             }

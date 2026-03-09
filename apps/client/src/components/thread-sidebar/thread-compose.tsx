@@ -40,7 +40,10 @@ const ThreadCompose = memo(
             async (message: string, files: { id: string }[]) => {
                 sendTypingSignal.cancel();
 
-                if (files.length === 0 && handleBuiltInCommand(message, channelId)) {
+                if (
+                    files.length === 0 &&
+                    handleBuiltInCommand(message, channelId)
+                ) {
                     setNewMessage('');
                     return true;
                 }
