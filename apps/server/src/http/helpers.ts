@@ -75,7 +75,7 @@ const buildCsp = (nonce?: string): string => {
     `script-src ${scriptSrc}`,
     `style-src ${styleSrc}`,
     "img-src 'self' data: blob: https:",
-    "connect-src 'self' wss: ws: https:",
+    "connect-src 'self' wss: ws: https://cors.isomorphic-git.org",
     "media-src 'self' blob:",
     "font-src 'self'",
     'frame-src https://www.youtube-nocookie.com',

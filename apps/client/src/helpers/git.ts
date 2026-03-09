@@ -25,9 +25,12 @@ export async function fetchRepoInfo(url: string): Promise<GitRepoInfo> {
     const git = await import('isomorphic-git');
     const normalized = normalizeUrl(url);
 
+    const corsProxy = 'https://cors.isomorphic-git.org';
+
     // Get HEAD / default branch
     const headRefs = await git.listServerRefs({
         http,
+        corsProxy,
         url: normalized,
         prefix: 'HEAD',
         symrefs: true
@@ -40,6 +43,7 @@ export async function fetchRepoInfo(url: string): Promise<GitRepoInfo> {
     // Get branches
     const branchRefs = await git.listServerRefs({
         http,
+        corsProxy,
         url: normalized,
         prefix: 'refs/heads/'
     });
@@ -48,6 +52,7 @@ export async function fetchRepoInfo(url: string): Promise<GitRepoInfo> {
     // Get tags
     const tagRefs = await git.listServerRefs({
         http,
+        corsProxy,
         url: normalized,
         prefix: 'refs/tags/'
     });
