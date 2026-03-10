@@ -1,4 +1,3 @@
-import { randomInt } from 'crypto';
 import {
   isBetWinner,
   LIGHTNING_MULTIPLIERS,
@@ -11,6 +10,7 @@ import {
   type TRouletteRoundResult,
   type TRouletteStateUpdate
 } from '@sharkord/shared/games/roulette';
+import { randomInt } from 'crypto';
 import { desc, eq, isNotNull } from 'drizzle-orm';
 import { db } from '../../db';
 import { rouletteBets, rouletteRounds } from '../../db/schema';

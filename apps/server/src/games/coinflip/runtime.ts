@@ -1,4 +1,3 @@
-import { randomInt } from 'crypto';
 import {
   CoinflipSide,
   CoinflipStatus,
@@ -6,6 +5,7 @@ import {
   type TCoinflipResult,
   type TCoinflipStateUpdate
 } from '@sharkord/shared/games/coinflip';
+import { randomInt } from 'crypto';
 import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '../../db';
 import { coinflipGames, users } from '../../db/schema';
@@ -263,8 +263,7 @@ class CoinflipRuntime {
 
     if (!game || game.status !== CoinflipStatus.FLIPPING) return;
 
-    const result =
-      randomInt(2) === 0 ? CoinflipSide.HEADS : CoinflipSide.TAILS;
+    const result = randomInt(2) === 0 ? CoinflipSide.HEADS : CoinflipSide.TAILS;
     const creatorWins = result === game.creatorSide;
 
     const winnerId = creatorWins ? game.creatorId : game.opponentId!;
