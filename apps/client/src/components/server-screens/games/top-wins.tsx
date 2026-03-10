@@ -86,9 +86,7 @@ const TopWins = memo(() => {
                     <div
                         key={`${page}-${i}`}
                         className={`flex items-center justify-between text-sm py-1 px-2 rounded ${
-                            win.profit > 0
-                                ? 'bg-green-500/10'
-                                : 'bg-red-500/10'
+                            win.profit > 0 ? 'bg-green-500/10' : 'bg-red-500/10'
                         }`}
                     >
                         <div className="flex items-center gap-2 truncate mr-2">

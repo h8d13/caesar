@@ -45,8 +45,7 @@ export default defineConfig({
         VITE_APP_NAME: JSON.stringify(manifest.name),
         VITE_APP_VERSION: JSON.stringify(pkg.version),
         VITE_GITHUB_URL: JSON.stringify(
-            process.env.VITE_GITHUB_URL ||
-                'https://github.com/h8d13/sharkord'
+            process.env.VITE_GITHUB_URL || 'https://github.com/h8d13/sharkord'
         )
     }
 });

@@ -25,7 +25,11 @@ export const placeRouletteBet = async (
 };
 
 export const placeRouletteBets = async (
-    bets: { betType: RouletteBetType; betValue: number | null; amount: number }[]
+    bets: {
+        betType: RouletteBetType;
+        betValue: number | null;
+        amount: number;
+    }[]
 ) => {
     const trpc = getTRPCClient();
     return trpc.roulette.placeBets.mutate({ bets });
