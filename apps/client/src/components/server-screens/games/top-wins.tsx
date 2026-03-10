@@ -1,88 +1,95 @@
-import { useCoinflipTopWins } from '@/features/server/coinflip/hooks';
-import { useCrashTopWins } from '@/features/server/crash/hooks';
-import { useRouletteTopWins } from '@/features/server/roulette/hooks';
+import { getTRPCClient } from '@/lib/trpc';
 import { Button } from '@sharkord/ui';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { memo, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
+
+type GameHistoryItem = {
+    userName: string;
+    game: 'Roulette' | 'Crash' | 'Coinflip';
+    detail: string;
+    profit: number;
+    createdAt: number;
+};
 
 const PAGE_SIZE = 10;
 
 const TopWins = memo(() => {
-    const rouletteTopWins = useRouletteTopWins();
-    const crashTopWins = useCrashTopWins();
-    const coinflipTopWins = useCoinflipTopWins();
+    const [items, setItems] = useState<GameHistoryItem[]>([]);
     const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    const combined = useMemo(() => {
-        const all = [
-            ...rouletteTopWins.map((w) => ({
-                userName: w.userName,
-                profit: w.profit,
-                game: 'Roulette' as const,
-                detail: w.betType.replace(/_/g, ' ')
-            })),
-            ...crashTopWins.map((w) => ({
-                userName: w.userName,
-                profit: w.profit,
-                game: 'Crash' as const,
-                detail: `${w.cashedOutAt.toFixed(2)}x`
-            })),
-            ...coinflipTopWins.map((w) => ({
-                userName: w.winnerName,
-                profit: w.profit,
-                game: 'Coinflip' as const,
-                detail: `vs ${w.loserName}`
-            }))
-        ];
-        return all.sort((a, b) => b.profit - a.profit);
-    }, [rouletteTopWins, crashTopWins, coinflipTopWins]);
+    const fetchPage = useCallback(async (p: number) => {
+        try {
+            setLoading(true);
+            const trpc = getTRPCClient();
+            const result = await trpc.others.getGameHistory.query({ page: p });
+            setItems(result.items);
+            setHasMore(result.hasMore);
+            setPage(result.page);
+        } catch {
+            // silently fail
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-    const totalPages = Math.max(1, Math.ceil(combined.length / PAGE_SIZE));
-    const safePage = Math.min(page, totalPages - 1);
-    const pageItems = combined.slice(
-        safePage * PAGE_SIZE,
-        (safePage + 1) * PAGE_SIZE
-    );
+    useEffect(() => {
+        fetchPage(0);
+        const interval = setInterval(() => fetchPage(0), 15_000);
+        return () => clearInterval(interval);
+    }, [fetchPage]);
 
-    if (combined.length === 0) return null;
+    const goBack = useCallback(() => {
+        const p = Math.max(0, page - 1);
+        fetchPage(p);
+    }, [page, fetchPage]);
+
+    const goForward = useCallback(() => {
+        fetchPage(page + 1);
+    }, [page, fetchPage]);
+
+    if (items.length === 0 && page === 0) return null;
 
     return (
         <div className="flex flex-col gap-1 px-4 min-h-0">
             <div className="flex items-center justify-between mb-1">
                 <div className="text-xs font-medium text-muted-foreground">
-                    Top Wins (Session) &middot; {combined.length}
+                    Game History
                 </div>
-                {totalPages > 1 && (
-                    <div className="flex items-center gap-1">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0"
-                            disabled={safePage === 0}
-                            onClick={() => setPage((p) => p - 1)}
-                        >
-                            <ChevronLeft className="w-3.5 h-3.5" />
-                        </Button>
-                        <span className="text-xs tabular-nums text-muted-foreground">
-                            {safePage + 1}/{totalPages}
-                        </span>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0"
-                            disabled={safePage >= totalPages - 1}
-                            onClick={() => setPage((p) => p + 1)}
-                        >
-                            <ChevronRight className="w-3.5 h-3.5" />
-                        </Button>
-                    </div>
-                )}
+                <div className="flex items-center gap-1">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        disabled={page === 0 || loading}
+                        onClick={goBack}
+                    >
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                    </Button>
+                    <span className="text-xs tabular-nums text-muted-foreground">
+                        {page + 1}
+                    </span>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        disabled={!hasMore || loading}
+                        onClick={goForward}
+                    >
+                        <ChevronRight className="w-3.5 h-3.5" />
+                    </Button>
+                </div>
             </div>
             <div className="flex flex-col gap-1">
-                {pageItems.map((win, i) => (
+                {items.slice(0, PAGE_SIZE).map((win, i) => (
                     <div
-                        key={safePage * PAGE_SIZE + i}
-                        className="flex items-center justify-between text-sm py-1 px-2 rounded bg-green-500/10"
+                        key={`${page}-${i}`}
+                        className={`flex items-center justify-between text-sm py-1 px-2 rounded ${
+                            win.profit > 0
+                                ? 'bg-green-500/10'
+                                : 'bg-red-500/10'
+                        }`}
                     >
                         <div className="flex items-center gap-2 truncate mr-2">
                             <span className="truncate">{win.userName}</span>
@@ -94,8 +101,15 @@ const TopWins = memo(() => {
                             <span className="text-xs text-muted-foreground">
                                 {win.detail}
                             </span>
-                            <span className="text-green-400 tabular-nums font-medium">
-                                +{win.profit} SC
+                            <span
+                                className={`tabular-nums font-medium ${
+                                    win.profit > 0
+                                        ? 'text-green-400'
+                                        : 'text-red-400'
+                                }`}
+                            >
+                                {win.profit > 0 ? '+' : ''}
+                                {win.profit} SC
                             </span>
                         </div>
                     </div>

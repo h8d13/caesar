@@ -9,6 +9,7 @@ import { BettingBoard } from './betting-board';
 import { RoulettePlayerBets } from './player-bets';
 import { LightningDisplay, RouletteWheel } from './roulette-wheel';
 import { RoundHistory } from './round-history';
+import { RoundWinners } from './round-winners';
 
 const RouletteGameContent = memo(() => {
     useEffect(() => {
@@ -25,6 +26,7 @@ const RouletteGameContent = memo(() => {
                 <RouletteWheel />
                 <LightningDisplay />
             </div>
+            <RoundWinners />
             <BetControls>
                 <BettingBoard />
             </BetControls>

@@ -2,6 +2,7 @@ import { t } from '../../utils/trpc';
 import { changeLogoRoute } from './change-logo';
 import { onServerSettingsUpdateRoute } from './events';
 import { getBankBalanceRoute } from './get-bank-balance';
+import { getGameHistoryRoute } from './get-game-history';
 import { getSettingsRoute } from './get-settings';
 import { getStorageSettingsRoute } from './get-storage-settings';
 import { handshakeRoute } from './handshake';
@@ -20,5 +21,6 @@ export const othersRouter = t.router({
   onServerSettingsUpdate: onServerSettingsUpdateRoute,
   useSecretToken: useSecretTokenRoute,
   getStorageSettings: getStorageSettingsRoute,
-  getBankBalance: getBankBalanceRoute
+  getBankBalance: getBankBalanceRoute,
+  getGameHistory: getGameHistoryRoute
 });
