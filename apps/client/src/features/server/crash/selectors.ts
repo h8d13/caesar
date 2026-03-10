@@ -10,4 +10,3 @@ export const crashPhaseDurationSelector = (state: IRootState) =>
 export const crashBetsSelector = (state: IRootState) => state.crash.bets;
 export const crashRoundHistorySelector = (state: IRootState) =>
     state.crash.roundHistory;
-export const crashTopWinsSelector = (state: IRootState) => state.crash.topWins;
