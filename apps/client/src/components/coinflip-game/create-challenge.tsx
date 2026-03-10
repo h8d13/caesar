@@ -86,11 +86,7 @@ const CreateChallenge = memo(() => {
             </div>
 
             {/* Create button */}
-            <Button
-                size="sm"
-                onClick={handleCreate}
-                disabled={loading}
-            >
+            <Button size="sm" onClick={handleCreate} disabled={loading}>
                 {loading ? 'Creating...' : `Challenge ${amount} SC`}
             </Button>
         </div>

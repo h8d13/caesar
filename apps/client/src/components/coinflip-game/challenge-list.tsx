@@ -52,12 +52,9 @@ const ChallengeList = memo(() => {
         <div className="flex flex-col gap-1 px-4 overflow-auto">
             {challenges.map((challenge) => {
                 const isCreator = challenge.creatorId === ownUserId;
-                const isFlipping =
-                    challenge.status === CoinflipStatus.FLIPPING;
-                const isResolved =
-                    challenge.status === CoinflipStatus.RESOLVED;
-                const isPending =
-                    challenge.status === CoinflipStatus.PENDING;
+                const isFlipping = challenge.status === CoinflipStatus.FLIPPING;
+                const isResolved = challenge.status === CoinflipStatus.RESOLVED;
+                const isPending = challenge.status === CoinflipStatus.PENDING;
                 const isWinner = challenge.winnerId === ownUserId;
 
                 return (
@@ -117,9 +114,7 @@ const ChallengeList = memo(() => {
                                     size="sm"
                                     className="h-7 text-xs"
                                     disabled={loadingId === challenge.id}
-                                    onClick={() =>
-                                        handleCancel(challenge.id)
-                                    }
+                                    onClick={() => handleCancel(challenge.id)}
                                 >
                                     Cancel
                                 </Button>
@@ -129,9 +124,7 @@ const ChallengeList = memo(() => {
                                     size="sm"
                                     className="h-7 text-xs"
                                     disabled={loadingId === challenge.id}
-                                    onClick={() =>
-                                        handleAccept(challenge.id)
-                                    }
+                                    onClick={() => handleAccept(challenge.id)}
                                 >
                                     Accept
                                 </Button>

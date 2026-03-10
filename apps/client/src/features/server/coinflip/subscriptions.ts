@@ -13,8 +13,7 @@ const subscribeToCoinflip = () => {
         onData: (state: TCoinflipStateUpdate) => {
             store.dispatch(coinflipSliceActions.setStateUpdate(state));
         },
-        onError: (err) =>
-            console.error('coinflip.onStateUpdate error:', err)
+        onError: (err) => console.error('coinflip.onStateUpdate error:', err)
     });
 
     const resultSub = trpc.coinflip.onResult.subscribe(undefined, {

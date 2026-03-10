@@ -652,12 +652,12 @@ const coinflipGames = sqliteTable(
 
 export {
   activityLog,
-  coinflipGames,
   categories,
   channelReadStates,
   channelRolePermissions,
   channels,
   channelUserPermissions,
+  coinflipGames,
   crashBets,
   crashRounds,
   directMessages,

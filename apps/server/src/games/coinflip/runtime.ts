@@ -8,7 +8,12 @@ import {
 import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '../../db';
 import { coinflipGames, users } from '../../db/schema';
-import { CHALLENGE_EXPIRE_MS, FLIP_DURATION_MS, MAX_BET, MIN_BET } from './constants';
+import {
+  CHALLENGE_EXPIRE_MS,
+  FLIP_DURATION_MS,
+  MAX_BET,
+  MIN_BET
+} from './constants';
 import type { TCoinflipLedgerCallbacks } from './types';
 
 type ActiveChallenge = {
@@ -22,7 +27,8 @@ class CoinflipRuntime {
   private callbacks: TCoinflipLedgerCallbacks;
   private activeTimers: Map<number, ActiveChallenge> = new Map();
 
-  private stateSubscribers: Set<(state: TCoinflipStateUpdate) => void> = new Set();
+  private stateSubscribers: Set<(state: TCoinflipStateUpdate) => void> =
+    new Set();
   private resultSubscribers: Set<(result: TCoinflipResult) => void> = new Set();
 
   constructor(callbacks: TCoinflipLedgerCallbacks) {
@@ -32,9 +38,21 @@ class CoinflipRuntime {
   async start() {
     // Clean up any stale pending/flipping challenges from previous server runs
     const stale = db
-      .select({ id: coinflipGames.id, creatorLedgerEntryId: coinflipGames.creatorLedgerEntryId, opponentLedgerEntryId: coinflipGames.opponentLedgerEntryId, status: coinflipGames.status, creatorId: coinflipGames.creatorId, opponentId: coinflipGames.opponentId })
+      .select({
+        id: coinflipGames.id,
+        creatorLedgerEntryId: coinflipGames.creatorLedgerEntryId,
+        opponentLedgerEntryId: coinflipGames.opponentLedgerEntryId,
+        status: coinflipGames.status,
+        creatorId: coinflipGames.creatorId,
+        opponentId: coinflipGames.opponentId
+      })
       .from(coinflipGames)
-      .where(inArray(coinflipGames.status, [CoinflipStatus.PENDING, CoinflipStatus.FLIPPING]))
+      .where(
+        inArray(coinflipGames.status, [
+          CoinflipStatus.PENDING,
+          CoinflipStatus.FLIPPING
+        ])
+      )
       .all();
 
     for (const game of stale) {
@@ -57,12 +75,16 @@ class CoinflipRuntime {
 
   subscribeToState(cb: (state: TCoinflipStateUpdate) => void): () => void {
     this.stateSubscribers.add(cb);
-    return () => { this.stateSubscribers.delete(cb); };
+    return () => {
+      this.stateSubscribers.delete(cb);
+    };
   }
 
   subscribeToResult(cb: (result: TCoinflipResult) => void): () => void {
     this.resultSubscribers.add(cb);
-    return () => { this.resultSubscribers.delete(cb); };
+    return () => {
+      this.resultSubscribers.delete(cb);
+    };
   }
 
   getState(): TCoinflipStateUpdate {
@@ -83,10 +105,12 @@ class CoinflipRuntime {
     const existing = db
       .select({ id: coinflipGames.id })
       .from(coinflipGames)
-      .where(and(
-        eq(coinflipGames.creatorId, userId),
-        eq(coinflipGames.status, CoinflipStatus.PENDING)
-      ))
+      .where(
+        and(
+          eq(coinflipGames.creatorId, userId),
+          eq(coinflipGames.status, CoinflipStatus.PENDING)
+        )
+      )
       .get();
 
     if (existing) {
@@ -111,7 +135,11 @@ class CoinflipRuntime {
       .returning({ id: coinflipGames.id })
       .get();
 
-    const ledgerEntryId = await this.callbacks.createLedgerEntry(userId, -amount, game.id);
+    const ledgerEntryId = await this.callbacks.createLedgerEntry(
+      userId,
+      -amount,
+      game.id
+    );
 
     db.update(coinflipGames)
       .set({ creatorLedgerEntryId: ledgerEntryId })
@@ -147,8 +175,10 @@ class CoinflipRuntime {
       .get();
 
     if (!game) throw new Error('Challenge not found');
-    if (game.status !== CoinflipStatus.PENDING) throw new Error('Challenge is no longer available');
-    if (game.creatorId === userId) throw new Error('You cannot accept your own challenge');
+    if (game.status !== CoinflipStatus.PENDING)
+      throw new Error('Challenge is no longer available');
+    if (game.creatorId === userId)
+      throw new Error('You cannot accept your own challenge');
 
     const balance = await this.callbacks.getBalance(userId);
     if (balance < game.amount) throw new Error('Insufficient balance');
@@ -159,7 +189,11 @@ class CoinflipRuntime {
       active.expireTimer = null;
     }
 
-    const ledgerEntryId = await this.callbacks.createLedgerEntry(userId, -game.amount, challengeId);
+    const ledgerEntryId = await this.callbacks.createLedgerEntry(
+      userId,
+      -game.amount,
+      challengeId
+    );
 
     db.update(coinflipGames)
       .set({
@@ -197,8 +231,10 @@ class CoinflipRuntime {
       .get();
 
     if (!game) throw new Error('Challenge not found');
-    if (game.creatorId !== userId) throw new Error('Only the creator can cancel');
-    if (game.status !== CoinflipStatus.PENDING) throw new Error('Challenge cannot be cancelled');
+    if (game.creatorId !== userId)
+      throw new Error('Only the creator can cancel');
+    if (game.status !== CoinflipStatus.PENDING)
+      throw new Error('Challenge cannot be cancelled');
 
     const active = this.activeTimers.get(challengeId);
     if (active?.expireTimer) {
@@ -231,7 +267,8 @@ class CoinflipRuntime {
 
     if (!game || game.status !== CoinflipStatus.FLIPPING) return;
 
-    const result = Math.random() < 0.5 ? CoinflipSide.HEADS : CoinflipSide.TAILS;
+    const result =
+      Math.random() < 0.5 ? CoinflipSide.HEADS : CoinflipSide.TAILS;
     const creatorWins = result === game.creatorSide;
 
     const winnerId = creatorWins ? game.creatorId : game.opponentId!;
@@ -244,7 +281,8 @@ class CoinflipRuntime {
       .where(inArray(users.id, [winnerId, loserId]))
       .all();
 
-    const winnerName = userRows.find((u) => u.id === winnerId)?.name ?? 'Unknown';
+    const winnerName =
+      userRows.find((u) => u.id === winnerId)?.name ?? 'Unknown';
     const loserName = userRows.find((u) => u.id === loserId)?.name ?? 'Unknown';
 
     const winnerLedgerEntryId = creatorWins
@@ -317,11 +355,13 @@ class CoinflipRuntime {
     const games = db
       .select()
       .from(coinflipGames)
-      .where(inArray(coinflipGames.status, [
-        CoinflipStatus.PENDING,
-        CoinflipStatus.FLIPPING,
-        CoinflipStatus.RESOLVED
-      ]))
+      .where(
+        inArray(coinflipGames.status, [
+          CoinflipStatus.PENDING,
+          CoinflipStatus.FLIPPING,
+          CoinflipStatus.RESOLVED
+        ])
+      )
       .all();
 
     // Filter out resolved games older than 5 seconds
@@ -340,12 +380,14 @@ class CoinflipRuntime {
       if (g.opponentId) userIds.add(g.opponentId);
     }
 
-    const userRows = userIds.size > 0
-      ? db.select({ id: users.id, name: users.name })
-          .from(users)
-          .where(inArray(users.id, Array.from(userIds)))
-          .all()
-      : [];
+    const userRows =
+      userIds.size > 0
+        ? db
+            .select({ id: users.id, name: users.name })
+            .from(users)
+            .where(inArray(users.id, Array.from(userIds)))
+            .all()
+        : [];
 
     const nameMap = new Map(userRows.map((u) => [u.id, u.name]));
 
@@ -356,7 +398,9 @@ class CoinflipRuntime {
       creatorSide: g.creatorSide as CoinflipSide,
       amount: g.amount,
       opponentId: g.opponentId,
-      opponentName: g.opponentId ? (nameMap.get(g.opponentId) ?? 'Unknown') : null,
+      opponentName: g.opponentId
+        ? (nameMap.get(g.opponentId) ?? 'Unknown')
+        : null,
       status: g.status as CoinflipStatus,
       result: g.result as CoinflipSide | null,
       winnerId: g.winnerId,

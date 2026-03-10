@@ -55,7 +55,11 @@ const acceptChallengeRoute = rateLimitedProcedure(protectedProcedure, {
   .input(z.object({ challengeId: z.number().int() }))
   .mutation(async ({ ctx, input }) => {
     try {
-      await runtime.acceptChallenge(input.challengeId, ctx.userId, ctx.user.name);
+      await runtime.acceptChallenge(
+        input.challengeId,
+        ctx.userId,
+        ctx.user.name
+      );
     } catch (e) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
