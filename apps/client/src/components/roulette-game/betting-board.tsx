@@ -1,3 +1,4 @@
+import { placeRouletteBet } from '@/features/server/roulette/actions';
 import {
     useRouletteBets,
     useRouletteLightningNumbers,
@@ -10,6 +11,7 @@ import {
 } from '@sharkord/shared/games/roulette';
 import { Zap } from 'lucide-react';
 import { memo, useCallback, useContext } from 'react';
+import { toast } from 'sonner';
 import { ChipAmountContext } from './chip-amount-context';
 import { BOARD_ROWS, getNumberColor } from './constants';
 
@@ -100,12 +102,9 @@ const BettingBoard = memo(() => {
     const onPlaceBet = useCallback(
         async (betType: RouletteBetType, betValue: number | null) => {
             if (disabled || !chipAmount) return;
-            const { placeRouletteBet } =
-                await import('@/features/server/roulette/actions');
             try {
                 await placeRouletteBet(betType, betValue, chipAmount);
             } catch (e) {
-                const { toast } = await import('sonner');
                 toast.error(
                     e instanceof Error ? e.message : 'Failed to place bet'
                 );

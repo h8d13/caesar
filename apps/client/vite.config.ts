@@ -10,10 +10,16 @@ export default defineConfig({
     assetsInclude: ['**/*.wasm'],
     build: {
         target: 'esnext',
+        chunkSizeWarningLimit: 1000,
         rollupOptions: {
             output: {
                 manualChunks: {
                     'vendor-react': ['react', 'react-dom'],
+                    'vendor-redux': [
+                        '@reduxjs/toolkit',
+                        'react-redux',
+                        're-reselect'
+                    ],
                     'vendor-tiptap': [
                         '@tiptap/core',
                         '@tiptap/react',
@@ -22,7 +28,9 @@ export default defineConfig({
                         '@tiptap/suggestion'
                     ],
                     'vendor-mediasoup': ['mediasoup-client'],
-                    'vendor-hljs': ['highlight.js']
+                    'vendor-hljs': ['highlight.js'],
+                    'vendor-date': ['date-fns'],
+                    'vendor-git': ['isomorphic-git']
                 }
             }
         }
