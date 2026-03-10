@@ -6,7 +6,6 @@ import {
     roulettePhaseSelector,
     roulettePhaseStartedAtSelector,
     rouletteRoundHistorySelector,
-    rouletteTopWinsSelector,
     rouletteWinningNumberSelector
 } from './selectors';
 
@@ -18,7 +17,6 @@ export const useRouletteRoundHistory = () =>
     useSelector(rouletteRoundHistorySelector);
 export const useRouletteLightningNumbers = () =>
     useSelector(rouletteLightningNumbersSelector);
-export const useRouletteTopWins = () => useSelector(rouletteTopWinsSelector);
 export const useRoulettePhaseStartedAt = () =>
     useSelector(roulettePhaseStartedAtSelector);
 export const useRoulettePhaseDuration = () =>

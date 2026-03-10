@@ -23,6 +23,6 @@
   },
   "ignore": ["**/*.d.ts"],
   "ignoreBinaries": ["tsc", "prettier", "eslint"],
-  "ignoreDependencies": ["tailwindcss", "tw-animate-css", "buffer"],
+  "ignoreDependencies": ["tailwindcss", "buffer"],
   "ignoreExportsUsedInFile": true
 }
