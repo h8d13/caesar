@@ -620,8 +620,39 @@ const rouletteBets = sqliteTable(
   ]
 );
 
+const coinflipGames = sqliteTable(
+  'coinflip_games',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    creatorId: integer('creator_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    creatorSide: text('creator_side').notNull(),
+    amount: integer('amount').notNull(),
+    opponentId: integer('opponent_id').references(() => users.id, {
+      onDelete: 'cascade'
+    }),
+    status: text('status').notNull(),
+    result: text('result'),
+    winnerId: integer('winner_id').references(() => users.id, {
+      onDelete: 'cascade'
+    }),
+    creatorLedgerEntryId: integer('creator_ledger_entry_id'),
+    opponentLedgerEntryId: integer('opponent_ledger_entry_id'),
+    createdAt: integer('created_at').notNull(),
+    resolvedAt: integer('resolved_at')
+  },
+  (t) => [
+    index('coinflip_games_creator_idx').on(t.creatorId),
+    index('coinflip_games_opponent_idx').on(t.opponentId),
+    index('coinflip_games_status_idx').on(t.status),
+    index('coinflip_games_created_idx').on(t.createdAt)
+  ]
+);
+
 export {
   activityLog,
+  coinflipGames,
   categories,
   channelReadStates,
   channelRolePermissions,

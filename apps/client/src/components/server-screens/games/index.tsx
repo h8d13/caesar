@@ -1,9 +1,10 @@
+import { CoinflipGameContent } from '@/components/coinflip-game';
 import { CrashGameContent } from '@/components/crash-game';
 import { RouletteGameContent } from '@/components/roulette-game';
 import { cn } from '@/lib/utils';
 import { memo, useState } from 'react';
 import { ServerScreenLayout } from '../server-screen-layout';
-import { BankBalance } from './bank-balance';
+import { Balances } from './balances';
 import { TopWins } from './top-wins';
 
 type Tab = 'games' | 'history';
@@ -19,7 +20,7 @@ const Games = memo(({ close }: TGamesProps) => {
         <ServerScreenLayout close={close} title="Games">
             <div className="flex flex-col gap-4 h-full">
                 <div className="flex items-center gap-4 px-4">
-                    <BankBalance />
+                    <Balances />
                     <div className="flex gap-1">
                         <button
                             onClick={() => setTab('games')}
@@ -54,8 +55,9 @@ const Games = memo(({ close }: TGamesProps) => {
                     <div className="w-4/5 min-w-0 overflow-auto">
                         <RouletteGameContent />
                     </div>
-                    <div className="w-1/5 min-w-0">
+                    <div className="w-1/5 min-w-0 flex flex-col gap-6">
                         <CrashGameContent />
+                        <CoinflipGameContent />
                     </div>
                 </div>
                 {tab === 'history' && <TopWins />}

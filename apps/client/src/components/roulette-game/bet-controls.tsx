@@ -97,9 +97,11 @@ const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
         return () => clearInterval(interval);
     }, [phaseStartedAt, phaseDuration]);
 
+    const ownBets = bets.filter((b) => b.userId === ownUserId);
+
     const handleClearBets = useCallback(async () => {
         if (phase !== RoulettePhase.BETTING) return;
-        for (const bet of bets) {
+        for (const bet of ownBets) {
             try {
                 await removeRouletteBet(bet.betId);
             } catch (e) {
@@ -109,7 +111,7 @@ const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
                 break;
             }
         }
-    }, [phase, bets]);
+    }, [phase, ownBets]);
 
     const seconds = remaining !== null ? (remaining / 1000).toFixed(1) : null;
 
@@ -178,14 +180,14 @@ const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
             </div>
             {children}
             {/* Clear bets */}
-            {bets.length > 0 && phase === RoulettePhase.BETTING && (
+            {ownBets.length > 0 && phase === RoulettePhase.BETTING && (
                 <div className="px-4">
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={handleClearBets}
                     >
-                        Clear All Bets ({bets.length})
+                        Clear All Bets ({ownBets.length})
                     </Button>
                 </div>
             )}

@@ -8,7 +8,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./games/crash": "./src/games/crash.ts",
-    "./games/roulette": "./src/games/roulette.ts"
+    "./games/roulette": "./src/games/roulette.ts",
+    "./games/coinflip": "./src/games/coinflip.ts"
   },
   "scripts": {
     "format": "prettier --write \"**/*.ts*\" --config ./.prettierrc.json",

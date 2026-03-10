@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { appSliceReducer } from './app/slice';
 import { dialogSliceReducer } from './dialogs/slice';
 import { serverScreenSliceReducer } from './server-screens/slice';
+import { coinflipSliceReducer } from './server/coinflip/slice';
 import { crashSliceReducer } from './server/crash/slice';
 import { rouletteSliceReducer } from './server/roulette/slice';
 import { serverSliceReducer } from './server/slice';
@@ -13,7 +14,8 @@ export const store = configureStore({
         dialog: dialogSliceReducer,
         serverScreen: serverScreenSliceReducer,
         crash: crashSliceReducer,
-        roulette: rouletteSliceReducer
+        roulette: rouletteSliceReducer,
+        coinflip: coinflipSliceReducer
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

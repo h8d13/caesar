@@ -13,6 +13,7 @@ import chalk from 'chalk';
 import { config, SERVER_PRIVATE_IP } from './config';
 import { loadCrons } from './crons';
 import { loadDb } from './db';
+import { initCoinflip } from './games/coinflip/init';
 import { initCrash } from './games/crash/init';
 import { initRoulette } from './games/roulette/init';
 import { enqueueActivityLog } from './queues/activity-log';
@@ -28,6 +29,7 @@ await initVoiceRuntimes();
 await loadCrons();
 await initCrash();
 await initRoulette();
+await initCoinflip();
 
 const host = IS_PRODUCTION ? SERVER_PRIVATE_IP : 'localhost';
 const url = `http://${host}:${config.server.port}/`;

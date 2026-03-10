@@ -11,7 +11,7 @@ const getBankBalanceRoute = protectedProcedure.query(() => {
       balance: sql<number>`COALESCE(-SUM(${socialCreditLedger.amount}), 0)`
     })
     .from(socialCreditLedger)
-    .where(sql`${socialCreditLedger.ledgerableType} IN ('crash', 'roulette')`)
+    .where(sql`${socialCreditLedger.ledgerableType} IN ('crash', 'roulette', 'coinflip')`)
     .get();
 
   return { balance: result?.balance ?? 0 };

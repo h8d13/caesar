@@ -50,6 +50,13 @@
       "when": 1773046400000,
       "tag": "0006_lightning_roulette",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1773132800000,
+      "tag": "0007_coinflip",
+      "breakpoints": true
     }
   ]
 }

@@ -1,3 +1,4 @@
+import { coinflipRouter } from '../games/coinflip/router';
 import { crashRouter } from '../games/crash/router';
 import { rouletteRouter } from '../games/roulette/router';
 import { t } from '../utils/trpc';
@@ -30,7 +31,8 @@ const appRouter = t.router({
   categories: categoriesRouter,
   whiteboard: whiteboardRouter,
   crash: crashRouter,
-  roulette: rouletteRouter
+  roulette: rouletteRouter,
+  coinflip: coinflipRouter
 });
 
 type AppRouter = typeof appRouter;
