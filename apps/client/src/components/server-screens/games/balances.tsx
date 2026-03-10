@@ -1,4 +1,4 @@
-import { ownUserSelector } from '@/features/server/selectors';
+import { ownUserSelector } from '@/features/server/users/selectors';
 import type { IRootState } from '@/features/store';
 import { getTRPCClient } from '@/lib/trpc';
 import { Landmark, User } from 'lucide-react';
@@ -13,7 +13,7 @@ const Balances = memo(() => {
     const fetchBalance = useCallback(async () => {
         try {
             const trpc = getTRPCClient();
-            const result = await trpc.others.getBalances.query();
+            const result = await trpc.others.getBankBalance.query();
             setBalance(result.balance);
         } catch {
             // silently fail
