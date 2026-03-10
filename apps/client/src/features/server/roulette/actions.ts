@@ -24,6 +24,13 @@ export const placeRouletteBet = async (
     await trpc.roulette.placeBet.mutate({ betType, betValue, amount });
 };
 
+export const placeRouletteBets = async (
+    bets: { betType: RouletteBetType; betValue: number | null; amount: number }[]
+) => {
+    const trpc = getTRPCClient();
+    return trpc.roulette.placeBets.mutate({ bets });
+};
+
 export const removeRouletteBet = async (betId: number) => {
     const trpc = getTRPCClient();
     await trpc.roulette.removeBet.mutate({ betId });

@@ -7,7 +7,7 @@ import { TRPCError } from '@trpc/server';
 import { observable } from '@trpc/server/observable';
 import { z } from 'zod';
 import { protectedProcedure, rateLimitedProcedure, t } from '../../utils/trpc';
-import { MAX_BET, MIN_BET } from './constants';
+import { MAX_BET, MAX_BETS_PER_USER, MIN_BET } from './constants';
 import type { RouletteRuntime } from './runtime';
 
 let runtime: RouletteRuntime;
@@ -55,6 +55,49 @@ const placeBetRoute = rateLimitedProcedure(protectedProcedure, {
     }
   });
 
+const placeBetsRoute = rateLimitedProcedure(protectedProcedure, {
+  maxRequests: 5,
+  windowMs: 15_000,
+  logLabel: 'roulette.placeBets'
+})
+  .input(
+    z.object({
+      bets: z
+        .array(
+          z.object({
+            betType: z.nativeEnum(RouletteBetType),
+            betValue: z.number().int().min(0).max(36).nullable(),
+            amount: z.number().int().min(MIN_BET).max(MAX_BET)
+          })
+        )
+        .min(1)
+        .max(MAX_BETS_PER_USER)
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    const errors: string[] = [];
+    for (const bet of input.bets) {
+      try {
+        await runtime.placeBet(
+          ctx.userId,
+          ctx.user.name,
+          bet.betType,
+          bet.betValue,
+          bet.amount
+        );
+      } catch (e) {
+        errors.push(e instanceof Error ? e.message : 'Failed to place bet');
+      }
+    }
+    if (errors.length > 0 && errors.length === input.bets.length) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: errors[0]!
+      });
+    }
+    return { placed: input.bets.length - errors.length, errors };
+  });
+
 const removeBetRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: 15,
   windowMs: 15_000,
@@ -90,6 +133,7 @@ const rouletteRouter = t.router({
   getState: getStateRoute,
   getHistory: getHistoryRoute,
   placeBet: placeBetRoute,
+  placeBets: placeBetsRoute,
   removeBet: removeBetRoute,
   onStateUpdate: onStateUpdateRoute,
   onRoundResult: onRoundResultRoute

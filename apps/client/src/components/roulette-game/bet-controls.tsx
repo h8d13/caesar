@@ -1,5 +1,6 @@
 import {
     placeRouletteBet,
+    placeRouletteBets,
     removeRouletteBet
 } from '@/features/server/roulette/actions';
 import {
@@ -52,7 +53,7 @@ const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
         }
     }, [phase, bets, ownUserId]);
 
-    // Auto rebet when new betting phase starts
+    // Auto rebet when new betting phase starts (single batch request)
     useEffect(() => {
         if (
             autoBet &&
@@ -61,20 +62,16 @@ const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
         ) {
             const savedBets = lastBets.current;
             (async () => {
-                for (const bet of savedBets) {
-                    try {
-                        await placeRouletteBet(
-                            bet.betType,
-                            bet.betValue,
-                            bet.amount
-                        );
-                    } catch (e) {
-                        toast.error(
-                            e instanceof Error ? e.message : 'Auto-bet failed'
-                        );
-                        setAutoBet(false);
-                        break;
+                try {
+                    const result = await placeRouletteBets(savedBets);
+                    if (result.errors.length > 0) {
+                        toast.error(result.errors[0]);
                     }
+                } catch (e) {
+                    toast.error(
+                        e instanceof Error ? e.message : 'Auto-bet failed'
+                    );
+                    setAutoBet(false);
                 }
             })();
         }
