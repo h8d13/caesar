@@ -1,5 +1,4 @@
 import {
-    placeRouletteBet,
     placeRouletteBets,
     removeRouletteBet
 } from '@/features/server/roulette/actions';
