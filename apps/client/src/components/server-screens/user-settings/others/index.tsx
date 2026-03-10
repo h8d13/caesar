@@ -31,7 +31,7 @@ const Others = memo(() => {
                 <CardTitle>Others</CardTitle>
                 <CardDescription>
                     In this section, you can update settings related to
-                    2Pac4Shakur's behavior.
+                    {VITE_APP_NAME}'s behavior.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

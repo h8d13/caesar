@@ -117,4 +117,4 @@ if (!values.target) {
 
 await fs.rm(buildTempPath, { recursive: true, force: true });
 
-console.log('2Pac4Shakur built.');
+console.log('Sharkord built.');

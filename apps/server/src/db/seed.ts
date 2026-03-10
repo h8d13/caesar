@@ -15,8 +15,7 @@ import {
   type TIChannel,
   type TIMessage,
   type TIRole,
-  type TISettings,
-  type TIUser
+  type TISettings
 } from '@sharkord/shared';
 import { randomUUIDv7 } from 'bun';
 import chalk from 'chalk';
@@ -30,8 +29,7 @@ import {
   rolePermissions,
   roles,
   settings,
-  userRoles,
-  users
+  userRoles
 } from './schema';
 
 const seedDatabase = async () => {
@@ -45,9 +43,9 @@ const seedDatabase = async () => {
   const originalToken = IS_DEVELOPMENT ? 'dev' : randomUUIDv7();
 
   const initialSettings: TISettings = {
-    name: '2Pac4Shakur Server',
+    name: 'Sharkord Server',
     description:
-      'This is the default 2Pac4Shakur server description. Change me in the server settings!',
+      'This is the default Sharkord server description. Change me in the server settings!',
     password: '',
     serverId: Bun.randomUUIDv7(),
     secretToken: await sha256(originalToken),
@@ -91,16 +89,6 @@ const seedDatabase = async () => {
       createdAt: firstStart
     },
     {
-      type: ChannelType.TEXT,
-      name: 'General Text 2',
-      position: 1,
-      fileAccessToken: randomUUIDv7(),
-      fileAccessTokenUpdatedAt: Date.now(),
-      categoryId: 1,
-      topic: 'General text channel 2',
-      createdAt: firstStart
-    },
-    {
       type: ChannelType.VOICE,
       name: 'General Voice',
       position: 0,
@@ -108,16 +96,6 @@ const seedDatabase = async () => {
       fileAccessTokenUpdatedAt: Date.now(),
       categoryId: 2,
       topic: 'General voice channel',
-      createdAt: firstStart
-    },
-    {
-      type: ChannelType.VOICE,
-      name: 'General Voice 2',
-      position: 1,
-      fileAccessToken: randomUUIDv7(),
-      fileAccessTokenUpdatedAt: Date.now(),
-      categoryId: 2,
-      topic: 'General voice channel 2',
       createdAt: firstStart
     }
   ];
@@ -178,7 +156,7 @@ const seedDatabase = async () => {
   });
 
   const notice = [
-    chalk.redBright.bold('🚨🚨 I M P O R T A N T 🚨🚨'),
+    chalk.redBright.bold(' I M P O R T A N T '),
     chalk.dim('────────────────────────────────────────────────────'),
     chalk.whiteBright('This server has been started for the first time.'),
     chalk.whiteBright(

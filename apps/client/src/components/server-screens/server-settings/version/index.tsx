@@ -21,7 +21,7 @@ const Version = memo(() => {
             <CardHeader>
                 <CardTitle>Version</CardTitle>
                 <CardDescription>
-                    Current version information for your 2Pac4Shakur server.
+                    Current version information for your {VITE_APP_NAME} server.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
