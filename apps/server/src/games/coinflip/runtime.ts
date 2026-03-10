@@ -162,10 +162,7 @@ class CoinflipRuntime {
     return game.id;
   }
 
-  async acceptChallenge(
-    challengeId: number,
-    userId: number
-  ): Promise<void> {
+  async acceptChallenge(challengeId: number, userId: number): Promise<void> {
     const game = db
       .select()
       .from(coinflipGames)
