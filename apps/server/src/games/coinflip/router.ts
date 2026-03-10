@@ -1,4 +1,5 @@
 import {
+  CoinflipSide,
   type TCoinflipResult,
   type TCoinflipStateUpdate
 } from '@sharkord/shared/games/coinflip';
@@ -26,7 +27,7 @@ const createChallengeRoute = rateLimitedProcedure(protectedProcedure, {
 })
   .input(
     z.object({
-      side: z.enum(['heads', 'tails']),
+      side: z.nativeEnum(CoinflipSide),
       amount: z.number().int().min(MIN_BET).max(MAX_BET)
     })
   )
@@ -35,7 +36,7 @@ const createChallengeRoute = rateLimitedProcedure(protectedProcedure, {
       const id = await runtime.createChallenge(
         ctx.userId,
         ctx.user.name,
-        input.side as 'heads' | 'tails',
+        input.side,
         input.amount
       );
       return { challengeId: id };
