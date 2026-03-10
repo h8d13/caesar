@@ -19,7 +19,7 @@ const RouletteGameContent = memo(() => {
     }, []);
 
     return (
-        <div className="flex flex-col gap-3 h-full pt-12">
+        <div className="flex flex-col gap-3 h-full pt-6">
             <RoundHistory />
             <div className="flex items-center justify-center gap-6">
                 <RouletteWheel />

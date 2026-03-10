@@ -129,10 +129,7 @@ class RouletteRuntime {
     }
 
     const balance = await this.callbacks.getBalance(userId);
-    const totalUserBets = this.activeBets
-      .filter((b) => b.userId === userId)
-      .reduce((sum, b) => sum + b.amount, 0);
-    if (balance < totalUserBets + amount) {
+    if (balance < amount) {
       throw new Error('Insufficient balance');
     }
 
@@ -245,27 +242,31 @@ class RouletteRuntime {
 
     // Resolve all bets
     for (const bet of this.activeBets) {
-      const won = isBetWinner(bet.betType, bet.betValue, this.winningNumber);
-      if (won) {
-        // Check if this is a STRAIGHT bet on a lightning number
-        const lightning = this.lightningNumbers.find(
-          (ln) => ln.number === bet.betValue
-        );
-        const payoutMultiplier =
-          bet.betType === 'straight' && lightning
-            ? lightning.multiplier
-            : PAYOUT_MAP[bet.betType];
-        const profit = bet.amount * payoutMultiplier;
-        bet.profit = profit;
-        await this.callbacks.updateLedgerEntry(bet.ledgerEntryId, profit);
-      } else {
-        bet.profit = -bet.amount;
-      }
+      try {
+        const won = isBetWinner(bet.betType, bet.betValue, this.winningNumber);
+        if (won) {
+          // Check if this is a STRAIGHT bet on a lightning number
+          const lightning = this.lightningNumbers.find(
+            (ln) => ln.number === bet.betValue
+          );
+          const payoutMultiplier =
+            bet.betType === 'straight' && lightning
+              ? lightning.multiplier
+              : PAYOUT_MAP[bet.betType];
+          const profit = bet.amount * payoutMultiplier;
+          bet.profit = profit;
+          await this.callbacks.updateLedgerEntry(bet.ledgerEntryId, profit);
+        } else {
+          bet.profit = -bet.amount;
+        }
 
-      db.update(rouletteBets)
-        .set({ profit: bet.profit })
-        .where(eq(rouletteBets.id, bet.betId))
-        .run();
+        db.update(rouletteBets)
+          .set({ profit: bet.profit })
+          .where(eq(rouletteBets.id, bet.betId))
+          .run();
+      } catch (e) {
+        console.error(`Failed to resolve roulette bet ${bet.betId}:`, e);
+      }
     }
 
     db.update(rouletteRounds)
