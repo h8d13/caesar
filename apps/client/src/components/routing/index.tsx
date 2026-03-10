@@ -30,15 +30,15 @@ const Routing = memo(() => {
 
     useEffect(() => {
         if (isConnected && serverName) {
-            document.title = `${serverName} - Sharkord`;
+            document.title = `${serverName} - 2Pac4Shakur`;
             return;
         }
 
-        document.title = 'Sharkord';
+        document.title = '2Pac4Shakur';
     }, [isConnected, serverName]);
 
     if (isAppLoading) {
-        return <LoadingApp text="Loading Sharkord" />;
+        return <LoadingApp text="Loading 2Pac4Shakur" />;
     }
 
     if (!isConnected) {

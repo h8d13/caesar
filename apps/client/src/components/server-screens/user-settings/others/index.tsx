@@ -31,7 +31,7 @@ const Others = memo(() => {
                 <CardTitle>Others</CardTitle>
                 <CardDescription>
                     In this section, you can update settings related to
-                    Sharkord's behavior.
+                    2Pac4Shakur's behavior.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

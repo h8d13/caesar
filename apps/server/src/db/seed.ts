@@ -45,9 +45,9 @@ const seedDatabase = async () => {
   const originalToken = IS_DEVELOPMENT ? 'dev' : randomUUIDv7();
 
   const initialSettings: TISettings = {
-    name: 'sharkord Server',
+    name: '2Pac4Shakur Server',
     description:
-      'This is the default Sharkord server description. Change me in the server settings!',
+      'This is the default 2Pac4Shakur server description. Change me in the server settings!',
     password: '',
     serverId: Bun.randomUUIDv7(),
     secretToken: await sha256(originalToken),
@@ -139,20 +139,6 @@ const seedDatabase = async () => {
     }
   ];
 
-  const initialUsers: TIUser[] = [
-    {
-      identity: await sha256(randomUUIDv7()),
-      name: 'Sharkord',
-      avatarId: null,
-      password: 'sharkord',
-      bannerId: null,
-      bio: 'Hey, I am Sharkord!',
-      bannerColor:
-        'linear-gradient(90deg, rgba(67,49,215,1) 30%, rgba(182,1,116,1) 100%)',
-      createdAt: firstStart
-    }
-  ];
-
   const initialMessages: TIMessage[] = [
     {
       channelId: 1,
@@ -173,7 +159,6 @@ const seedDatabase = async () => {
   await db.insert(categories).values(initialCategories);
   await db.insert(channels).values(initialChannels);
   await db.insert(roles).values(initialRoles);
-  await db.insert(users).values(initialUsers);
   await db.insert(messages).values(initialMessages);
 
   for (const [roleId, permissions] of Object.entries(initialRolePermissions)) {

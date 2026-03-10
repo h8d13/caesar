@@ -128,7 +128,7 @@ const Connect = memo(() => {
                     <CardTitle className="flex flex-col items-center gap-2 text-center">
                         <img
                             src={logoSrc}
-                            alt="Sharkord"
+                            alt="2Pac4Shakur"
                             className={
                                 info?.logo
                                     ? 'max-w-full max-h-32 object-contain rounded-xl'
