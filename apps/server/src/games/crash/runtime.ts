@@ -288,7 +288,9 @@ class CrashRuntime {
   }
 
   private generateCrashPoint(): number {
-    const r = Math.random();
+    const buf = new Uint32Array(1);
+    crypto.getRandomValues(buf);
+    const r = buf[0]! / (0xffffffff + 1); // [0, 1)
     return Math.max(1, Math.floor(((1 - HOUSE_EDGE) / r) * 100) / 100);
   }
 

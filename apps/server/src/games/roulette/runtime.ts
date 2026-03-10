@@ -1,3 +1,4 @@
+import { randomInt } from 'crypto';
 import {
   isBetWinner,
   LIGHTNING_MULTIPLIERS,
@@ -296,17 +297,15 @@ class RouletteRuntime {
   }
 
   private generateLightningNumbers(): TLightningNumber[] {
-    const count = Math.floor(Math.random() * 6); // 0-5 lightning numbers
+    const count = randomInt(6); // 0-5 lightning numbers
     const available = Array.from({ length: 37 }, (_, i) => i); // 0-36
     const selected: TLightningNumber[] = [];
 
     for (let i = 0; i < count; i++) {
-      const idx = Math.floor(Math.random() * available.length);
+      const idx = randomInt(available.length);
       const num = available.splice(idx, 1)[0]!;
       const multiplier =
-        LIGHTNING_MULTIPLIERS[
-          Math.floor(Math.random() * LIGHTNING_MULTIPLIERS.length)
-        ]!;
+        LIGHTNING_MULTIPLIERS[randomInt(LIGHTNING_MULTIPLIERS.length)]!;
       selected.push({ number: num, multiplier });
     }
 
@@ -314,7 +313,7 @@ class RouletteRuntime {
   }
 
   private generateWinningNumber(): number {
-    return Math.floor(Math.random() * 37); // 0-36
+    return randomInt(37); // 0-36
   }
 
   private hashWinningNumber(number: number): string {

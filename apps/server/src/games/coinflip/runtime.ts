@@ -1,3 +1,4 @@
+import { randomInt } from 'crypto';
 import {
   CoinflipSide,
   CoinflipStatus,
@@ -263,7 +264,7 @@ class CoinflipRuntime {
     if (!game || game.status !== CoinflipStatus.FLIPPING) return;
 
     const result =
-      Math.random() < 0.5 ? CoinflipSide.HEADS : CoinflipSide.TAILS;
+      randomInt(2) === 0 ? CoinflipSide.HEADS : CoinflipSide.TAILS;
     const creatorWins = result === game.creatorSide;
 
     const winnerId = creatorWins ? game.creatorId : game.opponentId!;
