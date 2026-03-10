@@ -93,7 +93,6 @@ class CoinflipRuntime {
 
   async createChallenge(
     userId: number,
-    userName: string,
     side: CoinflipSide,
     amount: number
   ): Promise<number> {
@@ -165,8 +164,7 @@ class CoinflipRuntime {
 
   async acceptChallenge(
     challengeId: number,
-    userId: number,
-    userName: string
+    userId: number
   ): Promise<void> {
     const game = db
       .select()
