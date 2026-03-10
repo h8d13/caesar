@@ -165,7 +165,7 @@ const seedDatabase = async () => {
     chalk.whiteBright(
       'The access token below is used to gain admin privileges. Anyone with this token can take over the server.'
     ),
-    chalk.white('Please read the documentation on how to use this token.'),
+    chalk.white('useToken("token-here")'),
     chalk.yellowBright('────────────────────────────────────────────────────'),
     chalk.bold.greenBright(originalToken),
     chalk.yellowBright('────────────────────────────────────────────────────')
