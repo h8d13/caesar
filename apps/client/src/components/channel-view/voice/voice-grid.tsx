@@ -71,15 +71,9 @@ const VoiceGrid = memo(
 
                     {regularCards.length > 0 && (
                         <div className="flex-shrink-0 border-t border-border bg-card/50">
-                            <div className="flex justify-center gap-2 p-2 overflow-x-auto">
-                                {regularCards.map((card, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex-shrink-0 w-40 h-24"
-                                    >
-                                        {card}
-                                    </div>
-                                ))}
+                            {/* Use CSS child selector so null-rendering cards leave no placeholder */}
+                            <div className="flex justify-center gap-2 p-2 overflow-x-auto [&>*]:flex-shrink-0 [&>*]:w-40 [&>*]:h-24">
+                                {regularCards}
                             </div>
                         </div>
                     )}
@@ -108,7 +102,10 @@ const VoiceGrid = memo(
             }
         };
 
-        const rows = getRowCount(regularCards.length, gridCols);
+        const totalCards = regularCards.length;
+        const rows = getRowCount(totalCards, gridCols);
+        const lastRowCount = totalCards % gridCols;
+        const lastRowStart = lastRowCount === 0 ? totalCards : totalCards - lastRowCount;
 
         return (
             <div
@@ -119,7 +116,24 @@ const VoiceGrid = memo(
                     className
                 )}
             >
-                {regularCards}
+                {regularCards.map((card, index) => {
+                    // A lone card in the last row spans all columns so it isn't left-stranded
+                    const isLoneLastCard =
+                        lastRowCount === 1 && index === lastRowStart;
+                    if (isLoneLastCard) {
+                        return (
+                            <div
+                                key={
+                                    isValidElement(card) ? card.key : index
+                                }
+                                className="col-span-full"
+                            >
+                                {card}
+                            </div>
+                        );
+                    }
+                    return card;
+                })}
             </div>
         );
     }
