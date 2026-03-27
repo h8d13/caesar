@@ -274,6 +274,7 @@ const Devices = memo(() => {
                                 onChange('playbackId', value)
                             }
                             value={values.playbackId}
+                            disabled={playbackDevices.length === 0}
                         >
                             <SelectTrigger className="w-92">
                                 <SelectValue placeholder="Select the output device" />
@@ -307,6 +308,7 @@ const Devices = memo(() => {
                                 onChange('microphoneId', value)
                             }
                             value={values.microphoneId}
+                            disabled={inputDevices.length === 0}
                         >
                             <SelectTrigger className="w-92">
                                 <SelectValue placeholder="Select the input device" />
@@ -470,6 +472,7 @@ const Devices = memo(() => {
                                     onChange('webcamId', value)
                                 }
                                 value={values.webcamId}
+                                disabled={videoDevices.length === 0}
                             >
                                 <SelectTrigger className="w-full max-w-96">
                                     <SelectValue placeholder="Select the input device" />

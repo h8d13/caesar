@@ -328,11 +328,14 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             logVoice('Starting microphone stream');
             cleanupMicProcessingResources();
 
+            const hasSpecificMic =
+                !!devices.microphoneId && devices.microphoneId !== 'default';
+
             const rawStream = await navigator.mediaDevices.getUserMedia({
                 audio: {
-                    deviceId: {
-                        exact: devices.microphoneId
-                    },
+                    deviceId: hasSpecificMic
+                        ? { exact: devices.microphoneId }
+                        : undefined,
                     autoGainControl: devices.autoGainControl,
                     echoCancellation: devices.echoCancellation,
                     noiseSuppression: devices.noiseSuppression,
