@@ -7,6 +7,7 @@ import {
 } from '@sharkord/shared';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '..';
+import { getOnlineUserIds } from '../../utils/wss';
 import {
   channelReadStates,
   channelRolePermissions,
@@ -308,6 +309,26 @@ const getAffectedUserIdsForChannel = async (
   return Array.from(userIdSet);
 };
 
+const getAffectedOnlineUserIdsForChannel = async (
+  channelId: number,
+  options?: {
+    forceAllUsers?: boolean;
+    permission?: ChannelPermission;
+  }
+): Promise<number[]> => {
+  const affectedUserIds = await getAffectedUserIdsForChannel(
+    channelId,
+    options
+  );
+  const onlineUserIds = getOnlineUserIds();
+
+  const onlineAffectedUserIds = affectedUserIds.filter((userId) =>
+    onlineUserIds.includes(userId)
+  );
+
+  return onlineAffectedUserIds;
+};
+
 const getChannelsReadStatesForUser = async (
   userId: number,
   channelId?: number
@@ -370,6 +391,7 @@ const getChannelsReadStatesForUser = async (
 };
 
 export {
+  getAffectedOnlineUserIdsForChannel,
   getAffectedUserIdsForChannel,
   getAllChannelUserPermissions,
   getChannelsForUser,

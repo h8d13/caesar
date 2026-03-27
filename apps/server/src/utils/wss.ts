@@ -47,6 +47,20 @@ const getUserIp = (userId: number): string | undefined => {
   return usersIpMap.get(userId);
 };
 
+const getOnlineUserIds = (): number[] => {
+  if (!wss) return [];
+
+  const userIdSet = new Set<number>();
+
+  wss.clients.forEach((client) => {
+    if (client.userId) {
+      userIdSet.add(client.userId);
+    }
+  });
+
+  return Array.from(userIdSet);
+};
+
 const createContext = async ({
   info,
   req
@@ -366,4 +380,4 @@ const createWsServer = async (server: http.Server) => {
   });
 };
 
-export { createContext, createWsServer, getUserIp, trackUserConnect };
+export { createContext, createWsServer, getOnlineUserIds, getUserIp, trackUserConnect };

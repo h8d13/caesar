@@ -118,6 +118,11 @@ export const addMessages = (
             browserNotificationsForMentionsSelector(state);
         const targetMessage = messages[0];
         const isFromOwnUser = ownUserId === targetMessage.userId;
+        const isChannelSelected = [
+            selectedChannelId,
+            selectedDmChannelId
+        ].includes(channelId);
+        const isWindowHidden = document?.hidden;
 
         if (!isFromOwnUser) {
             const isThreadReply = !!targetMessage.parentMessageId;
@@ -137,24 +142,22 @@ export const addMessages = (
                 playSound(SoundType.MESSAGE_RECEIVED);
             }
 
-            if (notificationsForMentionsOnly) {
-                const isMentioned = hasMention(
-                    targetMessage.content ?? null,
-                    ownUserId
-                );
+            // only send browser notifications if the user is not currently viewing this channel
+            if (!isChannelSelected || isWindowHidden) {
+                if (notificationsForMentionsOnly) {
+                    const isMentioned = hasMention(
+                        targetMessage.content ?? null,
+                        ownUserId
+                    );
 
-                if (isMentioned) {
+                    if (isMentioned) {
+                        sendBrowserNotification(targetMessage, channelId);
+                    }
+                } else if (hasBrowserNotificationsEnabled) {
                     sendBrowserNotification(targetMessage, channelId);
                 }
-            } else if (hasBrowserNotificationsEnabled) {
-                sendBrowserNotification(targetMessage, channelId);
             }
         }
-
-        const isChannelSelected = [
-            selectedChannelId,
-            selectedDmChannelId
-        ].includes(channelId);
 
         if (isChannelSelected && !isFromOwnUser && rootMessages.length > 0) {
             const trpc = getTRPCClient();

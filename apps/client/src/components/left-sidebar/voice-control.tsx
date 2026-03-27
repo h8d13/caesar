@@ -45,8 +45,8 @@ const VoiceControl = memo(() => {
                 const { isMonitoring, producer, consumer } = transportStats;
 
                 if (isMonitoring) {
-                    const noOutgoing = producer && producer.bytesSent === 0;
-                    const noIncoming = consumer && consumer.bytesReceived === 0;
+                    const noOutgoing = !producer || producer.bytesSent === 0;
+                    const noIncoming = !consumer || consumer.bytesReceived === 0;
 
                     if (noOutgoing && noIncoming) {
                         return {
@@ -141,7 +141,7 @@ const VoiceControl = memo(() => {
                     <Button
                         variant="destructive"
                         size="sm"
-                        onClick={leaveVoice}
+                        onClick={() => leaveVoice({ reason: 'user_disconnect_button' })}
                     >
                         <PhoneOff className="h-3.5 w-3.5 mr-1.5" />
                         Disconnect
