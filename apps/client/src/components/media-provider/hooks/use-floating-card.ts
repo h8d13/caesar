@@ -10,6 +10,17 @@ type TPosition = {
     y: number;
 };
 
+type TSize = {
+    width: number;
+    height: number;
+};
+
+type TResizeEdge = 'se' | 's' | 'e';
+
+const DEFAULT_SIZE: TSize = { width: 384, height: 216 };
+const MIN_WIDTH = 200;
+const MIN_HEIGHT = 112;
+
 export const useFloatingCard = () => {
     const cardRef = useRef<HTMLDivElement>(null);
     const [position, setPosition] = useState<TPosition | undefined>(
@@ -17,8 +28,20 @@ export const useFloatingCard = () => {
             LocalStorageKey.FLOATING_CARD_POSITION
         )
     );
+    const [size, setSize] = useState<TSize>(
+        getLocalStorageItemAsJSON<TSize>(LocalStorageKey.FLOATING_CARD_SIZE) ??
+            DEFAULT_SIZE
+    );
     const [isDragging, setIsDragging] = useState(false);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+    const resizeInfo = useRef<{
+        edge: TResizeEdge;
+        startX: number;
+        startY: number;
+        startWidth: number;
+        startHeight: number;
+    } | null>(null);
 
     useEffect(() => {
         if (position) {
@@ -28,6 +51,10 @@ export const useFloatingCard = () => {
             );
         }
     }, [position]);
+
+    useEffect(() => {
+        setLocalStorageItemAsJSON<TSize>(LocalStorageKey.FLOATING_CARD_SIZE, size);
+    }, [size]);
 
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
         if (!cardRef.current) return;
@@ -40,8 +67,45 @@ export const useFloatingCard = () => {
         });
     }, []);
 
+    const handleResizeMouseDown = useCallback(
+        (e: React.MouseEvent, edge: TResizeEdge) => {
+            e.stopPropagation();
+            if (!cardRef.current) return;
+
+            const rect = cardRef.current.getBoundingClientRect();
+            resizeInfo.current = {
+                edge,
+                startX: e.clientX,
+                startY: e.clientY,
+                startWidth: rect.width,
+                startHeight: rect.height
+            };
+        },
+        []
+    );
+
     const handleMouseMove = useCallback(
         (e: MouseEvent) => {
+            if (resizeInfo.current) {
+                const { edge, startX, startY, startWidth, startHeight } =
+                    resizeInfo.current;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                setSize((prev) => {
+                    const newWidth =
+                        edge === 's'
+                            ? prev.width
+                            : Math.max(MIN_WIDTH, startWidth + dx);
+                    const newHeight =
+                        edge === 'e'
+                            ? prev.height
+                            : Math.max(MIN_HEIGHT, startHeight + dy);
+                    return { width: newWidth, height: newHeight };
+                });
+                return;
+            }
+
             if (!isDragging || !cardRef.current) return;
 
             const parent = cardRef.current.parentElement;
@@ -69,35 +133,38 @@ export const useFloatingCard = () => {
 
     const handleMouseUp = useCallback(() => {
         setIsDragging(false);
+        resizeInfo.current = null;
     }, []);
 
     useEffect(() => {
-        if (isDragging) {
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
-            return () => {
-                document.removeEventListener('mousemove', handleMouseMove);
-                document.removeEventListener('mouseup', handleMouseUp);
-            };
-        }
-    }, [isDragging, handleMouseMove, handleMouseUp]);
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [handleMouseMove, handleMouseUp]);
 
     const getStyle = useCallback(() => {
         return {
             right: position ? undefined : '1rem',
             bottom: position ? undefined : '1rem',
             left: position ? `${position.x}px` : undefined,
-            top: position ? `${position.y}px` : undefined
+            top: position ? `${position.y}px` : undefined,
+            width: `${size.width}px`,
+            height: `${size.height}px`
         };
-    }, [position]);
+    }, [position, size]);
 
     const resetCard = useCallback(() => {
         setPosition(undefined);
+        setSize(DEFAULT_SIZE);
     }, []);
 
     return {
         cardRef,
         handleMouseDown,
+        handleResizeMouseDown,
         getStyle,
         resetCard
     };

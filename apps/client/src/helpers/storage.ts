@@ -6,6 +6,7 @@ export enum LocalStorageKey {
     VITE_UI_THEME = 'vite-ui-theme',
     DEVICES_SETTINGS = 'sharkord-devices-settings',
     FLOATING_CARD_POSITION = 'sharkord-floating-card-position',
+    FLOATING_CARD_SIZE = 'sharkord-floating-card-size',
     LEFT_SIDEBAR_STATE = 'sharkord-left-sidebar-state',
     RIGHT_SIDEBAR_STATE = 'sharkord-right-sidebar-state',
     VOICE_CHAT_SHOW_USER_BANNERS = 'sharkord-voice-chat-show-user-banners',

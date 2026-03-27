@@ -28,7 +28,7 @@ const FloatingPinnedCard = memo(
         localVideoStream,
         localScreenShareStream
     }: TFloatingPinnedCardProps) => {
-        const { cardRef, handleMouseDown, getStyle, resetCard } =
+        const { cardRef, handleMouseDown, handleResizeMouseDown, getStyle, resetCard } =
             useFloatingCard();
         const videoRef = useRef<HTMLVideoElement>(null);
         const [open, setOpen] = useState(true);
@@ -96,7 +96,7 @@ const FloatingPinnedCard = memo(
             <div
                 ref={cardRef}
                 onMouseDown={handleMouseDown}
-                className="absolute z-50 cursor-move select-none w-96 aspect-video rounded-lg overflow-hidden border border-border bg-black shadow-lg group"
+                className="absolute z-50 cursor-move select-none rounded-lg overflow-hidden border border-border bg-black shadow-lg group"
                 style={getStyle()}
             >
                 <CardControls>
@@ -135,6 +135,20 @@ const FloatingPinnedCard = memo(
                     playsInline
                     muted
                     className="w-full h-full object-contain"
+                />
+
+                {/* Resize handles */}
+                <div
+                    className="absolute bottom-0 right-0 left-0 h-1.5 cursor-s-resize z-20"
+                    onMouseDown={(e) => handleResizeMouseDown(e, 's')}
+                />
+                <div
+                    className="absolute top-0 bottom-0 right-0 w-1.5 cursor-e-resize z-20"
+                    onMouseDown={(e) => handleResizeMouseDown(e, 'e')}
+                />
+                <div
+                    className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-30"
+                    onMouseDown={(e) => handleResizeMouseDown(e, 'se')}
                 />
             </div>
         );
