@@ -91,6 +91,14 @@ const createHttpServer = async (port: number = config.server.port) => {
         );
         res.setHeader('Content-Security-Policy', buildCsp());
 
+        // Redirect HTTP to HTTPS when behind a reverse proxy
+        const forwardedProto = req.headers['x-forwarded-proto'];
+        if (forwardedProto === 'http' && host) {
+          res.writeHead(301, { Location: `https://${host}${req.url}` });
+          res.end();
+          return;
+        }
+
         const info = getWsInfo(undefined, req);
 
         logger.debug(
