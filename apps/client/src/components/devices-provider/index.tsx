@@ -4,7 +4,12 @@ import {
     LocalStorageKey,
     setLocalStorageItemAsJSON
 } from '@/helpers/storage';
-import { Resolution, VideoCodec, type TDeviceSettings } from '@/types';
+import {
+    NoiseSuppressionMode,
+    Resolution,
+    VideoCodec,
+    type TDeviceSettings
+} from '@/types';
 import { DEFAULT_BITRATE } from '@sharkord/shared';
 import {
     createContext,
@@ -28,8 +33,7 @@ const DEFAULT_DEVICE_SETTINGS: TDeviceSettings = {
     autoGainControl: true,
     noiseGateEnabled: true,
     noiseGateThresholdDb: MICROPHONE_GATE_DEFAULT_THRESHOLD_DB,
-    rnnoiseEnabled: true,
-    dtlnEnabled: false,
+    noiseSuppressionMode: NoiseSuppressionMode.RNNOISE,
     shareSystemAudio: true,
     mirrorOwnVideo: false,
     screenResolution: Resolution['720p'],
@@ -80,9 +84,22 @@ const DevicesProvider = memo(({ children }: TDevicesProviderProps) => {
 
         initializedRef.current = true;
 
-        const savedSettings = getLocalStorageItemAsJSON<TDeviceSettings>(
-            LocalStorageKey.DEVICES_SETTINGS
-        );
+        const savedSettings = getLocalStorageItemAsJSON<
+            TDeviceSettings & {
+                rnnoiseEnabled?: boolean;
+                dtlnEnabled?: boolean;
+            }
+        >(LocalStorageKey.DEVICES_SETTINGS);
+
+        // migrate legacy boolean flags to the enum mode. dtln wins if both
+        // were on. explicit rnnoiseEnabled=false => NONE.
+        const migratedMode: NoiseSuppressionMode =
+            savedSettings?.noiseSuppressionMode ??
+            (savedSettings?.dtlnEnabled
+                ? NoiseSuppressionMode.DTLN
+                : savedSettings?.rnnoiseEnabled === false
+                  ? NoiseSuppressionMode.NONE
+                  : NoiseSuppressionMode.RNNOISE);
 
         const autoMicrophoneId =
             inputDevices.find((d) => d?.deviceId === 'default')?.deviceId ??
@@ -97,9 +114,14 @@ const DevicesProvider = memo(({ children }: TDevicesProviderProps) => {
             videoDevices[0]?.deviceId;
 
         if (savedSettings) {
+            const { rnnoiseEnabled, dtlnEnabled, ...rest } = savedSettings;
+            void rnnoiseEnabled;
+            void dtlnEnabled;
+
             setDevices({
                 ...DEFAULT_DEVICE_SETTINGS,
-                ...savedSettings,
+                ...rest,
+                noiseSuppressionMode: migratedMode,
                 microphoneId: savedSettings.microphoneId ?? autoMicrophoneId,
                 playbackId: savedSettings.playbackId ?? autoPlaybackId,
                 webcamId: savedSettings.webcamId ?? autoWebcamId

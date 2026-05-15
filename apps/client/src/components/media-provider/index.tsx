@@ -21,13 +21,16 @@ import {
 import {
     createRNNoiseWorkletNode,
     getRNNoiseWorkletAvailabilitySnapshot,
-    markRNNoiseWorkletUnavailable,
-    postRNNoiseWorkletConfig
+    markRNNoiseWorkletUnavailable
 } from '@/helpers/audio-worklet/rnnoise-worklet';
 import { logVoice } from '@/helpers/browser-logger';
 import { getResWidthHeight } from '@/helpers/get-res-with-height';
 import { getTRPCClient } from '@/lib/trpc';
-import { VideoCodec, type TRemoteUserStreamKinds } from '@/types';
+import {
+    NoiseSuppressionMode,
+    VideoCodec,
+    type TRemoteUserStreamKinds
+} from '@/types';
 import {
     DEFAULT_BITRATE,
     StreamKind,
@@ -326,14 +329,6 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         });
     }, [devices.noiseGateThresholdDb]);
 
-    useEffect(() => {
-        if (!microphoneRNNoiseWorkletNodeRef.current) return;
-
-        postRNNoiseWorkletConfig(microphoneRNNoiseWorkletNodeRef.current, {
-            enabled: devices.rnnoiseEnabled ?? false
-        });
-    }, [devices.rnnoiseEnabled]);
-
     const startMicStream = useCallback(async () => {
         try {
             logVoice('Starting microphone stream');
@@ -362,8 +357,11 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
 
             if (rawAudioTrack) {
                 const shouldUseNoiseGate = !!devices.noiseGateEnabled;
-                const shouldUseRNNoise = !!devices.rnnoiseEnabled;
-                const shouldUseDTLN = !!devices.dtlnEnabled;
+                const shouldUseRNNoise =
+                    devices.noiseSuppressionMode ===
+                    NoiseSuppressionMode.RNNOISE;
+                const shouldUseDTLN =
+                    devices.noiseSuppressionMode === NoiseSuppressionMode.DTLN;
                 const noiseGateAvailability =
                     getNoiseGateWorkletAvailabilitySnapshot();
                 const rnnoiseAvailability =
@@ -612,8 +610,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         devices.noiseSuppression,
         devices.noiseGateEnabled,
         devices.noiseGateThresholdDb,
-        devices.rnnoiseEnabled,
-        devices.dtlnEnabled
+        devices.noiseSuppressionMode
     ]);
 
     const startWebcamStream = useCallback(async () => {

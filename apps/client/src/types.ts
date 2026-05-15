@@ -41,6 +41,12 @@ export enum VideoCodec {
     AV1 = 'video/AV1'
 }
 
+export enum NoiseSuppressionMode {
+    NONE = 'none',
+    RNNOISE = 'rnnoise',
+    DTLN = 'dtln'
+}
+
 export type TDeviceSettings = {
     microphoneId: string | undefined;
     playbackId: string | undefined;
@@ -52,8 +58,7 @@ export type TDeviceSettings = {
     autoGainControl: boolean;
     noiseGateEnabled: boolean;
     noiseGateThresholdDb: number;
-    rnnoiseEnabled: boolean;
-    dtlnEnabled: boolean;
+    noiseSuppressionMode: NoiseSuppressionMode;
     shareSystemAudio: boolean;
     mirrorOwnVideo: boolean;
     screenResolution: Resolution;

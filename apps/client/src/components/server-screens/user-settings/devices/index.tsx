@@ -18,7 +18,7 @@ import {
     subscribeRNNoiseWorkletAvailability
 } from '@/helpers/audio-worklet/rnnoise-worklet';
 import { useForm } from '@/hooks/use-form';
-import { Resolution, VideoCodec } from '@/types';
+import { NoiseSuppressionMode, Resolution, VideoCodec } from '@/types';
 import { DEFAULT_BITRATE } from '@sharkord/shared';
 import {
     Alert,
@@ -379,23 +379,42 @@ const Devices = memo(() => {
                             </Group>
 
                             <Group label="AI Noise Suppression">
-                                <Switch
-                                    checked={values.rnnoiseEnabled}
-                                    disabled={!isRNNoiseAvailable}
-                                    onCheckedChange={(checked) =>
-                                        onChange('rnnoiseEnabled', checked)
+                                <Select
+                                    value={values.noiseSuppressionMode}
+                                    onValueChange={(value) =>
+                                        onChange(
+                                            'noiseSuppressionMode',
+                                            value as NoiseSuppressionMode
+                                        )
                                     }
-                                />
-                            </Group>
-
-                            <Group label="DTLN Noise Suppression">
-                                <Switch
-                                    checked={!!values.dtlnEnabled}
-                                    disabled={!isDTLNAvailable}
-                                    onCheckedChange={(checked) =>
-                                        onChange('dtlnEnabled', checked)
-                                    }
-                                />
+                                >
+                                    <SelectTrigger className="w-40">
+                                        <SelectValue placeholder="Select mode" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectItem
+                                                value={NoiseSuppressionMode.NONE}
+                                            >
+                                                Off
+                                            </SelectItem>
+                                            <SelectItem
+                                                value={
+                                                    NoiseSuppressionMode.RNNOISE
+                                                }
+                                                disabled={!isRNNoiseAvailable}
+                                            >
+                                                RNNoise (fast)
+                                            </SelectItem>
+                                            <SelectItem
+                                                value={NoiseSuppressionMode.DTLN}
+                                                disabled={!isDTLNAvailable}
+                                            >
+                                                DTLN (stronger)
+                                            </SelectItem>
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
                             </Group>
                         </div>
 
@@ -409,32 +428,27 @@ const Devices = memo(() => {
                             </p>
                         )}
 
-                        {!isRNNoiseAvailable && values.rnnoiseEnabled && (
-                            <p className="text-xs text-muted-foreground">
-                                AI Noise Suppression is unavailable.
-                                {rnnoiseWorkletAvailability.reason
-                                    ? ` ${rnnoiseWorkletAvailability.reason}`
-                                    : ''}
-                            </p>
-                        )}
+                        {values.noiseSuppressionMode ===
+                            NoiseSuppressionMode.RNNOISE &&
+                            !isRNNoiseAvailable && (
+                                <p className="text-xs text-muted-foreground">
+                                    RNNoise is unavailable.
+                                    {rnnoiseWorkletAvailability.reason
+                                        ? ` ${rnnoiseWorkletAvailability.reason}`
+                                        : ''}
+                                </p>
+                            )}
 
-                        {!isDTLNAvailable && values.dtlnEnabled && (
-                            <p className="text-xs text-muted-foreground">
-                                DTLN Noise Suppression is unavailable.
-                                {dtlnWorkletAvailability.reason
-                                    ? ` ${dtlnWorkletAvailability.reason}`
-                                    : ''}
-                            </p>
-                        )}
-
-                        {values.rnnoiseEnabled && values.dtlnEnabled && (
-                            <p className="text-xs text-muted-foreground">
-                                Both AI and DTLN noise suppression are enabled.
-                                They will be stacked (DTLN, then RNNoise) which
-                                may degrade voice quality. Usually you only
-                                want one.
-                            </p>
-                        )}
+                        {values.noiseSuppressionMode ===
+                            NoiseSuppressionMode.DTLN &&
+                            !isDTLNAvailable && (
+                                <p className="text-xs text-muted-foreground">
+                                    DTLN is unavailable.
+                                    {dtlnWorkletAvailability.reason
+                                        ? ` ${dtlnWorkletAvailability.reason}`
+                                        : ''}
+                                </p>
+                            )}
                     </Group>
 
                     <Group label="Microphone Test">
