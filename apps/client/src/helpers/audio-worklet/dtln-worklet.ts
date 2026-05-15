@@ -147,52 +147,24 @@ const waitForDTLNReady = (node: AudioWorkletNode) =>
         };
     });
 
-type TDTLNChain = {
-    outputStream: MediaStream;
-    context: AudioContext;
-};
+// Caller is expected to create the AudioContext at 16kHz so the worklet
+// runs its native (zero-resample) fast path. Returns a node that can be
+// inserted in-chain alongside other 16k-tolerant nodes (gate is amplitude
+// based, so it works at any rate).
+const createDTLNWorkletNode = async (
+    audioContext: AudioContext
+): Promise<AudioWorkletNode> => {
+    await ensureDTLNWorkletLoaded(audioContext);
 
-// Runs DTLN in its own 16kHz AudioContext so the worklet hits the native
-// (zero-resample) fast path. The returned MediaStream is consumed by the
-// caller's main pipeline, where the browser handles 16k -> 48k upsampling
-// with its built-in polyphase resampler (much higher quality than the
-// linear interpolation in the worklet's fallback resampling path).
-const createDTLNChain = async (
-    inputStream: MediaStream
-): Promise<TDTLNChain> => {
-    if (!isDTLNWorkletSupported()) {
-        throw new Error(
-            'AudioWorklet, WebAssembly, or Cache API is not supported in this browser.'
-        );
-    }
+    const node = new AudioWorkletNode(audioContext, DTLN_WORKLET_NAME);
 
-    const context = new AudioContext({ sampleRate: 16000 });
+    await waitForDTLNReady(node);
 
-    try {
-        await ensureDTLNWorkletLoaded(context);
-
-        const node = new AudioWorkletNode(context, DTLN_WORKLET_NAME);
-        const source = context.createMediaStreamSource(inputStream);
-        const destination = context.createMediaStreamDestination();
-
-        source.connect(node);
-        node.connect(destination);
-
-        if (context.state === 'suspended') {
-            await context.resume();
-        }
-
-        await waitForDTLNReady(node);
-
-        return { outputStream: destination.stream, context };
-    } catch (error) {
-        await context.close().catch(() => {});
-        throw error;
-    }
+    return node;
 };
 
 export {
-    createDTLNChain,
+    createDTLNWorkletNode,
     getDTLNWorkletAvailabilitySnapshot,
     isDTLNWorkletSupported,
     markDTLNWorkletUnavailable,

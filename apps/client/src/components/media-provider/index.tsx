@@ -14,7 +14,7 @@ import {
     postNoiseGateWorkletConfig
 } from '@/helpers/audio-worklet/noise-gate-worklet';
 import {
-    createDTLNChain,
+    createDTLNWorkletNode,
     getDTLNWorkletAvailabilitySnapshot,
     markDTLNWorkletUnavailable
 } from '@/helpers/audio-worklet/dtln-worklet';
@@ -256,8 +256,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
     const microphoneRNNoiseWorkletNodeRef = useRef<AudioWorkletNode | null>(
         null
     );
-    const microphoneDTLNContextRef = useRef<AudioContext | null>(null);
-    const microphoneDTLNStreamRef = useRef<MediaStream | null>(null);
+    const microphoneDTLNWorkletNodeRef = useRef<AudioWorkletNode | null>(null);
     const micMutedRef = useRef(ownVoiceState.micMuted);
 
     const syncTransmitMicrophoneTrackState = useCallback(() => {
@@ -273,14 +272,9 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
     }, []);
 
     const cleanupMicProcessingResources = useCallback(() => {
-        microphoneDTLNStreamRef.current
-            ?.getTracks()
-            .forEach((track) => track.stop());
-        microphoneDTLNStreamRef.current = null;
-
-        if (microphoneDTLNContextRef.current) {
-            microphoneDTLNContextRef.current.close().catch(() => {});
-            microphoneDTLNContextRef.current = null;
+        if (microphoneDTLNWorkletNodeRef.current) {
+            microphoneDTLNWorkletNodeRef.current.disconnect();
+            microphoneDTLNWorkletNodeRef.current = null;
         }
 
         if (microphoneRNNoiseWorkletNodeRef.current) {
@@ -340,8 +334,20 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             logVoice('Starting microphone stream');
             cleanupMicProcessingResources();
 
+            const shouldUseNoiseGate = !!devices.noiseGateEnabled;
+            const shouldUseRNNoise =
+                devices.noiseSuppressionMode === NoiseSuppressionMode.RNNOISE;
+            const shouldUseDTLN =
+                devices.noiseSuppressionMode === NoiseSuppressionMode.DTLN;
+
             const hasSpecificMic =
                 !!devices.microphoneId && devices.microphoneId !== 'default';
+
+            // DTLN runs natively at 16kHz, RNNoise at 48kHz. Match the whole
+            // pipeline (getUserMedia hint + AudioContext + gate) to the mode
+            // so there is exactly one context and zero cross-context handoff.
+            // Cross-AudioContext handoff causes clock-drift glitches.
+            const pipelineSampleRate = shouldUseDTLN ? 16000 : 48000;
 
             const rawStream = await navigator.mediaDevices.getUserMedia({
                 audio: {
@@ -351,7 +357,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                     autoGainControl: devices.autoGainControl,
                     echoCancellation: devices.echoCancellation,
                     noiseSuppression: devices.noiseSuppression,
-                    sampleRate: 48000,
+                    sampleRate: pipelineSampleRate,
                     channelCount: 1
                 },
                 video: false
@@ -362,12 +368,6 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             const rawAudioTrack = rawStream.getAudioTracks()[0];
 
             if (rawAudioTrack) {
-                const shouldUseNoiseGate = !!devices.noiseGateEnabled;
-                const shouldUseRNNoise =
-                    devices.noiseSuppressionMode ===
-                    NoiseSuppressionMode.RNNOISE;
-                const shouldUseDTLN =
-                    devices.noiseSuppressionMode === NoiseSuppressionMode.DTLN;
                 const noiseGateAvailability =
                     getNoiseGateWorkletAvailabilitySnapshot();
                 const rnnoiseAvailability =
@@ -376,61 +376,61 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                 let transmitTrack: MediaStreamTrack = rawAudioTrack;
                 let transmitStream: MediaStream = rawStream;
 
-                // DTLN runs in its own dedicated 16kHz AudioContext to avoid
-                // the worklet's internal linear-interp resampler (which causes
-                // audible crackle). The browser then resamples its output up
-                // to 48kHz when the resulting track feeds the main pipeline.
-                let preChainStream: MediaStream = rawStream;
-
-                if (shouldUseDTLN && dtlnAvailability.available) {
-                    try {
-                        const dtlnChain = await createDTLNChain(rawStream);
-                        microphoneDTLNContextRef.current = dtlnChain.context;
-                        microphoneDTLNStreamRef.current = dtlnChain.outputStream;
-                        preChainStream = dtlnChain.outputStream;
-
-                        console.log(
-                            '%c[DTLN] Initialized at 16kHz — noise suppression is active',
-                            'color: lime; font-weight: bold;'
-                        );
-                    } catch (error) {
-                        console.error(
-                            '%c[DTLN] Failed to initialize — noise suppression is NOT active',
-                            'color: red; font-weight: bold;',
-                            error
-                        );
-                        markDTLNWorkletUnavailable(
-                            'Failed to initialize the DTLN audio processor.'
-                        );
-                    }
-                } else if (shouldUseDTLN && !dtlnAvailability.available) {
-                    console.warn(
-                        '%c[DTLN] Unavailable — skipping noise suppression:',
-                        'color: orange; font-weight: bold;',
-                        dtlnAvailability.reason
-                    );
-                }
-
-                const dtlnActive = !!microphoneDTLNContextRef.current;
                 const needsProcessing =
                     (shouldUseNoiseGate && noiseGateAvailability.available) ||
-                    (shouldUseRNNoise && rnnoiseAvailability.available);
+                    (shouldUseRNNoise && rnnoiseAvailability.available) ||
+                    (shouldUseDTLN && dtlnAvailability.available);
 
                 if (needsProcessing) {
                     let audioContext: AudioContext | null = null;
 
                     try {
                         audioContext = new window.AudioContext({
-                            sampleRate: 48000
+                            sampleRate: pipelineSampleRate
                         });
                         const source =
-                            audioContext.createMediaStreamSource(preChainStream);
+                            audioContext.createMediaStreamSource(rawStream);
                         const destination =
                             audioContext.createMediaStreamDestination();
 
                         let currentNode: AudioNode = source;
 
-                        // RNNoise (AI denoising before noise gate)
+                        // DTLN first (only enabled in 16k pipeline)
+                        if (shouldUseDTLN && dtlnAvailability.available) {
+                            try {
+                                const dtlnNode =
+                                    await createDTLNWorkletNode(audioContext);
+
+                                currentNode.connect(dtlnNode);
+                                currentNode = dtlnNode;
+                                microphoneDTLNWorkletNodeRef.current = dtlnNode;
+
+                                console.log(
+                                    '%c[DTLN] Initialized at 16kHz — noise suppression is active',
+                                    'color: lime; font-weight: bold;'
+                                );
+                            } catch (error) {
+                                console.error(
+                                    '%c[DTLN] Failed to initialize — noise suppression is NOT active',
+                                    'color: red; font-weight: bold;',
+                                    error
+                                );
+                                markDTLNWorkletUnavailable(
+                                    'Failed to initialize the DTLN audio processor.'
+                                );
+                            }
+                        } else if (
+                            shouldUseDTLN &&
+                            !dtlnAvailability.available
+                        ) {
+                            console.warn(
+                                '%c[DTLN] Unavailable — skipping noise suppression:',
+                                'color: orange; font-weight: bold;',
+                                dtlnAvailability.reason
+                            );
+                        }
+
+                        // RNNoise (only enabled in 48k pipeline)
                         if (shouldUseRNNoise && rnnoiseAvailability.available) {
                             try {
                                 const rnnoiseNode =
@@ -526,6 +526,8 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                             transmitTrack = processedTrack;
                             transmitStream = destination.stream;
                         } else {
+                            microphoneDTLNWorkletNodeRef.current?.disconnect();
+                            microphoneDTLNWorkletNodeRef.current = null;
                             microphoneRNNoiseWorkletNodeRef.current?.disconnect();
                             microphoneRNNoiseWorkletNodeRef.current = null;
                             microphoneNoiseGateWorkletNodeRef.current?.disconnect();
@@ -545,17 +547,6 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                             'Failed to initialize audio processing pipeline, using raw mic stream',
                             { error }
                         );
-                    }
-                } else if (dtlnActive) {
-                    // DTLN-only path: no 48k chain needed, use DTLN output
-                    // track directly. Browser handles 16k -> 48k upsampling
-                    // when consumed by the producer.
-                    const dtlnTrack = preChainStream.getAudioTracks()[0];
-
-                    if (dtlnTrack) {
-                        rawMicrophoneStreamRef.current = rawStream;
-                        transmitTrack = dtlnTrack;
-                        transmitStream = preChainStream;
                     }
                 }
 
