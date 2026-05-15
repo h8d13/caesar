@@ -29,6 +29,7 @@ const DEFAULT_DEVICE_SETTINGS: TDeviceSettings = {
     noiseGateEnabled: true,
     noiseGateThresholdDb: MICROPHONE_GATE_DEFAULT_THRESHOLD_DB,
     rnnoiseEnabled: true,
+    dtlnEnabled: false,
     shareSystemAudio: true,
     mirrorOwnVideo: false,
     screenResolution: Resolution['720p'],

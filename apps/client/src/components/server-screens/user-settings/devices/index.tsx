@@ -10,6 +10,10 @@ import {
     subscribeNoiseGateWorkletAvailability
 } from '@/helpers/audio-worklet/noise-gate-worklet';
 import {
+    getDTLNWorkletAvailabilitySnapshot,
+    subscribeDTLNWorkletAvailability
+} from '@/helpers/audio-worklet/dtln-worklet';
+import {
     getRNNoiseWorkletAvailabilitySnapshot,
     subscribeRNNoiseWorkletAvailability
 } from '@/helpers/audio-worklet/rnnoise-worklet';
@@ -82,6 +86,12 @@ const Devices = memo(() => {
         getRNNoiseWorkletAvailabilitySnapshot
     );
     const isRNNoiseAvailable = rnnoiseWorkletAvailability.available;
+    const dtlnWorkletAvailability = useSyncExternalStore(
+        subscribeDTLNWorkletAvailability,
+        getDTLNWorkletAvailabilitySnapshot,
+        getDTLNWorkletAvailabilitySnapshot
+    );
+    const isDTLNAvailable = dtlnWorkletAvailability.available;
     const {
         testAudioRef,
         permissionState,
@@ -377,6 +387,16 @@ const Devices = memo(() => {
                                     }
                                 />
                             </Group>
+
+                            <Group label="DTLN Noise Suppression">
+                                <Switch
+                                    checked={!!values.dtlnEnabled}
+                                    disabled={!isDTLNAvailable}
+                                    onCheckedChange={(checked) =>
+                                        onChange('dtlnEnabled', checked)
+                                    }
+                                />
+                            </Group>
                         </div>
 
                         {!isNoiseGateAvailable && (
@@ -395,6 +415,24 @@ const Devices = memo(() => {
                                 {rnnoiseWorkletAvailability.reason
                                     ? ` ${rnnoiseWorkletAvailability.reason}`
                                     : ''}
+                            </p>
+                        )}
+
+                        {!isDTLNAvailable && values.dtlnEnabled && (
+                            <p className="text-xs text-muted-foreground">
+                                DTLN Noise Suppression is unavailable.
+                                {dtlnWorkletAvailability.reason
+                                    ? ` ${dtlnWorkletAvailability.reason}`
+                                    : ''}
+                            </p>
+                        )}
+
+                        {values.rnnoiseEnabled && values.dtlnEnabled && (
+                            <p className="text-xs text-muted-foreground">
+                                Both AI and DTLN noise suppression are enabled.
+                                They will be stacked (DTLN, then RNNoise) which
+                                may degrade voice quality. Usually you only
+                                want one.
                             </p>
                         )}
                     </Group>

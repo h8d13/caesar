@@ -14,6 +14,11 @@ import {
     postNoiseGateWorkletConfig
 } from '@/helpers/audio-worklet/noise-gate-worklet';
 import {
+    createDTLNWorkletNode,
+    getDTLNWorkletAvailabilitySnapshot,
+    markDTLNWorkletUnavailable
+} from '@/helpers/audio-worklet/dtln-worklet';
+import {
     createRNNoiseWorkletNode,
     getRNNoiseWorkletAvailabilitySnapshot,
     markRNNoiseWorkletUnavailable,
@@ -248,6 +253,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
     const microphoneRNNoiseWorkletNodeRef = useRef<AudioWorkletNode | null>(
         null
     );
+    const microphoneDTLNWorkletNodeRef = useRef<AudioWorkletNode | null>(null);
     const micMutedRef = useRef(ownVoiceState.micMuted);
 
     const syncTransmitMicrophoneTrackState = useCallback(() => {
@@ -263,6 +269,11 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
     }, []);
 
     const cleanupMicProcessingResources = useCallback(() => {
+        if (microphoneDTLNWorkletNodeRef.current) {
+            microphoneDTLNWorkletNodeRef.current.disconnect();
+            microphoneDTLNWorkletNodeRef.current = null;
+        }
+
         if (microphoneRNNoiseWorkletNodeRef.current) {
             microphoneRNNoiseWorkletNodeRef.current.port.postMessage({
                 type: 'cleanup'
@@ -352,16 +363,19 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             if (rawAudioTrack) {
                 const shouldUseNoiseGate = !!devices.noiseGateEnabled;
                 const shouldUseRNNoise = !!devices.rnnoiseEnabled;
+                const shouldUseDTLN = !!devices.dtlnEnabled;
                 const noiseGateAvailability =
                     getNoiseGateWorkletAvailabilitySnapshot();
                 const rnnoiseAvailability =
                     getRNNoiseWorkletAvailabilitySnapshot();
+                const dtlnAvailability = getDTLNWorkletAvailabilitySnapshot();
                 let transmitTrack: MediaStreamTrack = rawAudioTrack;
                 let transmitStream: MediaStream = rawStream;
 
                 const needsProcessing =
                     (shouldUseNoiseGate && noiseGateAvailability.available) ||
-                    (shouldUseRNNoise && rnnoiseAvailability.available);
+                    (shouldUseRNNoise && rnnoiseAvailability.available) ||
+                    (shouldUseDTLN && dtlnAvailability.available);
 
                 if (needsProcessing) {
                     let audioContext: AudioContext | null = null;
@@ -377,7 +391,39 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
 
                         let currentNode: AudioNode = source;
 
-                        // RNNoise first (AI denoising before noise gate)
+                        // DTLN first (heavier denoising, run before any other denoiser)
+                        if (shouldUseDTLN && dtlnAvailability.available) {
+                            try {
+                                const dtlnNode =
+                                    await createDTLNWorkletNode(audioContext);
+
+                                currentNode.connect(dtlnNode);
+                                currentNode = dtlnNode;
+                                microphoneDTLNWorkletNodeRef.current = dtlnNode;
+
+                                console.log(
+                                    '%c[DTLN] Initialized — noise suppression is active',
+                                    'color: lime; font-weight: bold;'
+                                );
+                            } catch (error) {
+                                console.error(
+                                    '%c[DTLN] Failed to initialize — noise suppression is NOT active',
+                                    'color: red; font-weight: bold;',
+                                    error
+                                );
+                                markDTLNWorkletUnavailable(
+                                    'Failed to initialize the DTLN audio processor.'
+                                );
+                            }
+                        } else if (shouldUseDTLN && !dtlnAvailability.available) {
+                            console.warn(
+                                '%c[DTLN] Unavailable — skipping noise suppression:',
+                                'color: orange; font-weight: bold;',
+                                dtlnAvailability.reason
+                            );
+                        }
+
+                        // RNNoise second (AI denoising before noise gate)
                         if (shouldUseRNNoise && rnnoiseAvailability.available) {
                             try {
                                 const rnnoiseNode =
@@ -473,6 +519,8 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                             transmitTrack = processedTrack;
                             transmitStream = destination.stream;
                         } else {
+                            microphoneDTLNWorkletNodeRef.current?.disconnect();
+                            microphoneDTLNWorkletNodeRef.current = null;
                             microphoneRNNoiseWorkletNodeRef.current?.disconnect();
                             microphoneRNNoiseWorkletNodeRef.current = null;
                             microphoneNoiseGateWorkletNodeRef.current?.disconnect();
@@ -564,7 +612,8 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         devices.noiseSuppression,
         devices.noiseGateEnabled,
         devices.noiseGateThresholdDb,
-        devices.rnnoiseEnabled
+        devices.rnnoiseEnabled,
+        devices.dtlnEnabled
     ]);
 
     const startWebcamStream = useCallback(async () => {

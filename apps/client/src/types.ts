@@ -53,6 +53,7 @@ export type TDeviceSettings = {
     noiseGateEnabled: boolean;
     noiseGateThresholdDb: number;
     rnnoiseEnabled: boolean;
+    dtlnEnabled: boolean;
     shareSystemAudio: boolean;
     mirrorOwnVideo: boolean;
     screenResolution: Resolution;
