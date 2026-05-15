@@ -339,6 +339,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                 devices.noiseSuppressionMode === NoiseSuppressionMode.RNNOISE;
             const shouldUseDTLN =
                 devices.noiseSuppressionMode === NoiseSuppressionMode.DTLN;
+            const advancedNsActive = shouldUseRNNoise || shouldUseDTLN;
 
             const hasSpecificMic =
                 !!devices.microphoneId && devices.microphoneId !== 'default';
@@ -346,7 +347,6 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             // DTLN runs natively at 16kHz, RNNoise at 48kHz. Match the whole
             // pipeline (getUserMedia hint + AudioContext + gate) to the mode
             // so there is exactly one context and zero cross-context handoff.
-            // Cross-AudioContext handoff causes clock-drift glitches.
             const pipelineSampleRate = shouldUseDTLN ? 16000 : 48000;
 
             const rawStream = await navigator.mediaDevices.getUserMedia({
@@ -356,8 +356,12 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                         : undefined,
                     autoGainControl: devices.autoGainControl,
                     echoCancellation: devices.echoCancellation,
-                    noiseSuppression: devices.noiseSuppression,
-                    sampleRate: pipelineSampleRate,
+                    // Disable browser-level noise suppression whenever an
+                    // advanced mode is on. Stacking two denoisers produces
+                    // speech smear / musical-noise artifacts.
+                    noiseSuppression:
+                        devices.noiseSuppression && !advancedNsActive,
+                    sampleRate: shouldUseDTLN ? 16000 : undefined,
                     channelCount: 1
                 },
                 video: false
