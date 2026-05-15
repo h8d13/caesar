@@ -121,14 +121,8 @@ const ensureDTLNWorkletLoaded = async (audioContext: AudioContext) => {
     await loadPromise;
 };
 
-const createDTLNWorkletNode = async (
-    audioContext: AudioContext
-): Promise<AudioWorkletNode> => {
-    await ensureDTLNWorkletLoaded(audioContext);
-
-    const node = new AudioWorkletNode(audioContext, DTLN_WORKLET_NAME);
-
-    await new Promise<void>((resolve, reject) => {
+const waitForDTLNReady = (node: AudioWorkletNode) =>
+    new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => {
             reject(new Error('DTLN worklet initialization timed out'));
         }, DTLN_READY_TIMEOUT_MS);
@@ -153,11 +147,52 @@ const createDTLNWorkletNode = async (
         };
     });
 
-    return node;
+type TDTLNChain = {
+    outputStream: MediaStream;
+    context: AudioContext;
+};
+
+// Runs DTLN in its own 16kHz AudioContext so the worklet hits the native
+// (zero-resample) fast path. The returned MediaStream is consumed by the
+// caller's main pipeline, where the browser handles 16k -> 48k upsampling
+// with its built-in polyphase resampler (much higher quality than the
+// linear interpolation in the worklet's fallback resampling path).
+const createDTLNChain = async (
+    inputStream: MediaStream
+): Promise<TDTLNChain> => {
+    if (!isDTLNWorkletSupported()) {
+        throw new Error(
+            'AudioWorklet, WebAssembly, or Cache API is not supported in this browser.'
+        );
+    }
+
+    const context = new AudioContext({ sampleRate: 16000 });
+
+    try {
+        await ensureDTLNWorkletLoaded(context);
+
+        const node = new AudioWorkletNode(context, DTLN_WORKLET_NAME);
+        const source = context.createMediaStreamSource(inputStream);
+        const destination = context.createMediaStreamDestination();
+
+        source.connect(node);
+        node.connect(destination);
+
+        if (context.state === 'suspended') {
+            await context.resume();
+        }
+
+        await waitForDTLNReady(node);
+
+        return { outputStream: destination.stream, context };
+    } catch (error) {
+        await context.close().catch(() => {});
+        throw error;
+    }
 };
 
 export {
-    createDTLNWorkletNode,
+    createDTLNChain,
     getDTLNWorkletAvailabilitySnapshot,
     isDTLNWorkletSupported,
     markDTLNWorkletUnavailable,
