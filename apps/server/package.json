@@ -43,7 +43,7 @@
     "@trpc/server": "^11.17.0",
     "cron": "^4.4.0",
     "drizzle-orm": "^0.45.2",
-    "ini": "^5.0.0",
+    "ini": "^7.0.0",
     "ipaddr.js": "^2.4.0",
     "jsonwebtoken": "^9.0.3",
     "link-preview-js": "^4.0.3",
