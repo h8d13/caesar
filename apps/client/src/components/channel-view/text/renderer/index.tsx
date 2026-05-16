@@ -94,8 +94,6 @@ const MessageRenderer = memo(
             }
         }, []);
 
-        const embeds = (message.metadata as TMessageMetadata[] | null) ?? [];
-
         const allMedia = useMemo(() => {
             const mediaFromFiles: TFoundMedia[] = message.files
                 .filter((file) => {
@@ -118,6 +116,32 @@ const MessageRenderer = memo(
 
             return [...foundMedia, ...mediaFromFiles];
         }, [foundMedia, message.files]);
+
+        // Drop opengraph entries whose URL is already shown inline as a
+        // direct media (image/video/audio in the message body). Hash is
+        // stripped for comparison since OG fetch usually drops fragments.
+        const embeds = useMemo(() => {
+            const raw = (message.metadata as TMessageMetadata[] | null) ?? [];
+
+            const normalize = (href: string) => {
+                try {
+                    const u = new URL(href);
+                    u.hash = '';
+                    return u.toString();
+                } catch {
+                    return href;
+                }
+            };
+
+            const inlineMediaUrls = new Set(
+                allMedia.map((item) => normalize(item.url))
+            );
+
+            return raw.filter(
+                (entry) =>
+                    entry?.url && !inlineMediaUrls.has(normalize(entry.url))
+            );
+        }, [message.metadata, allMedia]);
 
         return (
             <div className="flex flex-col gap-1">

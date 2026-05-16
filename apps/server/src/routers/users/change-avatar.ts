@@ -17,6 +17,13 @@ const changeAvatarRoute = protectedProcedure
     })
   )
   .mutation(async ({ ctx, input }) => {
+    if (
+      input.fileId &&
+      !fileManager.temporaryFileHasMimeType(input.fileId, 'image/')
+    ) {
+      throw new Error('Invalid file type. Please try again.');
+    }
+
     const user = await getUserById(ctx.userId);
 
     invariant(user, {

@@ -6,7 +6,7 @@ import zlib from 'zlib';
 import { INTERFACE_PATH } from '../helpers/paths';
 import { logger } from '../logger';
 import { IS_DEVELOPMENT, IS_TEST } from '../utils/env';
-import { buildCsp } from './helpers';
+import { buildCsp, buildEtag, sendNotModified } from './helpers';
 
 const COMPRESSIBLE_TYPES = new Set([
   'text/html',
@@ -109,10 +109,29 @@ const interfaceRouteHandler = (
 
   // Static assets — hashed filenames (assets/) can be cached immutably
   const isHashed = cleanSubPath.startsWith('assets/');
-  res.setHeader(
-    'Cache-Control',
-    isHashed ? 'public, max-age=31536000, immutable' : 'public, max-age=3600'
-  );
+  const cacheControl = isHashed
+    ? 'public, max-age=31536000, immutable'
+    : 'public, max-age=3600';
+
+  // index.html gets no ETag because the nonce is injected fresh per response,
+  // so the byte stream differs even when the source file is unchanged.
+  const etag = buildEtag(null, stats);
+  const lastModified = stats.mtime.toUTCString();
+
+  if (
+    sendNotModified(req, res, {
+      etag,
+      lastModified,
+      cacheControl,
+      mtimeMs: stats.mtimeMs
+    })
+  ) {
+    return res;
+  }
+
+  res.setHeader('Cache-Control', cacheControl);
+  res.setHeader('ETag', etag);
+  res.setHeader('Last-Modified', lastModified);
 
   const file = Bun.file(requestedPath);
   const contentType = file.type;

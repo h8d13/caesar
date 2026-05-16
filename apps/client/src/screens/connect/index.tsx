@@ -34,11 +34,13 @@ const Connect = memo(() => {
     const { values, r, setErrors, onChange } = useForm<{
         identity: string;
         password: string;
+        confirmPassword: string;
         rememberCredentials: boolean;
         autoLogin: boolean;
     }>({
         identity: getLocalStorageItem(LocalStorageKey.IDENTITY) || '',
         password: getLocalStorageItem(LocalStorageKey.USER_PASSWORD) || '',
+        confirmPassword: '',
         rememberCredentials: !!getLocalStorageItem(
             LocalStorageKey.REMEMBER_CREDENTIALS
         ),
@@ -46,7 +48,11 @@ const Connect = memo(() => {
     });
 
     const [loading, setLoading] = useState(false);
+    const [isNewAccount, setIsNewAccount] = useState(false);
     const info = useInfo();
+
+    const passwordMismatch =
+        isNewAccount && values.confirmPassword !== values.password;
 
     const inviteCode = useMemo(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -55,6 +61,13 @@ const Connect = memo(() => {
     }, []);
 
     const onConnectClick = useCallback(async () => {
+        if (isNewAccount && values.password !== values.confirmPassword) {
+            setErrors({
+                confirmPassword: 'Passwords do not match'
+            });
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -108,7 +121,9 @@ const Connect = memo(() => {
     }, [
         values.identity,
         values.password,
+        values.confirmPassword,
         values.autoLogin,
+        isNewAccount,
         setErrors,
         inviteCode
     ]);
@@ -170,12 +185,46 @@ const Connect = memo(() => {
                             <Input
                                 {...r('password')}
                                 type="password"
-                                autoComplete="current-password"
+                                autoComplete={
+                                    isNewAccount
+                                        ? 'new-password'
+                                        : 'current-password'
+                                }
                                 onEnter={onConnectClick}
                                 data-testid={TestId.CONNECT_PASSWORD_INPUT}
                             />
                         </Group>
+                        {isNewAccount && (
+                            <Group
+                                label="Confirm password"
+                                help="Type your password again so you don't lock yourself out."
+                            >
+                                <Input
+                                    {...r('confirmPassword')}
+                                    type="password"
+                                    autoComplete="new-password"
+                                    onEnter={onConnectClick}
+                                />
+                            </Group>
+                        )}
                     </form>
+
+                    <div
+                        className="flex items-center gap-2 w-fit cursor-pointer"
+                        onClick={() => {
+                            const next = !isNewAccount;
+                            setIsNewAccount(next);
+                            if (!next) {
+                                onChange('confirmPassword', '');
+                                setErrors({});
+                            }
+                        }}
+                    >
+                        <Switch checked={isNewAccount} />
+                        <span className="text-sm font-medium cursor-pointer">
+                            Create a new account
+                        </span>
+                    </div>
 
                     <div
                         className="flex items-center gap-2 w-fit cursor-pointer"
@@ -219,11 +268,14 @@ const Connect = memo(() => {
                             variant="outline"
                             onClick={onConnectClick}
                             disabled={
-                                loading || !values.identity || !values.password
+                                loading ||
+                                !values.identity ||
+                                !values.password ||
+                                passwordMismatch
                             }
                             data-testid={TestId.CONNECT_BUTTON}
                         >
-                            Connect
+                            {isNewAccount ? 'Create account' : 'Connect'}
                         </Button>
 
                         {!info?.allowNewUsers && (

@@ -13,6 +13,13 @@ const changeLogoRoute = protectedProcedure
     })
   )
   .mutation(async ({ ctx, input }) => {
+    if (
+      input.fileId &&
+      !fileManager.temporaryFileHasMimeType(input.fileId, 'image/')
+    ) {
+      throw new Error('Invalid file type. Please try again.');
+    }
+
     const settings = await getSettings();
 
     if (settings.logoId) {

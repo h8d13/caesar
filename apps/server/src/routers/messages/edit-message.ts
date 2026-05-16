@@ -62,7 +62,7 @@ const editMessageRoute = rateLimitedProcedure(protectedProcedure, {
 
     const sanitizedContent = sanitizeMessageHtml(input.content);
 
-    invariant(!isEmptyMessage(input.content), {
+    invariant(!isEmptyMessage(sanitizedContent), {
       code: 'BAD_REQUEST',
       message:
         'Your message only contained unsupported or removed content, so there was nothing to send.'
