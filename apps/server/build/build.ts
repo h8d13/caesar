@@ -1,24 +1,12 @@
 import fs from 'fs/promises';
 import path from 'path';
-import semver from 'semver';
 import { parseArgs } from 'util';
 import { zipDirectory } from '../src/helpers/zip';
-import {
-  compile,
-  getCurrentVersion,
-  getVersionInfo,
-  patchPackageJsons,
-  rmIfExists,
-  type TTarget
-} from './helpers';
+import { compile, rmIfExists, type TTarget } from './helpers';
 
 const { values } = parseArgs({
   args: Bun.argv,
   options: {
-    bump: {
-      type: 'string',
-      default: 'none'
-    },
     target: {
       type: 'string'
     }
@@ -27,20 +15,6 @@ const { values } = parseArgs({
   allowPositionals: true
 });
 
-if (values.bump && values.bump !== 'none') {
-  const newVersion = semver.inc(
-    await getCurrentVersion(),
-    values.bump as semver.ReleaseType
-  );
-
-  if (!newVersion) {
-    console.error('Failed to increment version');
-    process.exit(1);
-  }
-
-  await patchPackageJsons(newVersion);
-}
-
 const clientCwd = path.resolve(process.cwd(), '..', 'client');
 const serverCwd = process.cwd();
 const viteDistPath = path.join(clientCwd, 'dist');
@@ -48,7 +22,6 @@ const buildPath = path.join(serverCwd, 'build');
 const buildTempPath = path.join(buildPath, 'temp');
 const drizzleMigrationsPath = path.join(serverCwd, 'src', 'db', 'migrations');
 const outPath = path.join(buildPath, 'out');
-const releasePath = path.join(outPath, 'release.json');
 const interfaceZipPath = path.join(buildTempPath, 'interface.zip');
 const drizzleZipPath = path.join(buildTempPath, 'drizzle.zip');
 
@@ -107,12 +80,6 @@ for (const target of targets) {
     out: path.join(outPath, target.out),
     target: target.target
   });
-}
-
-if (!values.target) {
-  const releaseInfo = await getVersionInfo(targets, outPath);
-
-  await fs.writeFile(releasePath, JSON.stringify(releaseInfo, null, 2), 'utf8');
 }
 
 await fs.rm(buildTempPath, { recursive: true, force: true });

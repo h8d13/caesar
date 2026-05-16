@@ -100,13 +100,6 @@ export type TServerInfo = Pick<
   version: string;
 };
 
-export type TArtifact = {
-  name: string;
-  target: string;
-  size: number;
-  checksum: string;
-};
-
 export type TIpInfo = {
   ip: string;
   hostname: string;

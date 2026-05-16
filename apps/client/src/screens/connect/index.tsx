@@ -306,19 +306,6 @@ const Connect = memo(() => {
                     </div>
                 </CardContent>
             </Card>
-
-            <div className="flex justify-center gap-2 text-xs text-muted-foreground select-none">
-                <span>v{VITE_APP_VERSION}</span>
-                {VITE_GITHUB_URL && (
-                    <a
-                        href={VITE_GITHUB_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        GitHub
-                    </a>
-                )}
-            </div>
         </div>
     );
 });

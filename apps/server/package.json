@@ -25,7 +25,6 @@
     "@types/ini": "^4.1.1",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/sanitize-html": "^2.16.0",
-    "@types/semver": "^7.7.1",
     "@types/ws": "^8.18.1",
     "@types/yauzl": "^2.10.3",
     "@types/yazl": "^3.3.0",
@@ -42,7 +41,6 @@
   "dependencies": {
     "@sharkord/shared": "workspace:*",
     "@trpc/server": "^11.6.0",
-    "bun-sfe-autoupdater": "^0.0.4",
     "chalk": "^5.6.2",
     "cron": "^4.4.0",
     "drizzle-orm": "^0.45.2",
@@ -53,7 +51,6 @@
     "mediasoup": "^3.19.17",
     "queue": "^7.0.0",
     "sanitize-html": "^2.17.4",
-    "semver": "^7.7.4",
     "ua-parser-js": "^2.0.6",
     "winston": "^3.17.0",
     "ws": "^8.18.3",

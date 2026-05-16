@@ -11,7 +11,6 @@ declare global {
 
     const VITE_APP_NAME: string;
     const VITE_APP_VERSION: string;
-    const VITE_GITHUB_URL: string;
 }
 
 export {};
