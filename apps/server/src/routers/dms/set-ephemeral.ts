@@ -11,18 +11,13 @@ import { directMessages } from '../../db/schema';
 import { invariant } from '../../utils/invariant';
 import { protectedProcedure } from '../../utils/trpc';
 
-const ALLOWED_MS = new Set<number | null>([
-  null,
-  60 * 60 * 1000, // 1h
-  24 * 60 * 60 * 1000, // 24h
-  7 * 24 * 60 * 60 * 1000 // 7d
-]);
+const EPHEMERAL_MS = 24 * 60 * 60 * 1000;
 
 const setEphemeralRoute = protectedProcedure
   .input(
     z.object({
       channelId: z.number(),
-      ephemeralMs: z.number().int().positive().nullable()
+      enabled: z.boolean()
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -33,16 +28,13 @@ const setEphemeralRoute = protectedProcedure
       message: 'Ephemeral mode is only supported on DM channels'
     });
 
-    invariant(ALLOWED_MS.has(input.ephemeralMs), {
-      code: 'BAD_REQUEST',
-      message: 'Invalid ephemeral duration'
-    });
-
     await assertDmParticipant(input.channelId, ctx.userId);
+
+    const ephemeralMs = input.enabled ? EPHEMERAL_MS : null;
 
     await db
       .update(directMessages)
-      .set({ ephemeralMs: input.ephemeralMs })
+      .set({ ephemeralMs })
       .where(eq(directMessages.channelId, input.channelId));
 
     const participants = await getDirectMessageChannelParticipantIds(
@@ -51,7 +43,7 @@ const setEphemeralRoute = protectedProcedure
 
     ctx.pubsub.publishFor(participants, ServerEvents.DM_EPHEMERAL_UPDATE, {
       channelId: input.channelId,
-      ephemeralMs: input.ephemeralMs
+      ephemeralMs
     });
   });
 

@@ -68,7 +68,7 @@ describe('dms router', () => {
     );
   });
 
-  test('ephemeral mode: default null, set/get round-trips, validates duration', async () => {
+  test('ephemeral mode: default off, toggle on/off round-trips', async () => {
     const { caller: caller1 } = await initTest(1);
     const { caller: caller2 } = await initTest(2);
 
@@ -77,21 +77,14 @@ describe('dms router', () => {
     const initial = await caller1.dms.getEphemeral({ channelId });
     expect(initial.ephemeralMs).toBeNull();
 
-    await caller1.dms.setEphemeral({
-      channelId,
-      ephemeralMs: 60 * 60 * 1000
-    });
+    await caller1.dms.setEphemeral({ channelId, enabled: true });
 
     const afterSet = await caller2.dms.getEphemeral({ channelId });
-    expect(afterSet.ephemeralMs).toBe(60 * 60 * 1000);
+    expect(afterSet.ephemeralMs).toBe(24 * 60 * 60 * 1000);
 
-    await caller1.dms.setEphemeral({ channelId, ephemeralMs: null });
+    await caller1.dms.setEphemeral({ channelId, enabled: false });
     const afterClear = await caller1.dms.getEphemeral({ channelId });
     expect(afterClear.ephemeralMs).toBeNull();
-
-    await expect(
-      caller1.dms.setEphemeral({ channelId, ephemeralMs: 12345 })
-    ).rejects.toThrow('Invalid ephemeral duration');
   });
 
   test('ephemeral mode: non-participant cannot read or set', async () => {
@@ -105,10 +98,7 @@ describe('dms router', () => {
     );
 
     await expect(
-      caller3.dms.setEphemeral({
-        channelId,
-        ephemeralMs: 60 * 60 * 1000
-      })
+      caller3.dms.setEphemeral({ channelId, enabled: true })
     ).rejects.toThrow('You are not a participant in this DM channel');
   });
 
@@ -133,9 +123,9 @@ describe('dms router', () => {
     expect(beforeEphemeral.length).toBe(1);
     expect(beforeEphemeral[0]!.expiresAt).toBeNull();
 
-    // turn on 1h ephemeral, new message gets expiresAt ~now+1h
-    const ONE_HOUR = 60 * 60 * 1000;
-    await caller1.dms.setEphemeral({ channelId, ephemeralMs: ONE_HOUR });
+    // turn on ephemeral, new message gets expiresAt ~now+24h
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+    await caller1.dms.setEphemeral({ channelId, enabled: true });
 
     const before = Date.now();
     await caller1.messages.send({
@@ -153,8 +143,12 @@ describe('dms router', () => {
 
     expect(ephemeralRow).toBeTruthy();
     expect(ephemeralRow!.expiresAt).not.toBeNull();
-    expect(ephemeralRow!.expiresAt!).toBeGreaterThanOrEqual(before + ONE_HOUR);
-    expect(ephemeralRow!.expiresAt!).toBeLessThanOrEqual(after + ONE_HOUR);
+    expect(ephemeralRow!.expiresAt!).toBeGreaterThanOrEqual(
+      before + TWENTY_FOUR_HOURS
+    );
+    expect(ephemeralRow!.expiresAt!).toBeLessThanOrEqual(
+      after + TWENTY_FOUR_HOURS
+    );
 
     // force expire and run prune cron
     await tdb
@@ -185,10 +179,7 @@ describe('dms router', () => {
     const { caller } = await initTest(1);
 
     await expect(
-      caller.dms.setEphemeral({
-        channelId: 1,
-        ephemeralMs: 60 * 60 * 1000
-      })
+      caller.dms.setEphemeral({ channelId: 1, enabled: true })
     ).rejects.toThrow('Ephemeral mode is only supported on DM channels');
   });
 
