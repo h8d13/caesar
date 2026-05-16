@@ -105,7 +105,8 @@ const VoiceGrid = memo(
         const totalCards = regularCards.length;
         const rows = getRowCount(totalCards, gridCols);
         const lastRowCount = totalCards % gridCols;
-        const lastRowStart = lastRowCount === 0 ? totalCards : totalCards - lastRowCount;
+        const lastRowStart =
+            lastRowCount === 0 ? totalCards : totalCards - lastRowCount;
 
         return (
             <div
@@ -123,9 +124,7 @@ const VoiceGrid = memo(
                     if (isLoneLastCard) {
                         return (
                             <div
-                                key={
-                                    isValidElement(card) ? card.key : index
-                                }
+                                key={isValidElement(card) ? card.key : index}
                                 className="col-span-full"
                             >
                                 {card}

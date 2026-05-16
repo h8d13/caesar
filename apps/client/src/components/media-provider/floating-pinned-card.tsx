@@ -28,8 +28,13 @@ const FloatingPinnedCard = memo(
         localVideoStream,
         localScreenShareStream
     }: TFloatingPinnedCardProps) => {
-        const { cardRef, handleMouseDown, handleResizeMouseDown, getStyle, resetCard } =
-            useFloatingCard();
+        const {
+            cardRef,
+            handleMouseDown,
+            handleResizeMouseDown,
+            getStyle,
+            resetCard
+        } = useFloatingCard();
         const videoRef = useRef<HTMLVideoElement>(null);
         const [open, setOpen] = useState(true);
         const pinnedCard = usePinnedCard();

@@ -53,7 +53,10 @@ export const useFloatingCard = () => {
     }, [position]);
 
     useEffect(() => {
-        setLocalStorageItemAsJSON<TSize>(LocalStorageKey.FLOATING_CARD_SIZE, size);
+        setLocalStorageItemAsJSON<TSize>(
+            LocalStorageKey.FLOATING_CARD_SIZE,
+            size
+        );
     }, [size]);
 
     const handleMouseDown = useCallback((e: React.MouseEvent) => {

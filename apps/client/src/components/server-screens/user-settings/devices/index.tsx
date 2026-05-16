@@ -6,13 +6,13 @@ import { usePublicServerSettings } from '@/features/server/hooks';
 import { useOwnVoiceState } from '@/features/server/voice/hooks';
 import { MICROPHONE_GATE_DEFAULT_THRESHOLD_DB } from '@/helpers/audio-gate';
 import {
-    getNoiseGateWorkletAvailabilitySnapshot,
-    subscribeNoiseGateWorkletAvailability
-} from '@/helpers/audio-worklet/noise-gate-worklet';
-import {
     getDTLNWorkletAvailabilitySnapshot,
     subscribeDTLNWorkletAvailability
 } from '@/helpers/audio-worklet/dtln-worklet';
+import {
+    getNoiseGateWorkletAvailabilitySnapshot,
+    subscribeNoiseGateWorkletAvailability
+} from '@/helpers/audio-worklet/noise-gate-worklet';
 import {
     getRNNoiseWorkletAvailabilitySnapshot,
     subscribeRNNoiseWorkletAvailability
@@ -346,105 +346,120 @@ const Devices = memo(() => {
                             </Select>
 
                             <div className="flex items-center gap-4">
-                            <Group label="Echo cancellation">
-                                <Switch
-                                    checked={!!values.echoCancellation}
-                                    onCheckedChange={(checked) =>
-                                        onChange('echoCancellation', checked)
+                                <Group label="Echo cancellation">
+                                    <Switch
+                                        checked={!!values.echoCancellation}
+                                        onCheckedChange={(checked) =>
+                                            onChange(
+                                                'echoCancellation',
+                                                checked
+                                            )
+                                        }
+                                    />
+                                </Group>
+
+                                <Group label="Noise suppression">
+                                    <Switch
+                                        checked={
+                                            !!values.noiseSuppression &&
+                                            !advancedNsActive
+                                        }
+                                        disabled={advancedNsActive}
+                                        onCheckedChange={(checked) =>
+                                            onChange(
+                                                'noiseSuppression',
+                                                checked
+                                            )
+                                        }
+                                    />
+                                </Group>
+
+                                <Group label="Automatic gain control">
+                                    <Switch
+                                        checked={!!values.autoGainControl}
+                                        onCheckedChange={(checked) =>
+                                            onChange('autoGainControl', checked)
+                                        }
+                                    />
+                                </Group>
+
+                                <Group label="Noise gate">
+                                    <Switch
+                                        checked={values.noiseGateEnabled}
+                                        disabled={!isNoiseGateAvailable}
+                                        onCheckedChange={(checked) =>
+                                            onChange(
+                                                'noiseGateEnabled',
+                                                checked
+                                            )
+                                        }
+                                    />
+                                </Group>
+                            </div>
+
+                            <Group label="AI Noise Suppression">
+                                <Select
+                                    value={values.noiseSuppressionMode}
+                                    onValueChange={(value) =>
+                                        onChange(
+                                            'noiseSuppressionMode',
+                                            value as NoiseSuppressionMode
+                                        )
                                     }
-                                />
+                                >
+                                    <SelectTrigger className="w-56">
+                                        <SelectValue placeholder="Select mode" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            <SelectItem
+                                                value={
+                                                    NoiseSuppressionMode.NONE
+                                                }
+                                            >
+                                                Off
+                                            </SelectItem>
+                                            <SelectItem
+                                                value={
+                                                    NoiseSuppressionMode.RNNOISE
+                                                }
+                                                disabled={!isRNNoiseAvailable}
+                                            >
+                                                RNNoise (fast)
+                                            </SelectItem>
+                                            <SelectItem
+                                                value={
+                                                    NoiseSuppressionMode.DTLN
+                                                }
+                                                disabled={!isDTLNAvailable}
+                                            >
+                                                DTLN (stronger)
+                                            </SelectItem>
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
                             </Group>
 
-                            <Group label="Noise suppression">
-                                <Switch
-                                    checked={
-                                        !!values.noiseSuppression &&
-                                        !advancedNsActive
-                                    }
-                                    disabled={advancedNsActive}
-                                    onCheckedChange={(checked) =>
-                                        onChange('noiseSuppression', checked)
-                                    }
-                                />
-                            </Group>
-
-                            <Group label="Automatic gain control">
-                                <Switch
-                                    checked={!!values.autoGainControl}
-                                    onCheckedChange={(checked) =>
-                                        onChange('autoGainControl', checked)
-                                    }
-                                />
-                            </Group>
-
-                            <Group label="Noise gate">
-                                <Switch
-                                    checked={values.noiseGateEnabled}
-                                    disabled={!isNoiseGateAvailable}
-                                    onCheckedChange={(checked) =>
-                                        onChange('noiseGateEnabled', checked)
-                                    }
-                                />
-                            </Group>
-                        </div>
-
-                        <Group label="AI Noise Suppression">
-                            <Select
-                                value={values.noiseSuppressionMode}
-                                onValueChange={(value) =>
-                                    onChange(
-                                        'noiseSuppressionMode',
-                                        value as NoiseSuppressionMode
-                                    )
-                                }
-                            >
-                                <SelectTrigger className="w-56">
-                                    <SelectValue placeholder="Select mode" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        <SelectItem
-                                            value={NoiseSuppressionMode.NONE}
-                                        >
-                                            Off
-                                        </SelectItem>
-                                        <SelectItem
-                                            value={NoiseSuppressionMode.RNNOISE}
-                                            disabled={!isRNNoiseAvailable}
-                                        >
-                                            RNNoise (fast)
-                                        </SelectItem>
-                                        <SelectItem
-                                            value={NoiseSuppressionMode.DTLN}
-                                            disabled={!isDTLNAvailable}
-                                        >
-                                            DTLN (stronger)
-                                        </SelectItem>
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                        </Group>
-
-                        {!isNoiseGateAvailable && (
-                            <p className="text-xs text-muted-foreground">
-                                Noise gate is unavailable. Microphone audio will
-                                be sent without gating.
-                                {noiseGateWorkletAvailability.reason
-                                    ? ` ${noiseGateWorkletAvailability.reason}`
-                                    : ''}
-                            </p>
-                        )}
-
-                        {values.noiseSuppressionMode ===
-                            NoiseSuppressionMode.RNNOISE &&
-                            !isRNNoiseAvailable && (
+                            {!isNoiseGateAvailable && (
                                 <p className="text-xs text-muted-foreground">
-                                    RNNoise is unavailable.
-                                    {rnnoiseWorkletAvailability.reason
-                                        ? ` ${rnnoiseWorkletAvailability.reason}`
+                                    Noise gate is unavailable. Microphone audio
+                                    will be sent without gating.
+                                    {noiseGateWorkletAvailability.reason
+                                        ? ` ${noiseGateWorkletAvailability.reason}`
                                         : ''}
                                 </p>
                             )}
+
+                            {values.noiseSuppressionMode ===
+                                NoiseSuppressionMode.RNNOISE &&
+                                !isRNNoiseAvailable && (
+                                    <p className="text-xs text-muted-foreground">
+                                        RNNoise is unavailable.
+                                        {rnnoiseWorkletAvailability.reason
+                                            ? ` ${rnnoiseWorkletAvailability.reason}`
+                                            : ''}
+                                    </p>
+                                )}
 
                             {values.noiseSuppressionMode ===
                                 NoiseSuppressionMode.DTLN &&

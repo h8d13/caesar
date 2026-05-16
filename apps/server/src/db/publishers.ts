@@ -27,9 +27,12 @@ const publishMessage = async (
   if (!messageId || !channelId) return;
 
   if (type === 'delete') {
-    const affectedUserIds = await getAffectedOnlineUserIdsForChannel(channelId, {
-      permission: ChannelPermission.VIEW_CHANNEL
-    });
+    const affectedUserIds = await getAffectedOnlineUserIdsForChannel(
+      channelId,
+      {
+        permission: ChannelPermission.VIEW_CHANNEL
+      }
+    );
 
     pubsub.publishFor(affectedUserIds, ServerEvents.MESSAGE_DELETE, {
       messageId: messageId,

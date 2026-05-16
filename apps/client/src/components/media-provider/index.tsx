@@ -8,16 +8,16 @@ import {
     clampMicrophoneDecibels
 } from '@/helpers/audio-gate';
 import {
+    createDTLNWorkletNode,
+    getDTLNWorkletAvailabilitySnapshot,
+    markDTLNWorkletUnavailable
+} from '@/helpers/audio-worklet/dtln-worklet';
+import {
     createNoiseGateWorkletNode,
     getNoiseGateWorkletAvailabilitySnapshot,
     markNoiseGateWorkletUnavailable,
     postNoiseGateWorkletConfig
 } from '@/helpers/audio-worklet/noise-gate-worklet';
-import {
-    createDTLNWorkletNode,
-    getDTLNWorkletAvailabilitySnapshot,
-    markDTLNWorkletUnavailable
-} from '@/helpers/audio-worklet/dtln-worklet';
 import {
     createRNNoiseWorkletNode,
     getRNNoiseWorkletAvailabilitySnapshot,
