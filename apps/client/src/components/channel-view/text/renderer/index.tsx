@@ -144,7 +144,7 @@ const MessageRenderer = memo(
         }, [message.metadata, allMedia]);
 
         return (
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col">
                 <div
                     className={cn(
                         'prose max-w-full overflow-hidden wrap-break-word msg-content',
@@ -155,7 +155,7 @@ const MessageRenderer = memo(
                     {message.editedAt ? (
                         <Tooltip
                             content={
-                                <div className="flex flex-col gap-1">
+                                <div className="flex flex-col">
                                     <RelativeTime
                                         date={new Date(message.editedAt)}
                                     >
