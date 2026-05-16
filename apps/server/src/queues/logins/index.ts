@@ -1,9 +1,9 @@
 import Queue from 'queue';
 import { db } from '../../db';
 import { logins } from '../../db/schema';
+import { hashIp } from '../../helpers/hash-ip';
 import { logger } from '../../logger';
 import type { TConnectionInfo } from '../../types';
-import { getIpInfo } from '../../utils/logins';
 
 const loginsQueue = new Queue({
   concurrency: 1,
@@ -20,16 +20,15 @@ const enqueueLogin = (userId: number, info: TConnectionInfo | undefined) => {
       callback?.();
       return;
     }
+
     const { ip, ...rest } = info;
-    const ipInfo = ip ? await getIpInfo(ip) : undefined;
 
     await db
       .insert(logins)
       .values({
         userId,
-        ip,
+        ip: hashIp(ip),
         ...rest,
-        ...ipInfo,
         createdAt: Date.now()
       })
       .returning()

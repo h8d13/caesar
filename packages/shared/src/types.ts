@@ -100,18 +100,6 @@ export type TServerInfo = Pick<
   version: string;
 };
 
-export type TIpInfo = {
-  ip: string;
-  hostname: string;
-  city: string;
-  region: string;
-  country: string;
-  loc: string;
-  org: string;
-  postal: string;
-  timezone: string;
-};
-
 export type TChannelPermissionsMap = Record<ChannelPermission, boolean>;
 
 export type TChannelUserPermissionsMap = Record<

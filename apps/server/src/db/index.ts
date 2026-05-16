@@ -14,6 +14,12 @@ const loadDb = async () => {
   db = drizzle({ client: sqlite });
 
   await migrate(db, { migrationsFolder: DRIZZLE_PATH });
+
+  // Rewrite the file to reclaim pages freed by DROP COLUMN / UPDATE-to-NULL.
+  // Without this, deleted bytes (e.g. old raw IPs from migration 0010)
+  // linger in the file's free list and are forensically recoverable.
+  sqlite.run('VACUUM;');
+
   await seedDatabase();
 };
 

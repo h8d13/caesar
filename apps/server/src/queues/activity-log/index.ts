@@ -2,6 +2,7 @@ import type { ActivityLogType, TActivityLogDetailsMap } from '@sharkord/shared';
 import Queue from 'queue';
 import { db } from '../../db';
 import { activityLog } from '../../db/schema';
+import { hashIp } from '../../helpers/hash-ip';
 import { logger } from '../../logger';
 import { getUserIp } from '../../utils/wss';
 
@@ -35,7 +36,7 @@ const enqueueActivityLog = <T extends ActivityLogType>({
       userId,
       type: type,
       details,
-      ip: ip || getUserIp(userId) || null,
+      ip: hashIp(ip || getUserIp(userId)),
       createdAt: date
     });
 

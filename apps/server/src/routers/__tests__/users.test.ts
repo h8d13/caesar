@@ -159,17 +159,10 @@ describe('users router', () => {
       createdAt: Date.now()
     });
 
-    // insert a login record for user 1 so we can verify ip and location are hidden
+    // insert a login record for user 1 so we can verify ip is hidden
     await tdb.insert(logins).values({
       userId: 1,
-      ip: '192.168.1.1',
-      city: 'Gondomar',
-      region: 'Porto',
-      country: 'PT',
-      loc: '41.1833,-8.6333',
-      org: 'MEO',
-      postal: '10001',
-      timezone: 'Europe/Lisbon',
+      ip: 'deadbeefcafebabe',
       createdAt: Date.now()
     });
 
@@ -188,7 +181,6 @@ describe('users router', () => {
 
     info.logins.forEach((login) => {
       expect(login.ip).toBeNull();
-      expect(login.loc).toBeNull();
     });
   });
 

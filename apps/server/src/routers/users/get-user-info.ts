@@ -34,12 +34,11 @@ const getUserInfoRoute = protectedProcedure
     let cleanLogins: TLogin[] = [...logins];
 
     if (!(await ctx.hasPermission(Permission.VIEW_USER_SENSITIVE_DATA))) {
-      // doesn't have permission to view sensitive data, remove identity, ip and location
+      // doesn't have permission to view sensitive data, remove identity and ip hash
       cleanUser = clearFields(cleanUser, ['identity']);
       cleanLogins = logins.map((login) => ({
         ...login,
-        ip: null,
-        loc: null
+        ip: null
       }));
     }
 

@@ -16,7 +16,6 @@ import {
     Eye,
     EyeClosed,
     Gavel,
-    Globe,
     IdCard,
     Network
 } from 'lucide-react';
@@ -101,17 +100,8 @@ const Details = memo(() => {
                             icon={
                                 <Network className="h-4 w-4 text-muted-foreground" />
                             }
-                            label="IP Address"
+                            label="Client hash"
                             value={lastLogin?.ip || 'Unknown'}
-                            hidden
-                        />
-
-                        <Row
-                            icon={
-                                <Globe className="h-4 w-4 text-muted-foreground" />
-                            }
-                            label="Location"
-                            value={`${lastLogin?.country || 'N/A'} - ${lastLogin?.city || 'N/A'}`}
                             hidden
                         />
                     </Protect>
