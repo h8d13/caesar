@@ -1,5 +1,3 @@
-your.domain.com:8443 {
-	tls internal
-
+your.domain.com {
 	reverse_proxy sharkord:4991
 }

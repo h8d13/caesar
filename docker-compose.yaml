@@ -26,7 +26,9 @@ services:
     depends_on:
       - sharkord
     ports:
-      - "8443:8443/tcp"
+      - "80:80/tcp"
+      - "443:443/tcp"
+      - "443:443/udp"
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
