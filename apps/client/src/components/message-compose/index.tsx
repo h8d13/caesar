@@ -129,11 +129,11 @@ const MessageCompose = memo(
 
                 const trpc = getTRPCClient();
 
-                try {
-                    trpc.files.deleteTemporary.mutate({ fileId });
-                } catch {
-                    // ignore error
-                }
+                // fire-and-forget: orphaned temp files are reaped by the
+                // cleanup job, but trace if the request itself rejects
+                trpc.files.deleteTemporary.mutate({ fileId }).catch((e) => {
+                    console.warn('failed to delete temp file', fileId, e);
+                });
             },
             [removeFile]
         );

@@ -13,8 +13,8 @@ const extractUrls = (content: string): string[] => {
 
     // remove duplicates
     return Array.from(new Set(urls));
-  } catch {
-    // ignore
+  } catch (e) {
+    console.warn('extractUrls: linkify failed', e);
   }
 
   return [];

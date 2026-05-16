@@ -162,11 +162,11 @@ export const addMessages = (
         if (isChannelSelected && !isFromOwnUser && rootMessages.length > 0) {
             const trpc = getTRPCClient();
 
-            try {
-                trpc.channels.markAsRead.mutate({ channelId });
-            } catch {
-                // ignore errors
-            }
+            // fire-and-forget read receipt: log rejection so a broken
+            // markAsRead doesn't silently rot the unread badge
+            trpc.channels.markAsRead.mutate({ channelId }).catch((e) => {
+                console.error('markAsRead failed', e);
+            });
         }
     }
 };
