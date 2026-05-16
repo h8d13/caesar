@@ -44,14 +44,10 @@
       "groupName": "bun runtime"
     },
     {
-      "matchPackageNames": ["typescript"],
-      "allowedVersions": "<6.0.0",
-      "description": "cap to TS 5.x until 6.x ships stable"
-    },
-    {
-      "matchPackageNames": ["@types/node"],
-      "allowedVersions": "<25.0.0",
-      "description": "cap to the active Node LTS line"
+      "matchPackageNames": ["typescript", "@types/node", "mediasoup"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true,
+      "description": "ts/node/mediasoup majors must be approved on the dashboard"
     },
     {
       "matchPackageNames": ["mediasoup"],
