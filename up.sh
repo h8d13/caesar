@@ -21,5 +21,5 @@ else
 fi
 
 # convenience wrapper for prod builds
-docker system prune && docker compose --profile prod build --no-cache && docker compose --profile prod up -d
+docker system prune -f && docker compose --profile prod build --no-cache && docker compose --profile prod up -d
 # can add --progress=plain for easier debug
