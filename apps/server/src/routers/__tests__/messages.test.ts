@@ -625,7 +625,7 @@ describe('messages router', () => {
       sentMessageIds.push(messageId);
     }
 
-    // target the newest message — should return all 10 + up to 20 older (0 exist)
+    // target the newest message should return all 10 + up to 20 older (0 exist)
     const newestId = sentMessageIds[9]!;
 
     const result = await caller.messages.get({
@@ -642,7 +642,7 @@ describe('messages router', () => {
       true
     );
 
-    // target the 3rd message (index 2) — 7 newer + target + 2 older = 10
+    // target the 3rd message (index 2) 7 newer + target + 2 older = 10
     const middleId = sentMessageIds[2]!;
 
     const result2 = await caller.messages.get({
@@ -657,7 +657,7 @@ describe('messages router', () => {
       true
     );
 
-    // target the oldest — 9 newer + target + 0 older = 10
+    // target the oldest 9 newer + target + 0 older = 10
     const oldestId = sentMessageIds[0]!;
 
     const result3 = await caller.messages.get({

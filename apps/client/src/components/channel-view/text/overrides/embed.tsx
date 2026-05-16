@@ -76,7 +76,7 @@ const EmbedOverride = memo(({ metadata }: TEmbedOverrideProps) => {
                 )}
                 <span className="text-muted-foreground truncate flex-1">
                     {metadata.siteName || domain}
-                    {metadata.title ? ` — ${metadata.title}` : ''}
+                    {metadata.title ? ` - ${metadata.title}` : ''}
                 </span>
                 <ChevronDown
                     size={16}

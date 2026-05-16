@@ -411,12 +411,12 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                                 microphoneDTLNWorkletNodeRef.current = dtlnNode;
 
                                 console.log(
-                                    '%c[DTLN] Initialized at 16kHz — noise suppression is active',
+                                    '%c[DTLN] Initialized at 16kHz noise suppression is active',
                                     'color: lime; font-weight: bold;'
                                 );
                             } catch (error) {
                                 console.error(
-                                    '%c[DTLN] Failed to initialize — noise suppression is NOT active',
+                                    '%c[DTLN] Failed to initialize noise suppression is NOT active',
                                     'color: red; font-weight: bold;',
                                     error
                                 );
@@ -429,7 +429,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                             !dtlnAvailability.available
                         ) {
                             console.warn(
-                                '%c[DTLN] Unavailable — skipping noise suppression:',
+                                '%c[DTLN] Unavailable skipping noise suppression:',
                                 'color: orange; font-weight: bold;',
                                 dtlnAvailability.reason
                             );
@@ -450,12 +450,12 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                                     rnnoiseNode;
 
                                 console.log(
-                                    '%c[RNNOISE] Initialized — noise suppression is active',
+                                    '%c[RNNOISE] Initialized noise suppression is active',
                                     'color: lime; font-weight: bold;'
                                 );
                             } catch (error) {
                                 console.error(
-                                    '%c[RNNOISE] Failed to initialize — noise suppression is NOT active',
+                                    '%c[RNNOISE] Failed to initialize noise suppression is NOT active',
                                     'color: red; font-weight: bold;',
                                     error
                                 );
@@ -468,7 +468,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                             !rnnoiseAvailability.available
                         ) {
                             console.warn(
-                                '%c[RNNOISE] Unavailable — skipping noise suppression:',
+                                '%c[RNNOISE] Unavailable skipping noise suppression:',
                                 'color: orange; font-weight: bold;',
                                 rnnoiseAvailability.reason
                             );

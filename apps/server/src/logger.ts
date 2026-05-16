@@ -1,8 +1,6 @@
 import { config } from './config';
 
 // Lightweight stdout/stderr logger. Plain text, no ANSI, no banners.
-// Docker captures stdout/stderr — that's where you read these.
-//
 // Levels: debug only fires when config.server.debug is true.
 // info/warn/error always fire.
 

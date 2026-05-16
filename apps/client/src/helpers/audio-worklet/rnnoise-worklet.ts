@@ -1,7 +1,7 @@
 import rnnoiseProcessorUrl from '@/audio-worklets/rnnoise-processor.js?url';
 import { RNNOISE_WORKLET_NAME } from '@/helpers/audio-gate';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore — Vite resolves ?url imports from node_modules
+// @ts-ignore Vite resolves ?url imports from node_modules
 import rnnoiseWasmUrl from '@jitsi/rnnoise-wasm/dist/rnnoise.wasm?url';
 
 type TRNNoiseWorkletConfig = {

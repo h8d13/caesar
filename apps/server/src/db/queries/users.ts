@@ -122,6 +122,7 @@ const getUserById = async (
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
       lastLoginAt: users.lastLoginAt,
+      sessionEpoch: users.sessionEpoch,
       banned: users.banned,
       banReason: users.banReason,
       bannedAt: users.bannedAt,
@@ -172,6 +173,7 @@ const getUserByIdentity = async (
       updatedAt: users.updatedAt,
       password: users.password,
       lastLoginAt: users.lastLoginAt,
+      sessionEpoch: users.sessionEpoch,
       banned: users.banned,
       banReason: users.banReason,
       bannedAt: users.bannedAt,
@@ -207,6 +209,19 @@ const getUserByToken = async (token: string | undefined) => {
 
     const decoded = jwt.verify(token, await getServerToken()) as TTokenPayload;
 
+    // reject tokens minted before the user's current session superseded
+    // by a newer login on another device. Backwards-compat: tokens issued
+    // before this field existed lack `sessionEpoch`; treat them as epoch 0
+    // so existing logins survive the migration but are kicked at next login.
+    const epochRow = await db
+      .select({ sessionEpoch: users.sessionEpoch })
+      .from(users)
+      .where(eq(users.id, decoded.userId))
+      .get();
+
+    if (!epochRow) return undefined;
+    if ((decoded.sessionEpoch ?? 0) !== epochRow.sessionEpoch) return undefined;
+
     const user = await getUserById(decoded.userId);
 
     return user;
@@ -232,6 +247,7 @@ const getUsers = async (): Promise<TJoinedUser[]> => {
       createdAt: users.createdAt,
       identity: users.identity,
       lastLoginAt: users.lastLoginAt,
+      sessionEpoch: users.sessionEpoch,
       banned: users.banned,
       banReason: users.banReason,
       bannedAt: users.bannedAt,
@@ -277,6 +293,7 @@ const getUsers = async (): Promise<TJoinedUser[]> => {
     identity: result.identity,
     password: '',
     lastLoginAt: result.lastLoginAt,
+    sessionEpoch: result.sessionEpoch,
     banned: result.banned,
     banReason: result.banReason,
     bannedAt: result.bannedAt,

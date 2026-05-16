@@ -16,7 +16,7 @@ marked.setOptions({
  * a proper markdown parser, then linkifies any remaining bare URLs.
  *
  * Old messages stored as proper HTML (with <h1>, <strong>, etc.) pass
- * through safely — marked preserves existing HTML tags.
+ * through safely marked preserves existing HTML tags.
  */
 const renderMarkdown = (content: string): string => {
     // Convert editor HTML to markdown-like text:

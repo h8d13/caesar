@@ -84,7 +84,7 @@ const ChallengeList = memo(() => {
                                     <span className="capitalize">
                                         {challenge.result}
                                     </span>
-                                    {' — '}
+                                    {' - '}
                                     <span
                                         className={
                                             isWinner ||

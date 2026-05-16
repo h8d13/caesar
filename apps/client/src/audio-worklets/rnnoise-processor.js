@@ -17,7 +17,7 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
     this.inputBuffer = new Float32Array(FRAME_SIZE);
     this.inputBufferOffset = 0;
 
-    // pre-allocated mono downmix buffer — avoids per-call allocation on the audio thread
+    // pre-allocated mono downmix buffer avoids per-call allocation on the audio thread
     this.monoBuffer = new Float32Array(MAX_RENDER_QUANTUM);
 
     // circular output buffer to decouple input/output timing
@@ -235,7 +235,7 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
       return true;
     }
 
-    // rnnoise is mono — downmix input channels to mono
+    // rnnoise is mono downmix input channels to mono
     // re-use pre-allocated buffer to avoid GC pressure on the audio thread
     let monoInput = this.monoBuffer;
 

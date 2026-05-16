@@ -206,7 +206,7 @@ const WhiteboardPanel = memo(({ channelId, onClose }: WhiteboardPanelProps) => {
                     }
                 />
 
-                {/* Pen thickness — bottom-right, only in pen mode */}
+                {/* Pen thickness bottom-right, only in pen mode */}
                 {isPenMode && (
                     <div className="absolute right-3 bottom-3 flex items-center gap-1.5 bg-card border border-border rounded-xl p-1.5 shadow-lg z-10">
                         <button
@@ -240,7 +240,7 @@ const WhiteboardPanel = memo(({ channelId, onClose }: WhiteboardPanelProps) => {
                     </div>
                 )}
 
-                {/* Layer order — bottom-right, only when a single layer is selected */}
+                {/* Layer order bottom-right, only when a single layer is selected */}
                 {hasSelection && !isPenMode && (
                     <div className="absolute right-3 bottom-3 flex items-center gap-0.5 bg-card border border-border rounded-xl p-1 shadow-lg z-10">
                         <button

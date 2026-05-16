@@ -107,7 +107,7 @@ const interfaceRouteHandler = (
     return res;
   }
 
-  // Static assets — hashed filenames (assets/) can be cached immutably
+  // Static assets hashed filenames (assets/) can be cached immutably
   const isHashed = cleanSubPath.startsWith('assets/');
   const cacheControl = isHashed
     ? 'public, max-age=31536000, immutable'

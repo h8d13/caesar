@@ -4,7 +4,7 @@
  * On Windows, Bun's `child_process.spawn()` creates broken stdio pipe handles
  * for fd indices >= 3 (oven-sh/bun#11044). The Socket objects look correct
  * (they extend Duplex with .write/.on/.destroy) but the underlying handle has
- * fd=-1 and never connects — so data written to stdio[3] is silently dropped
+ * fd=-1 and never connects so data written to stdio[3] is silently dropped
  * and data never arrives from stdio[4].
  *
  * mediasoup relies on exactly these two extra pipes (fd 3 = producer channel,
@@ -44,7 +44,7 @@ let patched = false;
  * For the **consumer** (read) side this emits `'data'` events with Buffers.
  * For the **producer** (write) side this provides a `.write()` method.
  * Both emit `'end'` / `'error'` and support `.destroy()` /
- * `.removeAllListeners()` — the full surface area mediasoup's Channel needs.
+ * `.removeAllListeners()` the full surface area mediasoup's Channel needs.
  */
 function createBunPipeSocket(
   fd: number,
@@ -81,7 +81,7 @@ function createBunPipeSocket(
       return false;
     }
     if (!bunSocket) {
-      // In practice this never happens — Bun.connect resolves before the
+      // In practice this never happens Bun.connect resolves before the
       // first IPC write (which waits for the async WORKER_RUNNING event).
       logger.warn('[bun-mediasoup-fix] write() called before Bun socket ready');
       callback?.(new Error('Socket not ready'));
@@ -205,7 +205,7 @@ function wrapBunSubprocess(bunChild: any): EventEmitter {
   wrapper.stdout = stdoutReadable;
   wrapper.stderr = stderrReadable;
 
-  // Extra stdio pipes — Bun gives us raw fd numbers
+  // Extra stdio pipes Bun gives us raw fd numbers
   const producerFd = bunChild.stdio[3];
   const consumerFd = bunChild.stdio[4];
 
@@ -223,8 +223,8 @@ function wrapBunSubprocess(bunChild: any): EventEmitter {
     null, // stdin  (ignored)
     stdoutReadable, // stdout
     stderrReadable, // stderr
-    producerSocket, // fd 3 — write TO worker
-    consumerSocket // fd 4 — read FROM worker
+    producerSocket, // fd 3 write TO worker
+    consumerSocket // fd 4 read FROM worker
   ];
 
   // kill()
@@ -259,7 +259,7 @@ function wrapBunSubprocess(bunChild: any): EventEmitter {
 
 /**
  * Monkey-patches `child_process.spawn` so that when mediasoup spawns its
- * worker binary, we use `Bun.spawn()` instead — which correctly supports
+ * worker binary, we use `Bun.spawn()` instead which correctly supports
  * extra stdio pipe handles on Windows.
  *
  * Call this BEFORE `mediasoup.createWorker()`.

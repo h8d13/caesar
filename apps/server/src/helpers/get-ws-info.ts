@@ -3,7 +3,7 @@ import ipaddr from 'ipaddr.js';
 import { UAParser } from 'ua-parser-js';
 import type { TConnectionInfo } from '../types';
 
-/** Minimal shape we need from a WebSocket — internal properties not in the ws type defs */
+/** Minimal shape we need from a WebSocket internal properties not in the ws type defs */
 interface WsLike {
   _socket?: { remoteAddress?: string };
   socket?: { remoteAddress?: string };

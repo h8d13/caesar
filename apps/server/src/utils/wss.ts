@@ -43,6 +43,25 @@ const trackUserConnect = (userId: number) => {
   connectedAt.set(userId, Date.now());
 };
 
+// Close all open WS sessions for a user (except optionally one token). Used
+// when a fresh /login bumps sessionEpoch: any prior connections are now on
+// a stale epoch and must be told to disconnect.
+const closeUserSessions = (
+  userId: number,
+  reason: string,
+  code: number,
+  exceptToken?: string
+) => {
+  if (!wss) return;
+
+  wss.clients.forEach((client) => {
+    if (client.userId !== userId) return;
+    if (exceptToken && client.token === exceptToken) return;
+
+    client.close(code, reason);
+  });
+};
+
 const getUserIp = (userId: number): string | undefined => {
   return usersIpMap.get(userId);
 };
@@ -381,6 +400,7 @@ const createWsServer = async (server: http.Server) => {
 };
 
 export {
+  closeUserSessions,
   createContext,
   createWsServer,
   getOnlineUserIds,

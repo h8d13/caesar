@@ -49,11 +49,11 @@ describe('strip-zalgo', () => {
   });
 
   test('should handle string with only combining marks (no base)', () => {
-    // leading combiners with no base char — still capped
+    // leading combiners with no base char still capped
     const input = '\u0300'.repeat(10);
 
     // the first combiner has no base, the regex treats the first one as "base"
-    // followed by the rest as combiners — caps to 3 combiners after it
+    // followed by the rest as combiners caps to 3 combiners after it
     expect(stripZalgo(input).length).toBeLessThanOrEqual(4);
   });
 

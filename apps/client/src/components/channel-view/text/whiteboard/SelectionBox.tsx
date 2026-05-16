@@ -16,7 +16,7 @@ const SelectionBox = memo(
     ({ layers, selection, onResizeHandlePointerDown }: SelectionBoxProps) => {
         if (selection.length === 0) return null;
 
-        // Skip selection box for lines/arrows — they highlight themselves
+        // Skip selection box for lines/arrows they highlight themselves
         const selectedType =
             selection.length === 1 ? layers[selection[0]]?.type : null;
         if (

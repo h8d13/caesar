@@ -50,7 +50,8 @@ const Routing = memo(() => {
             disconnectInfo &&
             (!disconnectInfo.wasClean ||
                 disconnectInfo.code === DisconnectCode.KICKED ||
-                disconnectInfo.code === DisconnectCode.BANNED)
+                disconnectInfo.code === DisconnectCode.BANNED ||
+                disconnectInfo.code === DisconnectCode.SESSION_SUPERSEDED)
         ) {
             return <Disconnected info={disconnectInfo} />;
         }

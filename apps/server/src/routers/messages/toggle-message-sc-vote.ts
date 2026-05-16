@@ -88,12 +88,12 @@ const toggleMessageScVoteRoute = protectedProcedure
         createdAt: Date.now()
       });
     } else if (existingVote.amount === newValue) {
-      // Same direction — toggle off (remove vote)
+      // Same direction toggle off (remove vote)
       await db
         .delete(socialCreditLedger)
         .where(eq(socialCreditLedger.id, existingVote.id));
     } else {
-      // Opposite direction — switch vote
+      // Opposite direction switch vote
       await db
         .update(socialCreditLedger)
         .set({ amount: newValue })

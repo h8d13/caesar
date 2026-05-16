@@ -2,7 +2,7 @@ import { setDisconnectInfo } from '@/features/server/actions';
 import type { TDisconnectInfo } from '@/features/server/types';
 import { DisconnectCode } from '@caesar/shared';
 import { Button } from '@caesar/ui';
-import { AlertCircle, Gavel, RefreshCw, WifiOff } from 'lucide-react';
+import { AlertCircle, Gavel, LogIn, RefreshCw, WifiOff } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 
 type TDisconnectedProps = {
@@ -28,6 +28,17 @@ const Disconnected = memo(({ info }: TDisconnectedProps) => {
                 title: 'You have been banned',
                 message: info.reason || 'No reason provided.',
                 canReconnect: false
+            };
+        }
+
+        if (code === DisconnectCode.SESSION_SUPERSEDED) {
+            return {
+                icon: <LogIn className="h-8 w-8 text-blue-500" />,
+                title: 'Signed in elsewhere',
+                message:
+                    info.reason ||
+                    'This account just signed in on another device. Only one session can be active at a time.',
+                canReconnect: true
             };
         }
 

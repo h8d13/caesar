@@ -1,6 +1,7 @@
 import {
   ActivityLogType,
   DELETED_USER_IDENTITY_AND_NAME,
+  DisconnectCode,
   type TJoinedUser
 } from '@caesar/shared';
 import {
@@ -30,6 +31,7 @@ import {
   getClientRateLimitKey,
   getRateLimitRetrySeconds
 } from '../utils/rate-limiters/rate-limiter';
+import { closeUserSessions } from '../utils/wss';
 import { getJsonBody } from './helpers';
 import { HttpValidationError } from './utils';
 
@@ -234,9 +236,33 @@ const loginRouteHandler = async (
     throw new HttpValidationError('password', 'Invalid password');
   }
 
-  const token = jwt.sign({ userId: existingUser.id }, await getServerToken(), {
-    expiresIn: '604800s' // 7 days
-  });
+  // single-session: every successful login bumps the user's session epoch.
+  // JWTs from prior sessions fail the equality check in getUserByToken and
+  // any active WS connections under those tokens are kicked below.
+  const updated = await db
+    .update(users)
+    .set({ sessionEpoch: sql`${users.sessionEpoch} + 1` })
+    .where(eq(users.id, existingUser.id))
+    .returning({ sessionEpoch: users.sessionEpoch })
+    .get();
+
+  const sessionEpoch = updated?.sessionEpoch ?? 0;
+
+  const token = jwt.sign(
+    { userId: existingUser.id, sessionEpoch },
+    await getServerToken(),
+    { expiresIn: '604800s' /* 7 days */ }
+  );
+
+  // boot any WS connections still attached under the previous epoch's token.
+  // The newly minted `token` is not yet on any client, so passing it as the
+  // exception is a no-op safety net.
+  closeUserSessions(
+    existingUser.id,
+    'Signed in from another device',
+    DisconnectCode.SESSION_SUPERSEDED,
+    token
+  );
 
   res.setHeader(
     'Set-Cookie',

@@ -6,4 +6,5 @@
 /experiments
 .direnv/
 data/
-.idea
+.idea**
+.e2ee**

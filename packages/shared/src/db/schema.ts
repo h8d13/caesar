@@ -152,6 +152,9 @@ const users = sqliteTable(
     lastLoginAt: integer('last_login_at')
       .notNull()
       .$defaultFn(() => Date.now()),
+    // single-session enforcement: incremented on every successful /login.
+    // JWTs carry the epoch they were minted at and are rejected on mismatch.
+    sessionEpoch: integer('session_epoch').notNull().default(0),
     createdAt: integer('created_at').notNull(),
     updatedAt: integer('updated_at')
   },

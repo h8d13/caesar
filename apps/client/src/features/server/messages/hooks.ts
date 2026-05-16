@@ -80,7 +80,7 @@ const nextFrame = () =>
     new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
 const highlightMessageElement = async (element: Element) => {
-    // yield twice: once for layout, once for paint — ensures the browser
+    // yield twice: once for layout, once for paint ensures the browser
     // has fully laid out all newly inserted messages before we scroll
     await nextFrame();
     await nextFrame();
@@ -233,7 +233,7 @@ export const useMessages = (channelId: number) => {
                 return;
             }
 
-            // message not loaded yet — fetch all messages down to the target
+            // message not loaded yet fetch all messages down to the target
             const { messages: rawPage } = await fetchChannelMessagesPage({
                 channelId,
                 cursor: null,

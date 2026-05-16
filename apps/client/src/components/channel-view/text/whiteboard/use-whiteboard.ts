@@ -383,7 +383,7 @@ export function useWhiteboard(
         const layer = currentLayers[drag.layerId];
         if (!layer) return;
 
-        // Enforce minimum size (skip for lines/arrows — they use x2/y2 directly)
+        // Enforce minimum size (skip for lines/arrows they use x2/y2 directly)
         const isEndpointLayer =
             layer.type === LayerType.Line || layer.type === LayerType.Arrow;
         const finalLayer = isEndpointLayer
@@ -754,7 +754,7 @@ export function useWhiteboard(
                 return;
             }
 
-            // Line pending: don't finalize on pointer up — wait for second click
+            // Line pending: don't finalize on pointer up, wait for second click
             if (canvasMode === CanvasMode.Inserting && linePendingRef.current) {
                 return;
             }

@@ -120,7 +120,7 @@ const RightSidebar = memo(
             >
                 <div className="flex h-12 items-center border-b border-border px-4 justify-between">
                     <h3 className="text-sm font-semibold text-foreground">
-                        Members — {usersCount}
+                        Members - {usersCount}
                     </h3>
                     {(isPrivateChannel || isVoiceChannel) && (
                         <div className="flex gap-1">

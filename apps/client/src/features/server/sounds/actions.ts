@@ -27,7 +27,7 @@ const createGain = (value = 1) => {
     return gain;
 };
 
-// MESSAGE_RECEIVED — ultra-minimal single tone
+// MESSAGE_RECEIVED minimal single tone
 const sfxMessageReceived = () => {
     const osc = createOsc('sine', 600);
     const gain = createGain(0.05);
@@ -39,7 +39,7 @@ const sfxMessageReceived = () => {
     osc.stop(now() + 0.05);
 };
 
-// MESSAGE_SENT — ultra-minimal single tone (slightly higher)
+// MESSAGE_SENT minimal single tone (slightly higher)
 const sfxMessageSent = () => {
     const osc = createOsc('sine', 750);
     const gain = createGain(0.04);
@@ -51,7 +51,7 @@ const sfxMessageSent = () => {
     osc.stop(now() + 0.04);
 };
 
-// OWN_USER_JOINED_VOICE_CHANNEL — rich chord progression
+// OWN_USER_JOINED_VOICE_CHANNEL rich chord progression
 const sfxOwnUserJoinedVoiceChannel = () => {
     // First chord (C major feel)
     const chord1 = [
@@ -89,7 +89,7 @@ const sfxOwnUserJoinedVoiceChannel = () => {
     });
 };
 
-// OWN_USER_LEFT_VOICE_CHANNEL — soft chord fade
+// OWN_USER_LEFT_VOICE_CHANNEL soft chord fade
 const sfxOwnUserLeftVoiceChannel = () => {
     // Main chord (minor feel)
     const chord1 = [
@@ -120,7 +120,7 @@ const sfxOwnUserLeftVoiceChannel = () => {
     osc2.stop(now() + 0.3);
 };
 
-// MUTED_MIC — extremely bland low click
+// MUTED_MIC bland low click
 const sfxOwnUserMutedMic = () => {
     const osc = createOsc('sine', 350);
     const gain = createGain(0.05);
@@ -132,7 +132,7 @@ const sfxOwnUserMutedMic = () => {
     osc.stop(now() + 0.06);
 };
 
-// UNMUTED_MIC — extremely bland slightly higher click
+// UNMUTED_MIC bland slightly higher click
 const sfxOwnUserUnmutedMic = () => {
     const osc = createOsc('sine', 500);
     const gain = createGain(0.05);
@@ -144,7 +144,7 @@ const sfxOwnUserUnmutedMic = () => {
     osc.stop(now() + 0.06);
 };
 
-// MUTED_SOUND — bland mid-low tone
+// MUTED_SOUND bland mid-low tone
 const sfxOwnUserMutedSound = () => {
     const osc = createOsc('sine', 450);
     const gain = createGain(0.05);
@@ -156,7 +156,7 @@ const sfxOwnUserMutedSound = () => {
     osc.stop(now() + 0.06);
 };
 
-// UNMUTED_SOUND — bland mid-high tone
+// UNMUTED_SOUND bland mid-high tone
 const sfxOwnUserUnmutedSound = () => {
     const osc = createOsc('sine', 650);
     const gain = createGain(0.05);
@@ -168,7 +168,7 @@ const sfxOwnUserUnmutedSound = () => {
     osc.stop(now() + 0.06);
 };
 
-// STARTED_WEBCAM — subtle layered activation
+// STARTED_WEBCAM subtle layered activation
 const sfxOwnUserStartedWebcam = () => {
     const osc1 = createOsc('sine', 700);
     const gain1 = createGain(0.07);
@@ -189,7 +189,7 @@ const sfxOwnUserStartedWebcam = () => {
     osc2.stop(now() + 0.12);
 };
 
-// STOPPED_WEBCAM — subtle layered deactivation
+// STOPPED_WEBCAM subtle layered deactivation
 const sfxOwnUserStoppedWebcam = () => {
     const osc1 = createOsc('sine', 700);
     const gain1 = createGain(0.07);
@@ -202,7 +202,7 @@ const sfxOwnUserStoppedWebcam = () => {
     osc1.stop(now() + 0.14);
 };
 
-// STARTED_SCREENSHARE — richer activation sequence
+// STARTED_SCREENSHARE richer activation sequence
 const sfxOwnUserStartedScreenshare = () => {
     // Main pulse sequence
     const pulses = [
@@ -234,7 +234,7 @@ const sfxOwnUserStartedScreenshare = () => {
     osc2.stop(now() + 0.22);
 };
 
-// STOPPED_SCREENSHARE — richer deactivation
+// STOPPED_SCREENSHARE richer deactivation
 const sfxOwnUserStoppedScreenshare = () => {
     const osc1 = createOsc('sine', 900);
     const gain1 = createGain(0.08);
@@ -257,7 +257,7 @@ const sfxOwnUserStoppedScreenshare = () => {
     osc2.stop(now() + 0.2);
 };
 
-// REMOTE JOIN — layered uplifting tones
+// REMOTE JOIN layered uplifting tones
 const sfxRemoteUserJoinedVoiceChannel = () => {
     const tones = [
         { freq: 587, gain: 0.06, delay: 0 }, // D
@@ -278,7 +278,7 @@ const sfxRemoteUserJoinedVoiceChannel = () => {
     });
 };
 
-// REMOTE LEAVE — layered descending tones
+// REMOTE LEAVE layered descending tones
 const sfxRemoteUserLeftVoiceChannel = () => {
     const tones = [
         { freq: 659, gain: 0.06, delay: 0 }, // E
@@ -298,7 +298,7 @@ const sfxRemoteUserLeftVoiceChannel = () => {
         osc.stop(t + 0.2);
     });
 };
-// REMOTE STARTED SCREENSHARE — similar to own user but slightly softer
+// REMOTE STARTED SCREENSHARE similar to own user but slightly softer
 const sfxRemoteUserStartedScreenshare = () => {
     const pulses = [
         { freq: 600, delay: 0 },
@@ -328,7 +328,7 @@ const sfxRemoteUserStartedScreenshare = () => {
     osc2.stop(now() + 0.22);
 };
 
-// REMOTE STOPPED SCREENSHARE — similar to own user but slightly softer
+// REMOTE STOPPED SCREENSHARE similar to own user but slightly softer
 const sfxRemoteUserStoppedScreenshare = () => {
     const osc1 = createOsc('sine', 900);
     const gain1 = createGain(0.06);

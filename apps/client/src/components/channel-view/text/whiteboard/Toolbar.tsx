@@ -114,7 +114,7 @@ const Toolbar = memo(
                     <Pencil size={18} />
                 </button>
 
-                {/* Shapes — click to use, hold to pick */}
+                {/* Shapes click to use, hold to pick */}
                 <div className="relative">
                     <button
                         className={`${buttonClass(isShapeActive)} relative`}
