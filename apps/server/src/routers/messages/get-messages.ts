@@ -4,12 +4,16 @@ import {
   ServerEvents,
   type TMessage
 } from '@caesar/shared';
+import {
+  channelReadStates,
+  channels,
+  messages
+} from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { getChannelsReadStatesForUser } from '@server/db/queries/channels';
 import { assertDmChannel } from '@server/db/queries/dms';
 import { joinMessagesWithRelations } from '@server/db/queries/messages';
-import { channelReadStates, channels, messages } from '@server/db/schema';
 import { invariant } from '@server/utils/invariant';
 import { pubsub } from '@server/utils/pubsub';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';

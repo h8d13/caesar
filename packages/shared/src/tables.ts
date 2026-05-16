@@ -113,7 +113,6 @@ type TPublicUser = Pick<
   | 'createdAt'
 > & {
   status?: UserStatus;
-  _identity?: string;
 };
 
 export type TJoinedRole = TRole & {

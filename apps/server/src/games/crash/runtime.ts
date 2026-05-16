@@ -1,3 +1,4 @@
+import { crashBets, crashRounds } from '@caesar/shared/db/schema';
 import {
   CrashPhase,
   type TCrashActiveBet,
@@ -6,7 +7,6 @@ import {
   type TCrashStateUpdate
 } from '@caesar/shared/games/crash';
 import { db } from '@server/db';
-import { crashBets, crashRounds } from '@server/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import {
   BETTING_PHASE_DURATION_MS,

@@ -48,6 +48,7 @@ export const useAdminGeneral = () => {
     // form state initialized from server data
     useEffect(() => {
         if (!data) return;
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- mirror server data into editable form state on (re)fetch
         setSettings({
             name: data.name,
             description: data.description ?? '',
@@ -105,6 +106,7 @@ export const useAdminChannelGeneral = (channelId: number) => {
 
     // form state initialized from server data
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- mirror server data into editable form state on (re)fetch
         if (data) setChannel(data);
     }, [data]);
 
@@ -160,6 +162,7 @@ export const useAdminCategoryGeneral = (categoryId: number) => {
 
     // form state initialized from server data
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- mirror server data into editable form state on (re)fetch
         if (data) setCategory(data);
     }, [data]);
 

@@ -1,6 +1,6 @@
 import { Permission } from '@caesar/shared';
+import { categories } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import { categories } from '@server/db/schema';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';

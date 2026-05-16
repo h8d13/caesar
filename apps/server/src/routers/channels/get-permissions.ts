@@ -1,10 +1,10 @@
 import { Permission } from '@caesar/shared';
-import { db } from '@server/db';
-import { isDirectMessageChannel } from '@server/db/queries/dms';
 import {
   channelRolePermissions,
   channelUserPermissions
-} from '@server/db/schema';
+} from '@caesar/shared/db/schema';
+import { db } from '@server/db';
+import { isDirectMessageChannel } from '@server/db/queries/dms';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';

@@ -1,5 +1,3 @@
-import { describe, expect, test } from 'bun:test';
-import { eq } from 'drizzle-orm';
 import {
   activityLog,
   categories,
@@ -19,7 +17,9 @@ import {
   roles,
   userRoles,
   users
-} from '../db/schema';
+} from '@caesar/shared/db/schema';
+import { describe, expect, test } from 'bun:test';
+import { eq } from 'drizzle-orm';
 import { tdb } from './setup';
 
 describe('database cascades', async () => {

@@ -1,7 +1,7 @@
 import type { TJoinedSound } from '@caesar/shared';
+import { files, sounds, users } from '@caesar/shared/db/schema';
 import { eq } from 'drizzle-orm';
 import { db } from '..';
-import { files, sounds, users } from '../schema';
 import { publicUserBaseFields } from './user-fields';
 
 const soundSelectFields = {

@@ -1,6 +1,6 @@
 import { StorageOverflowAction } from '@caesar/shared';
+import { files, settings } from '@caesar/shared/db/schema';
 import { tdb } from '@server/__tests__/setup';
-import { files, settings } from '@server/db/schema';
 import { PUBLIC_PATH, TMP_PATH, UPLOADS_PATH } from '@server/helpers/paths';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';

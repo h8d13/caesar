@@ -1,9 +1,9 @@
 import { ActivityLogType, Permission } from '@caesar/shared';
+import { emojis } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishEmoji } from '@server/db/publishers';
 import { getUniqueEmojiName } from '@server/db/queries/emojis';
-import { emojis } from '@server/db/schema';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { fileManager } from '@server/utils/file-manager';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';

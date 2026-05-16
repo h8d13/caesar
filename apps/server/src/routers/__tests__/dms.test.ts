@@ -1,7 +1,7 @@
+import { messages, settings } from '@caesar/shared/db/schema';
 import { initTest } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { pruneExpiredMessages } from '@server/crons/prune-expired';
-import { messages, settings } from '@server/db/schema';
 import { describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 

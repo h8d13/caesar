@@ -1,8 +1,13 @@
 import type { TFile } from '@caesar/shared';
+import {
+  channels,
+  files,
+  messageFiles,
+  messages
+} from '@caesar/shared/db/schema';
 import { generateFileToken } from '@server/helpers/files-crypto';
 import { asc, eq, sql, sum } from 'drizzle-orm';
 import { db } from '..';
-import { channels, files, messageFiles, messages } from '../schema';
 import { getSettings } from './server';
 
 const getExceedingOldFiles = async (newFileSize: number) => {

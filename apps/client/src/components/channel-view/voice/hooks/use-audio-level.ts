@@ -27,6 +27,7 @@ const useAudioLevel = (audioStream: MediaStream | undefined) => {
 
     useEffect(() => {
         if (!audioStream || ownVoiceUser?.state.soundMuted) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- reset analyzer state when stream is removed or muted
             setAudioLevel(0);
             setIsSpeaking(false);
             return;

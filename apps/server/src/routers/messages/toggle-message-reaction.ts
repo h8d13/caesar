@@ -1,11 +1,11 @@
 import { Permission } from '@caesar/shared';
+import { messageReactions, messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishMessage } from '@server/db/publishers';
 import { assertDmChannel } from '@server/db/queries/dms';
 import { getEmojiFileIdByEmojiName } from '@server/db/queries/emojis';
 import { getReaction } from '@server/db/queries/messages';
-import { messageReactions, messages } from '@server/db/schema';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { and, eq } from 'drizzle-orm';

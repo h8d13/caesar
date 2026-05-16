@@ -1,8 +1,8 @@
 import { ActivityLogType, Permission } from '@caesar/shared';
+import { channels } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishChannel } from '@server/db/publishers';
 import { isDirectMessageChannel } from '@server/db/queries/dms';
-import { channels } from '@server/db/schema';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { VoiceRuntime } from '@server/runtimes/voice';
 import { invariant } from '@server/utils/invariant';

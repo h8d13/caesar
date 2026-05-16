@@ -1,5 +1,5 @@
+import { logins } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import { logins } from '@server/db/schema';
 import { hashIp } from '@server/helpers/hash-ip';
 import { logger } from '@server/logger';
 import type { TConnectionInfo } from '@server/types';

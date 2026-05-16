@@ -7,6 +7,7 @@ import {
   UserStatus,
   type TConnectionParams
 } from '@caesar/shared';
+import { channels, socialCreditLedger } from '@caesar/shared/db/schema';
 import { TRPCError } from '@trpc/server';
 import {
   applyWSSHandler,
@@ -19,7 +20,6 @@ import { db } from '../db';
 import { getAllChannelUserPermissions } from '../db/queries/channels';
 import { isUserDmParticipant } from '../db/queries/dms';
 import { getUserById, getUserByToken } from '../db/queries/users';
-import { channels, socialCreditLedger } from '../db/schema';
 import { getWsInfo } from '../helpers/get-ws-info';
 import { logger } from '../logger';
 import { enqueueActivityLog } from '../queues/activity-log';

@@ -1,7 +1,7 @@
+import { messages } from '@caesar/shared/db/schema';
 import { and, eq, isNotNull, lte } from 'drizzle-orm';
 import { db } from '../db';
 import { publishMessage } from '../db/publishers';
-import { messages } from '../db/schema';
 import { logger } from '../logger';
 
 const pruneExpiredMessages = async () => {

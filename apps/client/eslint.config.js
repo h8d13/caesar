@@ -26,10 +26,12 @@ export default defineConfig([
       ...reactHooks.configs.recommended.rules,
       ...reactRefresh.configs.recommended.rules,
       'react-hooks/exhaustive-deps': 'error',
-      // compiler-era heuristics: keep as warnings so they surface but
-      // do not break CI on patterns that have valid use cases
-      // (fetch-on-mount, intentional manual memoization).
-      'react-hooks/set-state-in-effect': 'warn',
+      // set-state-in-effect: error so regressions surface in CI. Valid
+      // sites (external-system sync, mirroring fetched data into form
+      // state, reset on prop change) carry an inline disable + reason.
+      'react-hooks/set-state-in-effect': 'error',
+      // preserve-manual-memoization stays at warn: it flags valid
+      // useCallback/useMemo uses the compiler would handle itself.
       'react-hooks/preserve-manual-memoization': 'warn',
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': 'off',

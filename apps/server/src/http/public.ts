@@ -1,3 +1,4 @@
+import { channels, files } from '@caesar/shared/db/schema';
 import { eq } from 'drizzle-orm';
 import fs from 'fs';
 import http from 'http';
@@ -7,7 +8,6 @@ import { isFileOrphaned } from '../db/queries/files';
 import { getMessageByFileId } from '../db/queries/messages';
 import { getSettings } from '../db/queries/server';
 import { getUserByToken } from '../db/queries/users';
-import { channels, files } from '../db/schema';
 import { verifyFileToken } from '../helpers/files-crypto';
 import { PUBLIC_PATH } from '../helpers/paths';
 import { logger } from '../logger';

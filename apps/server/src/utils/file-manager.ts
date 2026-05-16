@@ -3,6 +3,7 @@ import {
   type TFile,
   type TTempFile
 } from '@caesar/shared';
+import { files } from '@caesar/shared/db/schema';
 import { randomUUIDv7 } from 'bun';
 import { createHash } from 'crypto';
 import fs from 'fs/promises';
@@ -12,7 +13,6 @@ import { removeFile } from '../db/mutations/files';
 import { getExceedingOldFiles, getUsedFileQuota } from '../db/queries/files';
 import { getSettings } from '../db/queries/server';
 import { getStorageUsageByUserId } from '../db/queries/users';
-import { files } from '../db/schema';
 import { PUBLIC_PATH, TMP_PATH, UPLOADS_PATH } from '../helpers/paths';
 
 /**

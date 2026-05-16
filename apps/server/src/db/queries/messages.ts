@@ -6,9 +6,6 @@ import type {
   TMessageReaction,
   TMessageScVote
 } from '@caesar/shared';
-import { generateFileToken } from '@server/helpers/files-crypto';
-import { and, count, desc, eq, inArray, notExists } from 'drizzle-orm';
-import { db } from '..';
 import {
   channels,
   directMessages,
@@ -17,7 +14,10 @@ import {
   messageReactions,
   messages,
   socialCreditLedger
-} from '../schema';
+} from '@caesar/shared/db/schema';
+import { generateFileToken } from '@server/helpers/files-crypto';
+import { and, count, desc, eq, inArray, notExists } from 'drizzle-orm';
+import { db } from '..';
 
 const getMessageByFileId = async (
   fileId: number

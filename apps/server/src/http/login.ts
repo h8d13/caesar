@@ -3,6 +3,13 @@ import {
   DELETED_USER_IDENTITY_AND_NAME,
   type TJoinedUser
 } from '@caesar/shared';
+import {
+  channelReadStates,
+  invites,
+  messages,
+  userRoles,
+  users
+} from '@caesar/shared/db/schema';
 import { count, eq, isNull, max, sql } from 'drizzle-orm';
 import http from 'http';
 import jwt from 'jsonwebtoken';
@@ -14,13 +21,6 @@ import { isInviteValid } from '../db/queries/invites';
 import { getDefaultRole } from '../db/queries/roles';
 import { getServerToken } from '../db/queries/server';
 import { getUserByIdentity } from '../db/queries/users';
-import {
-  channelReadStates,
-  invites,
-  messages,
-  userRoles,
-  users
-} from '../db/schema';
 import { getWsInfo } from '../helpers/get-ws-info';
 import { logger } from '../logger';
 import { enqueueActivityLog } from '../queues/activity-log';

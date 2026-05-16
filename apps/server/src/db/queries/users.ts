@@ -3,12 +3,12 @@ import {
   type TJoinedUser,
   type TStorageData
 } from '@caesar/shared';
+import { files, userRoles, users } from '@caesar/shared/db/schema';
 import type { TTokenPayload } from '@server/types';
 import { count, eq, sum } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import jwt from 'jsonwebtoken';
 import { db } from '..';
-import { files, userRoles, users } from '../schema';
 import { getServerToken } from './server';
 import { publicUserBaseFields, socialCreditSubquery } from './user-fields';
 
@@ -45,82 +45,43 @@ const getPublicUserById = async (
   };
 };
 
-const getPublicUsers = async (
-  returnIdentity: boolean = false
-): Promise<TJoinedPublicUser[]> => {
+const getPublicUsers = async (): Promise<TJoinedPublicUser[]> => {
   const avatarFiles = alias(files, 'avatarFiles');
   const bannerFiles = alias(files, 'bannerFiles');
 
-  if (returnIdentity) {
-    const results = await db
-      .select({
-        ...publicUserBaseFields,
-        avatar: avatarFiles,
-        banner: bannerFiles,
-        socialCredit: socialCreditSubquery,
-        _identity: users.identity
-      })
-      .from(users)
-      .leftJoin(avatarFiles, eq(users.avatarId, avatarFiles.id))
-      .leftJoin(bannerFiles, eq(users.bannerId, bannerFiles.id))
-      .all();
+  const results = await db
+    .select({
+      ...publicUserBaseFields,
+      avatar: avatarFiles,
+      banner: bannerFiles,
+      socialCredit: socialCreditSubquery
+    })
+    .from(users)
+    .leftJoin(avatarFiles, eq(users.avatarId, avatarFiles.id))
+    .leftJoin(bannerFiles, eq(users.bannerId, bannerFiles.id))
+    .all();
 
-    const rolesByUser = await db
-      .select({
-        userId: userRoles.userId,
-        roleId: userRoles.roleId
-      })
-      .from(userRoles)
-      .all();
+  const rolesByUser = await db
+    .select({
+      userId: userRoles.userId,
+      roleId: userRoles.roleId
+    })
+    .from(userRoles)
+    .all();
 
-    const rolesMap = rolesByUser.reduce(
-      (acc, { userId, roleId }) => {
-        if (!acc[userId]) acc[userId] = [];
-        acc[userId].push(roleId);
-        return acc;
-      },
-      {} as Record<number, number[]>
-    );
+  const rolesMap = rolesByUser.reduce(
+    (acc, { userId, roleId }) => {
+      if (!acc[userId]) acc[userId] = [];
+      acc[userId].push(roleId);
+      return acc;
+    },
+    {} as Record<number, number[]>
+  );
 
-    return results.map((result) => ({
-      ...result,
-      roleIds: rolesMap[result.id] || []
-    }));
-  } else {
-    const results = await db
-      .select({
-        ...publicUserBaseFields,
-        avatar: avatarFiles,
-        banner: bannerFiles,
-        socialCredit: socialCreditSubquery
-      })
-      .from(users)
-      .leftJoin(avatarFiles, eq(users.avatarId, avatarFiles.id))
-      .leftJoin(bannerFiles, eq(users.bannerId, bannerFiles.id))
-      .all();
-
-    const rolesByUser = await db
-      .select({
-        userId: userRoles.userId,
-        roleId: userRoles.roleId
-      })
-      .from(userRoles)
-      .all();
-
-    const rolesMap = rolesByUser.reduce(
-      (acc, { userId, roleId }) => {
-        if (!acc[userId]) acc[userId] = [];
-        acc[userId].push(roleId);
-        return acc;
-      },
-      {} as Record<number, number[]>
-    );
-
-    return results.map((result) => ({
-      ...result,
-      roleIds: rolesMap[result.id] || []
-    }));
-  }
+  return results.map((result) => ({
+    ...result,
+    roleIds: rolesMap[result.id] || []
+  }));
 };
 
 const getStorageUsageByUserId = async (

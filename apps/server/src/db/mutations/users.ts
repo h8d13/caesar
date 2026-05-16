@@ -1,8 +1,8 @@
+import { userRoles } from '@caesar/shared/db/schema';
 import { invariant } from '@server/utils/invariant';
 import { and, eq } from 'drizzle-orm';
 import { db } from '..';
 import { getDefaultRole } from '../queries/roles';
-import { userRoles } from '../schema';
 
 const fallbackUsersToDefaultRole = async (roleId: number) => {
   const defaultRole = await getDefaultRole();

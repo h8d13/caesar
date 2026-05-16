@@ -1,5 +1,11 @@
+import {
+  channels,
+  messages,
+  roles,
+  settings,
+  users
+} from '@caesar/shared/db/schema';
 import { describe, expect, test } from 'bun:test';
-import { channels, messages, roles, settings, users } from '../db/schema';
 import { tdb } from './setup';
 
 describe('tests setup', () => {

@@ -1,7 +1,7 @@
 import { ChannelType } from '@caesar/shared';
+import { channels } from '@caesar/shared/db/schema';
 import { eq } from 'drizzle-orm';
 import { db } from '../db';
-import { channels } from '../db/schema';
 import { VoiceRuntime } from './voice';
 
 const initVoiceRuntimes = async () => {

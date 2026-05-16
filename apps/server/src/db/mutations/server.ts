@@ -1,7 +1,7 @@
 import type { TSettings } from '@caesar/shared';
+import { settings } from '@caesar/shared/db/schema';
 import { isNotNull } from 'drizzle-orm';
 import { db } from '..';
-import { settings } from '../schema';
 
 const updateSettings = async (serverSettings: Partial<TSettings>) =>
   db

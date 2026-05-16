@@ -1,7 +1,7 @@
 import { ActivityLogType, Permission } from '@caesar/shared';
+import { categories } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishCategory } from '@server/db/publishers';
-import { categories } from '@server/db/schema';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { protectedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';

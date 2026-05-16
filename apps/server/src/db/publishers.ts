@@ -3,6 +3,12 @@ import {
   ServerEvents,
   type TChannelUserPermissionsMap
 } from '@caesar/shared';
+import {
+  categories,
+  channels,
+  messages,
+  users
+} from '@caesar/shared/db/schema';
 import { count, eq } from 'drizzle-orm';
 import { db } from '.';
 import { extractMentionUserIds } from '../helpers/extract-mention-user-ids';
@@ -17,7 +23,6 @@ import { getRole } from './queries/roles';
 import { getPublicSettings } from './queries/server';
 import { getSoundById } from './queries/sounds';
 import { getAllUserIds, getPublicUserById } from './queries/users';
-import { categories, channels, messages, users } from './schema';
 
 const publishMessage = async (
   messageId: number | undefined,
@@ -199,7 +204,7 @@ const publishChannel = async (
   pubsub.publishFor(affectedUserIds, targetEvent, channel);
 
   if (ensureUsersAccess) {
-    const allUsers = await db.select().from(users).all();
+    const allUsers = await db.select({ id: users.id }).from(users).all();
     const allUserIds = allUsers.map((u) => u.id);
 
     // ensureUsersAccess is set to true when the private setting changed

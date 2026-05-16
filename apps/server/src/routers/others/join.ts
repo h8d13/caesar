@@ -1,4 +1,5 @@
 import { ActivityLogType, ServerEvents, UserStatus } from '@caesar/shared';
+import { categories, users } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import {
   getAllChannelUserPermissions,
@@ -10,7 +11,6 @@ import { getRoles } from '@server/db/queries/roles';
 import { getPublicSettings, getSettings } from '@server/db/queries/server';
 import { getSounds } from '@server/db/queries/sounds';
 import { getPublicUsers } from '@server/db/queries/users';
-import { categories, users } from '@server/db/schema';
 import { logger } from '@server/logger';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { enqueueLogin } from '@server/queues/logins';
@@ -74,7 +74,7 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
     ] = await Promise.all([
       db.select().from(categories),
       getChannelsForUser(ctx.user.id), // filter channels based on permissions and DM participation
-      getPublicUsers(true), // return identity to get status of already connected users
+      getPublicUsers(),
       getRoles(),
       getEmojis(),
       getSounds(),
@@ -85,8 +85,7 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
 
     const processedPublicUsers = publicUsers.map((u) => ({
       ...u,
-      status: ctx.getStatusById(u.id),
-      _identity: undefined // remove identity before sending to client
+      status: ctx.getStatusById(u.id)
     }));
 
     const foundPublicUser = processedPublicUsers.find(

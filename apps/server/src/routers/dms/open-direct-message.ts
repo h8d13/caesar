@@ -1,10 +1,10 @@
 import { ChannelType, ServerEvents } from '@caesar/shared';
+import { channels, directMessages, users } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishChannelPermissions } from '@server/db/publishers';
 import { getDirectMessageChannel, normalizePair } from '@server/db/queries/dms';
 import { getSettings } from '@server/db/queries/server';
-import { channels, directMessages, users } from '@server/db/schema';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { randomUUIDv7 } from 'bun';

@@ -1,10 +1,10 @@
-import { db } from '@server/db';
-import { publishUser } from '@server/db/publishers';
 import {
   socialCreditLedger,
   socialCreditVotes,
   users
-} from '@server/db/schema';
+} from '@caesar/shared/db/schema';
+import { db } from '@server/db';
+import { publishUser } from '@server/db/publishers';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { and, eq, gte } from 'drizzle-orm';

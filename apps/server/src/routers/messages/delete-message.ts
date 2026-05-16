@@ -1,10 +1,10 @@
 import { Permission } from '@caesar/shared';
+import { messages } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { removeFile } from '@server/db/mutations/files';
 import { publishMessage, publishReplyCount } from '@server/db/publishers';
 import { assertDmChannel } from '@server/db/queries/dms';
 import { getFilesByMessageId } from '@server/db/queries/files';
-import { messages } from '@server/db/schema';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';

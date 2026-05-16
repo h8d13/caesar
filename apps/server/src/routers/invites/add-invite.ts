@@ -1,6 +1,6 @@
 import { ActivityLogType, getRandomString, Permission } from '@caesar/shared';
+import { invites, roles } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import { invites, roles } from '@server/db/schema';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';

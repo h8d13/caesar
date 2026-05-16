@@ -1,7 +1,7 @@
 import { ChannelPermission, Permission } from '@caesar/shared';
+import { rolePermissions, settings } from '@caesar/shared/db/schema';
 import { initTest, uploadFile } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
-import { rolePermissions, settings } from '@server/db/schema';
 import { describe, expect, test } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 

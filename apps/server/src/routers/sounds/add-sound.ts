@@ -1,8 +1,8 @@
 import { ActivityLogType, Permission } from '@caesar/shared';
+import { sounds } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishSound } from '@server/db/publishers';
 import { getUniqueSoundName } from '@server/db/queries/sounds';
-import { sounds } from '@server/db/schema';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { fileManager } from '@server/utils/file-manager';
 import { protectedProcedure } from '@server/utils/trpc';

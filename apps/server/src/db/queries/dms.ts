@@ -1,8 +1,8 @@
 import type { TDirectMessageConversation } from '@caesar/shared';
+import { channels, directMessages, messages } from '@caesar/shared/db/schema';
 import { TRPCError } from '@trpc/server';
 import { and, eq, inArray, max, or } from 'drizzle-orm';
 import { db } from '..';
-import { channels, directMessages, messages } from '../schema';
 import { getChannelsReadStatesForUser } from './channels';
 import { getSettings } from './server';
 

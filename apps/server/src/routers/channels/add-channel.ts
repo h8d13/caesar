@@ -1,7 +1,7 @@
 import { ActivityLogType, ChannelType, Permission } from '@caesar/shared';
+import { channels } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishChannel } from '@server/db/publishers';
-import { channels } from '@server/db/schema';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { VoiceRuntime } from '@server/runtimes/voice';
 import { protectedProcedure } from '@server/utils/trpc';

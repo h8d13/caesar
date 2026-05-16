@@ -1,5 +1,5 @@
+import { socialCreditLedger } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import { socialCreditLedger } from '@server/db/schema';
 import { protectedProcedure } from '@server/utils/trpc';
 import { sql } from 'drizzle-orm';
 

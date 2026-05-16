@@ -1,8 +1,8 @@
 import { ActivityLogType, Permission } from '@caesar/shared';
+import { messages } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishMessage } from '@server/db/publishers';
 import { assertDmChannel } from '@server/db/queries/dms';
-import { messages } from '@server/db/schema';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';

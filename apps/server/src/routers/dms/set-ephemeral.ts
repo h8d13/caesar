@@ -1,11 +1,11 @@
 import { ServerEvents } from '@caesar/shared';
+import { directMessages } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import {
   assertDmParticipant,
   getDirectMessageChannelParticipantIds,
   isDirectMessageChannel
 } from '@server/db/queries/dms';
-import { directMessages } from '@server/db/schema';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';

@@ -4,9 +4,9 @@ import {
   Permission,
   ServerEvents
 } from '@caesar/shared';
+import { channels } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
-import { channels } from '@server/db/schema';
 import { logger } from '@server/logger';
 import { VoiceRuntime } from '@server/runtimes/voice';
 import { invariant } from '@server/utils/invariant';

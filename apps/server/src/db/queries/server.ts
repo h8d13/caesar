@@ -1,8 +1,8 @@
 import type { TJoinedSettings, TPublicServerSettings } from '@caesar/shared';
+import { files, settings } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { eq } from 'drizzle-orm';
 import { db } from '..';
-import { files, settings } from '../schema';
 
 // since this is static, we can keep it in memory to avoid querying the DB every time
 let token: string;

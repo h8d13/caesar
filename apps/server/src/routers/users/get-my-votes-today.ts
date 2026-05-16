@@ -1,5 +1,5 @@
+import { socialCreditVotes } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import { socialCreditVotes } from '@server/db/schema';
 import { protectedProcedure } from '@server/utils/trpc';
 import { and, eq, gte } from 'drizzle-orm';
 

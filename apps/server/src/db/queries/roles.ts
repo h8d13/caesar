@@ -1,7 +1,7 @@
 import type { Permission, TJoinedRole, TRole } from '@caesar/shared';
+import { rolePermissions, roles, userRoles } from '@caesar/shared/db/schema';
 import { eq, getTableColumns, sql } from 'drizzle-orm';
 import { db } from '..';
-import { rolePermissions, roles, userRoles } from '../schema';
 type TQueryResult = TRole & {
   permissions: string | null;
 };

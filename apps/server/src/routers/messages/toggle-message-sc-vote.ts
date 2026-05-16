@@ -1,6 +1,6 @@
+import { messages, socialCreditLedger } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishMessage, publishUser } from '@server/db/publishers';
-import { messages, socialCreditLedger } from '@server/db/schema';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { and, count, eq, gte } from 'drizzle-orm';

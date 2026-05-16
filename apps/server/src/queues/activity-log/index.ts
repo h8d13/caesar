@@ -1,6 +1,6 @@
 import type { ActivityLogType, TActivityLogDetailsMap } from '@caesar/shared';
+import { activityLog } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import { activityLog } from '@server/db/schema';
 import { hashIp } from '@server/helpers/hash-ip';
 import { logger } from '@server/logger';
 import { getUserIp } from '@server/utils/wss';

@@ -1,8 +1,13 @@
 import { ChannelType, type TFile, type TTempFile } from '@caesar/shared';
+import {
+  channels,
+  files,
+  messageFiles,
+  messages
+} from '@caesar/shared/db/schema';
 import { initTest, login, uploadFile } from '@server/__tests__/helpers';
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
 import { loadCrons } from '@server/crons';
-import { channels, files, messageFiles, messages } from '@server/db/schema';
 import { generateFileToken } from '@server/helpers/files-crypto';
 import { PUBLIC_PATH } from '@server/helpers/paths';
 import { fileManager } from '@server/utils/file-manager';

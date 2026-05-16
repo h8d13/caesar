@@ -1,4 +1,5 @@
 import { ChannelPermission, isEmptyMessage, Permission } from '@caesar/shared';
+import { messageFiles, messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishMessage, publishReplyCount } from '@server/db/publishers';
@@ -8,7 +9,6 @@ import {
   isDirectMessageChannel
 } from '@server/db/queries/dms';
 import { getSettings } from '@server/db/queries/server';
-import { messageFiles, messages } from '@server/db/schema';
 import { sanitizeMessageHtml } from '@server/helpers/sanitize-html';
 import { enqueueProcessMetadata } from '@server/queues/message-metadata';
 import { fileManager } from '@server/utils/file-manager';

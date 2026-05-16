@@ -3,10 +3,10 @@ import {
   DEFAULT_MESSAGES_LIMIT,
   type TMessage
 } from '@caesar/shared';
+import { channels, messages } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { assertDmChannel } from '@server/db/queries/dms';
 import { joinMessagesWithRelations } from '@server/db/queries/messages';
-import { channels, messages } from '@server/db/schema';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { and, asc, eq, gt } from 'drizzle-orm';

@@ -1,3 +1,4 @@
+import { coinflipGames, users } from '@caesar/shared/db/schema';
 import {
   CoinflipSide,
   CoinflipStatus,
@@ -6,7 +7,6 @@ import {
   type TCoinflipStateUpdate
 } from '@caesar/shared/games/coinflip';
 import { db } from '@server/db';
-import { coinflipGames, users } from '@server/db/schema';
 import { randomInt } from 'crypto';
 import { and, eq, inArray } from 'drizzle-orm';
 import {

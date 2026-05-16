@@ -1,7 +1,7 @@
 import type { TJoinedEmoji } from '@caesar/shared';
+import { emojis, files, users } from '@caesar/shared/db/schema';
 import { eq } from 'drizzle-orm';
 import { db } from '..';
-import { emojis, files, users } from '../schema';
 import { publicUserBaseFields } from './user-fields';
 
 const emojiSelectFields = {

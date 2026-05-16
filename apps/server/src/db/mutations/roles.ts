@@ -1,7 +1,7 @@
 import type { Permission, TRole } from '@caesar/shared';
+import { rolePermissions, roles } from '@caesar/shared/db/schema';
 import { eq } from 'drizzle-orm';
 import { db } from '..';
-import { rolePermissions, roles } from '../schema';
 
 const syncRolePermissions = async (
   roleId: number,

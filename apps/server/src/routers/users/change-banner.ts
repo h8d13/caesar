@@ -1,9 +1,9 @@
+import { users } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { removeFile } from '@server/db/mutations/files';
 import { publishUser } from '@server/db/publishers';
 import { getSettings } from '@server/db/queries/server';
 import { getUserById } from '@server/db/queries/users';
-import { users } from '@server/db/schema';
 import { fileManager } from '@server/utils/file-manager';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';

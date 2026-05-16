@@ -19,8 +19,6 @@ import {
   type TISettings,
   type TIUser
 } from '@caesar/shared';
-import { randomUUIDv7 } from 'bun';
-import { type BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import {
   categories,
   channels,
@@ -31,7 +29,9 @@ import {
   settings,
   userRoles,
   users
-} from '../db/schema';
+} from '@caesar/shared/db/schema';
+import { randomUUIDv7 } from 'bun';
+import { type BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 
 const TEST_SECRET_TOKEN = 'test-secret-token-for-unit-tests';
 

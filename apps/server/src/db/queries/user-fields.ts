@@ -1,9 +1,9 @@
+import { users } from '@caesar/shared/db/schema';
 import { sql } from 'drizzle-orm';
-import { users } from '../schema';
 
 // Common columns shared by every query that returns a TPublicUser-shaped
 // record. Spread this into a drizzle .select({ ... }) and add the rest
-// (avatar/banner joins, socialCredit, _identity) as needed.
+// (avatar/banner joins, socialCredit) as needed.
 //
 // When TPublicUser gains a new field, add it here once instead of patching
 // every caller.

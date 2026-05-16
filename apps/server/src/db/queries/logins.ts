@@ -1,7 +1,7 @@
 import type { TLogin } from '@caesar/shared';
+import { logins } from '@caesar/shared/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { db } from '..';
-import { logins } from '../schema';
 
 const getLastLogins = async (userId: number, limit = 10): Promise<TLogin[]> =>
   db

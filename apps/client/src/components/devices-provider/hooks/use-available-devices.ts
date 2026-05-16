@@ -68,6 +68,7 @@ const useAvailableDevices = () => {
     }, [normalizeDevices]);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs React state with the browser mediaDevices list (external system)
         void loadDevices();
 
         if (!navigator.mediaDevices?.addEventListener) return;

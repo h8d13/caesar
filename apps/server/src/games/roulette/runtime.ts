@@ -1,3 +1,4 @@
+import { rouletteBets, rouletteRounds } from '@caesar/shared/db/schema';
 import {
   isBetWinner,
   LIGHTNING_MULTIPLIERS,
@@ -11,7 +12,6 @@ import {
   type TRouletteStateUpdate
 } from '@caesar/shared/games/roulette';
 import { db } from '@server/db';
-import { rouletteBets, rouletteRounds } from '@server/db/schema';
 import { randomInt } from 'crypto';
 import { desc, eq, isNotNull } from 'drizzle-orm';
 import {

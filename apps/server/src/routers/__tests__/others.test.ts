@@ -41,10 +41,6 @@ describe('others router', () => {
     expect(result).toHaveProperty('channelPermissions');
 
     expect(result.ownUserId).toBe(joiningUserId);
-
-    for (const user of result.users) {
-      expect(user._identity).toBeUndefined();
-    }
   });
 
   test('should ask for password if server has one set', async () => {

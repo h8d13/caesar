@@ -1,6 +1,6 @@
 import { extractUrls, type TMessageMetadata } from '@caesar/shared';
+import { messages } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import { messages } from '@server/db/schema';
 import dns from 'dns';
 import { eq } from 'drizzle-orm';
 import ipaddr from 'ipaddr.js';

@@ -1,8 +1,14 @@
 import type { TInvite, TJoinedInvite } from '@caesar/shared';
+import {
+  files,
+  invites,
+  roles,
+  userRoles,
+  users
+} from '@caesar/shared/db/schema';
 import { eq } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { db } from '..';
-import { files, invites, roles, userRoles, users } from '../schema';
 import { publicUserBaseFields, socialCreditSubquery } from './user-fields';
 
 const isInviteValid = async (

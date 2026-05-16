@@ -5,16 +5,16 @@ import {
   Permission,
   ServerEvents
 } from '@caesar/shared';
-import { db } from '@server/db';
-import { publishUser } from '@server/db/publishers';
-import { getUserByIdentity } from '@server/db/queries/users';
 import {
   emojis,
   files,
   messageReactions,
   messages,
   users
-} from '@server/db/schema';
+} from '@caesar/shared/db/schema';
+import { db } from '@server/db';
+import { publishUser } from '@server/db/publishers';
+import { getUserByIdentity } from '@server/db/queries/users';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { pubsub } from '@server/utils/pubsub';

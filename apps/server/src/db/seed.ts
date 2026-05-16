@@ -17,10 +17,6 @@ import {
   type TIRole,
   type TISettings
 } from '@caesar/shared';
-import { randomUUIDv7 } from 'bun';
-import { logger } from '../logger';
-import { IS_DEVELOPMENT } from '../utils/env';
-import { db } from './index';
 import {
   categories,
   channels,
@@ -29,7 +25,11 @@ import {
   roles,
   settings,
   userRoles
-} from './schema';
+} from '@caesar/shared/db/schema';
+import { randomUUIDv7 } from 'bun';
+import { logger } from '../logger';
+import { IS_DEVELOPMENT } from '../utils/env';
+import { db } from './index';
 
 const seedDatabase = async () => {
   const needsSeeding = (await db.select().from(settings)).length === 0;

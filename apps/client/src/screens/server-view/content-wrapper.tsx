@@ -7,32 +7,27 @@ import {
 import { useServerName } from '@/features/server/hooks';
 import { getTRPCClient } from '@/lib/trpc';
 import { ChannelType } from '@caesar/shared';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo } from 'react';
 
 const usePing = () => {
-    const [serverPing, setServerPing] = useState<number | null>(null);
-    const [dbPing, setDbPing] = useState<number | null>(null);
-
-    const refresh = useCallback(async () => {
-        const trpc = getTRPCClient();
-        const start = performance.now();
-        try {
-            const result = await trpc.others.ping.query();
-            const roundTrip = Math.round(performance.now() - start);
-            setServerPing(roundTrip);
-            setDbPing(result.dbPing);
-        } catch {
-            setServerPing(null);
-            setDbPing(null);
+    const { data } = useQuery({
+        queryKey: ['ping'],
+        queryFn: async () => {
+            const start = performance.now();
+            const result = await getTRPCClient().others.ping.query();
+            return {
+                serverPing: Math.round(performance.now() - start),
+                dbPing: result.dbPing
+            };
         }
-    }, []);
+    });
 
-    useEffect(() => {
-        refresh();
-    }, [refresh]);
-
-    return { serverPing, dbPing };
+    return {
+        serverPing: data?.serverPing ?? null,
+        dbPing: data?.dbPing ?? null
+    };
 };
 
 const PingInfo = memo(() => {

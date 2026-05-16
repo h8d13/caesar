@@ -1,9 +1,9 @@
 import { Permission, isEmptyMessage } from '@caesar/shared';
+import { messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishMessage } from '@server/db/publishers';
 import { assertDmChannel } from '@server/db/queries/dms';
-import { messages } from '@server/db/schema';
 import { sanitizeMessageHtml } from '@server/helpers/sanitize-html';
 import { enqueueProcessMetadata } from '@server/queues/message-metadata';
 import { invariant } from '@server/utils/invariant';
