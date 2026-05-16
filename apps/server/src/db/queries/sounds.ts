@@ -2,21 +2,12 @@ import type { TJoinedSound } from '@sharkord/shared';
 import { eq } from 'drizzle-orm';
 import { db } from '..';
 import { files, sounds, users } from '../schema';
+import { publicUserBaseFields } from './user-fields';
 
 const soundSelectFields = {
   sound: sounds,
   file: files,
-  user: {
-    id: users.id,
-    name: users.name,
-    bannerColor: users.bannerColor,
-    bio: users.bio,
-    birthday: users.birthday,
-    createdAt: users.createdAt,
-    banned: users.banned,
-    avatarId: users.avatarId,
-    bannerId: users.bannerId
-  }
+  user: publicUserBaseFields
 };
 
 // TODO: check this any

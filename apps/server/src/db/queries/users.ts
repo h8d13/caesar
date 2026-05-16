@@ -3,15 +3,14 @@ import {
   type TJoinedUser,
   type TStorageData
 } from '@sharkord/shared';
-import { count, eq, sql, sum } from 'drizzle-orm';
+import { count, eq, sum } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import jwt from 'jsonwebtoken';
 import { db } from '..';
 import type { TTokenPayload } from '../../types';
 import { files, userRoles, users } from '../schema';
 import { getServerToken } from './server';
-
-const socialCreditSubquery = sql<number>`(SELECT COALESCE(SUM(amount), 0) FROM social_credit_ledger WHERE target_id = ${users.id})`;
+import { publicUserBaseFields, socialCreditSubquery } from './user-fields';
 
 const getPublicUserById = async (
   userId: number
@@ -21,18 +20,10 @@ const getPublicUserById = async (
 
   const results = await db
     .select({
-      id: users.id,
-      name: users.name,
-      bannerColor: users.bannerColor,
-      bio: users.bio,
-      birthday: users.birthday,
-      banned: users.banned,
-      avatarId: users.avatarId,
-      bannerId: users.bannerId,
+      ...publicUserBaseFields,
       avatar: avatarFiles,
       banner: bannerFiles,
-      socialCredit: socialCreditSubquery,
-      createdAt: users.createdAt
+      socialCredit: socialCreditSubquery
     })
     .from(users)
     .leftJoin(avatarFiles, eq(users.avatarId, avatarFiles.id))
@@ -49,18 +40,7 @@ const getPublicUserById = async (
     .all();
 
   return {
-    id: results.id,
-    name: results.name,
-    bannerColor: results.bannerColor,
-    bio: results.bio,
-    birthday: results.birthday,
-    avatarId: results.avatarId,
-    bannerId: results.bannerId,
-    avatar: results.avatar,
-    banner: results.banner,
-    socialCredit: results.socialCredit,
-    createdAt: results.createdAt,
-    banned: results.banned,
+    ...results,
     roleIds: roles.map((r) => r.roleId)
   };
 };
@@ -74,18 +54,10 @@ const getPublicUsers = async (
   if (returnIdentity) {
     const results = await db
       .select({
-        id: users.id,
-        name: users.name,
-        bannerColor: users.bannerColor,
-        bio: users.bio,
-        birthday: users.birthday,
-        banned: users.banned,
-        avatarId: users.avatarId,
-        bannerId: users.bannerId,
+        ...publicUserBaseFields,
         avatar: avatarFiles,
         banner: bannerFiles,
         socialCredit: socialCreditSubquery,
-        createdAt: users.createdAt,
         _identity: users.identity
       })
       .from(users)
@@ -111,43 +83,22 @@ const getPublicUsers = async (
     );
 
     return results.map((result) => ({
-      id: result.id,
-      name: result.name,
-      bannerColor: result.bannerColor,
-      bio: result.bio,
-      birthday: result.birthday,
-      banned: result.banned,
-      avatarId: result.avatarId,
-      bannerId: result.bannerId,
-      avatar: result.avatar,
-      banner: result.banner,
-      socialCredit: result.socialCredit,
-      createdAt: result.createdAt,
-      _identity: result._identity,
+      ...result,
       roleIds: rolesMap[result.id] || []
     }));
   } else {
     const results = await db
       .select({
-        id: users.id,
-        name: users.name,
-        banned: users.banned,
-        bannerColor: users.bannerColor,
-        bio: users.bio,
-        birthday: users.birthday,
-        avatarId: users.avatarId,
-        bannerId: users.bannerId,
+        ...publicUserBaseFields,
         avatar: avatarFiles,
         banner: bannerFiles,
-        socialCredit: socialCreditSubquery,
-        createdAt: users.createdAt
+        socialCredit: socialCreditSubquery
       })
       .from(users)
       .leftJoin(avatarFiles, eq(users.avatarId, avatarFiles.id))
       .leftJoin(bannerFiles, eq(users.bannerId, bannerFiles.id))
       .all();
 
-    // Get role IDs for all users
     const rolesByUser = await db
       .select({
         userId: userRoles.userId,
@@ -166,18 +117,7 @@ const getPublicUsers = async (
     );
 
     return results.map((result) => ({
-      id: result.id,
-      name: result.name,
-      banned: result.banned,
-      bannerColor: result.bannerColor,
-      bio: result.bio,
-      birthday: result.birthday,
-      avatarId: result.avatarId,
-      bannerId: result.bannerId,
-      avatar: result.avatar,
-      banner: result.banner,
-      socialCredit: result.socialCredit,
-      createdAt: result.createdAt,
+      ...result,
       roleIds: rolesMap[result.id] || []
     }));
   }
