@@ -133,7 +133,7 @@ const Connect = memo(() => {
             return getFileUrl(info.logo);
         }
 
-        return '/logo.webp';
+        return '/logo.png';
     }, [info]);
 
     return (
