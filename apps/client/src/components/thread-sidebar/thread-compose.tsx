@@ -5,7 +5,7 @@ import { handleBuiltInCommand } from '@/helpers/built-in-commands';
 import { getTRPCClient } from '@/lib/trpc';
 import type { TJoinedPublicUser } from '@sharkord/shared';
 import { TYPING_MS, getTrpcError } from '@sharkord/shared';
-import { throttle } from 'lodash-es';
+import { throttle } from '@/helpers/throttle';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 

@@ -1,22 +1,22 @@
 import type { TDiskMetrics } from '@sharkord/shared';
-import si from 'systeminformation';
+import fs from 'fs/promises';
 import { getUsedFileQuota } from '../db/queries/files';
+import { UPLOADS_PATH } from '../helpers/paths';
 
 const getDiskMetrics = async (): Promise<TDiskMetrics> => {
-  const [diskInfo, filesUsedSpace] = await Promise.all([
-    si.fsSize(),
+  const [stats, filesUsedSpace] = await Promise.all([
+    fs.statfs(UPLOADS_PATH),
     getUsedFileQuota()
   ]);
 
-  const totalDisk = diskInfo.reduce((acc, disk) => acc + disk.size, 0);
-  const usedDisk = diskInfo.reduce((acc, disk) => acc + disk.used, 0);
-
-  const freeDisk = totalDisk - usedDisk;
+  const totalSpace = stats.blocks * stats.bsize;
+  const freeSpace = stats.bavail * stats.bsize;
+  const usedSpace = totalSpace - freeSpace;
 
   const metrics: TDiskMetrics = {
-    totalSpace: totalDisk,
-    usedSpace: usedDisk,
-    freeSpace: freeDisk,
+    totalSpace,
+    usedSpace,
+    freeSpace,
     sharkordUsedSpace: filesUsedSpace
   };
 

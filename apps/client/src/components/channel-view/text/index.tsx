@@ -24,7 +24,7 @@ import {
     type TJoinedMessage
 } from '@sharkord/shared';
 import { Spinner } from '@sharkord/ui';
-import { throttle } from 'lodash-es';
+import { throttle } from '@/helpers/throttle';
 import { X } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';

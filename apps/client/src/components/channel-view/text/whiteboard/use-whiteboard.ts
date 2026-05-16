@@ -12,7 +12,7 @@ import {
     type WhiteboardCursor,
     type XYWH
 } from '@sharkord/shared';
-import { throttle } from 'lodash-es';
+import { throttle } from '@/helpers/throttle';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     constrainAngle,

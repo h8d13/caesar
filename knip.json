@@ -22,7 +22,7 @@
     }
   },
   "ignore": ["**/*.d.ts"],
-  "ignoreBinaries": ["tsc", "prettier", "eslint"],
-  "ignoreDependencies": ["tailwindcss", "buffer"],
+  "ignoreBinaries": ["prettier"],
+  "ignoreDependencies": ["tailwindcss", "buffer", "ws", "@types/ws"],
   "ignoreExportsUsedInFile": true
 }
