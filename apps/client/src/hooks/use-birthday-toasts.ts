@@ -28,7 +28,9 @@ const useBirthdayToasts = () => {
     useEffect(() => {
         if (users.length === 0) return;
 
-        const lastShown = getLocalStorageItem(LocalStorageKey.BIRTHDAY_LAST_SHOWN);
+        const lastShown = getLocalStorageItem(
+            LocalStorageKey.BIRTHDAY_LAST_SHOWN
+        );
         const today = todayISO();
 
         if (lastShown === today) return;
