@@ -4,8 +4,6 @@ import {
   Permission,
   ServerEvents
 } from '@caesar/shared';
-import { eq } from 'drizzle-orm';
-import { z } from 'zod';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { channels } from '@server/db/schema';
@@ -13,6 +11,8 @@ import { logger } from '@server/logger';
 import { VoiceRuntime } from '@server/runtimes/voice';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 
 const joinVoiceRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: config.rateLimiters.joinVoiceChannel.maxRequests,

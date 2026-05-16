@@ -1,12 +1,12 @@
 import { ActivityLogType, DisconnectCode, Permission } from '@caesar/shared';
-import { eq } from 'drizzle-orm';
-import z from 'zod';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
 import { users } from '@server/db/schema';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
+import { eq } from 'drizzle-orm';
+import z from 'zod';
 
 const banRoute = protectedProcedure
   .input(

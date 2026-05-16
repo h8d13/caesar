@@ -4,8 +4,6 @@ import {
   Permission,
   type TTempFile
 } from '@caesar/shared';
-import { describe, expect, test } from 'bun:test';
-import { and, eq } from 'drizzle-orm';
 import { initTest, uploadFile } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import {
@@ -21,6 +19,8 @@ import {
   userRoles,
   users
 } from '@server/db/schema';
+import { describe, expect, test } from 'bun:test';
+import { and, eq } from 'drizzle-orm';
 
 describe('users router', () => {
   test('should throw when user lacks permissions (getAll)', async () => {

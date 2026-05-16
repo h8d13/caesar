@@ -1,6 +1,4 @@
 import { ServerEvents } from '@caesar/shared';
-import { eq } from 'drizzle-orm';
-import { z } from 'zod';
 import { db } from '@server/db';
 import {
   assertDmParticipant,
@@ -10,6 +8,8 @@ import {
 import { directMessages } from '@server/db/schema';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 
 const EPHEMERAL_MS = 24 * 60 * 60 * 1000;
 

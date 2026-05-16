@@ -1,6 +1,6 @@
 import { Permission } from '@caesar/shared';
-import { describe, expect, test } from 'bun:test';
 import { initTest } from '@server/__tests__/helpers';
+import { describe, expect, test } from 'bun:test';
 
 describe('roles router', () => {
   test('should throw when user lacks permissions (getAll)', async () => {

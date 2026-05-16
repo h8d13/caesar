@@ -1,6 +1,6 @@
 import type { TServerInfo } from '@caesar/shared';
-import { describe, expect, test } from 'bun:test';
 import { testsBaseUrl } from '@server/__tests__/setup';
+import { describe, expect, test } from 'bun:test';
 
 describe('/info', () => {
   test('should return server info', async () => {

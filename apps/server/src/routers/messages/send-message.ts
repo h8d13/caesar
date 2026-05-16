@@ -1,6 +1,4 @@
 import { ChannelPermission, isEmptyMessage, Permission } from '@caesar/shared';
-import { eq } from 'drizzle-orm';
-import { z } from 'zod';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishMessage, publishReplyCount } from '@server/db/publishers';
@@ -16,6 +14,8 @@ import { enqueueProcessMetadata } from '@server/queues/message-metadata';
 import { fileManager } from '@server/utils/file-manager';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 
 const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: config.rateLimiters.sendAndEditMessage.maxRequests,

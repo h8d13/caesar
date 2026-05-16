@@ -1,6 +1,4 @@
 import { Permission, isEmptyMessage } from '@caesar/shared';
-import { eq } from 'drizzle-orm';
-import { z } from 'zod';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishMessage } from '@server/db/publishers';
@@ -10,6 +8,8 @@ import { sanitizeMessageHtml } from '@server/helpers/sanitize-html';
 import { enqueueProcessMetadata } from '@server/queues/message-metadata';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 
 const editMessageRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: config.rateLimiters.sendAndEditMessage.maxRequests,

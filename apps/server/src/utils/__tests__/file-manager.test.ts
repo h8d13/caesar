@@ -1,12 +1,12 @@
 import { StorageOverflowAction } from '@caesar/shared';
+import { tdb } from '@server/__tests__/setup';
+import { files, settings } from '@server/db/schema';
+import { PUBLIC_PATH, TMP_PATH, UPLOADS_PATH } from '@server/helpers/paths';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 import fs from 'fs/promises';
 import { afterEach } from 'node:test';
 import path from 'path';
-import { tdb } from '@server/__tests__/setup';
-import { files, settings } from '@server/db/schema';
-import { PUBLIC_PATH, TMP_PATH, UPLOADS_PATH } from '@server/helpers/paths';
 import { fileManager } from '../file-manager';
 
 describe('file manager', () => {

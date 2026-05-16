@@ -1,7 +1,7 @@
 import { ServerEvents, type Layer } from '@caesar/shared';
-import { z } from 'zod';
 import { WhiteboardRuntime } from '@server/runtimes/whiteboard';
 import { protectedProcedure, t } from '@server/utils/trpc';
+import { z } from 'zod';
 
 const colorSchema = z.object({
   r: z.number(),

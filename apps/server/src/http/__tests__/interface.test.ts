@@ -1,8 +1,8 @@
+import { testsBaseUrl } from '@server/__tests__/setup';
+import { INTERFACE_PATH } from '@server/helpers/paths';
 import { beforeAll, describe, expect, test } from 'bun:test';
 import fs from 'fs';
 import path from 'path';
-import { testsBaseUrl } from '@server/__tests__/setup';
-import { INTERFACE_PATH } from '@server/helpers/paths';
 
 describe('/interface', () => {
   const testInterfacePath = INTERFACE_PATH;

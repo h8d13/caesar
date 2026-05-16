@@ -5,9 +5,9 @@ import {
   type TChannelUserPermissionsMap,
   type TReadStateMap
 } from '@caesar/shared';
+import { getOnlineUserIds } from '@server/utils/wss';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '..';
-import { getOnlineUserIds } from '@server/utils/wss';
 import {
   channelReadStates,
   channelRolePermissions,

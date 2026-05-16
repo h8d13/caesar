@@ -5,8 +5,6 @@ import {
   Permission,
   ServerEvents
 } from '@caesar/shared';
-import { eq } from 'drizzle-orm';
-import z from 'zod';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
 import { getUserByIdentity } from '@server/db/queries/users';
@@ -21,6 +19,8 @@ import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { pubsub } from '@server/utils/pubsub';
 import { protectedProcedure } from '@server/utils/trpc';
+import { eq } from 'drizzle-orm';
+import z from 'zod';
 
 const ensureDeletedUser = async (): Promise<number> => {
   const existingDeletedUser = await getUserByIdentity(

@@ -1,10 +1,10 @@
 import { Permission } from '@caesar/shared';
-import { eq } from 'drizzle-orm';
-import { z } from 'zod';
 import { db } from '@server/db';
 import { categories } from '@server/db/schema';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 
 const getCategoryRoute = protectedProcedure
   .input(

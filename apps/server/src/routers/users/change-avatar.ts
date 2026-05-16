@@ -1,5 +1,3 @@
-import { eq } from 'drizzle-orm';
-import z from 'zod';
 import { db } from '@server/db';
 import { removeFile } from '@server/db/mutations/files';
 import { publishUser } from '@server/db/publishers';
@@ -9,6 +7,8 @@ import { users } from '@server/db/schema';
 import { fileManager } from '@server/utils/file-manager';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
+import { eq } from 'drizzle-orm';
+import z from 'zod';
 
 const changeAvatarRoute = protectedProcedure
   .input(

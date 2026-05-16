@@ -1,10 +1,10 @@
 import type { TFile } from '@caesar/shared';
+import { PUBLIC_PATH } from '@server/helpers/paths';
+import { logger } from '@server/logger';
 import { eq } from 'drizzle-orm';
 import fs from 'fs/promises';
 import path from 'path';
 import { db } from '..';
-import { PUBLIC_PATH } from '@server/helpers/paths';
-import { logger } from '@server/logger';
 import { files, messageFiles } from '../schema';
 
 const removeFile = async (fileId: number): Promise<TFile | undefined> => {

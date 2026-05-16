@@ -1,9 +1,4 @@
 import { ChannelType, type TFile, type TTempFile } from '@caesar/shared';
-import { describe, expect, test } from 'bun:test';
-import { eq } from 'drizzle-orm';
-import fs from 'fs/promises';
-import { beforeEach } from 'node:test';
-import path from 'path';
 import { initTest, login, uploadFile } from '@server/__tests__/helpers';
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
 import { loadCrons } from '@server/crons';
@@ -11,6 +6,11 @@ import { channels, files, messageFiles, messages } from '@server/db/schema';
 import { generateFileToken } from '@server/helpers/files-crypto';
 import { PUBLIC_PATH } from '@server/helpers/paths';
 import { fileManager } from '@server/utils/file-manager';
+import { describe, expect, test } from 'bun:test';
+import { eq } from 'drizzle-orm';
+import fs from 'fs/promises';
+import { beforeEach } from 'node:test';
+import path from 'path';
 
 const upload = async (file: File, token: string) => {
   const uploadResponse = await uploadFile(file, token);

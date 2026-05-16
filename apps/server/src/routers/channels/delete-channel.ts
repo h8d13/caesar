@@ -1,6 +1,4 @@
 import { ActivityLogType, Permission } from '@caesar/shared';
-import { eq } from 'drizzle-orm';
-import { z } from 'zod';
 import { db } from '@server/db';
 import { publishChannel } from '@server/db/publishers';
 import { isDirectMessageChannel } from '@server/db/queries/dms';
@@ -9,6 +7,8 @@ import { enqueueActivityLog } from '@server/queues/activity-log';
 import { VoiceRuntime } from '@server/runtimes/voice';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 
 const deleteChannelRoute = protectedProcedure
   .input(

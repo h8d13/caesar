@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test';
 import { initTest } from '@server/__tests__/helpers';
+import { describe, expect, test } from 'bun:test';
 
 describe('voice router', () => {
   test('should rate limit excessive voice join attempts', async () => {

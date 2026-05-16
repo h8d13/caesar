@@ -1,6 +1,6 @@
 import { ServerEvents, type StreamKind } from '@caesar/shared';
-import { observable } from '@trpc/server/observable';
 import { protectedProcedure } from '@server/utils/trpc';
+import { observable } from '@trpc/server/observable';
 
 type TVoiceProducerEvent = {
   channelId: number;

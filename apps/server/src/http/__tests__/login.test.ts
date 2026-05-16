@@ -1,11 +1,11 @@
 import { sha256 } from '@caesar/shared';
-import { describe, expect, test } from 'bun:test';
-import { eq } from 'drizzle-orm';
-import jwt from 'jsonwebtoken';
 import { login } from '@server/__tests__/helpers';
 import { TEST_SECRET_TOKEN } from '@server/__tests__/seed';
 import { tdb } from '@server/__tests__/setup';
 import { invites, roles, userRoles, users } from '@server/db/schema';
+import { describe, expect, test } from 'bun:test';
+import { eq } from 'drizzle-orm';
+import jwt from 'jsonwebtoken';
 
 describe('/login', () => {
   test('should successfully login with valid credentials', async () => {

@@ -6,9 +6,9 @@ import type {
   TMessageReaction,
   TMessageScVote
 } from '@caesar/shared';
+import { generateFileToken } from '@server/helpers/files-crypto';
 import { and, count, desc, eq, inArray, notExists } from 'drizzle-orm';
 import { db } from '..';
-import { generateFileToken } from '@server/helpers/files-crypto';
 import {
   channels,
   directMessages,

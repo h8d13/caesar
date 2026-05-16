@@ -5,10 +5,10 @@ import {
   type TCoinflipResult,
   type TCoinflipStateUpdate
 } from '@caesar/shared/games/coinflip';
-import { randomInt } from 'crypto';
-import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '@server/db';
 import { coinflipGames, users } from '@server/db/schema';
+import { randomInt } from 'crypto';
+import { and, eq, inArray } from 'drizzle-orm';
 import {
   CHALLENGE_EXPIRE_MS,
   FLIP_DURATION_MS,

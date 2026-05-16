@@ -3,11 +3,11 @@ import {
   Permission,
   StorageOverflowAction
 } from '@caesar/shared';
-import { z } from 'zod';
 import { updateSettings } from '@server/db/mutations/server';
 import { publishSettings } from '@server/db/publishers';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { protectedProcedure } from '@server/utils/trpc';
+import { z } from 'zod';
 
 const updateSettingsRoute = protectedProcedure
   .input(

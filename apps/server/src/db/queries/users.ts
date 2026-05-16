@@ -3,11 +3,11 @@ import {
   type TJoinedUser,
   type TStorageData
 } from '@caesar/shared';
+import type { TTokenPayload } from '@server/types';
 import { count, eq, sum } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import jwt from 'jsonwebtoken';
 import { db } from '..';
-import type { TTokenPayload } from '@server/types';
 import { files, userRoles, users } from '../schema';
 import { getServerToken } from './server';
 import { publicUserBaseFields, socialCreditSubquery } from './user-fields';

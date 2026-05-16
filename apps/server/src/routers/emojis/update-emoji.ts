@@ -1,6 +1,4 @@
 import { ActivityLogType, Permission } from '@caesar/shared';
-import { eq } from 'drizzle-orm';
-import { z } from 'zod';
 import { db } from '@server/db';
 import { publishEmoji } from '@server/db/publishers';
 import { emojiExists, getEmojiById } from '@server/db/queries/emojis';
@@ -8,6 +6,8 @@ import { emojis } from '@server/db/schema';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 
 const updateEmojiRoute = protectedProcedure
   .input(

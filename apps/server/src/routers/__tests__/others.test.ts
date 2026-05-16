@@ -1,5 +1,4 @@
 import type { TTempFile } from '@caesar/shared';
-import { describe, expect, test } from 'bun:test';
 import {
   getCaller,
   initTest,
@@ -7,6 +6,7 @@ import {
   uploadFile
 } from '@server/__tests__/helpers';
 import { TEST_SECRET_TOKEN } from '@server/__tests__/seed';
+import { describe, expect, test } from 'bun:test';
 
 describe('others router', () => {
   test('should throw when user tries to join with no handshake', async () => {

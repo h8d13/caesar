@@ -1,6 +1,4 @@
 import { ActivityLogType, ServerEvents, UserStatus } from '@caesar/shared';
-import { eq } from 'drizzle-orm';
-import { z } from 'zod';
 import { db } from '@server/db';
 import {
   getAllChannelUserPermissions,
@@ -20,6 +18,8 @@ import { VoiceRuntime } from '@server/runtimes/voice';
 import { invariant } from '@server/utils/invariant';
 import { rateLimitedProcedure, t } from '@server/utils/trpc';
 import { trackUserConnect } from '@server/utils/wss';
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 
 const joinServerRoute = rateLimitedProcedure(t.procedure, {
   maxRequests: 5,

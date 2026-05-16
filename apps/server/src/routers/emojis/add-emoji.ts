@@ -1,5 +1,4 @@
 import { ActivityLogType, Permission } from '@caesar/shared';
-import { z } from 'zod';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishEmoji } from '@server/db/publishers';
@@ -8,6 +7,7 @@ import { emojis } from '@server/db/schema';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { fileManager } from '@server/utils/file-manager';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
+import { z } from 'zod';
 
 const addEmojiRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: config.rateLimiters.addEmoji.maxRequests,

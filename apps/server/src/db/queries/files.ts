@@ -1,7 +1,7 @@
 import type { TFile } from '@caesar/shared';
+import { generateFileToken } from '@server/helpers/files-crypto';
 import { asc, eq, sql, sum } from 'drizzle-orm';
 import { db } from '..';
-import { generateFileToken } from '@server/helpers/files-crypto';
 import { channels, files, messageFiles, messages } from '../schema';
 import { getSettings } from './server';
 

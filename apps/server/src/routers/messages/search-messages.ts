@@ -1,9 +1,9 @@
 import { ChannelPermission, ChannelType } from '@caesar/shared';
-import { and, desc, eq, inArray, isNull, like } from 'drizzle-orm';
-import { z } from 'zod';
 import { db } from '@server/db';
 import { channels, messages } from '@server/db/schema';
 import { protectedProcedure } from '@server/utils/trpc';
+import { and, desc, eq, inArray, isNull, like } from 'drizzle-orm';
+import { z } from 'zod';
 
 const searchMessagesRoute = protectedProcedure
   .input(

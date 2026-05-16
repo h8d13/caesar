@@ -1,6 +1,4 @@
 import { ActivityLogType, Permission } from '@caesar/shared';
-import { eq } from 'drizzle-orm';
-import { z } from 'zod';
 import { db } from '@server/db';
 import { publishSound } from '@server/db/publishers';
 import { getSoundById, soundExists } from '@server/db/queries/sounds';
@@ -8,6 +6,8 @@ import { sounds } from '@server/db/schema';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 
 const updateSoundRoute = protectedProcedure
   .input(

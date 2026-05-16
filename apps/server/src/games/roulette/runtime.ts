@@ -10,10 +10,10 @@ import {
   type TRouletteRoundResult,
   type TRouletteStateUpdate
 } from '@caesar/shared/games/roulette';
-import { randomInt } from 'crypto';
-import { desc, eq, isNotNull } from 'drizzle-orm';
 import { db } from '@server/db';
 import { rouletteBets, rouletteRounds } from '@server/db/schema';
+import { randomInt } from 'crypto';
+import { desc, eq, isNotNull } from 'drizzle-orm';
 import {
   BETTING_PHASE_DURATION_MS,
   MAX_BET,

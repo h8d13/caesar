@@ -1,5 +1,5 @@
-import Queue from 'queue';
 import { publishMessage } from '@server/db/publishers';
+import Queue from 'queue';
 import { processMessageMetadata } from './get-message-metadata';
 
 const messageMetadataQueue = new Queue({

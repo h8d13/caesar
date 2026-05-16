@@ -1,11 +1,11 @@
 import { OWNER_ROLE_ID, sha256 } from '@caesar/shared';
-import { z } from 'zod';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
 import { getSettings } from '@server/db/queries/server';
 import { userRoles } from '@server/db/schema';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
+import { z } from 'zod';
 
 const useSecretTokenRoute = protectedProcedure
   .input(

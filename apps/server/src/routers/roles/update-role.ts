@@ -1,12 +1,12 @@
 import { ActivityLogType, OWNER_ROLE_ID, Permission } from '@caesar/shared';
-import { eq } from 'drizzle-orm';
-import { z } from 'zod';
 import { db } from '@server/db';
 import { syncRolePermissions } from '@server/db/mutations/roles';
 import { publishRole } from '@server/db/publishers';
 import { roles } from '@server/db/schema';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { protectedProcedure } from '@server/utils/trpc';
+import { eq } from 'drizzle-orm';
+import { z } from 'zod';
 
 const updateRoleRoute = protectedProcedure
   .input(

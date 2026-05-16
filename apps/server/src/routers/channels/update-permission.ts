@@ -1,6 +1,4 @@
 import { ActivityLogType, ChannelPermission, Permission } from '@caesar/shared';
-import { and, eq } from 'drizzle-orm';
-import { z } from 'zod';
 import { db } from '@server/db';
 import { publishChannelPermissions } from '@server/db/publishers';
 import { getAffectedOnlineUserIdsForChannel } from '@server/db/queries/channels';
@@ -12,6 +10,8 @@ import {
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
+import { and, eq } from 'drizzle-orm';
+import { z } from 'zod';
 
 const allPermissions = Object.values(ChannelPermission);
 

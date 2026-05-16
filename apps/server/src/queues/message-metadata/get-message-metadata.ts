@@ -1,11 +1,11 @@
 import { extractUrls, type TMessageMetadata } from '@caesar/shared';
+import { db } from '@server/db';
+import { messages } from '@server/db/schema';
 import dns from 'dns';
 import { eq } from 'drizzle-orm';
 import ipaddr from 'ipaddr.js';
 import { getLinkPreview } from 'link-preview-js';
 import { isIP } from 'net';
-import { db } from '@server/db';
-import { messages } from '@server/db/schema';
 
 type LinkPreviewResult = Awaited<ReturnType<typeof getLinkPreview>>;
 const metadataCache = new Map<string, LinkPreviewResult>();

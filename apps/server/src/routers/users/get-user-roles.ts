@@ -1,7 +1,7 @@
 import type { Permission, TJoinedRole } from '@caesar/shared';
-import { eq } from 'drizzle-orm';
 import { db } from '@server/db';
 import { rolePermissions, roles, userRoles } from '@server/db/schema';
+import { eq } from 'drizzle-orm';
 
 const getUserRoles = async (userId: number): Promise<TJoinedRole[]> => {
   const result = await db
