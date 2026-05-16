@@ -30,8 +30,7 @@ const Others = memo(() => {
             <CardHeader>
                 <CardTitle>Others</CardTitle>
                 <CardDescription>
-                    In this section, you can update settings related to
-                    {VITE_APP_NAME}'s behavior.
+                    In this section, you can update settings related to {VITE_APP_NAME}'s behavior.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
