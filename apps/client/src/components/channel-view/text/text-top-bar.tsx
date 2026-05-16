@@ -1,8 +1,5 @@
 import { useChannelById } from '@/features/server/channels/hooks';
-import {
-    useOwnUserId,
-    useUserById
-} from '@/features/server/users/hooks';
+import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
 import { getTRPCClient } from '@/lib/trpc';
 import { Hash, PenTool, Timer } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
