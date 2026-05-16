@@ -1,3 +1,4 @@
+import { DatePicker } from '@/components/date-picker';
 import { closeServerScreens } from '@/features/server-screens/actions';
 import { useOwnPublicUser } from '@/features/server/users/hooks';
 import { useForm } from '@/hooks/use-form';
@@ -20,9 +21,28 @@ import { toast } from 'sonner';
 import { AvatarManager } from './avatar-manager';
 import { BannerManager } from './banner-manager';
 
+// Birthday is stored as ISO "YYYY-MM-DD". The DatePicker speaks
+// timestamps, so we translate at the boundary.
+const isoToTimestamp = (iso: string): number => {
+    if (!iso) return 0;
+    const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return 0;
+    const [, y, m, d] = match;
+    return new Date(Number(y), Number(m) - 1, Number(d)).getTime();
+};
+
+const timestampToIso = (ts: number): string => {
+    if (!ts) return '';
+    const d = new Date(ts);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+};
+
 const Profile = memo(() => {
     const ownPublicUser = useOwnPublicUser();
-    const { setTrpcErrors, r, rr, values } = useForm({
+    const { setTrpcErrors, r, rr, values, onChange } = useForm({
         name: ownPublicUser?.name ?? '',
         bannerColor: ownPublicUser?.bannerColor ?? '#FFFFFF',
         bio: ownPublicUser?.bio ?? '',
@@ -77,12 +97,14 @@ const Profile = memo(() => {
 
                 <Group
                     label="Birthday"
-                    help="Optional. Format: DD-MM (e.g. 25-12). A reminder is posted in chat the day before."
+                    help="Optional. Online users see a one-time notification the day before."
                 >
-                    <Input
-                        placeholder="DD-MM"
-                        maxLength={5}
-                        {...r('birthday')}
+                    <DatePicker
+                        value={isoToTimestamp(values.birthday)}
+                        onChange={(ts) =>
+                            onChange('birthday', timestampToIso(ts))
+                        }
+                        placeholder="Select your birthday..."
                     />
                 </Group>
 

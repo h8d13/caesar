@@ -22,7 +22,10 @@ const updateUserRoute = protectedProcedure
       bio: z.string().max(160).optional(),
       birthday: z
         .string()
-        .regex(/^(0[1-9]|[12]\d|3[01])-(0[1-9]|1[0-2])$/, 'Use DD-MM format')
+        .regex(
+          /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/,
+          'Use YYYY-MM-DD format'
+        )
         .nullable()
         .optional()
     })
