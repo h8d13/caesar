@@ -49,7 +49,7 @@
     "ipaddr.js": "^2.4.0",
     "jsonwebtoken": "^9.0.3",
     "link-preview-js": "^4.0.3",
-    "mediasoup": "^3.19.22",
+    "mediasoup": "3.19.22",
     "queue": "^7.0.0",
     "sanitize-html": "^2.17.4",
     "ua-parser-js": "^2.0.9",
