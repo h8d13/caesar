@@ -197,7 +197,16 @@ describe('/login', () => {
   });
 
   test('should assign default role to newly registered user', async () => {
-    const response = await login('roleuser', 'password123');
+    await tdb.insert(invites).values({
+      code: 'ROLEINVITE',
+      creatorId: 1,
+      maxUses: 5,
+      uses: 0,
+      expiresAt: Date.now() + 86400000,
+      createdAt: Date.now()
+    });
+
+    const response = await login('roleuser', 'password123', 'ROLEINVITE');
 
     expect(response.status).toBe(200);
 
