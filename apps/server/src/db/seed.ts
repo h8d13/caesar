@@ -154,7 +154,7 @@ const seedDatabase = async () => {
   });
 
   console.log(
-    'First-time setup. Save this admin token, it is not recoverable:'
+    'First-time setup. Save this owner token, it is not recoverable:'
   );
   console.log(`  useToken("${originalToken}")`);
 };
