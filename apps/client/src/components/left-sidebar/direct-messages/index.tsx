@@ -87,6 +87,18 @@ const DirectMessages = memo(() => {
         fetchConversations();
     }, [channels.length, fetchConversations]);
 
+    // auto-select the most recent conversation when none is selected or the
+    // previously selected one is no longer in the list
+    useEffect(() => {
+        if (loading || conversations.length === 0) return;
+        const stillExists = conversations.some(
+            (c) => c.channelId === selectedDmChannelId
+        );
+        if (!stillExists) {
+            setSelectedDmChannelId(conversations[0]!.channelId);
+        }
+    }, [loading, conversations, selectedDmChannelId]);
+
     // subscribe to new conversations being opened, when a new conversation is opened we refetch the list of conversations
     useEffect(() => {
         const trpc = getTRPCClient();
