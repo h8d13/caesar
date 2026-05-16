@@ -5,10 +5,7 @@ import {
     useRoulettePhase
 } from '@/features/server/roulette/hooks';
 import { cn } from '@/lib/utils';
-import {
-    RouletteBetType,
-    RoulettePhase
-} from '@caesar/shared/games/roulette';
+import { RouletteBetType, RoulettePhase } from '@caesar/shared/games/roulette';
 import { Zap } from 'lucide-react';
 import { memo, useCallback, useContext } from 'react';
 import { toast } from 'sonner';

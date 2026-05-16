@@ -8,6 +8,8 @@ import {
     useHasVisibleChannelsInCategory
 } from '@/features/server/hooks';
 import { getTRPCClient } from '@/lib/trpc';
+import { Permission, getTrpcError } from '@caesar/shared';
+import { IconButton } from '@caesar/ui';
 import {
     DndContext,
     type DragEndEvent,
@@ -22,8 +24,6 @@ import {
     verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Permission, getTrpcError } from '@caesar/shared';
-import { IconButton } from '@caesar/ui';
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';

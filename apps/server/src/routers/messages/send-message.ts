@@ -1,8 +1,4 @@
-import {
-  ChannelPermission,
-  isEmptyMessage,
-  Permission
-} from '@caesar/shared';
+import { ChannelPermission, isEmptyMessage, Permission } from '@caesar/shared';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { config } from '../../config';

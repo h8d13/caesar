@@ -1,7 +1,7 @@
 import { UserAvatar } from '@/components/user-avatar';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
-import { computePosition } from '@floating-ui/dom';
 import type { TJoinedPublicUser } from '@caesar/shared';
+import { computePosition } from '@floating-ui/dom';
 import type { Editor } from '@tiptap/core';
 import { ReactRenderer } from '@tiptap/react';
 import {

@@ -1,9 +1,9 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import {
     type TCoinflipChallenge,
     type TCoinflipResult,
     type TCoinflipStateUpdate
 } from '@caesar/shared/games/coinflip';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 export type TCoinflipTopWin = {
     winnerName: string;

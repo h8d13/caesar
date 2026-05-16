@@ -1,10 +1,10 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import {
     type CrashPhase,
     type TCrashActiveBet,
     type TCrashRoundHistory,
     type TCrashStateUpdate
 } from '@caesar/shared/games/crash';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 export type TCrashTopWin = {
     userName: string;

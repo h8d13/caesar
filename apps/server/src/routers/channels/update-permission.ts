@@ -1,8 +1,4 @@
-import {
-  ActivityLogType,
-  ChannelPermission,
-  Permission
-} from '@caesar/shared';
+import { ActivityLogType, ChannelPermission, Permission } from '@caesar/shared';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../db';

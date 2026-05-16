@@ -1,4 +1,3 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import {
     type RoulettePhase,
     type TLightningNumber,
@@ -6,6 +5,7 @@ import {
     type TRouletteRoundHistory,
     type TRouletteStateUpdate
 } from '@caesar/shared/games/roulette';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 export type TRouletteTopWin = {
     userName: string;

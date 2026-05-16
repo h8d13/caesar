@@ -8,11 +8,7 @@ import {
 import { useUploadFiles } from '@/hooks/use-upload-files';
 import { getTRPCClient } from '@/lib/trpc';
 import type { TJoinedPublicUser, TTempFile } from '@caesar/shared';
-import {
-    ChannelPermission,
-    Permission,
-    isEmptyMessage
-} from '@caesar/shared';
+import { ChannelPermission, Permission, isEmptyMessage } from '@caesar/shared';
 import { Button, Spinner } from '@caesar/ui';
 import { filesize } from 'filesize';
 import { Paperclip, Send } from 'lucide-react';

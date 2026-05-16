@@ -1,6 +1,5 @@
 import type { TPinnedCard } from '@/components/channel-view/voice/hooks/use-pin-card-controller';
 import { getLocalStorageItemBool, LocalStorageKey } from '@/helpers/storage';
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type {
     TCategory,
     TChannel,
@@ -18,6 +17,7 @@ import type {
     TVoiceMap,
     TVoiceUserState
 } from '@caesar/shared';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type {
     TDisconnectInfo,
     TMessagesMap,

@@ -1,6 +1,6 @@
 import type { IRootState } from '@/features/store';
-import { createSelector } from '@reduxjs/toolkit';
 import type { TChannel } from '@caesar/shared';
+import { createSelector } from '@reduxjs/toolkit';
 import { createCachedSelector } from 're-reselect';
 
 const DEFAULT_OBJECT = {};

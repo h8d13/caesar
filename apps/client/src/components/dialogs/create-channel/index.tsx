@@ -1,10 +1,6 @@
 import { getTRPCClient } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
-import {
-    ChannelType,
-    parseTrpcErrors,
-    type TTrpcErrors
-} from '@caesar/shared';
+import { ChannelType, parseTrpcErrors, type TTrpcErrors } from '@caesar/shared';
 import {
     AutoFocus,
     Button,

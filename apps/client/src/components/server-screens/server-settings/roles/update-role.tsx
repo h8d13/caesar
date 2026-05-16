@@ -1,11 +1,7 @@
 import { requestConfirmation } from '@/features/dialogs/actions';
 import { useForm } from '@/hooks/use-form';
 import { getTRPCClient } from '@/lib/trpc';
-import {
-    getTrpcError,
-    OWNER_ROLE_ID,
-    type TJoinedRole
-} from '@caesar/shared';
+import { getTrpcError, OWNER_ROLE_ID, type TJoinedRole } from '@caesar/shared';
 import {
     Alert,
     AlertDescription,

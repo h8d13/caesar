@@ -1,5 +1,5 @@
-import { createSelector } from '@reduxjs/toolkit';
 import { ChannelPermission, OWNER_ROLE_ID, hasMention } from '@caesar/shared';
+import { createSelector } from '@reduxjs/toolkit';
 import { createCachedSelector } from 're-reselect';
 import type { IRootState } from '../store';
 import {
