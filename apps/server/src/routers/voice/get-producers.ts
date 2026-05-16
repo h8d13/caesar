@@ -1,7 +1,7 @@
 import { Permission } from '@caesar/shared';
-import { VoiceRuntime } from '../../runtimes/voice';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+import { VoiceRuntime } from '@server/runtimes/voice';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const getProducersRoute = protectedProcedure.query(async ({ ctx }) => {
   await ctx.needsPermission(Permission.JOIN_VOICE_CHANNELS);

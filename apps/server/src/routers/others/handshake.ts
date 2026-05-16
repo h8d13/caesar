@@ -1,7 +1,7 @@
 import { randomUUIDv7 } from 'bun';
-import { config } from '../../config';
-import { getSettings } from '../../db/queries/server';
-import { publicProcedure, rateLimitedProcedure } from '../../utils/trpc';
+import { config } from '@server/config';
+import { getSettings } from '@server/db/queries/server';
+import { publicProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 
 const handshakeRoute = rateLimitedProcedure(publicProcedure, {
   maxRequests: config.rateLimiters.handshake.maxRequests,

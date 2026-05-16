@@ -1,4 +1,4 @@
-import { t } from '../../utils/trpc';
+import { t } from '@server/utils/trpc';
 import { addSoundRoute } from './add-sound';
 import { deleteSoundRoute } from './delete-sound';
 import {

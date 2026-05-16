@@ -1,4 +1,4 @@
-import type { IRootState } from '../../store';
+import type { IRootState } from '@/features/store';
 
 export const crashPhaseSelector = (state: IRootState) => state.crash.phase;
 export const crashMultiplierSelector = (state: IRootState) =>

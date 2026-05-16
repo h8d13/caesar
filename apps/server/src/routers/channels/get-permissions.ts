@@ -1,14 +1,14 @@
 import { Permission } from '@caesar/shared';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { db } from '../../db';
-import { isDirectMessageChannel } from '../../db/queries/dms';
+import { db } from '@server/db';
+import { isDirectMessageChannel } from '@server/db/queries/dms';
 import {
   channelRolePermissions,
   channelUserPermissions
-} from '../../db/schema';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+} from '@server/db/schema';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const getPermissionsRoute = protectedProcedure
   .input(

@@ -1,4 +1,4 @@
-import { t } from '../../utils/trpc';
+import { t } from '@server/utils/trpc';
 import { addEmojiRoute } from './add-emoji';
 import { deleteEmojiRoute } from './delete-emoji';
 import {

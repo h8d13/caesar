@@ -1,4 +1,4 @@
-import { t } from '../../utils/trpc';
+import { t } from '@server/utils/trpc';
 import { deleteMessageRoute } from './delete-message';
 import { editMessageRoute } from './edit-message';
 import {

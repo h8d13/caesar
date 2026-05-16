@@ -1,8 +1,8 @@
 import type { TTempFile } from '@caesar/shared';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import fs from 'fs/promises';
-import { initTest, login, uploadFile } from '../../__tests__/helpers';
-import { fileManager } from '../../utils/file-manager';
+import { initTest, login, uploadFile } from '@server/__tests__/helpers';
+import { fileManager } from '@server/utils/file-manager';
 
 describe('files router', () => {
   let tempFile: TTempFile;

@@ -1,11 +1,11 @@
 import { ChannelType, Permission, ServerEvents } from '@caesar/shared';
 import { eq } from 'drizzle-orm';
-import { db } from '../../db';
-import { channels } from '../../db/schema';
-import { logger } from '../../logger';
-import { VoiceRuntime } from '../../runtimes/voice';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+import { db } from '@server/db';
+import { channels } from '@server/db/schema';
+import { logger } from '@server/logger';
+import { VoiceRuntime } from '@server/runtimes/voice';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const leaveVoiceRoute = protectedProcedure.mutation(async ({ ctx }) => {
   await ctx.needsPermission(Permission.JOIN_VOICE_CHANNELS);

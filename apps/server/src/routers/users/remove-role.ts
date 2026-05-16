@@ -1,11 +1,11 @@
 import { Permission } from '@caesar/shared';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { db } from '../../db';
-import { publishUser } from '../../db/publishers';
-import { userRoles } from '../../db/schema';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+import { db } from '@server/db';
+import { publishUser } from '@server/db/publishers';
+import { userRoles } from '@server/db/schema';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const removeRoleRoute = protectedProcedure
   .input(

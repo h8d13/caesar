@@ -3,7 +3,7 @@ import type {
     TRouletteRoundResult,
     TRouletteStateUpdate
 } from '@caesar/shared/games/roulette';
-import { store } from '../../store';
+import { store } from '@/features/store';
 import { rouletteSliceActions } from './slice';
 
 const subscribeToRoulette = () => {

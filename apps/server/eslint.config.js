@@ -29,7 +29,19 @@ export default defineConfig([
                     argsIgnorePattern: '^_'
                 }
             ],
-            '@typescript-eslint/no-explicit-any': 'warn'
+            '@typescript-eslint/no-explicit-any': 'warn',
+            'no-restricted-imports': [
+                'warn',
+                {
+                    patterns: [
+                        {
+                            group: ['../../*'],
+                            message:
+                                'Avoid deep relative imports. Use the @server/ alias (e.g. @server/db) instead.'
+                        }
+                    ]
+                }
+            ]
         }
     },
     {

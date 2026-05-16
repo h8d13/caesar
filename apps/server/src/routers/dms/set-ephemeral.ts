@@ -1,15 +1,15 @@
 import { ServerEvents } from '@caesar/shared';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { db } from '../../db';
+import { db } from '@server/db';
 import {
   assertDmParticipant,
   getDirectMessageChannelParticipantIds,
   isDirectMessageChannel
-} from '../../db/queries/dms';
-import { directMessages } from '../../db/schema';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+} from '@server/db/queries/dms';
+import { directMessages } from '@server/db/schema';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const EPHEMERAL_MS = 24 * 60 * 60 * 1000;
 

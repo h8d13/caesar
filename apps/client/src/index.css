@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* tailwind needs a filesystem path to scan; npm package names don't resolve here */
 @source "../../../packages/ui/src";
 
 @layer base {

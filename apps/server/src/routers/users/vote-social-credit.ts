@@ -1,10 +1,10 @@
 import { and, eq, gte } from 'drizzle-orm';
 import z from 'zod';
-import { db } from '../../db';
-import { publishUser } from '../../db/publishers';
-import { socialCreditLedger, socialCreditVotes, users } from '../../db/schema';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+import { db } from '@server/db';
+import { publishUser } from '@server/db/publishers';
+import { socialCreditLedger, socialCreditVotes, users } from '@server/db/schema';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const UPVOTE_VALUE = 10;
 const DOWNVOTE_VALUE = -5;

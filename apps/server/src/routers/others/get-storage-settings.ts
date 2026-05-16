@@ -1,7 +1,7 @@
 import { Permission, type TStorageSettings } from '@caesar/shared';
-import { getSettings } from '../../db/queries/server';
-import { getDiskMetrics } from '../../utils/metrics';
-import { protectedProcedure } from '../../utils/trpc';
+import { getSettings } from '@server/db/queries/server';
+import { getDiskMetrics } from '@server/utils/metrics';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const getStorageSettingsRoute = protectedProcedure.query(async ({ ctx }) => {
   await ctx.needsPermission(Permission.MANAGE_STORAGE);

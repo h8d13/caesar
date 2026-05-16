@@ -1,4 +1,4 @@
-import { t } from '../../utils/trpc';
+import { t } from '@server/utils/trpc';
 import { changeLogoRoute } from './change-logo';
 import { onServerSettingsUpdateRoute } from './events';
 import { getBankBalanceRoute } from './get-bank-balance';

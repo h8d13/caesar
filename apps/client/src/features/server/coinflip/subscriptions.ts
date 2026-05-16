@@ -3,7 +3,7 @@ import type {
     TCoinflipResult,
     TCoinflipStateUpdate
 } from '@caesar/shared/games/coinflip';
-import { store } from '../../store';
+import { store } from '@/features/store';
 import { coinflipSliceActions } from './slice';
 
 const subscribeToCoinflip = () => {

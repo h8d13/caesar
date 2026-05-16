@@ -1,8 +1,8 @@
 import { ActivityLogType, DisconnectCode, Permission } from '@caesar/shared';
 import z from 'zod';
-import { enqueueActivityLog } from '../../queues/activity-log';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+import { enqueueActivityLog } from '@server/queues/activity-log';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const kickRoute = protectedProcedure
   .input(

@@ -1,9 +1,9 @@
 import { ActivityLogType, Permission } from '@caesar/shared';
-import { db } from '../../db';
-import { publishRole } from '../../db/publishers';
-import { roles } from '../../db/schema';
-import { enqueueActivityLog } from '../../queues/activity-log';
-import { protectedProcedure } from '../../utils/trpc';
+import { db } from '@server/db';
+import { publishRole } from '@server/db/publishers';
+import { roles } from '@server/db/schema';
+import { enqueueActivityLog } from '@server/queues/activity-log';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const addRoleRoute = protectedProcedure.mutation(async ({ ctx }) => {
   await ctx.needsPermission(Permission.MANAGE_ROLES);

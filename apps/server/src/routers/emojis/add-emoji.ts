@@ -1,13 +1,13 @@
 import { ActivityLogType, Permission } from '@caesar/shared';
 import { z } from 'zod';
-import { config } from '../../config';
-import { db } from '../../db';
-import { publishEmoji } from '../../db/publishers';
-import { getUniqueEmojiName } from '../../db/queries/emojis';
-import { emojis } from '../../db/schema';
-import { enqueueActivityLog } from '../../queues/activity-log';
-import { fileManager } from '../../utils/file-manager';
-import { protectedProcedure, rateLimitedProcedure } from '../../utils/trpc';
+import { config } from '@server/config';
+import { db } from '@server/db';
+import { publishEmoji } from '@server/db/publishers';
+import { getUniqueEmojiName } from '@server/db/queries/emojis';
+import { emojis } from '@server/db/schema';
+import { enqueueActivityLog } from '@server/queues/activity-log';
+import { fileManager } from '@server/utils/file-manager';
+import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 
 const addEmojiRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: config.rateLimiters.addEmoji.maxRequests,

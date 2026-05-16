@@ -1,12 +1,12 @@
 import { Permission, type TLogin } from '@caesar/shared';
 import z from 'zod';
-import { getFilesByUserId } from '../../db/queries/files';
-import { getLastLogins } from '../../db/queries/logins';
-import { getNonDirectMessagesFromUserId } from '../../db/queries/messages';
-import { getUserById } from '../../db/queries/users';
-import { clearFields } from '../../helpers/clear-fields';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+import { getFilesByUserId } from '@server/db/queries/files';
+import { getLastLogins } from '@server/db/queries/logins';
+import { getNonDirectMessagesFromUserId } from '@server/db/queries/messages';
+import { getUserById } from '@server/db/queries/users';
+import { clearFields } from '@server/helpers/clear-fields';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const getUserInfoRoute = protectedProcedure
   .input(

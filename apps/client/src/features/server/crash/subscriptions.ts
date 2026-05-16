@@ -3,7 +3,7 @@ import type {
     TCrashRoundResult,
     TCrashStateUpdate
 } from '@caesar/shared/games/crash';
-import { store } from '../../store';
+import { store } from '@/features/store';
 import { crashSliceActions } from './slice';
 
 const subscribeToCrash = () => {

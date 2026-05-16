@@ -6,8 +6,8 @@ import {
   type TCrashStateUpdate
 } from '@caesar/shared/games/crash';
 import { desc, eq } from 'drizzle-orm';
-import { db } from '../../db';
-import { crashBets, crashRounds } from '../../db/schema';
+import { db } from '@server/db';
+import { crashBets, crashRounds } from '@server/db/schema';
 import {
   BETTING_PHASE_DURATION_MS,
   CASHOUT_GRACE_PERIOD_MS,

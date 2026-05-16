@@ -1,4 +1,4 @@
-import { t } from '../../utils/trpc';
+import { t } from '@server/utils/trpc';
 import { addRoleRoute } from './add-role';
 import { deleteRoleRoute } from './delete-role';
 import {

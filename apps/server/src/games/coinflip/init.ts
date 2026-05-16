@@ -1,7 +1,7 @@
 import { eq, sql } from 'drizzle-orm';
-import { db } from '../../db';
-import { publishUser } from '../../db/publishers';
-import { socialCreditLedger } from '../../db/schema';
+import { db } from '@server/db';
+import { publishUser } from '@server/db/publishers';
+import { socialCreditLedger } from '@server/db/schema';
 import { setRuntime } from './router';
 import { CoinflipRuntime } from './runtime';
 

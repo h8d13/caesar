@@ -1,17 +1,17 @@
 import { ActivityLogType, Permission } from '@caesar/shared';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { db } from '../../db';
-import { publishChannelPermissions } from '../../db/publishers';
-import { getAffectedOnlineUserIdsForChannel } from '../../db/queries/channels';
-import { isDirectMessageChannel } from '../../db/queries/dms';
+import { db } from '@server/db';
+import { publishChannelPermissions } from '@server/db/publishers';
+import { getAffectedOnlineUserIdsForChannel } from '@server/db/queries/channels';
+import { isDirectMessageChannel } from '@server/db/queries/dms';
 import {
   channelRolePermissions,
   channelUserPermissions
-} from '../../db/schema';
-import { enqueueActivityLog } from '../../queues/activity-log';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+} from '@server/db/schema';
+import { enqueueActivityLog } from '@server/queues/activity-log';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const deletePermissionsRoute = protectedProcedure
   .input(

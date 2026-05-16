@@ -1,14 +1,14 @@
 import { eq } from 'drizzle-orm';
 import z from 'zod';
-import { db } from '../../db';
-import { removeFile } from '../../db/mutations/files';
-import { publishUser } from '../../db/publishers';
-import { getSettings } from '../../db/queries/server';
-import { getUserById } from '../../db/queries/users';
-import { users } from '../../db/schema';
-import { fileManager } from '../../utils/file-manager';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+import { db } from '@server/db';
+import { removeFile } from '@server/db/mutations/files';
+import { publishUser } from '@server/db/publishers';
+import { getSettings } from '@server/db/queries/server';
+import { getUserById } from '@server/db/queries/users';
+import { users } from '@server/db/schema';
+import { fileManager } from '@server/utils/file-manager';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const changeAvatarRoute = protectedProcedure
   .input(

@@ -1,15 +1,15 @@
 import { Permission, isEmptyMessage } from '@caesar/shared';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { config } from '../../config';
-import { db } from '../../db';
-import { publishMessage } from '../../db/publishers';
-import { assertDmChannel } from '../../db/queries/dms';
-import { messages } from '../../db/schema';
-import { sanitizeMessageHtml } from '../../helpers/sanitize-html';
-import { enqueueProcessMetadata } from '../../queues/message-metadata';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure, rateLimitedProcedure } from '../../utils/trpc';
+import { config } from '@server/config';
+import { db } from '@server/db';
+import { publishMessage } from '@server/db/publishers';
+import { assertDmChannel } from '@server/db/queries/dms';
+import { messages } from '@server/db/schema';
+import { sanitizeMessageHtml } from '@server/helpers/sanitize-html';
+import { enqueueProcessMetadata } from '@server/queues/message-metadata';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 
 const editMessageRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: config.rateLimiters.sendAndEditMessage.maxRequests,

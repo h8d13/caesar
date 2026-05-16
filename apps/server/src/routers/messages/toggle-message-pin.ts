@@ -1,13 +1,13 @@
 import { ActivityLogType, Permission } from '@caesar/shared';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { db } from '../../db';
-import { publishMessage } from '../../db/publishers';
-import { assertDmChannel } from '../../db/queries/dms';
-import { messages } from '../../db/schema';
-import { enqueueActivityLog } from '../../queues/activity-log';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+import { db } from '@server/db';
+import { publishMessage } from '@server/db/publishers';
+import { assertDmChannel } from '@server/db/queries/dms';
+import { messages } from '@server/db/schema';
+import { enqueueActivityLog } from '@server/queues/activity-log';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const toggleMessagePinRoute = protectedProcedure
   .input(

@@ -1,7 +1,7 @@
 import { and, eq, gte } from 'drizzle-orm';
-import { db } from '../../db';
-import { socialCreditVotes } from '../../db/schema';
-import { protectedProcedure } from '../../utils/trpc';
+import { db } from '@server/db';
+import { socialCreditVotes } from '@server/db/schema';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const getStartOfDay = () => {
   const now = new Date();

@@ -2,14 +2,14 @@ import { ChannelType, ServerEvents } from '@caesar/shared';
 import { randomUUIDv7 } from 'bun';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { config } from '../../config';
-import { db } from '../../db';
-import { publishChannelPermissions } from '../../db/publishers';
-import { getDirectMessageChannel, normalizePair } from '../../db/queries/dms';
-import { getSettings } from '../../db/queries/server';
-import { channels, directMessages, users } from '../../db/schema';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure, rateLimitedProcedure } from '../../utils/trpc';
+import { config } from '@server/config';
+import { db } from '@server/db';
+import { publishChannelPermissions } from '@server/db/publishers';
+import { getDirectMessageChannel, normalizePair } from '@server/db/queries/dms';
+import { getSettings } from '@server/db/queries/server';
+import { channels, directMessages, users } from '@server/db/schema';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 
 const openDirectMessageRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: config.rateLimiters.openDirectMessage.maxRequests,

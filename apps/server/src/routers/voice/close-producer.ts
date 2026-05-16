@@ -1,9 +1,9 @@
 import { Permission, ServerEvents, StreamKind } from '@caesar/shared';
 import z from 'zod';
-import { logger } from '../../logger';
-import { VoiceRuntime } from '../../runtimes/voice';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+import { logger } from '@server/logger';
+import { VoiceRuntime } from '@server/runtimes/voice';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const closeProducerRoute = protectedProcedure
   .input(

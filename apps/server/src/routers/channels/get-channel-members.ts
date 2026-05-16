@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { getAffectedUserIdsForChannel } from '../../db/queries/channels';
-import { protectedProcedure } from '../../utils/trpc';
+import { getAffectedUserIdsForChannel } from '@server/db/queries/channels';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const getChannelMembersRoute = protectedProcedure
   .input(z.object({ channelId: z.number() }))

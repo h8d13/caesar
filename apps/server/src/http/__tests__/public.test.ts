@@ -4,13 +4,13 @@ import { eq } from 'drizzle-orm';
 import fs from 'fs/promises';
 import { beforeEach } from 'node:test';
 import path from 'path';
-import { initTest, login, uploadFile } from '../../__tests__/helpers';
-import { tdb, testsBaseUrl } from '../../__tests__/setup';
-import { loadCrons } from '../../crons';
-import { channels, files, messageFiles, messages } from '../../db/schema';
-import { generateFileToken } from '../../helpers/files-crypto';
-import { PUBLIC_PATH } from '../../helpers/paths';
-import { fileManager } from '../../utils/file-manager';
+import { initTest, login, uploadFile } from '@server/__tests__/helpers';
+import { tdb, testsBaseUrl } from '@server/__tests__/setup';
+import { loadCrons } from '@server/crons';
+import { channels, files, messageFiles, messages } from '@server/db/schema';
+import { generateFileToken } from '@server/helpers/files-crypto';
+import { PUBLIC_PATH } from '@server/helpers/paths';
+import { fileManager } from '@server/utils/file-manager';
 
 const upload = async (file: File, token: string) => {
   const uploadResponse = await uploadFile(file, token);

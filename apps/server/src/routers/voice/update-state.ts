@@ -1,8 +1,8 @@
 import { ChannelPermission, Permission, ServerEvents } from '@caesar/shared';
 import { z } from 'zod';
-import { VoiceRuntime } from '../../runtimes/voice';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+import { VoiceRuntime } from '@server/runtimes/voice';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const updateVoiceStateRoute = protectedProcedure
   .input(

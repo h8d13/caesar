@@ -26,9 +26,12 @@
 
     /* Shadcn */
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@server/*": ["../server/src/*"]
     }
   },
-  /* TODO: this doesn't look right but fuck it for now, it's working*/
+  // include server's ambient declarations because client's check-types
+  // follows tRPC types into server source files (wss.ts uses ws module
+  // augmentations declared there).
   "include": ["src", "../server/src/declarations.d.ts"]
 }

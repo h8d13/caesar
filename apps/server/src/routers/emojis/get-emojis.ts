@@ -1,6 +1,6 @@
 import { Permission } from '@caesar/shared';
-import { getEmojis } from '../../db/queries/emojis';
-import { protectedProcedure } from '../../utils/trpc';
+import { getEmojis } from '@server/db/queries/emojis';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const getEmojisRoute = protectedProcedure.query(async ({ ctx }) => {
   await ctx.needsPermission(Permission.MANAGE_EMOJIS);

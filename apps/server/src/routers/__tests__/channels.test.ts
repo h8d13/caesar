@@ -1,8 +1,8 @@
 import { ChannelPermission, ChannelType } from '@caesar/shared';
 import { describe, expect, test } from 'bun:test';
-import { initTest } from '../../__tests__/helpers';
-import { getChannelsReadStatesForUser } from '../../db/queries/channels';
-import { generateFileToken, verifyFileToken } from '../../helpers/files-crypto';
+import { initTest } from '@server/__tests__/helpers';
+import { getChannelsReadStatesForUser } from '@server/db/queries/channels';
+import { generateFileToken, verifyFileToken } from '@server/helpers/files-crypto';
 
 describe('channels router', () => {
   test('should throw when user lacks permissions (add)', async () => {

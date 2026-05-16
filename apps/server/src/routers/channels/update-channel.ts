@@ -1,13 +1,13 @@
 import { ActivityLogType, Permission } from '@caesar/shared';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { db } from '../../db';
-import { publishChannel } from '../../db/publishers';
-import { isDirectMessageChannel } from '../../db/queries/dms';
-import { channels } from '../../db/schema';
-import { enqueueActivityLog } from '../../queues/activity-log';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+import { db } from '@server/db';
+import { publishChannel } from '@server/db/publishers';
+import { isDirectMessageChannel } from '@server/db/queries/dms';
+import { channels } from '@server/db/schema';
+import { enqueueActivityLog } from '@server/queues/activity-log';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const updateChannelRoute = protectedProcedure
   .input(

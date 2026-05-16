@@ -7,6 +7,7 @@
   "types": "src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./db/schema": "./src/db/schema.ts",
     "./games/crash": "./src/games/crash.ts",
     "./games/roulette": "./src/games/roulette.ts",
     "./games/coinflip": "./src/games/coinflip.ts"

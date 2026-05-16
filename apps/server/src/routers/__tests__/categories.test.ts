@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { initTest } from '../../__tests__/helpers';
+import { initTest } from '@server/__tests__/helpers';
 
 describe('categories router', () => {
   test('should throw when user lacks permissions (get)', async () => {

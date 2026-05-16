@@ -2,12 +2,12 @@ import { ActivityLogType, ChannelType, Permission } from '@caesar/shared';
 import { randomUUIDv7 } from 'bun';
 import { desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { db } from '../../db';
-import { publishChannel } from '../../db/publishers';
-import { channels } from '../../db/schema';
-import { enqueueActivityLog } from '../../queues/activity-log';
-import { VoiceRuntime } from '../../runtimes/voice';
-import { protectedProcedure } from '../../utils/trpc';
+import { db } from '@server/db';
+import { publishChannel } from '@server/db/publishers';
+import { channels } from '@server/db/schema';
+import { enqueueActivityLog } from '@server/queues/activity-log';
+import { VoiceRuntime } from '@server/runtimes/voice';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const addChannelRoute = protectedProcedure
   .input(

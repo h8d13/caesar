@@ -1,6 +1,6 @@
 import { getTRPCClient } from '@/lib/trpc';
 import type { RouletteBetType } from '@caesar/shared/games/roulette';
-import { store } from '../../store';
+import { store } from '@/features/store';
 import { rouletteSliceActions } from './slice';
 
 export const fetchRouletteState = async () => {

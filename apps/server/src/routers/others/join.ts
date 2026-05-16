@@ -1,25 +1,25 @@
 import { ActivityLogType, ServerEvents, UserStatus } from '@caesar/shared';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { db } from '../../db';
+import { db } from '@server/db';
 import {
   getAllChannelUserPermissions,
   getChannelsForUser,
   getChannelsReadStatesForUser
-} from '../../db/queries/channels';
-import { getEmojis } from '../../db/queries/emojis';
-import { getRoles } from '../../db/queries/roles';
-import { getPublicSettings, getSettings } from '../../db/queries/server';
-import { getSounds } from '../../db/queries/sounds';
-import { getPublicUsers } from '../../db/queries/users';
-import { categories, users } from '../../db/schema';
-import { logger } from '../../logger';
-import { enqueueActivityLog } from '../../queues/activity-log';
-import { enqueueLogin } from '../../queues/logins';
-import { VoiceRuntime } from '../../runtimes/voice';
-import { invariant } from '../../utils/invariant';
-import { rateLimitedProcedure, t } from '../../utils/trpc';
-import { trackUserConnect } from '../../utils/wss';
+} from '@server/db/queries/channels';
+import { getEmojis } from '@server/db/queries/emojis';
+import { getRoles } from '@server/db/queries/roles';
+import { getPublicSettings, getSettings } from '@server/db/queries/server';
+import { getSounds } from '@server/db/queries/sounds';
+import { getPublicUsers } from '@server/db/queries/users';
+import { categories, users } from '@server/db/schema';
+import { logger } from '@server/logger';
+import { enqueueActivityLog } from '@server/queues/activity-log';
+import { enqueueLogin } from '@server/queues/logins';
+import { VoiceRuntime } from '@server/runtimes/voice';
+import { invariant } from '@server/utils/invariant';
+import { rateLimitedProcedure, t } from '@server/utils/trpc';
+import { trackUserConnect } from '@server/utils/wss';
 
 const joinServerRoute = rateLimitedProcedure(t.procedure, {
   maxRequests: 5,

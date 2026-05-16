@@ -1,5 +1,5 @@
 import { ServerEvents } from '@caesar/shared';
-import { protectedProcedure, t } from '../../utils/trpc';
+import { protectedProcedure, t } from '@server/utils/trpc';
 import { getDirectMessagesRoute } from './get-direct-messages';
 import { getEphemeralRoute } from './get-ephemeral';
 import { openDirectMessageRoute } from './open-direct-message';

@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { db } from '../../db';
-import { protectedProcedure } from '../../utils/trpc';
+import { db } from '@server/db';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const PAGE_SIZE = 20;
 

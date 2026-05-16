@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
-import { initTest } from '../../__tests__/helpers';
-import { tdb } from '../../__tests__/setup';
-import { pruneExpiredMessages } from '../../crons/prune-expired';
-import { messages, settings } from '../../db/schema';
+import { initTest } from '@server/__tests__/helpers';
+import { tdb } from '@server/__tests__/setup';
+import { pruneExpiredMessages } from '@server/crons/prune-expired';
+import { messages, settings } from '@server/db/schema';
 
 describe('dms router', () => {
   test('should create a direct message channel and allow messaging', async () => {

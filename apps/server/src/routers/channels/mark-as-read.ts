@@ -1,11 +1,11 @@
 import { type TMessage } from '@caesar/shared';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
-import { config } from '../../config';
-import { db } from '../../db';
-import { assertDmChannel } from '../../db/queries/dms';
-import { channelReadStates, messages } from '../../db/schema';
-import { protectedProcedure, rateLimitedProcedure } from '../../utils/trpc';
+import { config } from '@server/config';
+import { db } from '@server/db';
+import { assertDmChannel } from '@server/db/queries/dms';
+import { channelReadStates, messages } from '@server/db/schema';
+import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 
 const markAsReadRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: config.rateLimiters.markAsRead.maxRequests,

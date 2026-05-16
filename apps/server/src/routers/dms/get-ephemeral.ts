@@ -3,9 +3,9 @@ import {
   assertDmParticipant,
   getDmEphemeralMs,
   isDirectMessageChannel
-} from '../../db/queries/dms';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+} from '@server/db/queries/dms';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const getEphemeralRoute = protectedProcedure
   .input(z.object({ channelId: z.number() }))

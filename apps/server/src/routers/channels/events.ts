@@ -1,5 +1,5 @@
 import { ServerEvents } from '@caesar/shared';
-import { protectedProcedure } from '../../utils/trpc';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const onChannelCreateRoute = protectedProcedure.subscription(
   async ({ ctx }) => {

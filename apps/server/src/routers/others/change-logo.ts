@@ -1,10 +1,10 @@
 import z from 'zod';
-import { removeFile } from '../../db/mutations/files';
-import { updateSettings } from '../../db/mutations/server';
-import { publishSettings } from '../../db/publishers';
-import { getSettings } from '../../db/queries/server';
-import { fileManager } from '../../utils/file-manager';
-import { protectedProcedure } from '../../utils/trpc';
+import { removeFile } from '@server/db/mutations/files';
+import { updateSettings } from '@server/db/mutations/server';
+import { publishSettings } from '@server/db/publishers';
+import { getSettings } from '@server/db/queries/server';
+import { fileManager } from '@server/utils/file-manager';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const changeLogoRoute = protectedProcedure
   .input(

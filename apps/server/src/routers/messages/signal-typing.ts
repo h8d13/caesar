@@ -1,9 +1,9 @@
 import { ChannelPermission, Permission, ServerEvents } from '@caesar/shared';
 import { z } from 'zod';
-import { config } from '../../config';
-import { getAffectedOnlineUserIdsForChannel } from '../../db/queries/channels';
-import { assertDmChannel } from '../../db/queries/dms';
-import { protectedProcedure, rateLimitedProcedure } from '../../utils/trpc';
+import { config } from '@server/config';
+import { getAffectedOnlineUserIdsForChannel } from '@server/db/queries/channels';
+import { assertDmChannel } from '@server/db/queries/dms';
+import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 
 const signalTypingRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: config.rateLimiters.signalTyping.maxRequests,

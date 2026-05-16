@@ -1,6 +1,6 @@
 import { getTRPCClient } from '@/lib/trpc';
 import type { CoinflipSide } from '@caesar/shared/games/coinflip';
-import { store } from '../../store';
+import { store } from '@/features/store';
 import { coinflipSliceActions } from './slice';
 
 export const fetchCoinflipState = async () => {

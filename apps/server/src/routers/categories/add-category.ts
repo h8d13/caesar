@@ -1,11 +1,11 @@
 import { ActivityLogType, Permission } from '@caesar/shared';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { db } from '../../db';
-import { publishCategory } from '../../db/publishers';
-import { categories } from '../../db/schema';
-import { enqueueActivityLog } from '../../queues/activity-log';
-import { protectedProcedure } from '../../utils/trpc';
+import { db } from '@server/db';
+import { publishCategory } from '@server/db/publishers';
+import { categories } from '@server/db/schema';
+import { enqueueActivityLog } from '@server/queues/activity-log';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const addCategoryRoute = protectedProcedure
   .input(

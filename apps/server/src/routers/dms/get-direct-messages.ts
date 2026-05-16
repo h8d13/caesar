@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { getDirectMessageConversations } from '../../db/queries/dms';
-import { getSettings } from '../../db/queries/server';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+import { getDirectMessageConversations } from '@server/db/queries/dms';
+import { getSettings } from '@server/db/queries/server';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const getDirectMessagesRoute = protectedProcedure
   .input(z.void())

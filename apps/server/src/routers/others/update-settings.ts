@@ -4,10 +4,10 @@ import {
   StorageOverflowAction
 } from '@caesar/shared';
 import { z } from 'zod';
-import { updateSettings } from '../../db/mutations/server';
-import { publishSettings } from '../../db/publishers';
-import { enqueueActivityLog } from '../../queues/activity-log';
-import { protectedProcedure } from '../../utils/trpc';
+import { updateSettings } from '@server/db/mutations/server';
+import { publishSettings } from '@server/db/publishers';
+import { enqueueActivityLog } from '@server/queues/activity-log';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const updateSettingsRoute = protectedProcedure
   .input(

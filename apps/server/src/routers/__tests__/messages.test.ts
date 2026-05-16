@@ -1,9 +1,9 @@
 import { ChannelPermission, Permission } from '@caesar/shared';
 import { describe, expect, test } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
-import { initTest, uploadFile } from '../../__tests__/helpers';
-import { tdb } from '../../__tests__/setup';
-import { rolePermissions, settings } from '../../db/schema';
+import { initTest, uploadFile } from '@server/__tests__/helpers';
+import { tdb } from '@server/__tests__/setup';
+import { rolePermissions, settings } from '@server/db/schema';
 
 describe('messages router', () => {
   test('should throw when user lacks permissions (edit - not own message)', async () => {

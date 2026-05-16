@@ -1,12 +1,12 @@
 import { ChannelPermission } from '@caesar/shared';
 import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { db } from '../../db';
-import { assertDmChannel } from '../../db/queries/dms';
-import { joinMessagesWithRelations } from '../../db/queries/messages';
-import { channels, messages } from '../../db/schema';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+import { db } from '@server/db';
+import { assertDmChannel } from '@server/db/queries/dms';
+import { joinMessagesWithRelations } from '@server/db/queries/messages';
+import { channels, messages } from '@server/db/schema';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const getPinnedRoute = protectedProcedure
   .input(

@@ -1,7 +1,7 @@
 import type { TJoinedSettings, TPublicServerSettings } from '@caesar/shared';
 import { eq } from 'drizzle-orm';
 import { db } from '..';
-import { config } from '../../config';
+import { config } from '@server/config';
 import { files, settings } from '../schema';
 
 // since this is static, we can keep it in memory to avoid querying the DB every time

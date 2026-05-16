@@ -1,4 +1,4 @@
-import type { IRootState } from '../../store';
+import type { IRootState } from '@/features/store';
 
 export const roulettePhaseSelector = (state: IRootState) =>
     state.roulette.phase;

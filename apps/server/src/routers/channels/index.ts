@@ -1,4 +1,4 @@
-import { t } from '../../utils/trpc';
+import { t } from '@server/utils/trpc';
 import { addChannelRoute } from './add-channel';
 import { deleteChannelRoute } from './delete-channel';
 import { deletePermissionsRoute } from './delete-permissions';

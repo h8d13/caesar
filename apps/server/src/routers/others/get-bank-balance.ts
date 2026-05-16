@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
-import { db } from '../../db';
-import { socialCreditLedger } from '../../db/schema';
-import { protectedProcedure } from '../../utils/trpc';
+import { db } from '@server/db';
+import { socialCreditLedger } from '@server/db/schema';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const getBankBalanceRoute = protectedProcedure.query(() => {
   // Bank balance = negative sum of all game ledger entries

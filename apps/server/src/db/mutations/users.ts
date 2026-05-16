@@ -1,6 +1,6 @@
 import { and, eq } from 'drizzle-orm';
 import { db } from '..';
-import { invariant } from '../../utils/invariant';
+import { invariant } from '@server/utils/invariant';
 import { getDefaultRole } from '../queries/roles';
 import { userRoles } from '../schema';
 

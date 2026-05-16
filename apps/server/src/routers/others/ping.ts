@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
-import { db } from '../../db';
-import { protectedProcedure } from '../../utils/trpc';
+import { db } from '@server/db';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const pingRoute = protectedProcedure.query(() => {
   const dbStart = performance.now();

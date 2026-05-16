@@ -7,7 +7,7 @@ import {
 } from '@caesar/shared';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '..';
-import { getOnlineUserIds } from '../../utils/wss';
+import { getOnlineUserIds } from '@server/utils/wss';
 import {
   channelReadStates,
   channelRolePermissions,

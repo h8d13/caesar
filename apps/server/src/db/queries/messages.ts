@@ -8,7 +8,7 @@ import type {
 } from '@caesar/shared';
 import { and, count, desc, eq, inArray, notExists } from 'drizzle-orm';
 import { db } from '..';
-import { generateFileToken } from '../../helpers/files-crypto';
+import { generateFileToken } from '@server/helpers/files-crypto';
 import {
   channels,
   directMessages,

@@ -7,8 +7,8 @@ import {
 } from '@caesar/shared/games/coinflip';
 import { randomInt } from 'crypto';
 import { and, eq, inArray } from 'drizzle-orm';
-import { db } from '../../db';
-import { coinflipGames, users } from '../../db/schema';
+import { db } from '@server/db';
+import { coinflipGames, users } from '@server/db/schema';
 import {
   CHALLENGE_EXPIRE_MS,
   FLIP_DURATION_MS,

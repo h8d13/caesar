@@ -1,4 +1,4 @@
-import { t } from '../../utils/trpc';
+import { t } from '@server/utils/trpc';
 import { addCategoryRoute } from './add-category';
 import { deleteCategoryRoute } from './delete-category';
 import {

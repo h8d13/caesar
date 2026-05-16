@@ -7,20 +7,20 @@ import {
 } from '@caesar/shared';
 import { eq } from 'drizzle-orm';
 import z from 'zod';
-import { db } from '../../db';
-import { publishUser } from '../../db/publishers';
-import { getUserByIdentity } from '../../db/queries/users';
+import { db } from '@server/db';
+import { publishUser } from '@server/db/publishers';
+import { getUserByIdentity } from '@server/db/queries/users';
 import {
   emojis,
   files,
   messageReactions,
   messages,
   users
-} from '../../db/schema';
-import { enqueueActivityLog } from '../../queues/activity-log';
-import { invariant } from '../../utils/invariant';
-import { pubsub } from '../../utils/pubsub';
-import { protectedProcedure } from '../../utils/trpc';
+} from '@server/db/schema';
+import { enqueueActivityLog } from '@server/queues/activity-log';
+import { invariant } from '@server/utils/invariant';
+import { pubsub } from '@server/utils/pubsub';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const ensureDeletedUser = async (): Promise<number> => {
   const existingDeletedUser = await getUserByIdentity(

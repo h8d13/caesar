@@ -1,15 +1,15 @@
 import { Permission } from '@caesar/shared';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { config } from '../../config';
-import { db } from '../../db';
-import { publishMessage } from '../../db/publishers';
-import { assertDmChannel } from '../../db/queries/dms';
-import { getEmojiFileIdByEmojiName } from '../../db/queries/emojis';
-import { getReaction } from '../../db/queries/messages';
-import { messageReactions, messages } from '../../db/schema';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure, rateLimitedProcedure } from '../../utils/trpc';
+import { config } from '@server/config';
+import { db } from '@server/db';
+import { publishMessage } from '@server/db/publishers';
+import { assertDmChannel } from '@server/db/queries/dms';
+import { getEmojiFileIdByEmojiName } from '@server/db/queries/emojis';
+import { getReaction } from '@server/db/queries/messages';
+import { messageReactions, messages } from '@server/db/schema';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 
 const toggleMessageReactionRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: config.rateLimiters.toggleMessageReaction.maxRequests,

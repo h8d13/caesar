@@ -1,9 +1,9 @@
 import { ChannelPermission } from '@caesar/shared';
 import { z } from 'zod';
-import { assertDmChannel } from '../../db/queries/dms';
-import { getMessage } from '../../db/queries/messages';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+import { assertDmChannel } from '@server/db/queries/dms';
+import { getMessage } from '@server/db/queries/messages';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const getMessageRoute = protectedProcedure
   .input(

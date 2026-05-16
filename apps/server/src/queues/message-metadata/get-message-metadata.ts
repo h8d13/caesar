@@ -4,8 +4,8 @@ import { eq } from 'drizzle-orm';
 import ipaddr from 'ipaddr.js';
 import { getLinkPreview } from 'link-preview-js';
 import { isIP } from 'net';
-import { db } from '../../db';
-import { messages } from '../../db/schema';
+import { db } from '@server/db';
+import { messages } from '@server/db/schema';
 
 type LinkPreviewResult = Awaited<ReturnType<typeof getLinkPreview>>;
 const metadataCache = new Map<string, LinkPreviewResult>();

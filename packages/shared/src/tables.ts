@@ -22,7 +22,7 @@ import {
   sounds,
   userRoles,
   users
-} from '../../../apps/server/src/db/schema';
+} from './db/schema';
 import type { Permission } from './statics';
 import type { UserStatus } from './types';
 

@@ -7,15 +7,15 @@ import {
 import { and, count, desc, eq, gte, inArray, isNull, lt } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { z } from 'zod';
-import { config } from '../../config';
-import { db } from '../../db';
-import { getChannelsReadStatesForUser } from '../../db/queries/channels';
-import { assertDmChannel } from '../../db/queries/dms';
-import { joinMessagesWithRelations } from '../../db/queries/messages';
-import { channelReadStates, channels, messages } from '../../db/schema';
-import { invariant } from '../../utils/invariant';
-import { pubsub } from '../../utils/pubsub';
-import { protectedProcedure, rateLimitedProcedure } from '../../utils/trpc';
+import { config } from '@server/config';
+import { db } from '@server/db';
+import { getChannelsReadStatesForUser } from '@server/db/queries/channels';
+import { assertDmChannel } from '@server/db/queries/dms';
+import { joinMessagesWithRelations } from '@server/db/queries/messages';
+import { channelReadStates, channels, messages } from '@server/db/schema';
+import { invariant } from '@server/utils/invariant';
+import { pubsub } from '@server/utils/pubsub';
+import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 
 const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: config.rateLimiters.getMessages.maxRequests,

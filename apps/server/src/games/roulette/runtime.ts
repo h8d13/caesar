@@ -12,8 +12,8 @@ import {
 } from '@caesar/shared/games/roulette';
 import { randomInt } from 'crypto';
 import { desc, eq, isNotNull } from 'drizzle-orm';
-import { db } from '../../db';
-import { rouletteBets, rouletteRounds } from '../../db/schema';
+import { db } from '@server/db';
+import { rouletteBets, rouletteRounds } from '@server/db/schema';
 import {
   BETTING_PHASE_DURATION_MS,
   MAX_BET,

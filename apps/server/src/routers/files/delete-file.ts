@@ -1,14 +1,14 @@
 import { isEmptyMessage, Permission } from '@caesar/shared';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { db } from '../../db';
-import { removeFile } from '../../db/mutations/files';
-import { publishMessage } from '../../db/publishers';
-import { getFilesByMessageId } from '../../db/queries/files';
-import { getMessageByFileId } from '../../db/queries/messages';
-import { messages } from '../../db/schema';
-import { invariant } from '../../utils/invariant';
-import { protectedProcedure } from '../../utils/trpc';
+import { db } from '@server/db';
+import { removeFile } from '@server/db/mutations/files';
+import { publishMessage } from '@server/db/publishers';
+import { getFilesByMessageId } from '@server/db/queries/files';
+import { getMessageByFileId } from '@server/db/queries/messages';
+import { messages } from '@server/db/schema';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure } from '@server/utils/trpc';
 
 const deleteFileRoute = protectedProcedure
   .input(z.object({ fileId: z.number() }))

@@ -1,5 +1,5 @@
 import { getTRPCClient } from '@/lib/trpc';
-import { store } from '../../store';
+import { store } from '@/features/store';
 import { crashSliceActions } from './slice';
 
 export const fetchCrashState = async () => {

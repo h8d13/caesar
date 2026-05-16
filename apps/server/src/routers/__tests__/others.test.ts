@@ -5,8 +5,8 @@ import {
   initTest,
   login,
   uploadFile
-} from '../../__tests__/helpers';
-import { TEST_SECRET_TOKEN } from '../../__tests__/seed';
+} from '@server/__tests__/helpers';
+import { TEST_SECRET_TOKEN } from '@server/__tests__/seed';
 
 describe('others router', () => {
   test('should throw when user tries to join with no handshake', async () => {

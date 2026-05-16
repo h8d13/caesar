@@ -1,10 +1,10 @@
 import type { ActivityLogType, TActivityLogDetailsMap } from '@caesar/shared';
 import Queue from 'queue';
-import { db } from '../../db';
-import { activityLog } from '../../db/schema';
-import { hashIp } from '../../helpers/hash-ip';
-import { logger } from '../../logger';
-import { getUserIp } from '../../utils/wss';
+import { db } from '@server/db';
+import { activityLog } from '@server/db/schema';
+import { hashIp } from '@server/helpers/hash-ip';
+import { logger } from '@server/logger';
+import { getUserIp } from '@server/utils/wss';
 
 const activityLogQueue = new Queue({
   concurrency: 2,

@@ -1,4 +1,4 @@
-import { t } from '../../utils/trpc';
+import { t } from '@server/utils/trpc';
 import { addInviteRoute } from './add-invite';
 import { deleteInviteRoute } from './delete-invite';
 import { getInvitesRoute } from './get-invites';

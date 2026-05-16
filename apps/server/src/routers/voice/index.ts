@@ -1,4 +1,4 @@
-import { t } from '../../utils/trpc';
+import { t } from '@server/utils/trpc';
 import { closeProducerRoute } from './close-producer';
 import { connectConsumerTransportRoute } from './connect-consumer-transport';
 import { connectProducerTransportRoute } from './connect-producer-transport';

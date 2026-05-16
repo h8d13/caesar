@@ -43,7 +43,20 @@ export default defineConfig([
           argsIgnorePattern: '^_'
         }
       ],
-      'react-refresh/only-export-components': 'warn'
+      'react-refresh/only-export-components': 'warn',
+      // discourage deep relative imports. `@/` alias maps to ./src.
+      'no-restricted-imports': [
+        'warn',
+        {
+          patterns: [
+            {
+              group: ['../../*'],
+              message:
+                'Avoid deep relative imports. Use the @/ alias (e.g. @/components/foo) instead.'
+            }
+          ]
+        }
+      ]
     }
   }
 ]);
