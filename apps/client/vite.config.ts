@@ -30,8 +30,7 @@ export default defineConfig({
                     ],
                     'vendor-mediasoup': ['mediasoup-client'],
                     'vendor-hljs': ['highlight.js'],
-                    'vendor-date': ['date-fns'],
-                    'vendor-git': ['isomorphic-git']
+                    'vendor-date': ['date-fns']
                 }
             }
         }

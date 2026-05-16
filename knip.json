@@ -23,6 +23,6 @@
   },
   "ignore": ["**/*.d.ts"],
   "ignoreBinaries": ["prettier"],
-  "ignoreDependencies": ["tailwindcss", "buffer", "ws", "@types/ws"],
+  "ignoreDependencies": ["tailwindcss", "ws", "@types/ws"],
   "ignoreExportsUsedInFile": true
 }
