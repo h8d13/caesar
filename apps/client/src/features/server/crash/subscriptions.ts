@@ -1,9 +1,9 @@
+import { store } from '@/features/store';
 import { getTRPCClient } from '@/lib/trpc';
 import type {
     TCrashRoundResult,
     TCrashStateUpdate
 } from '@caesar/shared/games/crash';
-import { store } from '@/features/store';
 import { crashSliceActions } from './slice';
 
 const subscribeToCrash = () => {

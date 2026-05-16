@@ -1,9 +1,9 @@
+import { store } from '@/features/store';
 import { getTRPCClient } from '@/lib/trpc';
 import type {
     TCoinflipResult,
     TCoinflipStateUpdate
 } from '@caesar/shared/games/coinflip';
-import { store } from '@/features/store';
 import { coinflipSliceActions } from './slice';
 
 const subscribeToCoinflip = () => {
