@@ -92,6 +92,9 @@ const Devices = memo(() => {
         getDTLNWorkletAvailabilitySnapshot
     );
     const isDTLNAvailable = dtlnWorkletAvailability.available;
+    const advancedNsActive =
+        values.noiseSuppressionMode === NoiseSuppressionMode.RNNOISE ||
+        values.noiseSuppressionMode === NoiseSuppressionMode.DTLN;
     const {
         testAudioRef,
         permissionState,
@@ -352,7 +355,11 @@ const Devices = memo(() => {
 
                             <Group label="Noise suppression">
                                 <Switch
-                                    checked={!!values.noiseSuppression}
+                                    checked={
+                                        !!values.noiseSuppression &&
+                                        !advancedNsActive
+                                    }
+                                    disabled={advancedNsActive}
                                     onCheckedChange={(checked) =>
                                         onChange('noiseSuppression', checked)
                                     }
@@ -377,46 +384,44 @@ const Devices = memo(() => {
                                     }
                                 />
                             </Group>
-
-                            <Group label="AI Noise Suppression">
-                                <Select
-                                    value={values.noiseSuppressionMode}
-                                    onValueChange={(value) =>
-                                        onChange(
-                                            'noiseSuppressionMode',
-                                            value as NoiseSuppressionMode
-                                        )
-                                    }
-                                >
-                                    <SelectTrigger className="w-40">
-                                        <SelectValue placeholder="Select mode" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            <SelectItem
-                                                value={NoiseSuppressionMode.NONE}
-                                            >
-                                                Off
-                                            </SelectItem>
-                                            <SelectItem
-                                                value={
-                                                    NoiseSuppressionMode.RNNOISE
-                                                }
-                                                disabled={!isRNNoiseAvailable}
-                                            >
-                                                RNNoise (fast)
-                                            </SelectItem>
-                                            <SelectItem
-                                                value={NoiseSuppressionMode.DTLN}
-                                                disabled={!isDTLNAvailable}
-                                            >
-                                                DTLN (stronger)
-                                            </SelectItem>
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
-                            </Group>
                         </div>
+
+                        <Group label="AI Noise Suppression">
+                            <Select
+                                value={values.noiseSuppressionMode}
+                                onValueChange={(value) =>
+                                    onChange(
+                                        'noiseSuppressionMode',
+                                        value as NoiseSuppressionMode
+                                    )
+                                }
+                            >
+                                <SelectTrigger className="w-56">
+                                    <SelectValue placeholder="Select mode" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectItem
+                                            value={NoiseSuppressionMode.NONE}
+                                        >
+                                            Off
+                                        </SelectItem>
+                                        <SelectItem
+                                            value={NoiseSuppressionMode.RNNOISE}
+                                            disabled={!isRNNoiseAvailable}
+                                        >
+                                            RNNoise (fast)
+                                        </SelectItem>
+                                        <SelectItem
+                                            value={NoiseSuppressionMode.DTLN}
+                                            disabled={!isDTLNAvailable}
+                                        >
+                                            DTLN (stronger)
+                                        </SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </Group>
 
                         {!isNoiseGateAvailable && (
                             <p className="text-xs text-muted-foreground">
