@@ -17,9 +17,10 @@ const getMockFile = (content: string): File => {
 describe('/upload', () => {
   let token: string;
 
+  // setup.ts recreates the DB before each test, so the seeded user's
+  // sessionEpoch resets to 0; a token cached from a previous login is
+  // tied to a now-stale epoch and would 401. Re-login per test.
   beforeEach(async () => {
-    if (token) return;
-
     const response = await login('testowner', 'password123');
     const data: any = await response.json();
 
