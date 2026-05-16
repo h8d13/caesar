@@ -1,4 +1,7 @@
 import { sha256, UploadHeaders } from '@caesar/shared';
+import { users } from '@caesar/shared/db/schema';
+import { db } from '@server/db';
+import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import { appRouter } from '../routers';
 import { createMockContext } from './context';
@@ -8,9 +11,20 @@ import { testsBaseUrl } from './setup';
 const getMockedToken = async (userId: number) => {
   const hashedToken = await sha256(TEST_SECRET_TOKEN);
 
-  const token = jwt.sign({ userId: userId }, hashedToken, {
-    expiresIn: '86400s'
-  });
+  // mirror the current sessionEpoch so tests that interleave manual
+  // tokens with real /login calls (which bump the epoch) don't get
+  // rejected by getUserByToken's epoch check.
+  const row = await db
+    .select({ sessionEpoch: users.sessionEpoch })
+    .from(users)
+    .where(eq(users.id, userId))
+    .get();
+
+  const token = jwt.sign(
+    { userId, sessionEpoch: row?.sessionEpoch ?? 0 },
+    hashedToken,
+    { expiresIn: '86400s' }
+  );
 
   return token;
 };
