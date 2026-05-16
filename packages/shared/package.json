@@ -30,7 +30,7 @@
     "@types/linkify-it": "^5.0.0",
     "@typescript-eslint/eslint-plugin": "^8.59.3",
     "eslint": "^8.56.0",
-    "eslint-plugin-unused-imports": "^4.1.4",
+    "eslint-plugin-unused-imports": "^4.4.1",
     "prettier": "^3.5.3",
     "prettier-plugin-organize-imports": "^4.1.0",
     "@trpc/client": "^11.17.0"
