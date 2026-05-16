@@ -40,20 +40,20 @@
   },
   "dependencies": {
     "@sharkord/shared": "workspace:*",
-    "@trpc/server": "^11.6.0",
+    "@trpc/server": "^11.17.0",
     "cron": "^4.4.0",
     "drizzle-orm": "^0.45.2",
     "ini": "^5.0.0",
-    "ipaddr.js": "^2.3.0",
-    "jsonwebtoken": "^9.0.2",
+    "ipaddr.js": "^2.4.0",
+    "jsonwebtoken": "^9.0.3",
     "link-preview-js": "^4.0.3",
-    "mediasoup": "^3.19.17",
+    "mediasoup": "^3.19.22",
     "queue": "^7.0.0",
     "sanitize-html": "^2.17.4",
-    "ua-parser-js": "^2.0.6",
-    "ws": "^8.18.3",
-    "yauzl": "^3.2.0",
+    "ua-parser-js": "^2.0.9",
+    "ws": "^8.20.1",
+    "yauzl": "^3.3.0",
     "yazl": "^3.3.1",
-    "zod": "^4.1.11"
+    "zod": "^4.4.3"
   }
 }
