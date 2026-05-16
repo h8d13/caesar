@@ -259,7 +259,7 @@ const loginRouteHandler = async (
   // exception is a no-op safety net.
   closeUserSessions(
     existingUser.id,
-    'Signed in from another device',
+    'Another device connected.',
     DisconnectCode.SESSION_SUPERSEDED,
     token
   );
