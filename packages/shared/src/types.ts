@@ -114,4 +114,5 @@ export type TDirectMessageConversation = {
   userId: number;
   unreadCount: number;
   lastMessageAt: number;
+  ephemeralMs: number | null;
 };

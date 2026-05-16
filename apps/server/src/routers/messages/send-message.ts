@@ -8,7 +8,11 @@ import { z } from 'zod';
 import { config } from '../../config';
 import { db } from '../../db';
 import { publishMessage, publishReplyCount } from '../../db/publishers';
-import { assertDmChannel, isDirectMessageChannel } from '../../db/queries/dms';
+import {
+  assertDmChannel,
+  getDmEphemeralMs,
+  isDirectMessageChannel
+} from '../../db/queries/dms';
 import { getSettings } from '../../db/queries/server';
 import { messageFiles, messages } from '../../db/schema';
 import { sanitizeMessageHtml } from '../../helpers/sanitize-html';
@@ -131,6 +135,11 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
         'Your message only contained unsupported or removed content, so there was nothing to send.'
     });
 
+    const now = Date.now();
+    const ephemeralMs = isDmChannel
+      ? await getDmEphemeralMs(input.channelId)
+      : null;
+
     const message = await db
       .insert(messages)
       .values({
@@ -139,7 +148,8 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
         content: targetContent,
         parentMessageId: input.parentMessageId ?? null,
         replyToMessageId: input.replyToMessageId ?? null,
-        createdAt: Date.now()
+        expiresAt: ephemeralMs ? now + ephemeralMs : null,
+        createdAt: now
       })
       .returning()
       .get();

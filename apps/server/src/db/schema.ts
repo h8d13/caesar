@@ -218,6 +218,7 @@ const messages = sqliteTable(
     replyToMessageId: integer('reply_to_message_id'),
     editable: integer('editable', { mode: 'boolean' }).default(true),
     metadata: text('metadata', { mode: 'json' }).$type<TMessageMetadata[]>(),
+    expiresAt: integer('expires_at'),
     createdAt: integer('created_at').notNull(),
     updatedAt: integer('updated_at'),
     pinned: integer('pinned', { mode: 'boolean' }).default(false),
@@ -478,6 +479,7 @@ const directMessages = sqliteTable(
     userTwoId: integer('user_two_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+    ephemeralMs: integer('ephemeral_ms'),
     createdAt: integer('created_at').notNull()
   },
   (t) => [

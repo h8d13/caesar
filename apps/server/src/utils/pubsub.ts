@@ -149,6 +149,10 @@ type Events = {
   };
 
   [ServerEvents.DM_CONVERSATION_OPEN]: { channelId: number };
+  [ServerEvents.DM_EPHEMERAL_UPDATE]: {
+    channelId: number;
+    ephemeralMs: number | null;
+  };
 
   [ServerEvents.SOUNDBOARD_PLAY]: {
     channelId: number;

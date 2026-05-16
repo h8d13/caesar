@@ -57,6 +57,7 @@ export enum ServerEvents {
   WHITEBOARD_CLEAR = 'whiteboardClear',
 
   DM_CONVERSATION_OPEN = 'dmConversationOpen',
+  DM_EPHEMERAL_UPDATE = 'dmEphemeralUpdate',
 
   SOUNDBOARD_PLAY = 'soundboardPlay'
 }

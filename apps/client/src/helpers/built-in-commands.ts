@@ -20,6 +20,7 @@ const createLocalMessage = (
         replyToMessageId: null,
         editable: false,
         metadata: null,
+        expiresAt: null,
         createdAt: Date.now(),
         updatedAt: null,
         pinned: false,

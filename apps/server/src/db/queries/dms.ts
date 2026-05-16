@@ -92,7 +92,8 @@ const getDirectMessageConversations = async (
       channelId: row.channelId,
       userId: otherUserId,
       unreadCount: unreadMapRaw[row.channelId] ?? 0,
-      lastMessageAt
+      lastMessageAt,
+      ephemeralMs: row.ephemeralMs ?? null
     };
   });
 
@@ -176,6 +177,17 @@ const assertDmChannel = async (
   await assertDmParticipant(channelId, userId);
 };
 
+const getDmEphemeralMs = async (channelId: number): Promise<number | null> => {
+  const row = await db
+    .select({ ephemeralMs: directMessages.ephemeralMs })
+    .from(directMessages)
+    .where(eq(directMessages.channelId, channelId))
+    .limit(1)
+    .get();
+
+  return row?.ephemeralMs ?? null;
+};
+
 const getDirectMessageChannelParticipantIds = async (
   channelId: number
 ): Promise<number[]> => {
@@ -201,6 +213,7 @@ export {
   getDirectMessageChannelIdsForUser,
   getDirectMessageChannelParticipantIds,
   getDirectMessageConversations,
+  getDmEphemeralMs,
   isDirectMessageChannel,
   isUserDmParticipant,
   normalizePair

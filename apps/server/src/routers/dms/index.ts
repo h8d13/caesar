@@ -1,7 +1,9 @@
 import { ServerEvents } from '@sharkord/shared';
 import { protectedProcedure, t } from '../../utils/trpc';
 import { getDirectMessagesRoute } from './get-direct-messages';
+import { getEphemeralRoute } from './get-ephemeral';
 import { openDirectMessageRoute } from './open-direct-message';
+import { setEphemeralRoute } from './set-ephemeral';
 
 const onDmConversationOpenRoute = protectedProcedure.subscription(
   async ({ ctx }) => {
@@ -12,8 +14,20 @@ const onDmConversationOpenRoute = protectedProcedure.subscription(
   }
 );
 
+const onDmEphemeralUpdateRoute = protectedProcedure.subscription(
+  async ({ ctx }) => {
+    return ctx.pubsub.subscribeFor(
+      ctx.userId,
+      ServerEvents.DM_EPHEMERAL_UPDATE
+    );
+  }
+);
+
 export const dmsRouter = t.router({
   get: getDirectMessagesRoute,
   open: openDirectMessageRoute,
-  onConversationOpen: onDmConversationOpenRoute
+  getEphemeral: getEphemeralRoute,
+  setEphemeral: setEphemeralRoute,
+  onConversationOpen: onDmConversationOpenRoute,
+  onEphemeralUpdate: onDmEphemeralUpdateRoute
 });

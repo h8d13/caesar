@@ -276,6 +276,7 @@ const seedDatabase = async (db: BunSQLiteDatabase) => {
     userOneId: insertedUserA!.id,
     userTwoId: insertedUserB!.id,
     channelId: 3,
+    ephemeralMs: null,
     createdAt: firstStart
   };
 
