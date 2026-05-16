@@ -50,22 +50,24 @@ const TextTopbar = memo(
                             </span>
                         )}
                     </div>
-                    <div className="flex items-center gap-1">
-                        <button
-                            className={`p-1.5 rounded-md transition-colors ${
-                                whiteboardOpen
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'hover:bg-muted text-muted-foreground'
-                            }`}
-                            onClick={onToggleWhiteboard}
-                            title="Toggle whiteboard"
-                        >
-                            <PenTool size={16} />
-                        </button>
-                        <PinnedMessagesPopover
-                            onScrollToMessage={onScrollToMessage}
-                        />
-                    </div>
+                    {!channel?.isDm && (
+                        <div className="flex items-center gap-1">
+                            <button
+                                className={`p-1.5 rounded-md transition-colors ${
+                                    whiteboardOpen
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'hover:bg-muted text-muted-foreground'
+                                }`}
+                                onClick={onToggleWhiteboard}
+                                title="Toggle whiteboard"
+                            >
+                                <PenTool size={16} />
+                            </button>
+                            <PinnedMessagesPopover
+                                onScrollToMessage={onScrollToMessage}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
         );

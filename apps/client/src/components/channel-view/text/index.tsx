@@ -237,19 +237,21 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
                     />
                 </div>
 
-                <ResizableSidebar
-                    storageKey={LocalStorageKey.WHITEBOARD_SIDEBAR_WIDTH}
-                    minWidth={300}
-                    maxWidth={900}
-                    defaultWidth={500}
-                    edge="left"
-                    isOpen={whiteboardOpen}
-                >
-                    <WhiteboardPanel
-                        channelId={channelId}
-                        onClose={() => setWhiteboardOpen(false)}
-                    />
-                </ResizableSidebar>
+                {!channel?.isDm && (
+                    <ResizableSidebar
+                        storageKey={LocalStorageKey.WHITEBOARD_SIDEBAR_WIDTH}
+                        minWidth={300}
+                        maxWidth={900}
+                        defaultWidth={500}
+                        edge="left"
+                        isOpen={whiteboardOpen}
+                    >
+                        <WhiteboardPanel
+                            channelId={channelId}
+                            onClose={() => setWhiteboardOpen(false)}
+                        />
+                    </ResizableSidebar>
+                )}
             </div>
         </>
     );
