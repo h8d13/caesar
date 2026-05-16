@@ -103,6 +103,7 @@ type TPublicUser = Pick<
   | 'name'
   | 'bannerColor'
   | 'bio'
+  | 'birthday'
   | 'avatar'
   | 'avatarId'
   | 'banner'

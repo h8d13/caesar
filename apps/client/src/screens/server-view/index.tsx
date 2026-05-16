@@ -14,6 +14,7 @@ import {
 import { setSelectedChannelId } from '@/features/server/channels/actions';
 import { usePublicServerSettings } from '@/features/server/hooks';
 import { getLocalStorageItemBool, LocalStorageKey } from '@/helpers/storage';
+import { useBirthdayToasts } from '@/hooks/use-birthday-toasts';
 import { useSwipeGestures } from '@/hooks/use-swipe-gestures';
 import { cn } from '@/lib/utils';
 import { Permission } from '@sharkord/shared';
@@ -35,6 +36,8 @@ const ServerView = memo(() => {
     const publicSettings = usePublicServerSettings();
     const previousServerChannelIdRef = useRef<number | undefined>(undefined);
     const { isOpen: isThreadSidebarOpen } = useThreadSidebar();
+
+    useBirthdayToasts();
 
     const handleDesktopLeftSidebarToggle = useCallback(() => {
         setIsDesktopLeftSidebarOpen((prev) => !prev);

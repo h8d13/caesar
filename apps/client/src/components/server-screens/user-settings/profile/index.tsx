@@ -25,14 +25,18 @@ const Profile = memo(() => {
     const { setTrpcErrors, r, rr, values } = useForm({
         name: ownPublicUser?.name ?? '',
         bannerColor: ownPublicUser?.bannerColor ?? '#FFFFFF',
-        bio: ownPublicUser?.bio ?? ''
+        bio: ownPublicUser?.bio ?? '',
+        birthday: ownPublicUser?.birthday ?? ''
     });
 
     const onUpdateUser = useCallback(async () => {
         const trpc = getTRPCClient();
 
         try {
-            await trpc.users.update.mutate(values);
+            await trpc.users.update.mutate({
+                ...values,
+                birthday: values.birthday ? values.birthday : null
+            });
             toast.success('Profile updated');
         } catch (error) {
             setTrpcErrors(error);
@@ -68,6 +72,17 @@ const Profile = memo(() => {
                     <Textarea
                         placeholder="Tell us about yourself..."
                         {...r('bio')}
+                    />
+                </Group>
+
+                <Group
+                    label="Birthday"
+                    help="Optional. Format: DD-MM (e.g. 25-12). A reminder is posted in chat the day before."
+                >
+                    <Input
+                        placeholder="DD-MM"
+                        maxLength={5}
+                        {...r('birthday')}
                     />
                 </Group>
 

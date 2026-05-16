@@ -19,7 +19,12 @@ const updateUserRoute = protectedProcedure
       bannerColor: z
         .string()
         .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Invalid hex color'),
-      bio: z.string().max(160).optional()
+      bio: z.string().max(160).optional(),
+      birthday: z
+        .string()
+        .regex(/^(0[1-9]|[12]\d|3[01])-(0[1-9]|1[0-2])$/, 'Use DD-MM format')
+        .nullable()
+        .optional()
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -28,7 +33,8 @@ const updateUserRoute = protectedProcedure
       .set({
         name: input.name,
         bannerColor: input.bannerColor,
-        bio: input.bio ?? null
+        bio: input.bio ?? null,
+        birthday: input.birthday ?? null
       })
       .where(eq(users.id, ctx.userId))
       .returning()
