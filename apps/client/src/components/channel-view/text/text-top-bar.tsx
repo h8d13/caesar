@@ -1,9 +1,26 @@
 import { useChannelById } from '@/features/server/channels/hooks';
+import {
+    useOwnUserId,
+    useUserById
+} from '@/features/server/users/hooks';
 import { getTRPCClient } from '@/lib/trpc';
 import { Hash, PenTool, Timer } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { PinnedMessagesPopover } from './pinned-messages-popover';
+
+const parseDmPeerId = (
+    channelName: string | null | undefined,
+    ownUserId: number | undefined
+): number | undefined => {
+    if (!channelName || ownUserId == null) return undefined;
+    const match = channelName.match(/^DM - (\d+):(\d+)$/);
+    if (!match) return undefined;
+    const a = Number(match[1]);
+    const b = Number(match[2]);
+    if (Number.isNaN(a) || Number.isNaN(b)) return undefined;
+    return a === ownUserId ? b : a;
+};
 
 type TEphemeralToggleProps = {
     channelId: number;
@@ -91,12 +108,21 @@ const TextTopbar = memo(
         onToggleWhiteboard
     }: TTextTopbarProps) => {
         const channel = useChannelById(channelId);
+        const ownUserId = useOwnUserId();
+        const dmPeerId = useMemo(
+            () =>
+                channel?.isDm
+                    ? parseDmPeerId(channel.name, ownUserId)
+                    : undefined,
+            [channel?.isDm, channel?.name, ownUserId]
+        );
+        const dmPeer = useUserById(dmPeerId ?? -1);
 
         const info = useMemo(() => {
             if (channel?.isDm) {
                 return {
-                    name: 'Direct Message',
-                    topic: 'Only you and the recipient can see the messages here.'
+                    name: 'DM',
+                    topic: dmPeer?.name
                 };
             }
 
@@ -104,21 +130,21 @@ const TextTopbar = memo(
                 name: channel?.name,
                 topic: channel?.topic
             };
-        }, [channel]);
+        }, [channel, dmPeer?.name]);
 
         return (
             <div className="flex h-12 border-b border-border bg-card w-auto overflow-hidden">
                 <div className="flex w-full items-center justify-between px-4">
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-baseline gap-2 min-w-0">
                         <Hash
-                            className="inline-block text-muted-foreground"
+                            className="self-center text-muted-foreground"
                             size={16}
                         />
-                        <span className="font-bold truncate max-w-40">
+                        <span className="font-bold truncate max-w-40 leading-none">
                             {info.name || 'No topic'}
                         </span>
                         {info.topic && (
-                            <span className="text-xs text-muted-foreground truncate max-w-60">
+                            <span className="text-xs text-muted-foreground truncate max-w-60 leading-none">
                                 {info.topic}
                             </span>
                         )}
