@@ -15,7 +15,7 @@ import {
     type TChannel,
     type TStorageSettings,
     type TTrpcErrors
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import { useQuery, type QueryObserverResult } from '@tanstack/react-query';
 import { filesize } from 'filesize';
 import { useCallback, useEffect, useMemo, useState } from 'react';

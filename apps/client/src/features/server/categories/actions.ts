@@ -1,5 +1,5 @@
 import { store } from '@/features/store';
-import type { TCategory } from '@sharkord/shared';
+import type { TCategory } from '@caesar/shared';
 import { serverSliceActions } from '../slice';
 
 export const addCategory = (category: TCategory) => {

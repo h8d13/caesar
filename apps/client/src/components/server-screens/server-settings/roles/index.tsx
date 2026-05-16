@@ -1,5 +1,5 @@
 import { useAdminRoles } from '@/features/server/admin/hooks';
-import { Card, CardContent, LoadingCard } from '@sharkord/ui';
+import { Card, CardContent, LoadingCard } from '@caesar/ui';
 import { memo, useMemo, useState } from 'react';
 import { RolesList } from './roles-list';
 import { UpdateRole } from './update-role';

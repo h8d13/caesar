@@ -1,4 +1,4 @@
-import { type TextLayer } from '@sharkord/shared';
+import { type TextLayer } from '@caesar/shared';
 import { memo, useCallback, useEffect, useRef } from 'react';
 import { calculateFontSize, getContrastingTextColor } from '../utils';
 

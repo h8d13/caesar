@@ -6,7 +6,7 @@ import {
     type Point,
     Side,
     type XYWH
-} from '@sharkord/shared';
+} from '@caesar/shared';
 
 export const colors: Color[] = [
     { r: 243, g: 82, b: 35 },

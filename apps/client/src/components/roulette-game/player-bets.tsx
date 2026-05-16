@@ -3,7 +3,7 @@ import {
     useRouletteBets,
     useRoulettePhase
 } from '@/features/server/roulette/hooks';
-import { RoulettePhase } from '@sharkord/shared/games/roulette';
+import { RoulettePhase } from '@caesar/shared/games/roulette';
 import { X } from 'lucide-react';
 import { memo } from 'react';
 import { toast } from 'sonner';

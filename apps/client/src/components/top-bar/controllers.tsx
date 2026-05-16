@@ -13,7 +13,7 @@ import {
     PopoverTrigger,
     Slider,
     Tooltip
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import {
     Headphones,
     Monitor,

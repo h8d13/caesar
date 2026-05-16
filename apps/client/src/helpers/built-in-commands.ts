@@ -1,6 +1,6 @@
 import { addMessages } from '@/features/server/messages/actions';
 import { store } from '@/features/store';
-import type { TJoinedMessage } from '@sharkord/shared';
+import type { TJoinedMessage } from '@caesar/shared';
 
 let localMessageId = -1;
 

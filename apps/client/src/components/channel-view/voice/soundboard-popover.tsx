@@ -6,7 +6,7 @@ import {
     PopoverContent,
     PopoverTrigger,
     Tooltip
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { Music, Search, Volume2 } from 'lucide-react';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 

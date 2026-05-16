@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "paths": {
-      "@sharkord/shared": ["./packages/shared/src/index.ts"]
+      "@caesar/shared": ["./packages/shared/src/index.ts"]
     },
     "moduleResolution": "NodeNext",
     "module": "NodeNext",

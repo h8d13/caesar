@@ -1,4 +1,4 @@
-import type { TDiskMetrics } from '@sharkord/shared';
+import type { TDiskMetrics } from '@caesar/shared';
 import fs from 'fs/promises';
 import { getUsedFileQuota } from '../db/queries/files';
 import { UPLOADS_PATH } from '../helpers/paths';
@@ -17,7 +17,7 @@ const getDiskMetrics = async (): Promise<TDiskMetrics> => {
     totalSpace,
     usedSpace,
     freeSpace,
-    sharkordUsedSpace: filesUsedSpace
+    caesarUsedSpace: filesUsedSpace
   };
 
   return metrics;

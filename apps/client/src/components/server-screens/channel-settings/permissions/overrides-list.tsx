@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils';
 import type {
     TChannelRolePermission,
     TChannelUserPermission
-} from '@sharkord/shared';
-import { getTrpcError } from '@sharkord/shared';
+} from '@caesar/shared';
+import { getTrpcError } from '@caesar/shared';
 import {
     Avatar,
     AvatarFallback,
@@ -16,7 +16,7 @@ import {
     CardHeader,
     CardTitle,
     Separator
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { memo, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { SearchPopover } from './search-popover';

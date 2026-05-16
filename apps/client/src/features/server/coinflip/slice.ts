@@ -3,7 +3,7 @@ import {
     type TCoinflipChallenge,
     type TCoinflipResult,
     type TCoinflipStateUpdate
-} from '@sharkord/shared/games/coinflip';
+} from '@caesar/shared/games/coinflip';
 
 export type TCoinflipTopWin = {
     winnerName: string;

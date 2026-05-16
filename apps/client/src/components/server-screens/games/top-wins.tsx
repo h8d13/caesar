@@ -1,5 +1,5 @@
 import { getTRPCClient } from '@/lib/trpc';
-import { Button } from '@sharkord/ui';
+import { Button } from '@caesar/ui';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
 

@@ -1,4 +1,4 @@
-import { UploadHeaders, type TTempFile } from '@sharkord/shared';
+import { UploadHeaders, type TTempFile } from '@caesar/shared';
 import { toast } from 'sonner';
 import { getUrlFromServer } from './get-file-url';
 import { getSessionStorageItem, SessionStorageKey } from './storage';

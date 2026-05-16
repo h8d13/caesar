@@ -2,7 +2,7 @@ import { useAdminSounds } from '@/features/server/admin/hooks';
 import { uploadFiles } from '@/helpers/upload-file';
 import { useFilePicker } from '@/hooks/use-file-picker';
 import { getTRPCClient } from '@/lib/trpc';
-import { LoadingCard } from '@sharkord/ui';
+import { LoadingCard } from '@caesar/ui';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { SoundList } from './sound-list';

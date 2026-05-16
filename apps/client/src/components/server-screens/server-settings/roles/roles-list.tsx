@@ -1,6 +1,6 @@
 import { getTRPCClient } from '@/lib/trpc';
-import type { TJoinedRole } from '@sharkord/shared';
-import { Button, Card, CardContent, CardHeader, CardTitle } from '@sharkord/ui';
+import type { TJoinedRole } from '@caesar/shared';
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@caesar/ui';
 import { Plus } from 'lucide-react';
 import { memo, useCallback } from 'react';
 import { toast } from 'sonner';

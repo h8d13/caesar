@@ -1,4 +1,4 @@
-import { ChannelPermission, Permission } from '@sharkord/shared';
+import { ChannelPermission, Permission } from '@caesar/shared';
 import { useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import type { IRootState } from '../store';

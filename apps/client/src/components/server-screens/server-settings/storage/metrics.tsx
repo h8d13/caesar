@@ -1,4 +1,4 @@
-import type { TDiskMetrics } from '@sharkord/shared';
+import type { TDiskMetrics } from '@caesar/shared';
 import { filesize } from 'filesize';
 import { memo } from 'react';
 
@@ -38,7 +38,7 @@ const DiskMetrics = memo(({ diskMetrics }: DiskMetricsProps) => {
                     {VITE_APP_NAME} Used
                 </div>
                 <div className="text-lg font-semibold">
-                    {filesize(diskMetrics.sharkordUsedSpace, {
+                    {filesize(diskMetrics.caesarUsedSpace, {
                         standard: 'jedec'
                     })}
                 </div>

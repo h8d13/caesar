@@ -1,4 +1,4 @@
-import type { ChannelPermission } from '@sharkord/shared';
+import type { ChannelPermission } from '@caesar/shared';
 
 export type TChannelPermission = {
     permission: ChannelPermission;

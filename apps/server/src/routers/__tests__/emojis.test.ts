@@ -1,4 +1,4 @@
-import type { TTempFile } from '@sharkord/shared';
+import type { TTempFile } from '@caesar/shared';
 import { describe, expect, test } from 'bun:test';
 import { initTest, uploadFile } from '../../__tests__/helpers';
 

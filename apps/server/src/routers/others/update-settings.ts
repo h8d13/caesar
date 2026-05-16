@@ -2,7 +2,7 @@ import {
   ActivityLogType,
   Permission,
   StorageOverflowAction
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import { z } from 'zod';
 import { updateSettings } from '../../db/mutations/server';
 import { publishSettings } from '../../db/publishers';

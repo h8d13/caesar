@@ -5,8 +5,8 @@ import {
 import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
 import { useMedia } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
-import { StreamKind } from '@sharkord/shared';
-import { IconButton } from '@sharkord/ui';
+import { StreamKind } from '@caesar/shared';
+import { IconButton } from '@caesar/ui';
 import { Monitor, ZoomIn, ZoomOut } from 'lucide-react';
 import { memo, useCallback, useMemo, type RefObject } from 'react';
 import { CardControls } from './card-controls';

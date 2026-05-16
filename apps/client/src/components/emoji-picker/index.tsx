@@ -9,7 +9,7 @@ import {
     TabsContent,
     TabsList,
     TabsTrigger
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { CustomEmojiTab } from './custom-emoji-tab';
 import { ALL_EMOJIS, searchEmojis, toTEmojiItem } from './emoji-data';

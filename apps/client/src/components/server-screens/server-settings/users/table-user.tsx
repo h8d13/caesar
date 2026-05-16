@@ -5,7 +5,7 @@ import { openDialog } from '@/features/dialogs/actions';
 import { useUserRoles } from '@/features/server/hooks';
 import { useOwnUserId, useUserStatus } from '@/features/server/users/hooks';
 import { cn } from '@/lib/utils';
-import { UserStatus, type TJoinedUser } from '@sharkord/shared';
+import { UserStatus, type TJoinedUser } from '@caesar/shared';
 import {
     Button,
     DropdownMenu,
@@ -13,7 +13,7 @@ import {
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { format, formatDistanceToNow } from 'date-fns';
 import { MoreVertical, Trash2, UserCog } from 'lucide-react';
 import { memo, useCallback } from 'react';

@@ -5,7 +5,7 @@ import {
     parseTrpcErrors,
     type TJoinedSound,
     type TTrpcErrors
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import {
     Button,
     Card,
@@ -15,7 +15,7 @@ import {
     CardTitle,
     Input,
     Label
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { filesize } from 'filesize';
 import { Trash2, Volume2 } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';

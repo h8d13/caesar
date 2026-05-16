@@ -1,4 +1,4 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@sharkord/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@caesar/ui';
 import { memo } from 'react';
 import type { TServerScreenBaseProps } from '../screens';
 import { ServerScreenLayout } from '../server-screen-layout';

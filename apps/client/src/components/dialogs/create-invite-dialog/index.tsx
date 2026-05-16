@@ -17,7 +17,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { memo, useCallback } from 'react';
 import { toast } from 'sonner';
 import type { TDialogBaseProps } from '../types';

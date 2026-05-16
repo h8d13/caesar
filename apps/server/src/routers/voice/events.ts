@@ -1,4 +1,4 @@
-import { ServerEvents, type StreamKind } from '@sharkord/shared';
+import { ServerEvents, type StreamKind } from '@caesar/shared';
 import { observable } from '@trpc/server/observable';
 import { protectedProcedure } from '../../utils/trpc';
 

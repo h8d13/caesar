@@ -13,8 +13,8 @@ import { cn } from '@/lib/utils';
 import {
     type RouletteBetType,
     RoulettePhase
-} from '@sharkord/shared/games/roulette';
-import { Button } from '@sharkord/ui';
+} from '@caesar/shared/games/roulette';
+import { Button } from '@caesar/ui';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { ChipAmountContext } from './chip-amount-context';

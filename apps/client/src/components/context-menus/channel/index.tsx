@@ -4,7 +4,7 @@ import { openServerScreen } from '@/features/server-screens/actions';
 import { useChannelById } from '@/features/server/channels/hooks';
 import { useCan } from '@/features/server/hooks';
 import { getTRPCClient } from '@/lib/trpc';
-import { Permission } from '@sharkord/shared';
+import { Permission } from '@caesar/shared';
 import {
     ContextMenu,
     ContextMenuContent,
@@ -12,7 +12,7 @@ import {
     ContextMenuLabel,
     ContextMenuSeparator,
     ContextMenuTrigger
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { memo, useCallback } from 'react';
 import { toast } from 'sonner';
 

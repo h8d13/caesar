@@ -8,7 +8,7 @@ import {
     CardHeader,
     CardTitle,
     Group
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { CheckCircle } from 'lucide-react';
 import { memo } from 'react';
 import { useSelector } from 'react-redux';

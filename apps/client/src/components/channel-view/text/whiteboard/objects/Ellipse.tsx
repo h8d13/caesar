@@ -1,4 +1,4 @@
-import { type EllipseLayer } from '@sharkord/shared';
+import { type EllipseLayer } from '@caesar/shared';
 import { memo } from 'react';
 import { colorToCss } from '../utils';
 

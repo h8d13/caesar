@@ -1,4 +1,4 @@
-import type { Layer, WhiteboardState } from '@sharkord/shared';
+import type { Layer, WhiteboardState } from '@caesar/shared';
 
 const whiteboardRuntimes = new Map<number, WhiteboardRuntime>();
 

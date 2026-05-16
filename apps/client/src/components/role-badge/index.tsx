@@ -1,5 +1,5 @@
-import type { TRole } from '@sharkord/shared';
-import { Badge, IconButton } from '@sharkord/ui';
+import type { TRole } from '@caesar/shared';
+import { Badge, IconButton } from '@caesar/ui';
 import { X } from 'lucide-react';
 import { memo } from 'react';
 

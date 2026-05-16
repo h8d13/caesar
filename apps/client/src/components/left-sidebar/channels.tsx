@@ -37,7 +37,7 @@ import {
     Permission,
     type TChannel,
     getTrpcError
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import { Hash, Volume2 } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';

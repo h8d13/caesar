@@ -1,4 +1,4 @@
-import { parseTrpcErrors, type TTrpcErrors } from '@sharkord/shared';
+import { parseTrpcErrors, type TTrpcErrors } from '@caesar/shared';
 import { useCallback, useState } from 'react';
 
 const useForm = <T extends Record<string, unknown>>(initialValues: T) => {

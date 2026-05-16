@@ -1,4 +1,4 @@
-import type { TJoinedSound } from '@sharkord/shared';
+import type { TJoinedSound } from '@caesar/shared';
 import { eq } from 'drizzle-orm';
 import { db } from '..';
 import { files, sounds, users } from '../schema';

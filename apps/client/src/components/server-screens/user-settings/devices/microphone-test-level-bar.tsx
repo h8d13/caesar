@@ -5,7 +5,7 @@ import {
     clampMicrophoneDecibels,
     microphoneDecibelsToPercent
 } from '@/helpers/audio-gate';
-import { Slider } from '@sharkord/ui';
+import { Slider } from '@caesar/ui';
 import { memo, useEffect, useRef, useState } from 'react';
 
 type TMicrophoneTestLevelBarProps = {

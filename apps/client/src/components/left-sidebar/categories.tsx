@@ -22,8 +22,8 @@ import {
     verticalListSortingStrategy
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Permission, getTrpcError } from '@sharkord/shared';
-import { IconButton } from '@sharkord/ui';
+import { Permission, getTrpcError } from '@caesar/shared';
+import { IconButton } from '@caesar/ui';
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';

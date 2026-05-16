@@ -16,7 +16,7 @@ import {
     CardTitle,
     Group,
     Switch
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { memo } from 'react';
 
 const Others = memo(() => {

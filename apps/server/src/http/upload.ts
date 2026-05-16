@@ -1,4 +1,4 @@
-import { UploadHeaders } from '@sharkord/shared';
+import { UploadHeaders } from '@caesar/shared';
 import fs from 'fs';
 import http from 'http';
 import z from 'zod';

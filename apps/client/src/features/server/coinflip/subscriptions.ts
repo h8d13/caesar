@@ -2,7 +2,7 @@ import { getTRPCClient } from '@/lib/trpc';
 import type {
     TCoinflipResult,
     TCoinflipStateUpdate
-} from '@sharkord/shared/games/coinflip';
+} from '@caesar/shared/games/coinflip';
 import { store } from '../../store';
 import { coinflipSliceActions } from './slice';
 

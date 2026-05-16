@@ -1,4 +1,4 @@
-import type { ActivityLogType, TActivityLogDetailsMap } from '@sharkord/shared';
+import type { ActivityLogType, TActivityLogDetailsMap } from '@caesar/shared';
 import Queue from 'queue';
 import { db } from '../../db';
 import { activityLog } from '../../db/schema';

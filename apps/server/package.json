@@ -1,5 +1,5 @@
 {
-  "name": "@sharkord/server",
+  "name": "@caesar/server",
   "version": "0.0.8",
   "module": "src/index.ts",
   "type": "module",
@@ -41,7 +41,7 @@
     "typescript": "~5.9.3"
   },
   "dependencies": {
-    "@sharkord/shared": "workspace:*",
+    "@caesar/shared": "workspace:*",
     "@trpc/server": "^11.17.0",
     "cron": "^4.4.0",
     "drizzle-orm": "^0.45.2",

@@ -4,8 +4,8 @@ import { useChannelCan } from '@/features/server/hooks';
 import { useOwnPublicUser } from '@/features/server/users/hooks';
 import { useMedia } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
-import { ChannelPermission } from '@sharkord/shared';
-import { Button } from '@sharkord/ui';
+import { ChannelPermission } from '@caesar/shared';
+import { Button } from '@caesar/ui';
 import {
     HeadphoneOff,
     Headphones,

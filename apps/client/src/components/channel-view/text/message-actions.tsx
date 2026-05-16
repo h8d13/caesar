@@ -9,8 +9,8 @@ import { openThreadSidebar } from '@/features/app/actions';
 import { requestConfirmation } from '@/features/dialogs/actions';
 import { deleteMessage } from '@/features/server/messages/actions';
 import { getTRPCClient } from '@/lib/trpc';
-import { Permission } from '@sharkord/shared';
-import { IconButton } from '@sharkord/ui';
+import { Permission } from '@caesar/shared';
+import { IconButton } from '@caesar/ui';
 import {
     MessageSquareText,
     Pencil,

@@ -1,4 +1,4 @@
-import type { TServerInfo } from '@sharkord/shared';
+import type { TServerInfo } from '@caesar/shared';
 import { describe, expect, test } from 'bun:test';
 import { testsBaseUrl } from '../../__tests__/setup';
 

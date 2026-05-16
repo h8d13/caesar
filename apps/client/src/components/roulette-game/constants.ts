@@ -1,4 +1,4 @@
-import { BLACK_NUMBERS, RED_NUMBERS } from '@sharkord/shared/games/roulette';
+import { BLACK_NUMBERS, RED_NUMBERS } from '@caesar/shared/games/roulette';
 
 // European roulette wheel order
 export const WHEEL_ORDER = [

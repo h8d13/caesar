@@ -11,7 +11,7 @@ import {
     CardTitle,
     Group,
     Input
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { memo, useCallback } from 'react';
 import { toast } from 'sonner';
 

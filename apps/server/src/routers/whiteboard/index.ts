@@ -1,4 +1,4 @@
-import { ServerEvents, type Layer } from '@sharkord/shared';
+import { ServerEvents, type Layer } from '@caesar/shared';
 import { z } from 'zod';
 import { WhiteboardRuntime } from '../../runtimes/whiteboard';
 import { protectedProcedure, t } from '../../utils/trpc';

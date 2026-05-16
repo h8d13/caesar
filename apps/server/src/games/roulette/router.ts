@@ -1,8 +1,8 @@
 import type {
   TRouletteRoundResult,
   TRouletteStateUpdate
-} from '@sharkord/shared/games/roulette';
-import { RouletteBetType } from '@sharkord/shared/games/roulette';
+} from '@caesar/shared/games/roulette';
+import { RouletteBetType } from '@caesar/shared/games/roulette';
 import { TRPCError } from '@trpc/server';
 import { observable } from '@trpc/server/observable';
 import { z } from 'zod';

@@ -1,4 +1,4 @@
-import { DELETED_USER_IDENTITY_AND_NAME } from '@sharkord/shared';
+import { DELETED_USER_IDENTITY_AND_NAME } from '@caesar/shared';
 import { getNickname } from './nicknames';
 
 const getRenderedUsername = (user: { name: string }, userId?: number) => {

@@ -1,7 +1,7 @@
 import { logVoice } from '@/helpers/browser-logger';
 import { getTRPCClient } from '@/lib/trpc';
 import type { TRemoteUserStreamKinds } from '@/types';
-import { getMediasoupKind, StreamKind } from '@sharkord/shared';
+import { getMediasoupKind, StreamKind } from '@caesar/shared';
 import { TRPCClientError } from '@trpc/client';
 import {
     type AppData,

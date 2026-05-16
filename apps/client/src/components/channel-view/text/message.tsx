@@ -7,7 +7,7 @@ import {
     useUserById
 } from '@/features/server/users/hooks';
 import { cn } from '@/lib/utils';
-import { hasMention, Permission, type TJoinedMessage } from '@sharkord/shared';
+import { hasMention, Permission, type TJoinedMessage } from '@caesar/shared';
 import { CornerUpRight, MessageSquareText } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { ExpiresBadge } from './expires-badge';

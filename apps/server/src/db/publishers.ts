@@ -2,7 +2,7 @@ import {
   ChannelPermission,
   ServerEvents,
   type TChannelUserPermissionsMap
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import { count, eq } from 'drizzle-orm';
 import { db } from '.';
 import { extractMentionUserIds } from '../helpers/extract-mention-user-ids';

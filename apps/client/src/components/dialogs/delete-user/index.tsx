@@ -1,6 +1,6 @@
 import { requestConfirmation } from '@/features/dialogs/actions';
 import { getTRPCClient } from '@/lib/trpc';
-import { getTrpcError, type TJoinedUser } from '@sharkord/shared';
+import { getTrpcError, type TJoinedUser } from '@caesar/shared';
 import {
     Alert,
     AlertDescription,
@@ -15,7 +15,7 @@ import {
     AutoFocus,
     Group,
     Switch
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { AlertCircleIcon } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';

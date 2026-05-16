@@ -7,7 +7,7 @@ import {
 import { joinVoice } from '@/features/server/voice/actions';
 import { useMedia } from '@/features/server/voice/hooks';
 import { getLocalStorageItemAsJSON, LocalStorageKey } from '@/helpers/storage';
-import { ChannelType } from '@sharkord/shared';
+import { ChannelType } from '@caesar/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 

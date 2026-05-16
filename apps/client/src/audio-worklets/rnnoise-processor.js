@@ -1,4 +1,4 @@
-const RNNOISE_WORKLET_NAME = 'sharkord-rnnoise';
+const RNNOISE_WORKLET_NAME = 'caesar-rnnoise';
 const FRAME_SIZE = 480; // RNNoise processes 480 samples (10ms at 48kHz)
 const BYTES_PER_FLOAT = 4;
 // ring buffer size: must hold enough to cover latency (2 rnnoise frames)

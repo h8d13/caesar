@@ -2,7 +2,7 @@ import {
     useAdminChannelGeneral,
     useAdminChannelPermissions
 } from '@/features/server/admin/hooks';
-import { ChannelPermission } from '@sharkord/shared';
+import { ChannelPermission } from '@caesar/shared';
 import {
     Alert,
     AlertDescription,
@@ -13,7 +13,7 @@ import {
     CardHeader,
     CardTitle,
     LoadingCard
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { MessageCircleWarning } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
 import { Override } from './override';

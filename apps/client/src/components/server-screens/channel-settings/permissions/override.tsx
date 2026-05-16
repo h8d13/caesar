@@ -2,7 +2,7 @@ import { UserAvatar } from '@/components/user-avatar';
 import { useRoleById } from '@/features/server/roles/hooks';
 import { useUserById } from '@/features/server/users/hooks';
 import { getTRPCClient } from '@/lib/trpc';
-import { ChannelPermission, getTrpcError } from '@sharkord/shared';
+import { ChannelPermission, getTrpcError } from '@caesar/shared';
 import {
     Button,
     Card,
@@ -10,7 +10,7 @@ import {
     CardContent,
     CardHeader,
     CardTitle
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { Trash2 } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';

@@ -3,8 +3,8 @@ import { useChannelCan } from '@/features/server/hooks';
 import { leaveVoice } from '@/features/server/voice/actions';
 import { useMedia } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
-import { ChannelPermission } from '@sharkord/shared';
-import { Button, Tooltip } from '@sharkord/ui';
+import { ChannelPermission } from '@caesar/shared';
+import { Button, Tooltip } from '@caesar/ui';
 import {
     AlertTriangle,
     Loader2,

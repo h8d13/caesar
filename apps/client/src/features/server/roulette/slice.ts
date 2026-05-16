@@ -5,7 +5,7 @@ import {
     type TRouletteActiveBet,
     type TRouletteRoundHistory,
     type TRouletteStateUpdate
-} from '@sharkord/shared/games/roulette';
+} from '@caesar/shared/games/roulette';
 
 export type TRouletteTopWin = {
     userName: string;

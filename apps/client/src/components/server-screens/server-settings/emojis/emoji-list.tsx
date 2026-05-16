@@ -1,5 +1,5 @@
 import { getFileUrl } from '@/helpers/get-file-url';
-import type { TJoinedEmoji } from '@sharkord/shared';
+import type { TJoinedEmoji } from '@caesar/shared';
 import {
     Button,
     Card,
@@ -8,7 +8,7 @@ import {
     CardTitle,
     Input,
     Spinner
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { Plus, Search } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
 import { Emoji } from './emoji';

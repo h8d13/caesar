@@ -10,7 +10,7 @@ import {
     TabsContent,
     TabsList,
     TabsTrigger
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { Plus, Search } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
 import type { TChannelPermissionType } from './types';

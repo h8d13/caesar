@@ -1,4 +1,4 @@
-import type { Permission, TRole } from '@sharkord/shared';
+import type { Permission, TRole } from '@caesar/shared';
 import { eq } from 'drizzle-orm';
 import { db } from '..';
 import { rolePermissions, roles } from '../schema';

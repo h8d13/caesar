@@ -1,6 +1,6 @@
 import { selectedDmChannelIdSelector } from '@/features/app/selectors';
 import { store } from '@/features/store';
-import type { TChannel, TChannelUserPermissionsMap } from '@sharkord/shared';
+import type { TChannel, TChannelUserPermissionsMap } from '@caesar/shared';
 import { serverSliceActions } from '../slice';
 import {
     channelByIdSelector,

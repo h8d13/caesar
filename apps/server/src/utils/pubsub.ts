@@ -14,7 +14,7 @@ import type {
   TPublicServerSettings,
   TVoiceUserState,
   WhiteboardCursor
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import type { Unsubscribable } from '@trpc/server/observable';
 import { observable, type Observable } from '@trpc/server/observable';
 import { EventEmitter } from 'events';

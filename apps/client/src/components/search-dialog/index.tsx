@@ -10,7 +10,7 @@ import {
     DialogTitle,
     Input,
     Spinner
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { Hash, Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

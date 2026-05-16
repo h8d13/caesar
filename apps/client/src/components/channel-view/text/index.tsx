@@ -23,8 +23,8 @@ import {
     TYPING_MS,
     getTrpcError,
     type TJoinedMessage
-} from '@sharkord/shared';
-import { Spinner } from '@sharkord/ui';
+} from '@caesar/shared';
+import { Spinner } from '@caesar/ui';
 import { X } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';

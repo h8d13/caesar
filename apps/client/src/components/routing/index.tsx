@@ -7,8 +7,8 @@ import {
 import { Connect } from '@/screens/connect';
 import { Disconnected } from '@/screens/disconnected';
 import { LoadingApp } from '@/screens/loading-app';
-import { DisconnectCode } from '@sharkord/shared';
-import { Spinner } from '@sharkord/ui';
+import { DisconnectCode } from '@caesar/shared';
+import { Spinner } from '@caesar/ui';
 import { lazy, memo, Suspense, useEffect } from 'react';
 
 const ServerView = lazy(() =>

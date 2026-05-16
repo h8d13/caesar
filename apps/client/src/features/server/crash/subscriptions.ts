@@ -2,7 +2,7 @@ import { getTRPCClient } from '@/lib/trpc';
 import type {
     TCrashRoundResult,
     TCrashStateUpdate
-} from '@sharkord/shared/games/crash';
+} from '@caesar/shared/games/crash';
 import { store } from '../../store';
 import { crashSliceActions } from './slice';
 

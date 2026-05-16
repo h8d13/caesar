@@ -4,7 +4,7 @@ import {
     ChannelType,
     parseTrpcErrors,
     type TTrpcErrors
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import {
     AutoFocus,
     Button,
@@ -16,7 +16,7 @@ import {
     DialogTitle,
     Group,
     Input
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { Hash, Mic } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import type { TDialogBaseProps } from '../types';

@@ -3,7 +3,7 @@ import { useMediaControl } from '@/components/media-provider/media-control-conte
 import { useIsOwnUser } from '@/features/server/users/hooks';
 import { useMedia } from '@/features/server/voice/hooks';
 import { applyAudioOutputDevice } from '@/helpers/audio-output';
-import { StreamKind } from '@sharkord/shared';
+import { StreamKind } from '@caesar/shared';
 import { useEffect, useMemo } from 'react';
 import { useAudioLevel } from './use-audio-level';
 

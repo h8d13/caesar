@@ -2,8 +2,8 @@ import {
     ChannelPermission,
     channelPermissionDescriptions,
     channelPermissionLabels
-} from '@sharkord/shared';
-import { Switch } from '@sharkord/ui';
+} from '@caesar/shared';
+import { Switch } from '@caesar/ui';
 import { memo, useCallback, useMemo } from 'react';
 
 const availableChannelPermissions = Object.values(ChannelPermission);

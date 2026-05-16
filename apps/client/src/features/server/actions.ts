@@ -2,7 +2,7 @@ import { Dialog } from '@/components/dialogs/dialogs';
 import { logDebug } from '@/helpers/browser-logger';
 import { getHostFromServer } from '@/helpers/get-file-url';
 import { cleanup, connectToTRPC, getTRPCClient } from '@/lib/trpc';
-import { type TPublicServerSettings, type TServerInfo } from '@sharkord/shared';
+import { type TPublicServerSettings, type TServerInfo } from '@caesar/shared';
 import { toast } from 'sonner';
 import { openDialog } from '../dialogs/actions';
 import { store } from '../store';

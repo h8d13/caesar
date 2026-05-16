@@ -3,7 +3,7 @@ import {
     useCrashPhase
 } from '@/features/server/crash/hooks';
 import { cn } from '@/lib/utils';
-import { CrashPhase } from '@sharkord/shared/games/crash';
+import { CrashPhase } from '@caesar/shared/games/crash';
 import { memo, useEffect, useRef, useState } from 'react';
 
 const GROWTH_RATE = 0.06;

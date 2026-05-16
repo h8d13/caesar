@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
-import { Permission, permissionLabels } from '@sharkord/shared';
-import { Badge } from '@sharkord/ui';
+import { Permission, permissionLabels } from '@caesar/shared';
+import { Badge } from '@caesar/ui';
 import { memo } from 'react';
 
 type PermissionsListProps = {

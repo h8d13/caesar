@@ -8,7 +8,7 @@ await loadEmbeds();
 // ----------------------------------------
 import { IS_PRODUCTION, SERVER_VERSION } from './utils/env';
 // ----------------------------------------
-import { ActivityLogType } from '@sharkord/shared';
+import { ActivityLogType } from '@caesar/shared';
 import { config, SERVER_PRIVATE_IP } from './config';
 import { loadCrons } from './crons';
 import { loadDb } from './db';
@@ -33,7 +33,7 @@ await initCoinflip();
 const host = IS_PRODUCTION ? SERVER_PRIVATE_IP : 'localhost';
 const url = `http://${host}:${config.server.port}/`;
 
-logger.info(`Sharkord v${SERVER_VERSION} ready at ${url}`);
+logger.info(`Caesar v${SERVER_VERSION} ready at ${url}`);
 
 enqueueActivityLog({
   type: ActivityLogType.SERVER_STARTED

@@ -2,7 +2,7 @@ import {
     useRouletteBets,
     useRoulettePhase
 } from '@/features/server/roulette/hooks';
-import { RoulettePhase } from '@sharkord/shared/games/roulette';
+import { RoulettePhase } from '@caesar/shared/games/roulette';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 
 type WinEntry = {

@@ -15,7 +15,7 @@ import {
     Group,
     Input,
     Textarea
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { memo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { AvatarManager } from './avatar-manager';

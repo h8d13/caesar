@@ -2,7 +2,7 @@ import { getTRPCClient } from '@/lib/trpc';
 import type {
     TRouletteRoundResult,
     TRouletteStateUpdate
-} from '@sharkord/shared/games/roulette';
+} from '@caesar/shared/games/roulette';
 import { store } from '../../store';
 import { rouletteSliceActions } from './slice';
 

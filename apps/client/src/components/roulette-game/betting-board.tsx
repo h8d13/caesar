@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import {
     RouletteBetType,
     RoulettePhase
-} from '@sharkord/shared/games/roulette';
+} from '@caesar/shared/games/roulette';
 import { Zap } from 'lucide-react';
 import { memo, useCallback, useContext } from 'react';
 import { toast } from 'sonner';

@@ -1,7 +1,7 @@
 import {
   type TActivityLogDetailsMap,
   type TMessageMetadata
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import {
   index,
   integer,

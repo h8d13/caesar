@@ -3,7 +3,7 @@ import {
   IS_DEVELOPMENT,
   IS_TEST,
   SERVER_VERSION,
-  SHARKORD_MEDIASOUP_BIN_NAME
+  CAESAR_MEDIASOUP_BIN_NAME
 } from '../utils/env';
 import { getAppDataPath } from './fs';
 
@@ -11,7 +11,7 @@ const DATA_PATH = IS_TEST
   ? path.resolve(process.cwd(), './data-test')
   : IS_DEVELOPMENT
     ? path.resolve(process.cwd(), './data')
-    : path.join(getAppDataPath(), 'sharkord');
+    : path.join(getAppDataPath(), 'caesar');
 const DB_PATH = path.join(DATA_PATH, 'db.sqlite');
 const LOGS_PATH = path.join(DATA_PATH, 'logs');
 const PUBLIC_PATH = path.join(DATA_PATH, 'public');
@@ -25,7 +25,7 @@ const MEDIASOUP_BINARY_PATH = IS_DEVELOPMENT
   ? undefined
   : path.join(
       MEDIASOUP_PATH,
-      SHARKORD_MEDIASOUP_BIN_NAME || 'mediasoup-worker'
+      CAESAR_MEDIASOUP_BIN_NAME || 'mediasoup-worker'
     );
 const SRC_MIGRATIONS_PATH = path.join(process.cwd(), 'src', 'db', 'migrations');
 

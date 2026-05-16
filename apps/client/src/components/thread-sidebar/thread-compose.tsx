@@ -4,8 +4,8 @@ import { SoundType } from '@/features/server/types';
 import { handleBuiltInCommand } from '@/helpers/built-in-commands';
 import { throttle } from '@/helpers/throttle';
 import { getTRPCClient } from '@/lib/trpc';
-import type { TJoinedPublicUser } from '@sharkord/shared';
-import { TYPING_MS, getTrpcError } from '@sharkord/shared';
+import type { TJoinedPublicUser } from '@caesar/shared';
+import { TYPING_MS, getTrpcError } from '@caesar/shared';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 

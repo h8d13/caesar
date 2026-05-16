@@ -13,7 +13,7 @@ import {
     LoadingCard,
     Switch,
     Textarea
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { memo } from 'react';
 import { LogoManager } from './logo-manager';
 

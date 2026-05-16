@@ -13,7 +13,7 @@ import {
     STORAGE_MIN_QUOTA_PER_USER,
     STORAGE_OVERFLOW_ACTIONS_DICT,
     StorageOverflowAction
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import {
     Button,
     Card,
@@ -31,7 +31,7 @@ import {
     SelectTrigger,
     SelectValue,
     Switch
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { memo } from 'react';
 import { DiskMetrics } from './metrics';
 import {

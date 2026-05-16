@@ -1,4 +1,4 @@
-import { IconButton } from '@sharkord/ui';
+import { IconButton } from '@caesar/ui';
 import { Maximize, Minimize } from 'lucide-react';
 import { memo, type RefObject, useCallback, useEffect, useState } from 'react';
 

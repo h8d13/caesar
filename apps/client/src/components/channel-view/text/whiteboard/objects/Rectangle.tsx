@@ -1,4 +1,4 @@
-import { type RectangleLayer } from '@sharkord/shared';
+import { type RectangleLayer } from '@caesar/shared';
 import { memo } from 'react';
 import { colorToCss } from '../utils';
 

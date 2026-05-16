@@ -13,11 +13,11 @@ declare global {
 
 declare module 'bun' {
   interface Env {
-    // SHARKORD_ prefixed environment variables
-    SHARKORD_PORT?: string;
-    SHARKORD_DEBUG?: string;
-    SHARKORD_WEBRTC_PORT?: string;
-    SHARKORD_WEBRTC_ANNOUNCED_ADDRESS?: string;
+    // CAESAR_ prefixed environment variables
+    CAESAR_PORT?: string;
+    CAESAR_DEBUG?: string;
+    CAESAR_WEBRTC_PORT?: string;
+    CAESAR_WEBRTC_ANNOUNCED_ADDRESS?: string;
   }
 }
 

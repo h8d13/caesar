@@ -35,7 +35,7 @@ import {
     DEFAULT_BITRATE,
     StreamKind,
     type TVoiceUserState
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import { Device } from 'mediasoup-client';
 import type {
     RtpCapabilities,

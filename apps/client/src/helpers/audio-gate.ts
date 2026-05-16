@@ -3,9 +3,9 @@ const MICROPHONE_LEVEL_METER_MAX_DB = 0;
 const MICROPHONE_GATE_DEFAULT_THRESHOLD_DB = -48;
 const MICROPHONE_GATE_CLOSE_HOLD_MS = 100;
 const MICROPHONE_TEST_LEVEL_SAMPLE_INTERVAL_MS = 20;
-const MICROPHONE_NOISE_GATE_WORKLET_NAME = 'sharkord-noise-gate';
-const MICROPHONE_AUDIO_METER_WORKLET_NAME = 'sharkord-audio-meter';
-const RNNOISE_WORKLET_NAME = 'sharkord-rnnoise';
+const MICROPHONE_NOISE_GATE_WORKLET_NAME = 'caesar-noise-gate';
+const MICROPHONE_AUDIO_METER_WORKLET_NAME = 'caesar-audio-meter';
+const RNNOISE_WORKLET_NAME = 'caesar-rnnoise';
 
 const clampMicrophoneDecibels = (decibels: number) =>
     Math.max(

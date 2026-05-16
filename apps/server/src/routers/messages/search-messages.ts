@@ -1,4 +1,4 @@
-import { ChannelPermission, ChannelType } from '@sharkord/shared';
+import { ChannelPermission, ChannelType } from '@caesar/shared';
 import { and, desc, eq, inArray, isNull, like } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '../../db';

@@ -6,7 +6,7 @@ import {
     CardHeader,
     CardTitle,
     LoadingCard
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { memo } from 'react';
 import { UsersTable } from './users-table';
 

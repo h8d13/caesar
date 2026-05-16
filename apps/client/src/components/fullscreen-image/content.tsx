@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Button } from '@sharkord/ui';
+import { Button } from '@caesar/ui';
 import { X } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';

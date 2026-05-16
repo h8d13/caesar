@@ -16,7 +16,7 @@ import {
   type TIMessage,
   type TIRole,
   type TISettings
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import { randomUUIDv7 } from 'bun';
 import { logger } from '../logger';
 import { IS_DEVELOPMENT } from '../utils/env';
@@ -42,9 +42,9 @@ const seedDatabase = async () => {
   const originalToken = IS_DEVELOPMENT ? 'dev' : randomUUIDv7();
 
   const initialSettings: TISettings = {
-    name: 'Sharkord Server',
+    name: 'Caesar Server',
     description:
-      'This is the default Sharkord server description. Change me in the server settings!',
+      'This is the default Caesar server description. Change me in the server settings!',
     password: '',
     serverId: Bun.randomUUIDv7(),
     secretToken: await sha256(originalToken),
@@ -118,7 +118,7 @@ const seedDatabase = async () => {
   const initialMessages: TIMessage[] = [
     {
       channelId: 1,
-      content: '<p>Welcome to sharkord!</p>',
+      content: '<p>Welcome to Caesar!</p>',
       metadata: null,
       userId: 1,
       createdAt: firstStart

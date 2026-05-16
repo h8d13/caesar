@@ -9,7 +9,7 @@ import {
     CardHeader,
     CardTitle,
     LoadingCard
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { Plus } from 'lucide-react';
 import { memo } from 'react';
 import { InvitesTable } from './invites-table';

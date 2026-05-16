@@ -1,8 +1,8 @@
 import { useOwnUserId } from '@/features/server/users/hooks';
 import { getTRPCClient } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
-import { getTrpcError, type TMessageScVote } from '@sharkord/shared';
-import { Tooltip } from '@sharkord/ui';
+import { getTrpcError, type TMessageScVote } from '@caesar/shared';
+import { Tooltip } from '@caesar/ui';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';

@@ -1,4 +1,4 @@
-import { Permission } from '@sharkord/shared';
+import { Permission } from '@caesar/shared';
 import { getSounds } from '../../db/queries/sounds';
 import { protectedProcedure } from '../../utils/trpc';
 

@@ -1,6 +1,6 @@
 import type { IRootState } from '@/features/store';
 import { createSelector } from '@reduxjs/toolkit';
-import { UserStatus } from '@sharkord/shared';
+import { UserStatus } from '@caesar/shared';
 import { createCachedSelector } from 're-reselect';
 
 const STATUS_ORDER: Record<string, number> = {

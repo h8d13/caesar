@@ -1,4 +1,4 @@
-import { CanvasMode, type Color, LayerType } from '@sharkord/shared';
+import { CanvasMode, type Color, LayerType } from '@caesar/shared';
 import {
     ArrowRight,
     Circle,

@@ -5,7 +5,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { memo } from 'react';
 
 type TResolutionFpsControlProps = {

@@ -1,4 +1,4 @@
-import type { TJoinedSettings, TPublicServerSettings } from '@sharkord/shared';
+import type { TJoinedSettings, TPublicServerSettings } from '@caesar/shared';
 import { eq } from 'drizzle-orm';
 import { db } from '..';
 import { config } from '../../config';

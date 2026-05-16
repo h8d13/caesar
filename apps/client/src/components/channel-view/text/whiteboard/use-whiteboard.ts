@@ -12,7 +12,7 @@ import {
     Side,
     type WhiteboardCursor,
     type XYWH
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     constrainAngle,

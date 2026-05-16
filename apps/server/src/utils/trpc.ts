@@ -3,7 +3,7 @@ import {
   UserStatus,
   type Permission,
   type TUser
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import { initTRPC, TRPCError } from '@trpc/server';
 import type WebSocket from 'ws';
 import { config } from '../config';

@@ -3,7 +3,7 @@ import {
   DEFAULT_MESSAGES_LIMIT,
   ServerEvents,
   type TMessage
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import { and, count, desc, eq, gte, inArray, isNull, lt } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { z } from 'zod';

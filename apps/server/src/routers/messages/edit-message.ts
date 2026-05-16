@@ -1,4 +1,4 @@
-import { Permission, isEmptyMessage } from '@sharkord/shared';
+import { Permission, isEmptyMessage } from '@caesar/shared';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { config } from '../../config';

@@ -8,7 +8,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
     AutoFocus
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { memo } from 'react';
 import type { TDialogBaseProps } from '../types';
 

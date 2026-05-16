@@ -1,8 +1,8 @@
 import { EmojiPicker } from '@/components/emoji-picker';
 import { useCustomEmojis } from '@/features/server/emojis/hooks';
 import { BUILT_IN_COMMANDS } from '@/helpers/built-in-commands';
-import type { TJoinedPublicUser } from '@sharkord/shared';
-import { Button } from '@sharkord/ui';
+import type { TJoinedPublicUser } from '@caesar/shared';
+import { Button } from '@caesar/ui';
 import type { Extension } from '@tiptap/core';
 import Emoji, { gitHubEmojis } from '@tiptap/extension-emoji';
 import { EditorContent, useEditor } from '@tiptap/react';

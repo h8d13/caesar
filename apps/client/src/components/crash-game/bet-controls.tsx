@@ -1,7 +1,7 @@
 import { cashOut, placeBet } from '@/features/server/crash/actions';
 import { useCrashPhase } from '@/features/server/crash/hooks';
-import { CrashPhase } from '@sharkord/shared/games/crash';
-import { Button, Input } from '@sharkord/ui';
+import { CrashPhase } from '@caesar/shared/games/crash';
+import { Button, Input } from '@caesar/ui';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 

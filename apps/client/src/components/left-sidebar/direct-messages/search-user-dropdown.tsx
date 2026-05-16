@@ -7,7 +7,7 @@ import {
     DropdownMenuTrigger,
     IconButton,
     Input
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { Plus } from 'lucide-react';
 import { memo, useMemo } from 'react';
 

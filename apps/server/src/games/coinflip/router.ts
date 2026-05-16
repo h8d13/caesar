@@ -2,7 +2,7 @@ import {
   CoinflipSide,
   type TCoinflipResult,
   type TCoinflipStateUpdate
-} from '@sharkord/shared/games/coinflip';
+} from '@caesar/shared/games/coinflip';
 import { TRPCError } from '@trpc/server';
 import { observable } from '@trpc/server/observable';
 import { z } from 'zod';

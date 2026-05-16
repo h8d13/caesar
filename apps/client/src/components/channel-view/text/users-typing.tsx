@@ -1,5 +1,5 @@
 import { TypingDots } from '@/components/typing-dots';
-import type { TJoinedPublicUser } from '@sharkord/shared';
+import type { TJoinedPublicUser } from '@caesar/shared';
 import { memo } from 'react';
 
 type TUsersTypingIndicatorProps = {

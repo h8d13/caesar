@@ -4,8 +4,8 @@ import {
 } from '@/features/server/coinflip/actions';
 import { useCoinflipChallenges } from '@/features/server/coinflip/hooks';
 import { useOwnUserId } from '@/features/server/users/hooks';
-import { CoinflipStatus } from '@sharkord/shared/games/coinflip';
-import { Button } from '@sharkord/ui';
+import { CoinflipStatus } from '@caesar/shared/games/coinflip';
+import { Button } from '@caesar/ui';
 import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';
 

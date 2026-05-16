@@ -17,7 +17,7 @@ import type {
     TServerInfo,
     TVoiceMap,
     TVoiceUserState
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import type {
     TDisconnectInfo,
     TMessagesMap,

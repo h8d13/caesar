@@ -1,7 +1,7 @@
 import { useMediaControl } from '@/components/media-provider/media-control-context';
 import { cn } from '@/lib/utils';
-import type { TExternalStream } from '@sharkord/shared';
-import { Avatar, AvatarFallback, AvatarImage, IconButton } from '@sharkord/ui';
+import type { TExternalStream } from '@caesar/shared';
+import { Avatar, AvatarFallback, AvatarImage, IconButton } from '@caesar/ui';
 import { Headphones, Router, Video, ZoomIn, ZoomOut } from 'lucide-react';
 import { memo, useCallback, type RefObject } from 'react';
 import { CardControls } from './card-controls';

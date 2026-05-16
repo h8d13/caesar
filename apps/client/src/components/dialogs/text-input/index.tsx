@@ -9,7 +9,7 @@ import {
     AlertDialogTitle,
     AutoFocus,
     Input
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { memo, useCallback, useState } from 'react';
 import type { TDialogBaseProps } from '../types';
 

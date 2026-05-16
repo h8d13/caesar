@@ -8,7 +8,7 @@ import {
   type TTransportParams,
   type TVoiceMap,
   type TVoiceUserState
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import type {
   AppData,
   Consumer,

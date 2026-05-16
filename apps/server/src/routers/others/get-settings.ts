@@ -1,4 +1,4 @@
-import { Permission } from '@sharkord/shared';
+import { Permission } from '@caesar/shared';
 import { getSettings } from '../../db/queries/server';
 import { protectedProcedure } from '../../utils/trpc';
 

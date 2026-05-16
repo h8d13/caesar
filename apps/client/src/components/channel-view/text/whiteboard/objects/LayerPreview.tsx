@@ -1,4 +1,4 @@
-import { type Layer, LayerType } from '@sharkord/shared';
+import { type Layer, LayerType } from '@caesar/shared';
 import { memo } from 'react';
 import { Arrow } from './Arrow';
 import { Ellipse } from './Ellipse';

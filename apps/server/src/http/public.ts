@@ -82,7 +82,7 @@ const publicRouteHandler = async (
       (req.headers['x-token'] as string | undefined) ||
       req.headers.cookie
         ?.split('; ')
-        .find((c) => c.startsWith('sharkord-token='))
+        .find((c) => c.startsWith('caesar-token='))
         ?.split('=')
         .slice(1)
         .join('=');

@@ -1,4 +1,4 @@
-import { type ArrowLayer } from '@sharkord/shared';
+import { type ArrowLayer } from '@caesar/shared';
 import { memo } from 'react';
 import { colorToCss } from '../utils';
 

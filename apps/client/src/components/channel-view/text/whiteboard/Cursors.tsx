@@ -1,4 +1,4 @@
-import { type WhiteboardCursor } from '@sharkord/shared';
+import { type WhiteboardCursor } from '@caesar/shared';
 import { memo } from 'react';
 
 type CursorsProps = {

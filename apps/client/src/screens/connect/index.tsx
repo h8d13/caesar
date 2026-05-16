@@ -12,7 +12,7 @@ import {
     setSessionStorageItem
 } from '@/helpers/storage';
 import { useForm } from '@/hooks/use-form';
-import { TestId } from '@sharkord/shared';
+import { TestId } from '@caesar/shared';
 import {
     Alert,
     AlertDescription,
@@ -25,7 +25,7 @@ import {
     Group,
     Input,
     Switch
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { ShieldCheck } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';

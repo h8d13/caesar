@@ -1,4 +1,4 @@
-import type { TTrpcErrors } from '@sharkord/shared';
+import type { TTrpcErrors } from '@caesar/shared';
 import * as React from 'react';
 import { cn } from '../lib/utils';
 

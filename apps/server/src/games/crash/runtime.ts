@@ -4,7 +4,7 @@ import {
   type TCrashRoundHistory,
   type TCrashRoundResult,
   type TCrashStateUpdate
-} from '@sharkord/shared/games/crash';
+} from '@caesar/shared/games/crash';
 import { desc, eq } from 'drizzle-orm';
 import { db } from '../../db';
 import { crashBets, crashRounds } from '../../db/schema';

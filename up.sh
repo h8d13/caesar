@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # GET INITIAL OWNER TOKEN
-# docker logs -f sharkord
+# docker logs -f caesar
 
 # MAGIC RESETS VOLUMES LINE (drop volumes) DESTRUCTIVE
 # docker compose down -v && rm -rf data && docker system prune -a --volumes

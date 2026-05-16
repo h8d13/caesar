@@ -2,8 +2,8 @@ import {
     Permission as EPermission,
     permissionDescriptions,
     permissionLabels
-} from '@sharkord/shared';
-import { Switch } from '@sharkord/ui';
+} from '@caesar/shared';
+import { Switch } from '@caesar/ui';
 import { memo, useCallback } from 'react';
 
 const availablePermissions = Object.values(EPermission);

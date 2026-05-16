@@ -1,5 +1,5 @@
 import { Protect } from '@/components/protect';
-import { Permission } from '@sharkord/shared';
+import { Permission } from '@caesar/shared';
 import {
     Card,
     CardContent,
@@ -7,7 +7,7 @@ import {
     CardTitle,
     IconButton,
     Tooltip
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { format, formatDistanceToNow } from 'date-fns';
 import {
     Calendar,

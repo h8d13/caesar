@@ -1,5 +1,5 @@
-import type { TExternalStreamTracks } from '@sharkord/shared';
-import { Tooltip } from '@sharkord/ui';
+import type { TExternalStreamTracks } from '@caesar/shared';
+import { Tooltip } from '@caesar/ui';
 import { Headphones, Router, Video } from 'lucide-react';
 import { memo } from 'react';
 

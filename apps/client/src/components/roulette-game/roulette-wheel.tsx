@@ -4,7 +4,7 @@ import {
     useRouletteWinningNumber
 } from '@/features/server/roulette/hooks';
 import { cn } from '@/lib/utils';
-import { RoulettePhase } from '@sharkord/shared/games/roulette';
+import { RoulettePhase } from '@caesar/shared/games/roulette';
 import { Zap } from 'lucide-react';
 import { memo, useEffect, useRef, useState } from 'react';
 import { getNumberColor, WHEEL_ORDER } from './constants';

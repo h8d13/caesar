@@ -1,4 +1,4 @@
-import { linkifyHtml } from '@sharkord/shared';
+import { linkifyHtml } from '@caesar/shared';
 import { marked } from 'marked';
 
 marked.setOptions({

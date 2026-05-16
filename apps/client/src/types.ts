@@ -1,4 +1,4 @@
-import type { StreamKind } from '@sharkord/shared';
+import type { StreamKind } from '@caesar/shared';
 
 export type TDevices = {
     input: {

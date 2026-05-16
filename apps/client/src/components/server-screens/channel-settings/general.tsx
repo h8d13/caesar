@@ -12,7 +12,7 @@ import {
     Input,
     Switch,
     Textarea
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { memo } from 'react';
 
 type TGeneralProps = {

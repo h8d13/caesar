@@ -10,7 +10,7 @@ import {
     CardTitle,
     Group,
     Input
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { memo } from 'react';
 
 type TGeneralProps = {

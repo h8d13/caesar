@@ -17,7 +17,7 @@ import { getLocalStorageItemBool, LocalStorageKey } from '@/helpers/storage';
 import { useBirthdayToasts } from '@/hooks/use-birthday-toasts';
 import { useSwipeGestures } from '@/hooks/use-swipe-gestures';
 import { cn } from '@/lib/utils';
-import { Permission } from '@sharkord/shared';
+import { Permission } from '@caesar/shared';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { ContentWrapper } from './content-wrapper';
 import { PreventBrowser } from './prevent-browser';

@@ -9,7 +9,7 @@ import {
     removeSessionStorageItem,
     SessionStorageKey
 } from '@/helpers/storage';
-import { type AppRouter, type TConnectionParams } from '@sharkord/shared';
+import { type AppRouter, type TConnectionParams } from '@caesar/shared';
 import { createTRPCProxyClient, createWSClient, wsLink } from '@trpc/client';
 
 let wsClient: ReturnType<typeof createWSClient> | null = null;

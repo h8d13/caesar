@@ -16,13 +16,13 @@ FROM debian:bookworm-slim
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates && \
     rm -rf /var/lib/apt/lists/* && \
-    useradd -m -s /sbin/nologin sharkord
+    useradd -m -s /sbin/nologin caesar
 
-COPY --from=builder --chown=sharkord:sharkord --chmod=755 /app/apps/server/build/out/sharkord-* /usr/local/bin/sharkord
+COPY --from=builder --chown=caesar:caesar --chmod=755 /app/apps/server/build/out/caesar-* /usr/local/bin/caesar
 
-USER sharkord
-WORKDIR /home/sharkord
+USER caesar
+WORKDIR /home/caesar
 
 EXPOSE 4991 40000
 
-CMD ["sharkord"]
+CMD ["caesar"]

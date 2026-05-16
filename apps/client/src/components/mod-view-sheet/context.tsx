@@ -1,4 +1,4 @@
-import type { TFile, TJoinedUser, TLogin, TMessage } from '@sharkord/shared';
+import type { TFile, TJoinedUser, TLogin, TMessage } from '@caesar/shared';
 import { createContext, useContext } from 'react';
 
 enum ModViewScreen {

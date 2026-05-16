@@ -1,4 +1,4 @@
-import { ChannelPermission, Permission, ServerEvents } from '@sharkord/shared';
+import { ChannelPermission, Permission, ServerEvents } from '@caesar/shared';
 import { z } from 'zod';
 import { VoiceRuntime } from '../../runtimes/voice';
 import { invariant } from '../../utils/invariant';

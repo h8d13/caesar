@@ -159,11 +159,11 @@ if (!configExists) {
 }
 
 config = applyEnvOverrides(config, {
-  'server.port': 'SHARKORD_PORT',
-  'server.debug': 'SHARKORD_DEBUG',
-  'webRtc.port': 'SHARKORD_WEBRTC_PORT',
-  'webRtc.announcedAddress': 'SHARKORD_WEBRTC_ANNOUNCED_ADDRESS',
-  'webRtc.maxBitrate': 'SHARKORD_WEBRTC_MAX_BITRATE'
+  'server.port': 'CAESAR_PORT',
+  'server.debug': 'CAESAR_DEBUG',
+  'webRtc.port': 'CAESAR_WEBRTC_PORT',
+  'webRtc.announcedAddress': 'CAESAR_WEBRTC_ANNOUNCED_ADDRESS',
+  'webRtc.maxBitrate': 'CAESAR_WEBRTC_MAX_BITRATE'
 });
 
 config = Object.freeze(config);

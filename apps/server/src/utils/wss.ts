@@ -6,7 +6,7 @@ import {
   ServerEvents,
   UserStatus,
   type TConnectionParams
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import { TRPCError } from '@trpc/server';
 import {
   applyWSSHandler,

@@ -3,7 +3,7 @@ import {
     audioExtensions,
     imageExtensions,
     videoExtensions
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import hljs from 'highlight.js/lib/common';
 import { Element, type DOMNode } from 'html-react-parser';
 import { LinkOverride } from '../overrides/link';

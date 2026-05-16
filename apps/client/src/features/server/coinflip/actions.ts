@@ -1,5 +1,5 @@
 import { getTRPCClient } from '@/lib/trpc';
-import type { CoinflipSide } from '@sharkord/shared/games/coinflip';
+import type { CoinflipSide } from '@caesar/shared/games/coinflip';
 import { store } from '../../store';
 import { coinflipSliceActions } from './slice';
 

@@ -4,8 +4,8 @@ import { requestConfirmation } from '@/features/dialogs/actions';
 import { getUrlFromServer } from '@/helpers/get-file-url';
 import { getTRPCClient } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
-import type { TJoinedInvite } from '@sharkord/shared';
-import { getTrpcError } from '@sharkord/shared';
+import type { TJoinedInvite } from '@caesar/shared';
+import { getTrpcError } from '@caesar/shared';
 import {
     Badge,
     Button,
@@ -13,7 +13,7 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { format, formatDistanceToNow } from 'date-fns';
 import { Copy, MoreVertical, Trash2 } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';

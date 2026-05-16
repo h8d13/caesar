@@ -1,4 +1,4 @@
-import { Toaster } from '@sharkord/ui';
+import { Toaster } from '@caesar/ui';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import 'prosemirror-view/style/prosemirror.css';
 import { StrictMode } from 'react';

@@ -1,4 +1,4 @@
-import { type Color } from '@sharkord/shared';
+import { type Color } from '@caesar/shared';
 import { memo } from 'react';
 import { colorToCss, colors } from './utils';
 

@@ -1,7 +1,7 @@
 import { useChannelById } from '@/features/server/channels/hooks';
 import { useCan, usePublicServerSettings } from '@/features/server/hooks';
 import { uploadFiles } from '@/helpers/upload-file';
-import { Permission, type TTempFile } from '@sharkord/shared';
+import { Permission, type TTempFile } from '@caesar/shared';
 import {
     useCallback,
     useEffect,

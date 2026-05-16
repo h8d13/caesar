@@ -1,4 +1,4 @@
-import { Permission, StreamKind } from '@sharkord/shared';
+import { Permission, StreamKind } from '@caesar/shared';
 import { z } from 'zod';
 import { VoiceRuntime } from '../../runtimes/voice';
 import { invariant } from '../../utils/invariant';

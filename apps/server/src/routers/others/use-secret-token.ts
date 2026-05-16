@@ -1,4 +1,4 @@
-import { OWNER_ROLE_ID, sha256 } from '@sharkord/shared';
+import { OWNER_ROLE_ID, sha256 } from '@caesar/shared';
 import { z } from 'zod';
 import { db } from '../../db';
 import { publishUser } from '../../db/publishers';

@@ -1,4 +1,4 @@
-import { type LineLayer } from '@sharkord/shared';
+import { type LineLayer } from '@caesar/shared';
 import { memo } from 'react';
 import { colorToCss } from '../utils';
 

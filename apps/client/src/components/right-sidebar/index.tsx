@@ -11,7 +11,7 @@ import { getSocialCreditColor } from '@/helpers/get-social-credit-color';
 import { LocalStorageKey } from '@/helpers/storage';
 import { getTRPCClient } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
-import { ChannelType, DELETED_USER_IDENTITY_AND_NAME } from '@sharkord/shared';
+import { ChannelType, DELETED_USER_IDENTITY_AND_NAME } from '@caesar/shared';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { UserPopover } from '../user-popover';
 

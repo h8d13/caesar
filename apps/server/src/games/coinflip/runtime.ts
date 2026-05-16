@@ -4,7 +4,7 @@ import {
   type TCoinflipChallenge,
   type TCoinflipResult,
   type TCoinflipStateUpdate
-} from '@sharkord/shared/games/coinflip';
+} from '@caesar/shared/games/coinflip';
 import { randomInt } from 'crypto';
 import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '../../db';

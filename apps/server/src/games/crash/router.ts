@@ -1,7 +1,7 @@
 import type {
   TCrashRoundResult,
   TCrashStateUpdate
-} from '@sharkord/shared/games/crash';
+} from '@caesar/shared/games/crash';
 import { TRPCError } from '@trpc/server';
 import { observable } from '@trpc/server/observable';
 import { z } from 'zod';

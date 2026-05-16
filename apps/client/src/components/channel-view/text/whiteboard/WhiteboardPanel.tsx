@@ -1,4 +1,4 @@
-import { CanvasMode } from '@sharkord/shared';
+import { CanvasMode } from '@caesar/shared';
 import {
     ArrowDown,
     ArrowDownToLine,

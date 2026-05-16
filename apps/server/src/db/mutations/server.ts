@@ -1,4 +1,4 @@
-import type { TSettings } from '@sharkord/shared';
+import type { TSettings } from '@caesar/shared';
 import { isNotNull } from 'drizzle-orm';
 import { db } from '..';
 import { settings } from '../schema';

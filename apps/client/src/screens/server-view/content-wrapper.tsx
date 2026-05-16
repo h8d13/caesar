@@ -6,7 +6,7 @@ import {
 } from '@/features/server/channels/hooks';
 import { useServerName } from '@/features/server/hooks';
 import { getTRPCClient } from '@/lib/trpc';
-import { ChannelType } from '@sharkord/shared';
+import { ChannelType } from '@caesar/shared';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
 

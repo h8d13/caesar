@@ -3,7 +3,7 @@ import {
     useCurrentVoiceChannelId,
     useIsCurrentVoiceChannelSelected
 } from '@/features/server/channels/hooks';
-import { Button, Tooltip } from '@sharkord/ui';
+import { Button, Tooltip } from '@caesar/ui';
 import {
     PanelLeft,
     PanelLeftClose,

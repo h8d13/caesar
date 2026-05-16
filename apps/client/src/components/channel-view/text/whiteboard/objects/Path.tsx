@@ -1,4 +1,4 @@
-import { type PathLayer } from '@sharkord/shared';
+import { type PathLayer } from '@caesar/shared';
 import getStroke from 'perfect-freehand';
 import { memo } from 'react';
 import { colorToCss, getSvgPathFromStroke } from '../utils';

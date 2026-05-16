@@ -1,6 +1,6 @@
 import { MessageRenderer } from '@/components/channel-view/text/renderer';
 import { PaginatedList } from '@/components/paginated-list';
-import type { TMessage } from '@sharkord/shared';
+import type { TMessage } from '@caesar/shared';
 import { format } from 'date-fns';
 import { memo, useCallback } from 'react';
 import { useModViewContext } from '../context';

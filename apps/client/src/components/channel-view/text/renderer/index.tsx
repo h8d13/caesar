@@ -12,8 +12,8 @@ import {
     videoExtensions,
     type TJoinedMessage,
     type TMessageMetadata
-} from '@sharkord/shared';
-import { Tooltip } from '@sharkord/ui';
+} from '@caesar/shared';
+import { Tooltip } from '@caesar/ui';
 import parse from 'html-react-parser';
 import { memo, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';

@@ -1,6 +1,6 @@
 import { useTypingUsersByThreadId } from '@/features/server/hooks';
 import { useThreadMessages } from '@/features/server/messages/hooks';
-import { Spinner } from '@sharkord/ui';
+import { Spinner } from '@caesar/ui';
 import { MessageSquareText } from 'lucide-react';
 import { memo } from 'react';
 import { MessagesGroup } from '../channel-view/text/messages-group';

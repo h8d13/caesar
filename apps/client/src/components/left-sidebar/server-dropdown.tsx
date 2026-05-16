@@ -1,7 +1,7 @@
 import { openDialog } from '@/features/dialogs/actions';
 import { openServerScreen } from '@/features/server-screens/actions';
 import { disconnectFromServer } from '@/features/server/actions';
-import { Permission } from '@sharkord/shared';
+import { Permission } from '@caesar/shared';
 import {
     Button,
     DropdownMenu,
@@ -10,7 +10,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { Menu } from 'lucide-react';
 import { memo, useMemo } from 'react';
 import { Dialog } from '../dialogs/dialogs';

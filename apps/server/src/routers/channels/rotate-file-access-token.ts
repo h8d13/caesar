@@ -1,4 +1,4 @@
-import { ActivityLogType, Permission } from '@sharkord/shared';
+import { ActivityLogType, Permission } from '@caesar/shared';
 import { randomUUIDv7 } from 'bun';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';

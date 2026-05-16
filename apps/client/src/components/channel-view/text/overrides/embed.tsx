@@ -1,4 +1,4 @@
-import type { TMessageMetadata } from '@sharkord/shared';
+import type { TMessageMetadata } from '@caesar/shared';
 import { ChevronDown } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import LiteYouTubeEmbed from 'react-lite-youtube-embed';

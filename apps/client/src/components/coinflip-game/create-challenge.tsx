@@ -1,7 +1,7 @@
 import { createCoinflipChallenge } from '@/features/server/coinflip/actions';
 import { cn } from '@/lib/utils';
-import { CoinflipSide } from '@sharkord/shared/games/coinflip';
-import { Button, Input } from '@sharkord/ui';
+import { CoinflipSide } from '@caesar/shared/games/coinflip';
+import { Button, Input } from '@caesar/ui';
 import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';
 

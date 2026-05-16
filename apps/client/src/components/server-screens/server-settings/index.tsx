@@ -1,6 +1,6 @@
 import { useCan } from '@/features/server/hooks';
-import { Permission } from '@sharkord/shared';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@sharkord/ui';
+import { Permission } from '@caesar/shared';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@caesar/ui';
 import { memo, useMemo } from 'react';
 import type { TServerScreenBaseProps } from '../screens';
 import { ServerScreenLayout } from '../server-screen-layout';

@@ -3,7 +3,7 @@ import { useSelectedChannelId } from '@/features/server/channels/hooks';
 import { useUserById } from '@/features/server/users/hooks';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
 import { getTRPCClient } from '@/lib/trpc';
-import { getTrpcError, type TJoinedMessage } from '@sharkord/shared';
+import { getTrpcError, type TJoinedMessage } from '@caesar/shared';
 import {
     IconButton,
     Popover,
@@ -11,7 +11,7 @@ import {
     PopoverTrigger,
     Spinner,
     Tooltip
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { format } from 'date-fns';
 import { ArrowRight, Pin } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';

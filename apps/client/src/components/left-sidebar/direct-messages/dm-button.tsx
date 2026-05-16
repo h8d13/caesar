@@ -1,7 +1,7 @@
 import { setDmsOpen } from '@/features/app/actions';
 import { useDmsOpen } from '@/features/app/hooks';
 import { useDirectMessagesUnreadCount } from '@/features/server/channels/hooks';
-import { cn, Tooltip } from '@sharkord/ui';
+import { cn, Tooltip } from '@caesar/ui';
 import { MessageCircleMore, X } from 'lucide-react';
 import { memo, useCallback } from 'react';
 

@@ -4,7 +4,7 @@ import {
     type TCrashActiveBet,
     type TCrashRoundHistory,
     type TCrashStateUpdate
-} from '@sharkord/shared/games/crash';
+} from '@caesar/shared/games/crash';
 
 export type TCrashTopWin = {
     userName: string;

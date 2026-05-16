@@ -1,4 +1,4 @@
-import { type NoteLayer } from '@sharkord/shared';
+import { type NoteLayer } from '@caesar/shared';
 import { memo, useCallback, useRef } from 'react';
 import {
     calculateFontSize,

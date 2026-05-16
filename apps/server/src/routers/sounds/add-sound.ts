@@ -1,4 +1,4 @@
-import { ActivityLogType, Permission } from '@sharkord/shared';
+import { ActivityLogType, Permission } from '@caesar/shared';
 import { z } from 'zod';
 import { db } from '../../db';
 import { publishSound } from '../../db/publishers';

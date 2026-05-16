@@ -1,5 +1,5 @@
 import { getTRPCClient } from '@/lib/trpc';
-import { getTrpcError } from '@sharkord/shared';
+import { getTrpcError } from '@caesar/shared';
 import {
     Button,
     Card,
@@ -8,7 +8,7 @@ import {
     CardHeader,
     CardTitle,
     Group
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { memo, useCallback } from 'react';
 import { toast } from 'sonner';
 

@@ -119,10 +119,10 @@ const compile = async ({ out, target }: TTarget) => {
       target
     },
     define: {
-      'process.env.SHARKORD_ENV': '"production"',
-      'process.env.SHARKORD_BUILD_VERSION': `"${version}"`,
-      'process.env.SHARKORD_BUILD_DATE': `"${new Date().toISOString()}"`,
-      'process.env.SHARKORD_MEDIASOUP_BIN_NAME': `"${mediasoupBinary}"`,
+      'process.env.CAESAR_ENV': '"production"',
+      'process.env.CAESAR_BUILD_VERSION': `"${version}"`,
+      'process.env.CAESAR_BUILD_DATE': `"${new Date().toISOString()}"`,
+      'process.env.CAESAR_MEDIASOUP_BIN_NAME': `"${mediasoupBinary}"`,
       'process.env.CURRENT_VERSION': `"${version}"`
     }
   });

@@ -1,4 +1,4 @@
-import { extractUrls, type TMessageMetadata } from '@sharkord/shared';
+import { extractUrls, type TMessageMetadata } from '@caesar/shared';
 import dns from 'dns';
 import { eq } from 'drizzle-orm';
 import ipaddr from 'ipaddr.js';

@@ -15,7 +15,7 @@ import {
     Permission,
     UserStatus,
     getTrpcError
-} from '@sharkord/shared';
+} from '@caesar/shared';
 import {
     Button,
     IconButton,
@@ -23,7 +23,7 @@ import {
     Popover,
     PopoverContent,
     PopoverTrigger
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { format } from 'date-fns';
 import {
     ChevronDown,

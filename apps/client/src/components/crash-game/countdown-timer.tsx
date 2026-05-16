@@ -3,7 +3,7 @@ import {
     useCrashPhaseDuration,
     useCrashPhaseStartedAt
 } from '@/features/server/crash/hooks';
-import { CrashPhase } from '@sharkord/shared/games/crash';
+import { CrashPhase } from '@caesar/shared/games/crash';
 import { memo, useEffect, useState } from 'react';
 
 const CountdownTimer = memo(() => {

@@ -1,4 +1,4 @@
-import { type Layer, LayerType, Side } from '@sharkord/shared';
+import { type Layer, LayerType, Side } from '@caesar/shared';
 import { memo } from 'react';
 
 type SelectionBoxProps = {

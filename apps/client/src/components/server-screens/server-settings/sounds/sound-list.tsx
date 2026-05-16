@@ -1,4 +1,4 @@
-import type { TJoinedSound } from '@sharkord/shared';
+import type { TJoinedSound } from '@caesar/shared';
 import {
     Button,
     Card,
@@ -7,7 +7,7 @@ import {
     CardTitle,
     Input,
     Spinner
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { Plus, Search, Volume2 } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
 

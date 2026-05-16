@@ -14,8 +14,8 @@ import { cn } from '@/lib/utils';
 import {
     DELETED_USER_IDENTITY_AND_NAME,
     type TDirectMessageConversation
-} from '@sharkord/shared';
-import { Spinner } from '@sharkord/ui';
+} from '@caesar/shared';
+import { Spinner } from '@caesar/ui';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { SearchUserDropdown } from './search-user-dropdown';

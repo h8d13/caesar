@@ -13,7 +13,7 @@ import {
     PopoverTrigger,
     Switch,
     Tooltip
-} from '@sharkord/ui';
+} from '@caesar/ui';
 import { Settings } from 'lucide-react';
 import { memo, useCallback } from 'react';
 
