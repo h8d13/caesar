@@ -67,16 +67,16 @@ const sanitizeFileName = (name: string): string | null => {
 
 const buildCsp = (nonce?: string): string => {
   const scriptSrc = nonce
-    ? `'self' blob: data: 'unsafe-eval' 'nonce-${nonce}'`
-    : "'self' blob: data: 'unsafe-eval'";
-  const styleSrc = "'self' 'unsafe-inline' https://cdnjs.cloudflare.com";
+    ? `'self' blob: data: 'wasm-unsafe-eval' 'nonce-${nonce}'`
+    : "'self' blob: data: 'wasm-unsafe-eval'";
+  const styleSrc = "'self' 'unsafe-inline'";
 
   return [
     "default-src 'self'",
     `script-src ${scriptSrc}`,
     `style-src ${styleSrc}`,
     "img-src 'self' data: blob: https:",
-    "connect-src 'self' wss: ws: https://cors.isomorphic-git.org",
+    "connect-src 'self' wss: ws:",
     "media-src 'self' blob:",
     "font-src 'self'",
     'frame-src https://www.youtube-nocookie.com',

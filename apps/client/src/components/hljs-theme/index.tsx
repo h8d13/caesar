@@ -1,7 +1,9 @@
-const LIGHT_THEME =
-    'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css';
-const DARK_THEME =
-    'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — Vite resolves ?url imports from node_modules
+import lightThemeUrl from 'highlight.js/styles/github.min.css?url';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — Vite resolves ?url imports from node_modules
+import darkThemeUrl from 'highlight.js/styles/github-dark.min.css?url';
 
 const LINK_ID = 'hljs-theme';
 
@@ -9,7 +11,7 @@ let observing = false;
 
 const getThemeUrl = () => {
     const isDark = document.documentElement.classList.contains('dark');
-    return isDark ? DARK_THEME : LIGHT_THEME;
+    return isDark ? darkThemeUrl : lightThemeUrl;
 };
 
 const ensureHljsTheme = () => {
