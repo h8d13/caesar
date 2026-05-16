@@ -48,7 +48,6 @@ const seedDatabase = async () => {
     password: '',
     serverId: Bun.randomUUIDv7(),
     secretToken: await sha256(originalToken),
-    allowNewUsers: true,
     directMessagesEnabled: true,
     storageUploadEnabled: true,
     storageQuota: STORAGE_QUOTA,

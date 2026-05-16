@@ -15,7 +15,6 @@ const updateSettingsRoute = protectedProcedure
       name: z.string().min(2).max(24).optional(),
       description: z.string().max(128).optional(),
       password: z.string().min(1).max(32).optional().nullable().default(null),
-      allowNewUsers: z.boolean().optional(),
       directMessagesEnabled: z.boolean().optional(),
       storageUploadEnabled: z.boolean().optional(),
       storageFileSharingInDirectMessages: z.boolean().optional(),
@@ -35,7 +34,6 @@ const updateSettingsRoute = protectedProcedure
       name: input.name,
       description: input.description,
       password: input.password,
-      allowNewUsers: input.allowNewUsers,
       directMessagesEnabled: input.directMessagesEnabled,
       storageUploadEnabled: input.storageUploadEnabled,
       storageFileSharingInDirectMessages:

@@ -77,18 +77,6 @@ const General = memo(() => {
                 <LogoManager logo={logo} refetch={refetch} />
 
                 <Group
-                    label="Allow New Users"
-                    description="Allow anyone to register and join your server. If disabled, only users you invite can join."
-                >
-                    <Switch
-                        checked={settings.allowNewUsers}
-                        onCheckedChange={(checked) =>
-                            onChange('allowNewUsers', checked)
-                        }
-                    />
-                </Group>
-
-                <Group
                     label="Enable Direct Messages"
                     description="Allow users to send direct messages to each other. If disabled, users can only communicate in channels."
                 >

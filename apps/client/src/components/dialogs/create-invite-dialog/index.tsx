@@ -2,7 +2,6 @@ import { DatePicker } from '@/components/date-picker';
 import { useRoles } from '@/features/server/roles/hooks';
 import { useForm } from '@/hooks/use-form';
 import { getTRPCClient } from '@/lib/trpc';
-import { getRandomString } from '@sharkord/shared';
 import {
     Button,
     Dialog,
@@ -33,7 +32,6 @@ const CreateInviteDialog = memo(
         const { r, rrn, values, setTrpcErrors, onChange } = useForm({
             maxUses: 0,
             expiresAt: 0,
-            code: getRandomString(24),
             roleId: 0
         });
 
@@ -71,9 +69,6 @@ const CreateInviteDialog = memo(
                     </DialogHeader>
 
                     <div className="space-y-4">
-                        <Group label="Code">
-                            <Input placeholder="Invite code" {...r('code')} />
-                        </Group>
                         <Group
                             label="Max uses"
                             description="Use 0 for unlimited uses."

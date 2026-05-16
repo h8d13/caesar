@@ -40,7 +40,6 @@ export const useAdminGeneral = () => {
         name: '',
         description: '',
         password: '',
-        allowNewUsers: false,
         directMessagesEnabled: true
     });
     const [logo, setLogo] = useState<TFile | null>(null);
@@ -55,7 +54,6 @@ export const useAdminGeneral = () => {
             name: settings.name,
             description: settings.description ?? '',
             password: settings.password ?? '',
-            allowNewUsers: settings.allowNewUsers ?? false,
             directMessagesEnabled: settings.directMessagesEnabled ?? true
         });
         setLoading(false);
@@ -70,7 +68,6 @@ export const useAdminGeneral = () => {
                 name: settings.name,
                 description: settings.description,
                 password: settings.password || undefined,
-                allowNewUsers: settings.allowNewUsers,
                 directMessagesEnabled: settings.directMessagesEnabled
             });
             toast.success('Settings updated');

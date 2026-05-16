@@ -48,11 +48,7 @@ const Connect = memo(() => {
     });
 
     const [loading, setLoading] = useState(false);
-    const [isNewAccount, setIsNewAccount] = useState(false);
     const info = useInfo();
-
-    const passwordMismatch =
-        isNewAccount && values.confirmPassword !== values.password;
 
     const inviteCode = useMemo(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -60,8 +56,14 @@ const Connect = memo(() => {
         return invite || undefined;
     }, []);
 
+    // Invite-only server: signup happens iff an invite code is in the URL.
+    // Otherwise this is a login form for existing users.
+    const isSignup = !!inviteCode;
+    const passwordMismatch =
+        isSignup && values.confirmPassword !== values.password;
+
     const onConnectClick = useCallback(async () => {
-        if (isNewAccount && values.password !== values.confirmPassword) {
+        if (isSignup && values.password !== values.confirmPassword) {
             setErrors({
                 confirmPassword: 'Passwords do not match'
             });
@@ -123,7 +125,7 @@ const Connect = memo(() => {
         values.password,
         values.confirmPassword,
         values.autoLogin,
-        isNewAccount,
+        isSignup,
         setErrors,
         inviteCode
     ]);
@@ -186,7 +188,7 @@ const Connect = memo(() => {
                                 {...r('password')}
                                 type="password"
                                 autoComplete={
-                                    isNewAccount
+                                    isSignup
                                         ? 'new-password'
                                         : 'current-password'
                                 }
@@ -194,7 +196,7 @@ const Connect = memo(() => {
                                 data-testid={TestId.CONNECT_PASSWORD_INPUT}
                             />
                         </Group>
-                        {isNewAccount && (
+                        {isSignup && (
                             <Group
                                 label="Confirm password"
                                 help="Type your password again so you don't lock yourself out."
@@ -208,23 +210,6 @@ const Connect = memo(() => {
                             </Group>
                         )}
                     </form>
-
-                    <div
-                        className="flex items-center gap-2 w-fit cursor-pointer"
-                        onClick={() => {
-                            const next = !isNewAccount;
-                            setIsNewAccount(next);
-                            if (!next) {
-                                onChange('confirmPassword', '');
-                                setErrors({});
-                            }
-                        }}
-                    >
-                        <Switch checked={isNewAccount} />
-                        <span className="text-sm font-medium cursor-pointer">
-                            Create a new account
-                        </span>
-                    </div>
 
                     <div
                         className="flex items-center gap-2 w-fit cursor-pointer"
@@ -275,23 +260,17 @@ const Connect = memo(() => {
                             }
                             data-testid={TestId.CONNECT_BUTTON}
                         >
-                            {isNewAccount ? 'Create account' : 'Connect'}
+                            {isSignup ? 'Create account' : 'Connect'}
                         </Button>
 
-                        {!info?.allowNewUsers && (
-                            <>
-                                {!inviteCode && (
-                                    <span className="text-xs text-muted-foreground text-center">
-                                        New user registrations are currently
-                                        disabled. If you do not have an account
-                                        yet, you need to be invited by an
-                                        existing user to join this server.
-                                    </span>
-                                )}
-                            </>
+                        {!isSignup && (
+                            <span className="text-xs text-muted-foreground text-center">
+                                Sign in with an existing account, or open an
+                                invite link to create one.
+                            </span>
                         )}
 
-                        {inviteCode && (
+                        {isSignup && (
                             <Alert variant="info">
                                 <AlertTitle>
                                     You were invited to join this server

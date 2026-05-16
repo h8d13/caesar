@@ -14,8 +14,7 @@ const infoRouteHandler = async (
     version: SERVER_VERSION,
     name: settings.name,
     description: settings.description,
-    logo: settings.logo,
-    allowNewUsers: settings.allowNewUsers
+    logo: settings.logo
   };
 
   res.writeHead(200, { 'Content-Type': 'application/json' });

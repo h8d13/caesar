@@ -94,7 +94,7 @@ export type TTempFile = {
 
 export type TServerInfo = Pick<
   TSettings,
-  'serverId' | 'name' | 'description' | 'allowNewUsers'
+  'serverId' | 'name' | 'description'
 > & {
   logo: TFile | null;
   version: string;

@@ -3,7 +3,7 @@ import {
   DELETED_USER_IDENTITY_AND_NAME,
   type TJoinedUser
 } from '@sharkord/shared';
-import { eq, isNull, max, sql } from 'drizzle-orm';
+import { count, eq, isNull, max, sql } from 'drizzle-orm';
 import http from 'http';
 import jwt from 'jsonwebtoken';
 import z from 'zod';
@@ -12,7 +12,7 @@ import { db } from '../db';
 import { publishUser } from '../db/publishers';
 import { isInviteValid } from '../db/queries/invites';
 import { getDefaultRole } from '../db/queries/roles';
-import { getServerToken, getSettings } from '../db/queries/server';
+import { getServerToken } from '../db/queries/server';
 import { getUserByIdentity } from '../db/queries/users';
 import {
   channelReadStates,
@@ -123,7 +123,6 @@ const loginRouteHandler = async (
     throw new HttpValidationError('identity', 'This identity is reserved');
   }
 
-  const settings = await getSettings();
   let existingUser = await getUserByIdentity(data.identity);
   const connectionInfo = getWsInfo(undefined, req);
 
@@ -156,25 +155,32 @@ const loginRouteHandler = async (
   if (!existingUser) {
     let inviteRoleId: number | null = null;
 
-    const result = await isInviteValid(data.invite);
+    // Bootstrap: first user when DB is empty signs up without invite (becomes admin via seeded role assignment).
+    // Otherwise: signup requires a valid invite.
+    const userCount =
+      (await db.select({ c: count() }).from(users).get())?.c ?? 0;
+    const isBootstrap = userCount === 0;
 
-    if (!settings.allowNewUsers && result.error) {
-      throw new HttpValidationError('identity', result.error);
+    if (!isBootstrap) {
+      const result = await isInviteValid(data.invite);
+
+      if (result.error) {
+        throw new HttpValidationError('identity', result.error);
+      }
+
+      if (result.invite) {
+        inviteRoleId = result.invite.roleId ?? null;
+
+        await db
+          .update(invites)
+          .set({
+            uses: sql`${invites.uses} + 1`
+          })
+          .where(eq(invites.code, data.invite!))
+          .execute();
+      }
     }
 
-    if (result.invite) {
-      inviteRoleId = result.invite?.roleId ?? null;
-
-      await db
-        .update(invites)
-        .set({
-          uses: sql`${invites.uses} + 1`
-        })
-        .where(eq(invites.code, data.invite!))
-        .execute();
-    }
-
-    // user doesn't exist, but registration is open OR invite was valid - create the user automatically
     existingUser = await registerUser(
       data.identity,
       data.password,

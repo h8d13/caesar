@@ -45,7 +45,6 @@ const settings = sqliteTable(
     logoId: integer('logo_id').references(() => files.id, {
       onDelete: 'set null'
     }),
-    allowNewUsers: integer('allow_new_users', { mode: 'boolean' }).notNull(),
     directMessagesEnabled: integer('direct_messages_enabled', {
       mode: 'boolean'
     }).notNull(),

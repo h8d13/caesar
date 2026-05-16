@@ -12,7 +12,6 @@ const addInviteRoute = protectedProcedure
     z.object({
       maxUses: z.number().min(0).max(100).optional().default(0),
       expiresAt: z.number().optional().nullable().default(null),
-      code: z.string().min(4).max(64).optional(),
       roleId: z.number().optional()
     })
   )
@@ -32,17 +31,7 @@ const addInviteRoute = protectedProcedure
       });
     }
 
-    const newCode = input.code || getRandomString(24);
-    const existingInvite = await db
-      .select()
-      .from(invites)
-      .where(eq(invites.code, newCode))
-      .get();
-
-    invariant(!existingInvite, {
-      code: 'CONFLICT',
-      message: 'An invite with this code already exists'
-    });
+    const newCode = getRandomString(24);
 
     const invite = await db
       .insert(invites)
