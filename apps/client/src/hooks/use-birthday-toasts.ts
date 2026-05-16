@@ -40,10 +40,7 @@ const useBirthdayToasts = () => {
             (u) => !u.banned && u.birthday && u.birthday === target
         );
 
-        if (matches.length === 0) {
-            setLocalStorageItem(LocalStorageKey.BIRTHDAY_LAST_SHOWN, today);
-            return;
-        }
+        if (matches.length === 0) return;
 
         for (const u of matches) {
             toast(`🎂 Tomorrow is ${u.name}'s birthday!`, {
