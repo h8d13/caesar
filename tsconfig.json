@@ -1,8 +1,7 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
-      "@sharkord/shared": ["packages/shared/src/index.ts"]
+      "@sharkord/shared": ["./packages/shared/src/index.ts"]
     },
     "moduleResolution": "NodeNext",
     "module": "NodeNext",
