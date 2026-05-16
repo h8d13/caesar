@@ -31,5 +31,8 @@
       "@server/*": ["../../apps/server/src/*"]
     }
   },
-  "include": ["src"]
+  // ui transitively consumes shared/trpc.ts which references @server/routers;
+  // the typecheck then follows into server source which uses these ambient
+  // augmentations (ws.WebSocket, fs/promises.exists, globalThis flags).
+  "include": ["src", "../../apps/server/src/declarations.d.ts"]
 }
