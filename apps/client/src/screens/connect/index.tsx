@@ -265,8 +265,7 @@ const Connect = memo(() => {
 
                         {!isSignup && (
                             <span className="text-xs text-muted-foreground text-center">
-                                Sign in with an existing account, or open an
-                                invite link to create one.
+                                Sign in with an existing account. Or ask for an invite.
                             </span>
                         )}
 
