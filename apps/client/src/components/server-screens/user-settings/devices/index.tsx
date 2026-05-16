@@ -316,34 +316,36 @@ const Devices = memo(() => {
                     </Group>
 
                     <Group label="Microphone">
-                        <Select
-                            onValueChange={(value) =>
-                                onChange('microphoneId', value)
-                            }
-                            value={values.microphoneId}
-                            disabled={inputDevices.length === 0}
-                        >
-                            <SelectTrigger className="w-92">
-                                <SelectValue placeholder="Select the input device" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    {inputDevices.map((device) => (
-                                        <SelectItem
-                                            key={device?.deviceId}
-                                            value={
-                                                device?.deviceId || DEFAULT_NAME
-                                            }
-                                        >
-                                            {device?.label.trim() ||
-                                                'Default Microphone'}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
+                        <div className="space-y-4">
+                            <Select
+                                onValueChange={(value) =>
+                                    onChange('microphoneId', value)
+                                }
+                                value={values.microphoneId}
+                                disabled={inputDevices.length === 0}
+                            >
+                                <SelectTrigger className="w-92">
+                                    <SelectValue placeholder="Select the input device" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        {inputDevices.map((device) => (
+                                            <SelectItem
+                                                key={device?.deviceId}
+                                                value={
+                                                    device?.deviceId ||
+                                                    DEFAULT_NAME
+                                                }
+                                            >
+                                                {device?.label.trim() ||
+                                                    'Default Microphone'}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
 
-                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-4">
                             <Group label="Echo cancellation">
                                 <Switch
                                     checked={!!values.echoCancellation}
@@ -444,16 +446,17 @@ const Devices = memo(() => {
                                 </p>
                             )}
 
-                        {values.noiseSuppressionMode ===
-                            NoiseSuppressionMode.DTLN &&
-                            !isDTLNAvailable && (
-                                <p className="text-xs text-muted-foreground">
-                                    DTLN is unavailable.
-                                    {dtlnWorkletAvailability.reason
-                                        ? ` ${dtlnWorkletAvailability.reason}`
-                                        : ''}
-                                </p>
-                            )}
+                            {values.noiseSuppressionMode ===
+                                NoiseSuppressionMode.DTLN &&
+                                !isDTLNAvailable && (
+                                    <p className="text-xs text-muted-foreground">
+                                        DTLN is unavailable.
+                                        {dtlnWorkletAvailability.reason
+                                            ? ` ${dtlnWorkletAvailability.reason}`
+                                            : ''}
+                                    </p>
+                                )}
+                        </div>
                     </Group>
 
                     <Group label="Microphone Test">
