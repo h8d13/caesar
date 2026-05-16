@@ -1,4 +1,5 @@
 import { useOwnUser } from '@/features/server/users/hooks';
+import { throttle } from '@/helpers/throttle';
 import { getTRPCClient } from '@/lib/trpc';
 import {
     type ArrowLayer,
@@ -12,7 +13,6 @@ import {
     type WhiteboardCursor,
     type XYWH
 } from '@sharkord/shared';
-import { throttle } from '@/helpers/throttle';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     constrainAngle,

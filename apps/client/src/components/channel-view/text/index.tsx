@@ -15,6 +15,7 @@ import { SoundType } from '@/features/server/types';
 import { useUsers } from '@/features/server/users/hooks';
 import { handleBuiltInCommand } from '@/helpers/built-in-commands';
 import { LocalStorageKey } from '@/helpers/storage';
+import { throttle } from '@/helpers/throttle';
 import { getTRPCClient } from '@/lib/trpc';
 import {
     ChannelPermission,
@@ -24,7 +25,6 @@ import {
     type TJoinedMessage
 } from '@sharkord/shared';
 import { Spinner } from '@sharkord/ui';
-import { throttle } from '@/helpers/throttle';
 import { X } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';

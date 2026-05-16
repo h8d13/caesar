@@ -2,10 +2,10 @@ import { MessageCompose } from '@/components/message-compose';
 import { playSound } from '@/features/server/sounds/actions';
 import { SoundType } from '@/features/server/types';
 import { handleBuiltInCommand } from '@/helpers/built-in-commands';
+import { throttle } from '@/helpers/throttle';
 import { getTRPCClient } from '@/lib/trpc';
 import type { TJoinedPublicUser } from '@sharkord/shared';
 import { TYPING_MS, getTrpcError } from '@sharkord/shared';
-import { throttle } from '@/helpers/throttle';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
