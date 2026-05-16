@@ -15,10 +15,8 @@ describe('/info', () => {
     expect(data).toHaveProperty('name');
     expect(data).toHaveProperty('description');
     expect(data).toHaveProperty('logo');
-    expect(data).toHaveProperty('allowNewUsers');
 
     expect(data.name).toBe('Test Server');
     expect(data.description).toBe('Test server description');
-    expect(data.allowNewUsers).toBe(true);
   });
 });

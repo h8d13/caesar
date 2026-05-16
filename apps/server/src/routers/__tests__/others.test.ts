@@ -68,7 +68,6 @@ describe('others router', () => {
     const newSettings = {
       name: 'Updated Test Server',
       description: 'An updated description',
-      allowNewUsers: false,
       directMessagesEnabled: false,
       storageUploadEnabled: false,
       storageFileSharingInDirectMessages: false,
@@ -84,7 +83,6 @@ describe('others router', () => {
 
     expect(settings.name).toBe(newSettings.name);
     expect(settings.description).toBe(newSettings.description);
-    expect(settings.allowNewUsers).toBe(newSettings.allowNewUsers);
     expect(settings.directMessagesEnabled).toBe(
       newSettings.directMessagesEnabled
     );

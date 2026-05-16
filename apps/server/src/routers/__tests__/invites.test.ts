@@ -71,18 +71,16 @@ describe('invites router', () => {
     expect(newInvite!.maxUses).toBe(5);
   });
 
-  test('should create new invite with custom code', async () => {
+  test('should generate a random code per invite', async () => {
     const { caller } = await initTest();
 
-    await caller.invites.add({
-      code: 'custom-code-123'
-    });
+    const inviteA = await caller.invites.add({});
+    const inviteB = await caller.invites.add({});
 
-    const invites = await caller.invites.getAll();
-    const newInvite = invites.find((i) => i.code === 'custom-code-123');
-
-    expect(newInvite).toBeDefined();
-    expect(newInvite?.code).toBe('custom-code-123');
+    expect(inviteA.code).toBeTruthy();
+    expect(inviteB.code).toBeTruthy();
+    expect(inviteA.code).not.toBe(inviteB.code);
+    expect(inviteA.code.length).toBe(24);
   });
 
   test('should create new invite with expiration', async () => {
@@ -101,31 +99,13 @@ describe('invites router', () => {
     expect(newInvite!.expiresAt).toBe(expiresAt);
   });
 
-  test('should throw error when creating invite with duplicate code', async () => {
-    const { caller } = await initTest();
-
-    await caller.invites.add({
-      code: 'duplicate-code'
-    });
-
-    await expect(
-      caller.invites.add({
-        code: 'duplicate-code'
-      })
-    ).rejects.toThrow('An invite with this code already exists');
-  });
-
   test('should delete existing invite', async () => {
     const { caller } = await initTest();
 
-    await caller.invites.add({
-      code: 'to-be-deleted'
-    });
+    const created = await caller.invites.add({});
 
     const invitesBefore = await caller.invites.getAll();
-    const inviteToDelete = invitesBefore.find(
-      (i) => i.code === 'to-be-deleted'
-    );
+    const inviteToDelete = invitesBefore.find((i) => i.code === created.code);
 
     expect(inviteToDelete).toBeDefined();
 
@@ -134,7 +114,7 @@ describe('invites router', () => {
     });
 
     const invitesAfter = await caller.invites.getAll();
-    const deletedInvite = invitesAfter.find((i) => i.code === 'to-be-deleted');
+    const deletedInvite = invitesAfter.find((i) => i.code === created.code);
 
     expect(deletedInvite).toBeUndefined();
   });
@@ -155,9 +135,9 @@ describe('invites router', () => {
     const initialInvites = await caller.invites.getAll();
     const initialCount = initialInvites.length;
 
-    await caller.invites.add({ code: 'invite-1' });
-    await caller.invites.add({ code: 'invite-2' });
-    await caller.invites.add({ code: 'invite-3' });
+    await caller.invites.add({});
+    await caller.invites.add({});
+    await caller.invites.add({});
 
     const finalInvites = await caller.invites.getAll();
 
@@ -169,7 +149,6 @@ describe('invites router', () => {
 
     // roleId 1 is the Owner role created during seed
     const invite = await caller.invites.add({
-      code: 'role-invite-1',
       roleId: 1
     });
 
@@ -182,7 +161,6 @@ describe('invites router', () => {
 
     await expect(
       caller.invites.add({
-        code: 'bad-role-invite',
         roleId: 999999
       })
     ).rejects.toThrow('Role not found');
@@ -191,13 +169,12 @@ describe('invites router', () => {
   test('should return role info in getAll for invite with roleId', async () => {
     const { caller } = await initTest();
 
-    await caller.invites.add({
-      code: 'role-invite-2',
+    const created = await caller.invites.add({
       roleId: 1
     });
 
     const invites = await caller.invites.getAll();
-    const inviteWithRole = invites.find((i) => i.code === 'role-invite-2');
+    const inviteWithRole = invites.find((i) => i.code === created.code);
 
     expect(inviteWithRole).toBeDefined();
     expect(inviteWithRole!.role).toBeDefined();
@@ -210,12 +187,10 @@ describe('invites router', () => {
   test('should return null role for invite without roleId', async () => {
     const { caller } = await initTest();
 
-    await caller.invites.add({
-      code: 'no-role-invite'
-    });
+    const created = await caller.invites.add({});
 
     const invites = await caller.invites.getAll();
-    const inviteWithoutRole = invites.find((i) => i.code === 'no-role-invite');
+    const inviteWithoutRole = invites.find((i) => i.code === created.code);
 
     expect(inviteWithoutRole).toBeDefined();
     expect(inviteWithoutRole!.role).toBeNull();

@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import { login } from '../../__tests__/helpers';
 import { TEST_SECRET_TOKEN } from '../../__tests__/seed';
 import { tdb } from '../../__tests__/setup';
-import { invites, roles, settings, userRoles, users } from '../../db/schema';
+import { invites, roles, userRoles, users } from '../../db/schema';
 
 describe('/login', () => {
   test('should successfully login with valid credentials', async () => {
@@ -34,30 +34,9 @@ describe('/login', () => {
     expect(data.errors).toHaveProperty('password', 'Invalid password');
   });
 
-  test('should auto-register new user when allowNewUsers is true', async () => {
+  test('should fail signup without invite when DB has users', async () => {
+    // testowner exists in the seed, so new signups require a valid invite.
     const response = await login('newuser', 'newpassword123');
-
-    expect(response.status).toBe(200);
-
-    const data = await response.json();
-
-    expect(data).toHaveProperty('success', true);
-    expect(data).toHaveProperty('token');
-
-    const newUser = await tdb
-      .select()
-      .from(users)
-      .where(eq(users.identity, 'newuser'))
-      .get();
-
-    expect(newUser).toBeTruthy();
-    expect(newUser?.name).toBe('newuser');
-  });
-
-  test('should fail when allowNewUsers is false and no invite provided', async () => {
-    await tdb.update(settings).set({ allowNewUsers: false });
-
-    const response = await login('anothernewuser', 'password123');
 
     expect(response.status).toBe(400);
 
@@ -67,9 +46,7 @@ describe('/login', () => {
     expect(data.errors).toHaveProperty('identity', 'Invalid invite code');
   });
 
-  test('should allow registration with valid invite when allowNewUsers is false', async () => {
-    await tdb.update(settings).set({ allowNewUsers: false });
-
+  test('should allow registration with a valid invite', async () => {
     await tdb.insert(invites).values({
       code: 'TESTINVITE123',
       creatorId: 1,
@@ -98,9 +75,7 @@ describe('/login', () => {
   });
 
   test('should fail with expired invite', async () => {
-    await tdb.update(settings).set({ allowNewUsers: false });
-
-    await tdb.insert(invites).values({
+await tdb.insert(invites).values({
       code: 'EXPIREDINVITE',
       creatorId: 1,
       maxUses: 5,
@@ -124,9 +99,7 @@ describe('/login', () => {
   });
 
   test('should fail with maxed out invite', async () => {
-    await tdb.update(settings).set({ allowNewUsers: false });
-
-    // Create a maxed out invite
+// Create a maxed out invite
     await tdb.insert(invites).values({
       code: 'MAXEDINVITE',
       creatorId: 1,
@@ -151,9 +124,7 @@ describe('/login', () => {
   });
 
   test('should fail with non-existent invite', async () => {
-    await tdb.update(settings).set({ allowNewUsers: false });
-
-    const response = await login(
+const response = await login(
       'fakeinviteuser',
       'password123',
       'FAKEINVITECODE'
