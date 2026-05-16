@@ -100,9 +100,7 @@ const createHttpServer = async (port: number = config.server.port) => {
 
         const info = getWsInfo(undefined, req);
 
-        logger.debug(
-          `[HTTP] ${req.method} ${req.url} - ${info?.ip}`
-        );
+        logger.debug(`[HTTP] ${req.method} ${req.url} - ${info?.ip}`);
 
         if (req.method === 'OPTIONS') {
           res.writeHead(204);

@@ -12,7 +12,9 @@ const cleanupFiles = async () => {
     return;
   }
 
-  logger.info(`[Cron] Found ${orphanedFileIds.length} orphaned files. Cleaning up...`);
+  logger.info(
+    `[Cron] Found ${orphanedFileIds.length} orphaned files. Cleaning up...`
+  );
 
   const promises = orphanedFileIds.map(async (fileId) => {
     await removeFile(fileId);
