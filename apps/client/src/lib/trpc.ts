@@ -9,6 +9,9 @@ import {
     removeSessionStorageItem,
     SessionStorageKey
 } from '@/helpers/storage';
+// AppRouter is the server-defined router type, re-exported through
+// @caesar/shared to avoid a direct apps/server import here. See
+// packages/shared/src/trpc.ts for the layering note.
 import { type AppRouter, type TConnectionParams } from '@caesar/shared';
 import { createTRPCProxyClient, createWSClient, wsLink } from '@trpc/client';
 
