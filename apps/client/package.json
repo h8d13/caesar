@@ -35,7 +35,7 @@
     "filesize": "^11.0.17",
     "highlight.js": "^11.11.1",
     "html-react-parser": "^6.1.1",
-    "lucide-react": "^0.577.0",
+    "lucide-react": "^1.16.0",
     "marked": "^18.0.3",
     "mediasoup-client": "^3.20.0",
     "perfect-freehand": "^1.2.3",
