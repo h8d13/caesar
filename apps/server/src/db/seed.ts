@@ -18,7 +18,6 @@ import {
   type TISettings
 } from '@sharkord/shared';
 import { randomUUIDv7 } from 'bun';
-import chalk from 'chalk';
 import { logger } from '../logger';
 import { IS_DEVELOPMENT } from '../utils/env';
 import { db } from './index';
@@ -155,23 +154,8 @@ const seedDatabase = async () => {
     createdAt: firstStart
   });
 
-  const notice = [
-    chalk.redBright.bold(' I M P O R T A N T '),
-    chalk.dim('────────────────────────────────────────────────────'),
-    chalk.whiteBright('This server has been started for the first time.'),
-    chalk.whiteBright(
-      'Please save this access token somewhere safe, as it will not be shown again and there is no way to recover it.'
-    ),
-    chalk.whiteBright(
-      'The access token below is used to gain admin privileges. Anyone with this token can take over the server.'
-    ),
-    chalk.white('useToken("token-here")'),
-    chalk.yellowBright('────────────────────────────────────────────────────'),
-    chalk.bold.greenBright(originalToken),
-    chalk.yellowBright('────────────────────────────────────────────────────')
-  ].join('\n');
-
-  console.log('\n%s\n', notice);
+  console.log('First-time setup. Save this admin token, it is not recoverable:');
+  console.log(`  useToken("${originalToken}")`);
 };
 
 export { seedDatabase };

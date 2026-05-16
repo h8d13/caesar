@@ -1,5 +1,4 @@
 import type { ActivityLogType, TActivityLogDetailsMap } from '@sharkord/shared';
-import chalk from 'chalk';
 import Queue from 'queue';
 import { db } from '../../db';
 import { activityLog } from '../../db/schema';
@@ -41,7 +40,7 @@ const enqueueActivityLog = <T extends ActivityLogType>({
     });
 
     logger.debug(
-      `${chalk.dim('[Activity Logger]')} Logged activity of type ${type} for user ${userId} in ${(performance.now() - start).toFixed(2)} ms`
+      `[ActivityLogger] type=${type} user=${userId} took=${(performance.now() - start).toFixed(2)}ms`
     );
 
     callback?.();

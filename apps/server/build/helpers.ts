@@ -1,6 +1,12 @@
 import fs from 'fs/promises';
 import path from 'path';
 
+type BunBuildTarget =
+  | 'bun-linux-x64'
+  | 'bun-linux-arm64'
+  | 'bun-windows-x64'
+  | 'bun-darwin-arm64';
+
 const buildScriptDir = import.meta.dir;
 const serverCwd = path.resolve(buildScriptDir, '..');
 const rootCwd = path.resolve(serverCwd, '..', '..');
@@ -23,7 +29,7 @@ const unpack = async (tgzPath: string, outDir: string) => {
 
 const downloadMediasoupBinary = async (
   version: string,
-  target: Bun.Build.Target
+  target: BunBuildTarget
 ) => {
   let url = `https://github.com/versatica/mediasoup/releases/download/${version}/`;
   let fileName = '';
@@ -88,7 +94,7 @@ const getMediasoupVersion = async () => {
 
 type TTarget = {
   out: string;
-  target: Bun.Build.Target;
+  target: BunBuildTarget;
 };
 
 const compile = async ({ out, target }: TTarget) => {

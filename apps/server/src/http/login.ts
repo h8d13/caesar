@@ -3,7 +3,6 @@ import {
   DELETED_USER_IDENTITY_AND_NAME,
   type TJoinedUser
 } from '@sharkord/shared';
-import chalk from 'chalk';
 import { eq, isNull, max, sql } from 'drizzle-orm';
 import http from 'http';
 import jwt from 'jsonwebtoken';
@@ -223,7 +222,7 @@ const loginRouteHandler = async (
 
   if (!passwordMatches) {
     logger.info(
-      `${chalk.dim('[Auth]')} Failed login attempt for user "${existingUser.identity}" due to invalid password. (IP: ${connectionInfo?.ip || 'unknown'})`
+      `[Auth] Failed login for "${existingUser.identity}" (IP: ${connectionInfo?.ip || 'unknown'})`
     );
 
     throw new HttpValidationError('password', 'Invalid password');

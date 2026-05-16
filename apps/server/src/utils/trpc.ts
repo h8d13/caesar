@@ -5,7 +5,6 @@ import {
   type TUser
 } from '@sharkord/shared';
 import { initTRPC, TRPCError } from '@trpc/server';
-import chalk from 'chalk';
 import type WebSocket from 'ws';
 import { config } from '../config';
 import { logger } from '../logger';
@@ -60,9 +59,7 @@ const timingMiddleware = t.middleware(async ({ path, next }) => {
   const end = performance.now();
   const duration = end - start;
 
-  logger.debug(
-    `${chalk.dim('[tRPC]')} ${chalk.yellow(path)} took ${chalk.green(duration.toFixed(2))} ms`
-  );
+  logger.debug(`[tRPC] ${path} took ${duration.toFixed(2)}ms`);
 
   return result;
 });
@@ -100,7 +97,7 @@ const rateLimitedProcedure = (
       // if we have no IP, it means we have no way to identify the client
       // if we can't identify the client, we can't apply rate limiting, so we log a warning and skip it for this request
       logger.warn(
-        `${chalk.dim('[Rate Limiter tRPC]')} Missing IP address in connection info, skipping rate limiting for this request. Path: ${path}`
+        `[RateLimit] Missing IP in connection info, skipping limit for path=${path}`
       );
 
       return next();
@@ -110,9 +107,7 @@ const rateLimitedProcedure = (
     const rateLimit = limiter.consume(key);
 
     if (!rateLimit.allowed) {
-      logger.debug(
-        `${chalk.dim('[Rate Limiter tRPC]')} ${options.logLabel} rate limited for key "${key}"`
-      );
+      logger.debug(`[RateLimit] ${options.logLabel} blocked key=${key}`);
 
       throw new TRPCError({
         code: 'TOO_MANY_REQUESTS',

@@ -41,7 +41,6 @@
   "dependencies": {
     "@sharkord/shared": "workspace:*",
     "@trpc/server": "^11.6.0",
-    "chalk": "^5.6.2",
     "cron": "^4.4.0",
     "drizzle-orm": "^0.45.2",
     "ini": "^5.0.0",
@@ -52,7 +51,6 @@
     "queue": "^7.0.0",
     "sanitize-html": "^2.17.4",
     "ua-parser-js": "^2.0.6",
-    "winston": "^3.17.0",
     "ws": "^8.18.3",
     "yauzl": "^3.2.0",
     "yazl": "^3.3.1",

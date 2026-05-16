@@ -1,55 +1,39 @@
-import path from 'path';
-import { createLogger, format, transports } from 'winston';
 import { config } from './config';
-import { ensureDir } from './helpers/fs';
-import { LOGS_PATH } from './helpers/paths';
 
-const { combine, colorize, printf, errors, splat, timestamp, uncolorize } =
-  format;
+// Lightweight stdout/stderr logger. Plain text, no ANSI, no banners.
+// Docker captures stdout/stderr — that's where you read these.
+//
+// Levels: debug only fires when config.server.debug is true.
+// info/warn/error always fire.
 
-const fileFormat = combine(
-  uncolorize(), // strips any ANSI codes coming from chalk etc.
-  splat(),
-  errors({ stack: true }),
-  timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  printf(({ level, message, timestamp, stack }) => {
-    return `${timestamp} ${level.toUpperCase()}: ${stack || message}`;
-  })
-);
+type Args = unknown[];
 
-const consoleFormat = combine(
-  colorize(),
-  splat(),
-  errors({ stack: true }),
-  printf(({ level, message, stack }) => {
-    return `${level}: ${stack || message}`;
-  })
-);
+const format = (level: string, args: Args): string => {
+  const ts = new Date().toISOString();
+  const parts = args.map((a) =>
+    typeof a === 'string'
+      ? a
+      : a instanceof Error
+        ? (a.stack ?? a.message)
+        : JSON.stringify(a)
+  );
+  return `${ts} ${level} ${parts.join(' ')}`;
+};
 
-const combinedLog = path.join(LOGS_PATH, 'combined.log');
-const errorLog = path.join(LOGS_PATH, 'error.log');
-
-await ensureDir(LOGS_PATH);
-
-const level = config.server.debug ? 'debug' : 'info';
-
-const logger = createLogger({
-  level,
-  transports: [
-    new transports.Console({
-      format: consoleFormat
-    }),
-    new transports.File({
-      filename: combinedLog,
-      format: fileFormat,
-      level
-    }),
-    new transports.File({
-      filename: errorLog,
-      format: fileFormat,
-      level: 'error'
-    })
-  ]
-});
+const logger = {
+  debug: (...args: Args) => {
+    if (!config.server.debug) return;
+    console.log(format('DEBUG', args));
+  },
+  info: (...args: Args) => {
+    console.log(format('INFO', args));
+  },
+  warn: (...args: Args) => {
+    console.warn(format('WARN', args));
+  },
+  error: (...args: Args) => {
+    console.error(format('ERROR', args));
+  }
+};
 
 export { logger };

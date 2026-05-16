@@ -1,4 +1,3 @@
-import chalk from 'chalk';
 import http from 'http';
 import z from 'zod';
 import { config } from '../config';
@@ -102,7 +101,7 @@ const createHttpServer = async (port: number = config.server.port) => {
         const info = getWsInfo(undefined, req);
 
         logger.debug(
-          `${chalk.dim('[HTTP]')} ${req.method} ${req.url} - ${info?.ip}`
+          `[HTTP] ${req.method} ${req.url} - ${info?.ip}`
         );
 
         if (req.method === 'OPTIONS') {
