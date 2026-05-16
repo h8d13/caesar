@@ -34,7 +34,7 @@
         "highlight.js": "^11.11.1",
         "html-react-parser": "^5.2.17",
         "lucide-react": "^0.577.0",
-        "marked": "^15.0.12",
+        "marked": "^18.0.3",
         "mediasoup-client": "^3.20.0",
         "perfect-freehand": "^1.2.3",
         "prosemirror-view": "^1.41.8",
@@ -1050,7 +1050,7 @@
 
     "magic-string": ["magic-string@0.30.21", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.5" } }, "sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ=="],
 
-    "marked": ["marked@15.0.12", "", { "bin": { "marked": "bin/marked.js" } }, "sha512-8dD6FusOQSrpv9Z1rdNMdlSgQOIP880DHqnohobOmYLElGEqAL/JvxvuxZO16r4HtjTlfPRDC1hbvxC9dPN2nA=="],
+    "marked": ["marked@18.0.3", "", { "bin": { "marked": "bin/marked.js" } }, "sha512-7VT90JOkDeaRWpfjOReRGPEKn0ecdARBkDGL+tT1wZY0efPPqkUxLUSmzy/C7TIylQYJC9STISEsCHrqb/7VIA=="],
 
     "mediasoup": ["mediasoup@3.19.22", "", { "dependencies": { "debug": "^4.4.3", "flatbuffers": "^25.9.23", "h264-profile-level-id": "^2.3.2", "node-fetch": "^3.3.2", "supports-color": "^10.2.2", "tar": "^7.5.13" } }, "sha512-BzEl6zSNsANdq8LCGswoF7cr2r84SDgfGHnA393SL4wFjPmW7kij3gHPHvj6o+i15hjnzSvqWV2fUiFNWKq6Jw=="],
 
