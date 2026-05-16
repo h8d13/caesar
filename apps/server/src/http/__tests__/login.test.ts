@@ -75,7 +75,7 @@ describe('/login', () => {
   });
 
   test('should fail with expired invite', async () => {
-await tdb.insert(invites).values({
+    await tdb.insert(invites).values({
       code: 'EXPIREDINVITE',
       creatorId: 1,
       maxUses: 5,
@@ -99,7 +99,7 @@ await tdb.insert(invites).values({
   });
 
   test('should fail with maxed out invite', async () => {
-// Create a maxed out invite
+    // Create a maxed out invite
     await tdb.insert(invites).values({
       code: 'MAXEDINVITE',
       creatorId: 1,
@@ -124,7 +124,7 @@ await tdb.insert(invites).values({
   });
 
   test('should fail with non-existent invite', async () => {
-const response = await login(
+    const response = await login(
       'fakeinviteuser',
       'password123',
       'FAKEINVITECODE'
