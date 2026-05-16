@@ -259,3 +259,7 @@ export const setShowUserBannersInVoice = (value: boolean): void => {
         console.error('Failed to save voice options:', error);
     }
 };
+
+export const setUserSpeaking = (userId: number, intensity: number): void => {
+    store.dispatch(serverSliceActions.setUserSpeaking({ userId, intensity }));
+};

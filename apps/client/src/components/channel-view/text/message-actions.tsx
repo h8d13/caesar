@@ -59,7 +59,7 @@ const MessageActions = memo(
             const choice = await requestConfirmation({
                 title: 'Delete Message',
                 message:
-                    'Are you sure you want to delete this message? This action is irreversible.',
+                    'Do you want to delete this message? This action is irreversible.',
                 confirmLabel: 'Delete',
                 cancelLabel: 'Cancel'
             });

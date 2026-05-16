@@ -1,7 +1,9 @@
 import { UserAvatar } from '@/components/user-avatar';
 import type { TVoiceUser } from '@/features/server/types';
+import { useSpeakingIntensity } from '@/features/server/voice/hooks';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
 import { getSocialCreditColor } from '@/helpers/get-social-credit-color';
+import { cn } from '@/lib/utils';
 import {
     HeadphoneOff,
     Headphones,
@@ -19,12 +21,22 @@ type TVoiceUserProps = {
 };
 
 const VoiceUser = memo(({ user }: TVoiceUserProps) => {
+    const speakingIntensity = useSpeakingIntensity(user.id);
+    const speakingClass =
+        !user.state.micMuted && speakingIntensity > 0
+            ? speakingIntensity === 1
+                ? 'speaking-effect-low'
+                : speakingIntensity === 2
+                  ? 'speaking-effect-medium'
+                  : 'speaking-effect-high'
+            : '';
+
     return (
         <UserPopover userId={user.id}>
             <div className="flex items-center gap-2 px-2 py-1 rounded hover:bg-accent/30 text-sm">
                 <UserAvatar
                     userId={user.id}
-                    className="h-5 w-5"
+                    className={cn('h-5 w-5 rounded-full', speakingClass)}
                     showUserPopover={true}
                     showStatusBadge={false}
                 />

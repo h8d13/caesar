@@ -51,3 +51,8 @@ export const hideNonVideoParticipantsSelector = (state: IRootState) =>
 
 export const showUserBannersInVoiceSelector = (state: IRootState) =>
     state.server.showUserBannersInVoice;
+
+export const speakingIntensityForUserSelector = (
+    state: IRootState,
+    userId: number
+): number => state.server.speakingMap[userId] ?? 0;

@@ -51,6 +51,7 @@ import {
     useState
 } from 'react';
 import { useDevices } from '../devices-provider/hooks/use-devices';
+import { SpeakingDetector } from '../speaking-detector';
 import {
     clearVoiceControlsBridge,
     setVoiceControlsBridge
@@ -1078,6 +1079,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         <MediaProviderContext.Provider value={contextValue}>
             <MediaControlProvider>
                 <div className="relative">
+                    <SpeakingDetector />
                     <FloatingPinnedCard
                         remoteUserStreams={remoteUserStreams}
                         externalStreams={externalStreams}

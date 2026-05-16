@@ -1,9 +1,28 @@
 #!/usr/bin/env bash
-# GET INITIAL OWNER TOKEN
-# docker logs -f caesar
 
-# MAGIC RESETS VOLUMES LINE (drop volumes) DESTRUCTIVE
-# docker compose down -v && rm -rf data && docker system prune -a --volumes
+confirm() {
+read -r -p "Are you sure? [y/N] " response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+then
+    continue
+else
+    exit 0
+fi
+}
+
+# case "$1" in
+    # -l | --logs)
+    # docker logs -f caesar
+    # ;;
+    # -d | --down)
+    # docker compose --profile prod down
+    # ;;
+    # -r | --reset)
+    # confirm
+    # # MAGIC RESETS VOLUMES LINE (drop volumes) DESTRUCTIVE
+    # rm -rf data && docker system prune -a --volumes
+    # ;;
+# esac
 
 # make sure we are up to date
 command -v git >/dev/null || { echo "git not found"; exit 1; }

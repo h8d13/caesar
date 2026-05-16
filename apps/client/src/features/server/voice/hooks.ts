@@ -7,10 +7,16 @@ import {
     ownVoiceStateSelector,
     pinnedCardSelector,
     showUserBannersInVoiceSelector,
+    speakingIntensityForUserSelector,
     voiceChannelAudioExternalStreamsSelector,
     voiceChannelExternalStreamsListSelector,
     voiceChannelStateSelector
 } from './selectors';
+
+export const useSpeakingIntensity = (userId: number) =>
+    useSelector((state: IRootState) =>
+        speakingIntensityForUserSelector(state, userId)
+    );
 
 export const useVoiceChannelExternalStreamsList = (channelId: number) =>
     useSelector((state: IRootState) =>

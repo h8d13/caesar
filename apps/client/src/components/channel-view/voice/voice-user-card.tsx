@@ -3,7 +3,10 @@ import { useMediaControl } from '@/components/media-provider/media-control-conte
 import { UserAvatar } from '@/components/user-avatar';
 import type { TVoiceUser } from '@/features/server/types';
 import { useOwnUserId } from '@/features/server/users/hooks';
-import { useShowUserBannersInVoice } from '@/features/server/voice/hooks';
+import {
+    useShowUserBannersInVoice,
+    useSpeakingIntensity
+} from '@/features/server/voice/hooks';
 import { getFileUrl } from '@/helpers/get-file-url';
 import { cn } from '@/lib/utils';
 import { HeadphoneOff, MicOff, Monitor, Video } from 'lucide-react';
@@ -35,8 +38,9 @@ const VoiceUserCard = memo(
         showPinControls = true,
         voiceUser
     }: TVoiceUserCardProps) => {
-        const { videoRef, hasVideoStream, isSpeaking, speakingIntensity } =
-            useMediaRefs(userId);
+        const { videoRef, hasVideoStream } = useMediaRefs(userId);
+        const speakingIntensity = useSpeakingIntensity(userId);
+        const isSpeaking = speakingIntensity > 0;
         const { getUserVolumeKey } = useMediaControl();
         const { devices } = useDevices();
         const ownUserId = useOwnUserId();

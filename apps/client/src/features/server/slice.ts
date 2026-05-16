@@ -60,6 +60,8 @@ export interface IServerState {
     channelsWithUnreadMention: number[];
     hideNonVideoParticipants: boolean;
     showUserBannersInVoice: boolean;
+    // 0 = silent, 1 = quiet, 2 = normal, 3 = loud (mirrors SpeakingIntensity)
+    speakingMap: Record<number, number>;
 }
 
 const initialState: IServerState = {
@@ -102,7 +104,8 @@ const initialState: IServerState = {
     showUserBannersInVoice: getLocalStorageItemBool(
         LocalStorageKey.VOICE_CHAT_SHOW_USER_BANNERS,
         true
-    )
+    ),
+    speakingMap: {}
 };
 
 export const serverSlice = createSlice({
@@ -118,6 +121,17 @@ export const serverSlice = createSlice({
         setConnected: (state, action: PayloadAction<boolean>) => {
             state.connected = action.payload;
             state.connecting = false;
+        },
+        setUserSpeaking: (
+            state,
+            action: PayloadAction<{ userId: number; intensity: number }>
+        ) => {
+            const { userId, intensity } = action.payload;
+            if (intensity <= 0) {
+                delete state.speakingMap[userId];
+            } else {
+                state.speakingMap[userId] = intensity;
+            }
         },
         setConnecting: (state, action: PayloadAction<boolean>) => {
             state.connecting = action.payload;

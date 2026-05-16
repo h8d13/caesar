@@ -5,7 +5,6 @@ import { useMedia } from '@/features/server/voice/hooks';
 import { applyAudioOutputDevice } from '@/helpers/audio-output';
 import { StreamKind } from '@caesar/shared';
 import { useEffect, useMemo } from 'react';
-import { useAudioLevel } from './use-audio-level';
 
 const useMediaRefs = (
     remoteId: number,
@@ -15,7 +14,6 @@ const useMediaRefs = (
     const {
         remoteUserStreams,
         externalStreams,
-        localAudioStream,
         localVideoStream,
         localScreenShareStream,
         ownVoiceState,
@@ -56,12 +54,6 @@ const useMediaRefs = (
         return remoteUserStreams[remoteId]?.[StreamKind.AUDIO];
     }, [remoteUserStreams, remoteId, isOwnUser]);
 
-    const audioStreamForLevel = useMemo(() => {
-        if (isOwnUser) return localAudioStream;
-
-        return remoteUserStreams[remoteId]?.[StreamKind.AUDIO];
-    }, [remoteUserStreams, remoteId, isOwnUser, localAudioStream]);
-
     const screenShareStream = useMemo(() => {
         if (isOwnUser) return localScreenShareStream;
 
@@ -89,9 +81,6 @@ const useMediaRefs = (
 
         return external?.videoStream;
     }, [externalStreams, remoteId, isOwnUser]);
-
-    const { audioLevel, isSpeaking, speakingIntensity } =
-        useAudioLevel(audioStreamForLevel);
 
     const userVolumeKey = getUserVolumeKey(remoteId);
     const userVolume = getVolume(userVolumeKey);
@@ -244,10 +233,7 @@ const useMediaRefs = (
         hasScreenShareStream: !!screenShareStream && !screenVideoHidden,
         hasScreenShareAudioStream: !!screenShareAudioStream,
         hasExternalAudioStream: !!externalAudioStream,
-        hasExternalVideoStream: !!externalVideoStream,
-        audioLevel,
-        isSpeaking,
-        speakingIntensity
+        hasExternalVideoStream: !!externalVideoStream
     };
 };
 
