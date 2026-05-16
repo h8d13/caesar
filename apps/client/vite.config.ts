@@ -7,7 +7,15 @@ import pkg from './package.json';
 
 // https://vite.dev/config/
 export default defineConfig({
-    plugins: [react(), tailwindcss()],
+    plugins: [
+        react(),
+        tailwindcss(),
+        {
+            name: 'inject-app-name',
+            transformIndexHtml: (html) =>
+                html.replace(/%APP_NAME%/g, manifest.name)
+        }
+    ],
     assetsInclude: ['**/*.wasm'],
     build: {
         target: 'esnext',

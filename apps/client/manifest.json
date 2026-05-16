@@ -1,6 +1,5 @@
 {
-  "name": "2pac4shakur",
-  "short_name": "2pac4shakur",
+  "name": "Caesar",
   "description": "Lightweight self-hosted chat with voice, video, and screen sharing.",
   "start_url": "/",
   "display": "standalone",
