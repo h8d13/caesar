@@ -26,11 +26,16 @@ export default defineConfig([
       ...reactHooks.configs.recommended.rules,
       ...reactRefresh.configs.recommended.rules,
       'react-hooks/exhaustive-deps': 'error',
+      // compiler-era heuristics: keep as warnings so they surface but
+      // do not break CI on patterns that have valid use cases
+      // (fetch-on-mount, intentional manual memoization).
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/preserve-manual-memoization': 'warn',
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
       'unused-imports/no-unused-imports': 'error',
       'unused-imports/no-unused-vars': [
-        'warn',
+        'error',
         {
           vars: 'all',
           varsIgnorePattern: '^_',

@@ -10,7 +10,10 @@ const emojiSelectFields = {
   user: publicUserBaseFields
 };
 
-// TODO: check this any
+// row shape from select(emojiSelectFields). user lacks avatar/banner/socialCredit
+// that TPublicUser nominally requires; the wire shape mirrors this and callers
+// only touch the columns we actually project.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const parseEmoji = (row: any): TJoinedEmoji => ({
   ...row.emoji,
   file: row.file,

@@ -1,4 +1,5 @@
 import { Toaster } from '@sharkord/ui';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import 'prosemirror-view/style/prosemirror.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -15,23 +16,34 @@ import { store } from './features/store.ts';
 import { LocalStorageKey } from './helpers/storage.ts';
 import './index.css';
 
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            staleTime: 30_000,
+            refetchOnWindowFocus: false
+        }
+    }
+});
+
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
-        <ThemeProvider
-            defaultTheme="dark"
-            storageKey={LocalStorageKey.VITE_UI_THEME}
-        >
-            <DebugInfo />
-            <Toaster />
-            <Provider store={store}>
-                <StoreDebug />
-                <DevicesProvider>
-                    <DialogsProvider />
-                    <ServerScreensProvider />
-                    <AutoLoginController />
-                    <Routing />
-                </DevicesProvider>
-            </Provider>
-        </ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+            <ThemeProvider
+                defaultTheme="dark"
+                storageKey={LocalStorageKey.VITE_UI_THEME}
+            >
+                <DebugInfo />
+                <Toaster />
+                <Provider store={store}>
+                    <StoreDebug />
+                    <DevicesProvider>
+                        <DialogsProvider />
+                        <ServerScreensProvider />
+                        <AutoLoginController />
+                        <Routing />
+                    </DevicesProvider>
+                </Provider>
+            </ThemeProvider>
+        </QueryClientProvider>
     </StrictMode>
 );

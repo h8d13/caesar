@@ -33,8 +33,9 @@ const useUploadFiles = (
 
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    // hackers gonna hack
-    filesRef.current = files;
+    useEffect(() => {
+        filesRef.current = files;
+    });
 
     const addFiles = useCallback((files: TTempFile[]) => {
         setFiles((prevFiles) => [...prevFiles, ...files]);

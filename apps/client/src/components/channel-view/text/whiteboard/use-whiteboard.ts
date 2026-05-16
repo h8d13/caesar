@@ -36,10 +36,12 @@ export function useWhiteboard(
     const ownUser = useOwnUser();
     const [layers, setLayers] = useState<Record<string, Layer>>({});
     const layersRef = useRef<Record<string, Layer>>({});
-    layersRef.current = layers;
     const [layerIds, setLayerIds] = useState<string[]>([]);
     const layerIdsRef = useRef<string[]>([]);
-    layerIdsRef.current = layerIds;
+    useEffect(() => {
+        layersRef.current = layers;
+        layerIdsRef.current = layerIds;
+    });
     const [selection, setSelection] = useState<string[]>([]);
     const [canvasMode, setCanvasMode] = useState<CanvasMode>(CanvasMode.None);
     const [insertingLayerType, setInsertingLayerType] =
@@ -101,6 +103,34 @@ export function useWhiteboard(
     // Undo/redo
     const history = useRef<HistoryEntry[]>([]);
     const historyIndex = useRef(-1);
+    const [historySnapshot, setHistorySnapshot] = useState({
+        canUndo: false,
+        canRedo: false
+    });
+
+    const refreshHistorySnapshot = useCallback(() => {
+        setHistorySnapshot({
+            canUndo: historyIndex.current > 0,
+            canRedo: historyIndex.current < history.current.length - 1
+        });
+    }, []);
+
+    const pushToHistory = useCallback(
+        (l: Record<string, Layer>, ids: string[]) => {
+            const entry: HistoryEntry = {
+                layers: { ...l },
+                layerIds: [...ids]
+            };
+            history.current = history.current.slice(
+                0,
+                historyIndex.current + 1
+            );
+            history.current.push(entry);
+            historyIndex.current = history.current.length - 1;
+            refreshHistorySnapshot();
+        },
+        [refreshHistorySnapshot]
+    );
 
     const trpc = useMemo(() => getTRPCClient(), []);
 
@@ -198,24 +228,7 @@ export function useWhiteboard(
     }, [channelId, trpc]);
 
     // --- History ---
-    const pushToHistory = useCallback(
-        (l: Record<string, Layer>, ids: string[]) => {
-            const entry: HistoryEntry = {
-                layers: { ...l },
-                layerIds: [...ids]
-            };
-            history.current = history.current.slice(
-                0,
-                historyIndex.current + 1
-            );
-            history.current.push(entry);
-            historyIndex.current = history.current.length - 1;
-        },
-        []
-    );
-
-    const canUndo = historyIndex.current > 0;
-    const canRedo = historyIndex.current < history.current.length - 1;
+    const { canUndo, canRedo } = historySnapshot;
 
     const undo = useCallback(() => {
         if (historyIndex.current <= 0) return;
@@ -224,7 +237,8 @@ export function useWhiteboard(
         setLayers(entry.layers);
         setLayerIds(entry.layerIds);
         setSelection([]);
-    }, []);
+        refreshHistorySnapshot();
+    }, [refreshHistorySnapshot]);
 
     const redo = useCallback(() => {
         if (historyIndex.current >= history.current.length - 1) return;
@@ -233,7 +247,8 @@ export function useWhiteboard(
         setLayers(entry.layers);
         setLayerIds(entry.layerIds);
         setSelection([]);
-    }, []);
+        refreshHistorySnapshot();
+    }, [refreshHistorySnapshot]);
 
     // --- Cursor broadcasting ---
     const broadcastCursor = useMemo(

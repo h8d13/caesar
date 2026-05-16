@@ -89,11 +89,9 @@ const ServerScreensProvider = memo(() => {
 
     const realIsOpen = isOpen && !!component;
 
-    if (realIsOpen) {
-        portalRoot.style.display = 'block';
-    } else {
-        portalRoot.style.display = 'none';
-    }
+    useEffect(() => {
+        portalRoot.style.display = realIsOpen ? 'block' : 'none';
+    }, [realIsOpen]);
 
     if (!realIsOpen) return null;
 

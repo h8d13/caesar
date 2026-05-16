@@ -49,9 +49,7 @@ export enum ActivityLogType {
 export type TActivityLogDetailsMap = {
   [ActivityLogType.SERVER_STARTED]: {};
   [ActivityLogType.EDIT_SERVER_SETTINGS]: {
-    values: Partial<{
-      [K in keyof TSettings]: any;
-    }>;
+    values: Partial<TSettings>;
   };
   // -------------------- USERS --------------------
   [ActivityLogType.USER_KICKED]: {

@@ -14,8 +14,8 @@
   "scripts": {
     "format": "prettier --write \"**/*.ts*\" --config ./.prettierrc.json",
     "format:check": "prettier --check \"**/*.ts*\" --config ./.prettierrc.json",
-    "lint": "eslint ./src/**/*.ts --ext ts --report-unused-disable-directives",
-    "lint:fix": "eslint ./src/**/*.ts --ext ts --report-unused-disable-directives --fix",
+    "lint": "eslint ./src --report-unused-disable-directives",
+    "lint:fix": "eslint ./src --report-unused-disable-directives --fix",
     "check-types": "tsc --noEmit",
     "magic": "bun --bun run lint:fix && bun --bun run format && bun --bun run check-types",
     "test": "bun test",
@@ -26,13 +26,15 @@
   },
   "peerDependencies": {
     "@types/react": "^19.2.14",
-    "typescript": "^6.0.3",
+    "typescript": "~5.9.3",
     "@types/linkify-it": "^5.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.59.3",
+    "@eslint/js": "^10.0.1",
     "eslint": "^10.4.0",
     "eslint-plugin-unused-imports": "^4.4.1",
+    "globals": "^17.6.0",
     "prettier": "^3.8.3",
     "prettier-plugin-organize-imports": "^4.3.0",
+    "typescript-eslint": "^8.59.3",
     "@trpc/client": "^11.17.0"
   },
   "dependencies": {

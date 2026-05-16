@@ -1,4 +1,8 @@
-import type { IceCandidate, IceParameters } from 'mediasoup/types';
+import type {
+  DtlsParameters,
+  IceCandidate,
+  IceParameters
+} from 'mediasoup/types';
 import type { TExternalStreamTracks } from './types';
 
 export type TVoiceUserState = {
@@ -31,7 +35,7 @@ export type TTransportParams = {
   id: string;
   iceParameters: IceParameters;
   iceCandidates: IceCandidate[];
-  dtlsParameters: any;
+  dtlsParameters: DtlsParameters;
 };
 
 export type TPublicVoiceChannelState = {

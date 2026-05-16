@@ -6,9 +6,7 @@ export const useScreenShareZoom = () => {
     const [isZoomEnabled, setIsZoomEnabled] = useState(false);
     const [zoom, setZoom] = useState(1);
     const zoomRef = useRef(zoom);
-    zoomRef.current = zoom;
     const isZoomEnabledRef = useRef(isZoomEnabled);
-    isZoomEnabledRef.current = isZoomEnabled;
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -21,7 +19,12 @@ export const useScreenShareZoom = () => {
     }, []);
 
     const resetZoomRef = useRef(resetZoom);
-    resetZoomRef.current = resetZoom;
+
+    useEffect(() => {
+        zoomRef.current = zoom;
+        isZoomEnabledRef.current = isZoomEnabled;
+        resetZoomRef.current = resetZoom;
+    });
 
     const handleToggleZoom = useCallback(() => {
         setIsZoomEnabled((prev) => {

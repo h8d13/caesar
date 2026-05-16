@@ -42,6 +42,21 @@
     {
       "matchPackageNames": ["bun", "oven-sh/setup-bun"],
       "groupName": "bun runtime"
+    },
+    {
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<6.0.0",
+      "description": "cap to TS 5.x until 6.x ships stable"
+    },
+    {
+      "matchPackageNames": ["@types/node"],
+      "allowedVersions": "<25.0.0",
+      "description": "cap to the active Node LTS line"
+    },
+    {
+      "matchPackageNames": ["mediasoup"],
+      "rangeStrategy": "pin",
+      "description": "native worker binary, pin exact"
     }
   ],
   "vulnerabilityAlerts": {

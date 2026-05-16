@@ -28,7 +28,6 @@ const createMockContextOptions = async (opts?: {
         remoteAddress: '127.0.0.1'
       }
     } as IncomingMessage,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     res: undefined as any
   };
 };

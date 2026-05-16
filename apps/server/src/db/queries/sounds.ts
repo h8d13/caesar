@@ -10,7 +10,10 @@ const soundSelectFields = {
   user: publicUserBaseFields
 };
 
-// TODO: check this any
+// row shape from select(soundSelectFields). user lacks avatar/banner/socialCredit
+// that TPublicUser nominally requires; the wire shape mirrors this and callers
+// only touch the columns we actually project.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const parseSound = (row: any): TJoinedSound => ({
   ...row.sound,
   file: row.file,

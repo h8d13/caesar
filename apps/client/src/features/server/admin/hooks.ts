@@ -13,28 +13,21 @@ import {
     StorageOverflowAction,
     type TCategory,
     type TChannel,
-    type TChannelRolePermission,
-    type TChannelUserPermission,
-    type TDiskMetrics,
-    type TFile,
-    type TJoinedEmoji,
-    type TJoinedInvite,
-    type TJoinedRole,
-    type TJoinedSound,
-    type TJoinedUser,
-    type TLogin,
-    type TMessage,
-    type TRole,
     type TStorageSettings,
     type TTrpcErrors
 } from '@sharkord/shared';
+import { useQuery, type QueryObserverResult } from '@tanstack/react-query';
 import { filesize } from 'filesize';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-// TODO: review this whole file for optimizations and improvements
+
+const toVoid =
+    <T>(refetch: () => Promise<QueryObserverResult<T, Error>>) =>
+    async (): Promise<void> => {
+        await refetch();
+    };
 
 export const useAdminGeneral = () => {
-    const [loading, setLoading] = useState(true);
     const [errors, setErrors] = useState<TTrpcErrors>({});
     const [settings, setSettings] = useState({
         name: '',
@@ -42,23 +35,26 @@ export const useAdminGeneral = () => {
         password: '',
         directMessagesEnabled: true
     });
-    const [logo, setLogo] = useState<TFile | null>(null);
 
-    const fetchSettings = useCallback(async () => {
-        setLoading(true);
+    const {
+        data,
+        isPending: loading,
+        refetch
+    } = useQuery({
+        queryKey: ['admin', 'settings'],
+        queryFn: () => getTRPCClient().others.getSettings.query()
+    });
 
-        const trpc = getTRPCClient();
-        const settings = await trpc.others.getSettings.query();
-
+    // form state initialized from server data
+    useEffect(() => {
+        if (!data) return;
         setSettings({
-            name: settings.name,
-            description: settings.description ?? '',
-            password: settings.password ?? '',
-            directMessagesEnabled: settings.directMessagesEnabled ?? true
+            name: data.name,
+            description: data.description ?? '',
+            password: data.password ?? '',
+            directMessagesEnabled: data.directMessagesEnabled ?? true
         });
-        setLoading(false);
-        setLogo(settings.logo);
-    }, []);
+    }, [data]);
 
     const submit = useCallback(async () => {
         const trpc = getTRPCClient();
@@ -83,35 +79,34 @@ export const useAdminGeneral = () => {
         setErrors((e) => ({ ...e, [field]: undefined }));
     }, []);
 
-    useEffect(() => {
-        fetchSettings();
-    }, [fetchSettings]);
-
     return {
         settings,
-        refetch: fetchSettings,
+        refetch: toVoid(refetch),
         loading,
         submit,
         errors,
         onChange,
-        logo
+        logo: data?.logo ?? null
     };
 };
 
 export const useAdminChannelGeneral = (channelId: number) => {
-    const [loading, setLoading] = useState(true);
     const [errors, setErrors] = useState<TTrpcErrors>({});
     const [channel, setChannel] = useState<TChannel | undefined>(undefined);
 
-    const fetchChannel = useCallback(async () => {
-        setLoading(true);
+    const {
+        data,
+        isPending: loading,
+        refetch
+    } = useQuery({
+        queryKey: ['admin', 'channel', channelId],
+        queryFn: () => getTRPCClient().channels.get.query({ channelId })
+    });
 
-        const trpc = getTRPCClient();
-        const channel = await trpc.channels.get.query({ channelId });
-
-        setChannel(channel);
-        setLoading(false);
-    }, [channelId]);
+    // form state initialized from server data
+    useEffect(() => {
+        if (data) setChannel(data);
+    }, [data]);
 
     const submit = useCallback(async () => {
         const trpc = getTRPCClient();
@@ -140,13 +135,9 @@ export const useAdminChannelGeneral = (channelId: number) => {
         [channel]
     );
 
-    useEffect(() => {
-        fetchChannel();
-    }, [fetchChannel]);
-
     return {
         channel,
-        refetch: fetchChannel,
+        refetch: toVoid(refetch),
         loading,
         errors,
         onChange,
@@ -155,19 +146,22 @@ export const useAdminChannelGeneral = (channelId: number) => {
 };
 
 export const useAdminCategoryGeneral = (categoryId: number) => {
-    const [loading, setLoading] = useState(true);
     const [errors, setErrors] = useState<TTrpcErrors>({});
     const [category, setCategory] = useState<TCategory | undefined>(undefined);
 
-    const fetchCategory = useCallback(async () => {
-        setLoading(true);
+    const {
+        data,
+        isPending: loading,
+        refetch
+    } = useQuery({
+        queryKey: ['admin', 'category', categoryId],
+        queryFn: () => getTRPCClient().categories.get.query({ categoryId })
+    });
 
-        const trpc = getTRPCClient();
-        const category = await trpc.categories.get.query({ categoryId });
-
-        setCategory(category);
-        setLoading(false);
-    }, [categoryId]);
+    // form state initialized from server data
+    useEffect(() => {
+        if (data) setCategory(data);
+    }, [data]);
 
     const submit = useCallback(async () => {
         const trpc = getTRPCClient();
@@ -194,13 +188,9 @@ export const useAdminCategoryGeneral = (categoryId: number) => {
         [category]
     );
 
-    useEffect(() => {
-        fetchCategory();
-    }, [fetchCategory]);
-
     return {
         category,
-        refetch: fetchCategory,
+        refetch: toVoid(refetch),
         loading,
         errors,
         onChange,
@@ -209,37 +199,24 @@ export const useAdminCategoryGeneral = (categoryId: number) => {
 };
 
 export const useAdminEmojis = () => {
-    const [loading, setLoading] = useState(true);
     const [errors, setErrors] = useState<TTrpcErrors>({});
-    const [emojis, setEmojis] = useState<TJoinedEmoji[]>([]);
 
-    const fetchEmojis = useCallback(async () => {
-        setLoading(true);
+    const {
+        data: emojis = [],
+        isPending: loading,
+        refetch
+    } = useQuery({
+        queryKey: ['admin', 'emojis'],
+        queryFn: () => getTRPCClient().emojis.getAll.query()
+    });
 
-        const trpc = getTRPCClient();
-        const emojis = await trpc.emojis.getAll.query();
-
-        setEmojis(emojis);
-        setLoading(false);
+    const onChange = useCallback(() => {
+        setErrors({});
     }, []);
-
-    const onChange = useCallback(
-        (field: keyof TJoinedEmoji, value: string | null) => {
-            if (!emojis) return;
-
-            setEmojis((c) => (c ? { ...c, [field]: value } : c));
-            setErrors((e) => ({ ...e, [field]: undefined }));
-        },
-        [emojis]
-    );
-
-    useEffect(() => {
-        fetchEmojis();
-    }, [fetchEmojis]);
 
     return {
         emojis,
-        refetch: fetchEmojis,
+        refetch: toVoid(refetch),
         loading,
         errors,
         onChange
@@ -247,37 +224,24 @@ export const useAdminEmojis = () => {
 };
 
 export const useAdminSounds = () => {
-    const [loading, setLoading] = useState(true);
     const [errors, setErrors] = useState<TTrpcErrors>({});
-    const [sounds, setSounds] = useState<TJoinedSound[]>([]);
 
-    const fetchSounds = useCallback(async () => {
-        setLoading(true);
+    const {
+        data: sounds = [],
+        isPending: loading,
+        refetch
+    } = useQuery({
+        queryKey: ['admin', 'sounds'],
+        queryFn: () => getTRPCClient().sounds.getAll.query()
+    });
 
-        const trpc = getTRPCClient();
-        const sounds = await trpc.sounds.getAll.query();
-
-        setSounds(sounds);
-        setLoading(false);
+    const onChange = useCallback(() => {
+        setErrors({});
     }, []);
-
-    const onChange = useCallback(
-        (field: keyof TJoinedSound, value: string | null) => {
-            if (!sounds) return;
-
-            setSounds((c) => (c ? { ...c, [field]: value } : c));
-            setErrors((e) => ({ ...e, [field]: undefined }));
-        },
-        [sounds]
-    );
-
-    useEffect(() => {
-        fetchSounds();
-    }, [fetchSounds]);
 
     return {
         sounds,
-        refetch: fetchSounds,
+        refetch: toVoid(refetch),
         loading,
         errors,
         onChange
@@ -285,37 +249,24 @@ export const useAdminSounds = () => {
 };
 
 export const useAdminRoles = () => {
-    const [loading, setLoading] = useState(true);
     const [errors, setErrors] = useState<TTrpcErrors>({});
-    const [roles, setRoles] = useState<TJoinedRole[]>([]);
 
-    const fetchRoles = useCallback(async () => {
-        setLoading(true);
+    const {
+        data: roles = [],
+        isPending: loading,
+        refetch
+    } = useQuery({
+        queryKey: ['admin', 'roles'],
+        queryFn: () => getTRPCClient().roles.getAll.query()
+    });
 
-        const trpc = getTRPCClient();
-        const roles = await trpc.roles.getAll.query();
-
-        setRoles(roles);
-        setLoading(false);
+    const onChange = useCallback(() => {
+        setErrors({});
     }, []);
-
-    const onChange = useCallback(
-        (field: keyof TRole, value: string | null) => {
-            if (!roles) return;
-
-            setRoles((c) => (c ? { ...c, [field]: value } : c));
-            setErrors((e) => ({ ...e, [field]: undefined }));
-        },
-        [roles]
-    );
-
-    useEffect(() => {
-        fetchRoles();
-    }, [fetchRoles]);
 
     return {
         roles,
-        refetch: fetchRoles,
+        refetch: toVoid(refetch),
         loading,
         errors,
         onChange
@@ -323,7 +274,6 @@ export const useAdminRoles = () => {
 };
 
 export const useAdminStorage = () => {
-    const [loading, setLoading] = useState(true);
     const { values, setValues, setTrpcErrors, r, onChange } =
         useForm<TStorageSettings>({
             storageOverflowAction: STORAGE_OVERFLOW_ACTION,
@@ -336,21 +286,20 @@ export const useAdminStorage = () => {
             storageMaxFilesPerMessage: STORAGE_DEFAULT_MAX_FILES_PER_MESSAGE,
             storageQuota: STORAGE_QUOTA
         });
-    const [diskMetrics, setDiskMetrics] = useState<TDiskMetrics | undefined>(
-        undefined
-    );
 
-    const fetchStorageSettings = useCallback(async () => {
-        setLoading(true);
+    const {
+        data,
+        isPending: loading,
+        refetch
+    } = useQuery({
+        queryKey: ['admin', 'storage'],
+        queryFn: () => getTRPCClient().others.getStorageSettings.query()
+    });
 
-        const trpc = getTRPCClient();
-        const { storageSettings, diskMetrics } =
-            await trpc.others.getStorageSettings.query();
-
-        setValues(storageSettings);
-        setDiskMetrics(diskMetrics);
-        setLoading(false);
-    }, [setValues]);
+    // form state initialized from server data
+    useEffect(() => {
+        if (data) setValues(data.storageSettings);
+    }, [data, setValues]);
 
     const submit = useCallback(async () => {
         const trpc = getTRPCClient();
@@ -413,142 +362,90 @@ export const useAdminStorage = () => {
         };
     }, [values]);
 
-    useEffect(() => {
-        fetchStorageSettings();
-    }, [fetchStorageSettings]);
-
     return {
         values,
         labels,
-        refetch: fetchStorageSettings,
+        refetch: toVoid(refetch),
         loading,
         submit,
         r,
         onChange,
-        diskMetrics
+        diskMetrics: data?.diskMetrics
     };
 };
 
 export const useAdminUsers = () => {
-    const [loading, setLoading] = useState(true);
-    const [users, setUsers] = useState<TJoinedUser[]>([]);
-
-    const fetchUsers = useCallback(async () => {
-        setLoading(true);
-
-        const trpc = getTRPCClient();
-        const users = await trpc.users.getAll.query();
-
-        const filteredUsers = users.filter(
-            (user) => user.name !== DELETED_USER_IDENTITY_AND_NAME
-        );
-
-        setUsers(filteredUsers);
-        setLoading(false);
-    }, []);
-
-    useEffect(() => {
-        fetchUsers();
-    }, [fetchUsers]);
+    const {
+        data: users = [],
+        isPending: loading,
+        refetch
+    } = useQuery({
+        queryKey: ['admin', 'users'],
+        queryFn: async () => {
+            const all = await getTRPCClient().users.getAll.query();
+            return all.filter((u) => u.name !== DELETED_USER_IDENTITY_AND_NAME);
+        }
+    });
 
     return {
         users,
-        refetch: fetchUsers,
+        refetch: toVoid(refetch),
         loading
     };
 };
 
 export const useAdminChannelPermissions = (channelId: number) => {
-    const [loading, setLoading] = useState(true);
-    const [rolePermissions, setRolePermissions] = useState<
-        TChannelRolePermission[]
-    >([]);
-    const [userPermissions, setUserPermissions] = useState<
-        TChannelUserPermission[]
-    >([]);
-
-    const fetchPermissions = useCallback(async () => {
-        setLoading(true);
-
-        const trpc = getTRPCClient();
-        const { rolePermissions, userPermissions } =
-            await trpc.channels.getPermissions.mutate({ channelId });
-
-        setRolePermissions(rolePermissions);
-        setUserPermissions(userPermissions);
-        setLoading(false);
-    }, [channelId]);
-
-    useEffect(() => {
-        fetchPermissions();
-    }, [fetchPermissions]);
+    const {
+        data,
+        isPending: loading,
+        refetch
+    } = useQuery({
+        queryKey: ['admin', 'channel-permissions', channelId],
+        queryFn: () =>
+            getTRPCClient().channels.getPermissions.mutate({ channelId })
+    });
 
     return {
-        rolePermissions,
-        userPermissions,
-        refetch: fetchPermissions,
+        rolePermissions: data?.rolePermissions ?? [],
+        userPermissions: data?.userPermissions ?? [],
+        refetch: toVoid(refetch),
         loading
     };
 };
 
 export const useAdminUserInfo = (userId: number) => {
-    const [loading, setLoading] = useState(true);
-    const [user, setUser] = useState<TJoinedUser | null>(null);
-    const [logins, setLogins] = useState<TLogin[]>([]);
-    const [files, setFiles] = useState<TFile[]>([]);
-    const [messages, setMessages] = useState<TMessage[]>([]);
-
-    const fetchUser = useCallback(async () => {
-        setLoading(true);
-
-        const trpc = getTRPCClient();
-        const { user, logins, files, messages } =
-            await trpc.users.getInfo.query({
-                userId
-            });
-
-        setUser(user);
-        setLoading(false);
-        setLogins(logins);
-        setFiles(files);
-        setMessages(messages);
-    }, [userId]);
-
-    useEffect(() => {
-        fetchUser();
-    }, [fetchUser]);
+    const {
+        data,
+        isPending: loading,
+        refetch
+    } = useQuery({
+        queryKey: ['admin', 'user-info', userId],
+        queryFn: () => getTRPCClient().users.getInfo.query({ userId })
+    });
 
     return {
-        user,
-        logins,
-        files,
-        refetch: fetchUser,
-        loading,
-        messages
+        user: data?.user ?? null,
+        logins: data?.logins ?? [],
+        files: data?.files ?? [],
+        messages: data?.messages ?? [],
+        refetch: toVoid(refetch),
+        loading
     };
 };
 
 export const useAdminInvites = () => {
-    const [loading, setLoading] = useState(true);
-    const [invites, setInvites] = useState<TJoinedInvite[]>([]);
-
-    const fetchInvites = useCallback(async () => {
-        setLoading(true);
-
-        const trpc = getTRPCClient();
-        const invites = await trpc.invites.getAll.query();
-
-        setInvites(invites);
-        setLoading(false);
-    }, []);
-
-    useEffect(() => {
-        fetchInvites();
-    }, [fetchInvites]);
+    const {
+        data: invites = [],
+        isPending: loading,
+        refetch
+    } = useQuery({
+        queryKey: ['admin', 'invites'],
+        queryFn: () => getTRPCClient().invites.getAll.query()
+    });
 
     return {
         invites,
-        refetch: fetchInvites,
+        refetch: toVoid(refetch),
         loading
     };
 };

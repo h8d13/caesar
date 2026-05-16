@@ -41,11 +41,9 @@ await initDb();
 // create a Proxy that forwards all operations to the current tdb
 const dbProxy = new Proxy({} as BunSQLiteDatabase, {
   get(_target, prop) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (tdb as any)[prop];
   },
   set(_target, prop, value) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (tdb as any)[prop] = value;
     return true;
   }
