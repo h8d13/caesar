@@ -7,19 +7,9 @@ import { useOwnUserId } from '@/features/server/users/hooks';
 import { useForm } from '@/hooks/use-form';
 import { tryDeriveAndSet } from '@/lib/e2ee';
 import { getTRPCClient } from '@/lib/trpc';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AutoFocus,
-    Input
-} from '@caesar/ui';
+import { AutoFocus, Input } from '@caesar/ui';
 import { memo, useCallback, useState } from 'react';
+import { DialogShell } from '../dialog-shell';
 import type { TDialogBaseProps } from '../types';
 
 const E2eePasswordDialog = memo(({ isOpen, close }: TDialogBaseProps) => {
@@ -63,40 +53,27 @@ const E2eePasswordDialog = memo(({ isOpen, close }: TDialogBaseProps) => {
     }, [ownUserId, values.password, close, setErrors]);
 
     return (
-        <AlertDialog open={isOpen}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Re-enter your password</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        Auto-login skips deriving your encryption key. Enter
-                        your password to read and send ephemeral messages in
-                        this session. Your password stays in this tab.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <div className="flex flex-col gap-2">
-                    <AutoFocus>
-                        <Input
-                            {...r('password')}
-                            className="mt-2"
-                            type="password"
-                            autoComplete="current-password"
-                            error={errors._general}
-                        />
-                    </AutoFocus>
-                </div>
-                <AlertDialogFooter className="gap-2">
-                    <AlertDialogCancel onClick={close}>
-                        Cancel
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                        onClick={onSubmit}
-                        disabled={!values.password || loading}
-                    >
-                        {loading ? 'Deriving…' : 'Unlock'}
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+        <DialogShell
+            isOpen={isOpen}
+            title="Re-enter your password"
+            description="Auto-login skips deriving your encryption key. Enter your password to read and send ephemeral messages in this session. Your password stays in this tab."
+            confirmLabel={loading ? 'Deriving…' : 'Unlock'}
+            onCancel={close}
+            onConfirm={onSubmit}
+            confirmDisabled={!values.password || loading}
+        >
+            <div className="flex flex-col gap-2">
+                <AutoFocus>
+                    <Input
+                        {...r('password')}
+                        className="mt-2"
+                        type="password"
+                        autoComplete="current-password"
+                        error={errors._general}
+                    />
+                </AutoFocus>
+            </div>
+        </DialogShell>
     );
 });
 

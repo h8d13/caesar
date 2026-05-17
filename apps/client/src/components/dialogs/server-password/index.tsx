@@ -2,19 +2,9 @@ import { joinServer } from '@/features/server/actions';
 import { useForm } from '@/hooks/use-form';
 import { cleanup } from '@/lib/trpc';
 import {} from '@/types';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AutoFocus,
-    Input
-} from '@caesar/ui';
+import { AutoFocus, Input } from '@caesar/ui';
 import { memo, useCallback, useState } from 'react';
+import { DialogShell } from '../dialog-shell';
 import type { TDialogBaseProps } from '../types';
 
 type TServerPasswordDialogProps = TDialogBaseProps & {
@@ -47,40 +37,26 @@ const ServerPasswordDialog = memo(
         }, [close]);
 
         return (
-            <AlertDialog open={isOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Enter the password</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This server is password protected. Please enter the
-                            password to join.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <div className="flex flex-col gap-2">
-                        <AutoFocus>
-                            <Input
-                                {...r('password')}
-                                className="mt-2"
-                                type="password"
-                                error={errors._general}
-                            />
-                        </AutoFocus>
-                    </div>
-                    <AlertDialogFooter className="gap-2">
-                        <AlertDialogCancel onClick={onCancel}>
-                            Cancel
-                        </AlertDialogCancel>
-                        <AutoFocus>
-                            <AlertDialogAction
-                                onClick={onSubmit}
-                                disabled={!values.password || loading}
-                            >
-                                Join
-                            </AlertDialogAction>
-                        </AutoFocus>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <DialogShell
+                isOpen={isOpen}
+                title="Enter the password"
+                description="This server is password protected. Please enter the password to join."
+                confirmLabel="Join"
+                onCancel={onCancel}
+                onConfirm={onSubmit}
+                confirmDisabled={!values.password || loading}
+            >
+                <div className="flex flex-col gap-2">
+                    <AutoFocus>
+                        <Input
+                            {...r('password')}
+                            className="mt-2"
+                            type="password"
+                            error={errors._general}
+                        />
+                    </AutoFocus>
+                </div>
+            </DialogShell>
         );
     }
 );

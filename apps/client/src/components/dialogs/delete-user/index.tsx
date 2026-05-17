@@ -1,24 +1,11 @@
 import { requestConfirmation } from '@/features/dialogs/actions';
 import { getTRPCClient } from '@/lib/trpc';
 import { getTrpcError, type TJoinedUser } from '@caesar/shared';
-import {
-    Alert,
-    AlertDescription,
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AutoFocus,
-    Group,
-    Switch
-} from '@caesar/ui';
+import { Alert, AlertDescription, Group, Switch } from '@caesar/ui';
 import { AlertCircleIcon } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';
+import { DialogShell } from '../dialog-shell';
 import type { TDialogBaseProps } from '../types';
 
 type TDeleteUserDialogProps = TDialogBaseProps & {
@@ -67,61 +54,46 @@ const DeleteUserDialog = memo(
         }, [close, refetch, wipe, user.name, user.id, onDelete]);
 
         return (
-            <AlertDialog open={isOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Delete {user.name}</AlertDialogTitle>
-                        <AlertDialogDescription className="sr-only">
-                            Confirm deletion of user {user.name} and choose
-                            whether to wipe their data
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <div className="flex flex-col gap-4">
-                        <Group label="Wipe All Data">
-                            <Switch
-                                checked={wipe}
-                                onCheckedChange={(checked) => setWipe(checked)}
-                            />
-                        </Group>
+            <DialogShell
+                isOpen={isOpen}
+                title={`Delete ${user.name}`}
+                confirmLabel="Delete User"
+                onCancel={close}
+                onConfirm={onSubmit}
+                confirmDisabled={isDeleting}
+            >
+                <div className="flex flex-col gap-4">
+                    <Group label="Wipe All Data">
+                        <Switch
+                            checked={wipe}
+                            onCheckedChange={(checked) => setWipe(checked)}
+                        />
+                    </Group>
 
-                        {wipe ? (
-                            <Alert variant="destructive" className="py-2">
-                                <AlertCircleIcon className="h-4 w-4" />
-                                <AlertDescription className="text-xs">
-                                    This will permanently delete the user and
-                                    all associated data, including messages,
-                                    emojis, reactions, and files. This
-                                    completely wipes the user from the server.
-                                </AlertDescription>
-                            </Alert>
-                        ) : (
-                            <Alert variant="info" className="py-2">
-                                <AlertCircleIcon className="h-4 w-4" />
-                                <AlertDescription className="text-xs">
-                                    This will delete the user but keep their
-                                    messages and data intact. The user will be
-                                    removed from the server, but their messages,
-                                    emojis, reactions, and files will remain as
-                                    "Deleted User".
-                                </AlertDescription>
-                            </Alert>
-                        )}
-                    </div>
-                    <AlertDialogFooter className="gap-2">
-                        <AlertDialogCancel onClick={close}>
-                            Cancel
-                        </AlertDialogCancel>
-                        <AutoFocus>
-                            <AlertDialogAction
-                                onClick={onSubmit}
-                                disabled={isDeleting}
-                            >
-                                Delete User
-                            </AlertDialogAction>
-                        </AutoFocus>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+                    {wipe ? (
+                        <Alert variant="destructive" className="py-2">
+                            <AlertCircleIcon className="h-4 w-4" />
+                            <AlertDescription className="text-xs">
+                                This will permanently delete the user and all
+                                associated data, including messages, emojis,
+                                reactions, and files. This completely wipes the
+                                user from the server.
+                            </AlertDescription>
+                        </Alert>
+                    ) : (
+                        <Alert variant="info" className="py-2">
+                            <AlertCircleIcon className="h-4 w-4" />
+                            <AlertDescription className="text-xs">
+                                This will delete the user but keep their
+                                messages and data intact. The user will be
+                                removed from the server, but their messages,
+                                emojis, reactions, and files will remain as
+                                "Deleted User".
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                </div>
+            </DialogShell>
         );
     }
 );

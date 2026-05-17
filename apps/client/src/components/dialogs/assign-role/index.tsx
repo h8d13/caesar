@@ -6,15 +6,6 @@ import { getTrpcError, type TJoinedUser } from '@caesar/shared';
 import {
     Alert,
     AlertDescription,
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AutoFocus,
     Group,
     Select,
     SelectContent,
@@ -25,6 +16,7 @@ import {
 import { Info } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { DialogShell } from '../dialog-shell';
 import type { TDialogBaseProps } from '../types';
 
 type TAssignRoleDialogProps = TDialogBaseProps & {
@@ -73,15 +65,11 @@ const AssignRoleDialog = memo(
         }, [user.id, selectedRoleId, close, refetch]);
 
         return (
-            <AlertDialog open={isOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>
-                            Assign role to {user.name}
-                        </AlertDialogTitle>
-                        <AlertDialogDescription className="sr-only">
-                            Select a role to assign to {user.name}
-                        </AlertDialogDescription>
+            <DialogShell
+                isOpen={isOpen}
+                title={`Assign role to ${user.name}`}
+                afterHeader={
+                    <>
                         {isOwnUser && (
                             <Alert variant="default">
                                 <Info />
@@ -98,58 +86,49 @@ const AssignRoleDialog = memo(
                                 </AlertDescription>
                             </Alert>
                         )}
-                    </AlertDialogHeader>
-                    <div className="flex flex-col gap-4">
-                        <Group label="Role">
-                            <Select
-                                onValueChange={(value) =>
-                                    setSelectedRoleId(Number(value))
-                                }
-                                value={selectedRoleId.toString()}
-                                disabled={availableRoles.length === 0}
-                            >
-                                <SelectTrigger className="w-[230px]">
-                                    <SelectValue placeholder="Select a role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {availableRoles.map((role) => (
-                                        <SelectItem
-                                            key={role.id}
-                                            value={role.id.toString()}
-                                        >
-                                            {role.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </Group>
+                    </>
+                }
+                confirmLabel="Assign Role"
+                onCancel={close}
+                onConfirm={onSubmit}
+                confirmDisabled={
+                    availableRoles.length === 0 || selectedRoleId === 0
+                }
+            >
+                <div className="flex flex-col gap-4">
+                    <Group label="Role">
+                        <Select
+                            onValueChange={(value) =>
+                                setSelectedRoleId(Number(value))
+                            }
+                            value={selectedRoleId.toString()}
+                            disabled={availableRoles.length === 0}
+                        >
+                            <SelectTrigger className="w-[230px]">
+                                <SelectValue placeholder="Select a role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {availableRoles.map((role) => (
+                                    <SelectItem
+                                        key={role.id}
+                                        value={role.id.toString()}
+                                    >
+                                        {role.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </Group>
 
-                        {selectedRole && (
-                            <PermissionsList
-                                permissions={selectedRole.permissions}
-                                variant="default"
-                                size="md"
-                            />
-                        )}
-                    </div>
-                    <AlertDialogFooter className="gap-2">
-                        <AlertDialogCancel onClick={close}>
-                            Cancel
-                        </AlertDialogCancel>
-                        <AutoFocus>
-                            <AlertDialogAction
-                                onClick={onSubmit}
-                                disabled={
-                                    availableRoles.length === 0 ||
-                                    selectedRoleId === 0
-                                }
-                            >
-                                Assign Role
-                            </AlertDialogAction>
-                        </AutoFocus>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+                    {selectedRole && (
+                        <PermissionsList
+                            permissions={selectedRole.permissions}
+                            variant="default"
+                            size="md"
+                        />
+                    )}
+                </div>
+            </DialogShell>
         );
     }
 );

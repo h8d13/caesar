@@ -1,15 +1,5 @@
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AutoFocus
-} from '@caesar/ui';
 import { memo } from 'react';
+import { DialogShell } from '../dialog-shell';
 import type { TDialogBaseProps } from '../types';
 
 type TConfirmActionDialogProps = TDialogBaseProps & {
@@ -31,33 +21,20 @@ const ConfirmActionDialog = memo(
         message,
         confirmLabel,
         cancelLabel
-    }: TConfirmActionDialogProps) => {
-        return (
-            <AlertDialog open={isOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>
-                            {title ?? 'Confirm Action'}
-                        </AlertDialogTitle>
-                        <AlertDialogDescription className="whitespace-pre-line break-all">
-                            {message ??
-                                'Are you sure you want to perform this action?'}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className="gap-2">
-                        <AlertDialogCancel onClick={onCancel}>
-                            {cancelLabel ?? 'Cancel'}
-                        </AlertDialogCancel>
-                        <AutoFocus>
-                            <AlertDialogAction onClick={onConfirm}>
-                                {confirmLabel ?? 'Confirm'}
-                            </AlertDialogAction>
-                        </AutoFocus>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        );
-    }
+    }: TConfirmActionDialogProps) => (
+        <DialogShell
+            isOpen={isOpen}
+            title={title ?? 'Confirm Action'}
+            description={
+                message ?? 'Are you sure you want to perform this action?'
+            }
+            descriptionClassName="whitespace-pre-line break-all"
+            cancelLabel={cancelLabel}
+            confirmLabel={confirmLabel}
+            onCancel={onCancel}
+            onConfirm={onConfirm}
+        />
+    )
 );
 
 export default ConfirmActionDialog;

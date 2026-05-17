@@ -1,16 +1,6 @@
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AutoFocus,
-    Input
-} from '@caesar/ui';
+import { AutoFocus, Input } from '@caesar/ui';
 import { memo, useCallback, useState } from 'react';
+import { DialogShell } from '../dialog-shell';
 import type { TDialogBaseProps } from '../types';
 
 type TTextInputDialogProps = TDialogBaseProps & {
@@ -50,41 +40,27 @@ const TextInputDialog = memo(
         }, [onCancel, close]);
 
         return (
-            <AlertDialog open={isOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>{title}</AlertDialogTitle>
-                        <AlertDialogDescription
-                            className={message ? undefined : 'sr-only'}
-                        >
-                            {message ?? 'Enter a value'}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AutoFocus>
-                        <Input
-                            value={value}
-                            onChange={(e) => setValue(e.target.value)}
-                            onEnter={onSubmit}
-                            className="mt-2"
-                            type={type}
-                            autoFocus
-                        />
-                    </AutoFocus>
-                    <AlertDialogFooter className="gap-2">
-                        <AlertDialogCancel onClick={onCancelClick}>
-                            {cancelLabel ?? 'Cancel'}
-                        </AlertDialogCancel>
-                        <AutoFocus>
-                            <AlertDialogAction
-                                onClick={onSubmit}
-                                disabled={!allowEmpty && !value}
-                            >
-                                {confirmLabel ?? 'Confirm'}
-                            </AlertDialogAction>
-                        </AutoFocus>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <DialogShell
+                isOpen={isOpen}
+                title={title}
+                description={message}
+                cancelLabel={cancelLabel}
+                confirmLabel={confirmLabel}
+                onCancel={onCancelClick}
+                onConfirm={onSubmit}
+                confirmDisabled={!allowEmpty && !value}
+            >
+                <AutoFocus>
+                    <Input
+                        value={value}
+                        onChange={(e) => setValue(e.target.value)}
+                        onEnter={onSubmit}
+                        className="mt-2"
+                        type={type}
+                        autoFocus
+                    />
+                </AutoFocus>
+            </DialogShell>
         );
     }
 );
