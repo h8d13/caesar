@@ -19,7 +19,10 @@ const editMessageRoute = rateLimitedProcedure(protectedProcedure, {
   .input(
     z.object({
       messageId: z.number(),
-      content: z.string()
+      content: z.string(),
+      // mirrors send-message: ciphertext skips sanitize, and isEncrypted
+      // must match the existing message's ephemeral state.
+      isEncrypted: z.boolean().optional().default(false)
     })
   )
   .mutation(async ({ input, ctx }) => {
@@ -27,7 +30,8 @@ const editMessageRoute = rateLimitedProcedure(protectedProcedure, {
       .select({
         userId: messages.userId,
         channelId: messages.channelId,
-        editable: messages.editable
+        editable: messages.editable,
+        expiresAt: messages.expiresAt
       })
       .from(messages)
       .where(eq(messages.id, input.messageId))
@@ -60,9 +64,16 @@ const editMessageRoute = rateLimitedProcedure(protectedProcedure, {
       message: 'Message cannot be empty.'
     });
 
-    const sanitizedContent = sanitizeMessageHtml(input.content);
+    invariant(input.isEncrypted === (message.expiresAt !== null), {
+      code: 'BAD_REQUEST',
+      message: 'Encryption state of edit does not match the original message.'
+    });
 
-    invariant(!isEmptyMessage(sanitizedContent), {
+    const finalContent = input.isEncrypted
+      ? input.content
+      : sanitizeMessageHtml(input.content);
+
+    invariant(!isEmptyMessage(finalContent), {
       code: 'BAD_REQUEST',
       message:
         'Your message only contained unsupported or removed content, so there was nothing to send.'
@@ -71,7 +82,7 @@ const editMessageRoute = rateLimitedProcedure(protectedProcedure, {
     await db
       .update(messages)
       .set({
-        content: sanitizedContent,
+        content: finalContent,
         updatedAt: Date.now(),
         editedAt: Date.now(),
         editedBy: ctx.user.id
@@ -79,7 +90,7 @@ const editMessageRoute = rateLimitedProcedure(protectedProcedure, {
       .where(eq(messages.id, input.messageId));
 
     publishMessage(input.messageId, message.channelId, 'update');
-    enqueueProcessMetadata(sanitizedContent, input.messageId);
+    enqueueProcessMetadata(finalContent, input.messageId);
   });
 
 export { editMessageRoute };

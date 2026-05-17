@@ -9,6 +9,11 @@ import {
     useUserById,
     useUsers
 } from '@/features/server/users/hooks';
+import {
+    getLocalStorageItemAsJSON,
+    LocalStorageKey,
+    setLocalStorageItemAsJSON
+} from '@/helpers/storage';
 import { getTRPCClient } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
 import {
@@ -16,42 +21,74 @@ import {
     type TDirectMessageConversation
 } from '@caesar/shared';
 import { Spinner } from '@caesar/ui';
+import { X } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { SearchUserDropdown } from './search-user-dropdown';
+
+// Client-only "close conversation". The server keeps the DM channel and
+// we just hide the entry from this reopening via SearchUserDropdown un-hides it.
+const readHiddenDms = (): number[] =>
+    getLocalStorageItemAsJSON<number[]>(LocalStorageKey.HIDDEN_DMS, []) ?? [];
+
+const writeHiddenDms = (ids: number[]) =>
+    setLocalStorageItemAsJSON(LocalStorageKey.HIDDEN_DMS, ids);
 
 type TDirectMessageItemProps = {
     dm: TDirectMessageConversation;
     selected: boolean;
     onSelect: () => void;
+    onClose: () => void;
 };
 
 const DirectMessageItem = memo(
-    ({ dm, selected, onSelect }: TDirectMessageItemProps) => {
+    ({ dm, selected, onSelect, onClose }: TDirectMessageItemProps) => {
         const user = useUserById(dm.userId);
         const unreadCount = useUnreadMessagesCount(dm.channelId);
+
+        const handleClose = useCallback(
+            (e: React.MouseEvent) => {
+                e.stopPropagation();
+                onClose();
+            },
+            [onClose]
+        );
 
         if (!user) {
             return null;
         }
 
         return (
-            <button
-                type="button"
+            <div
                 className={cn(
-                    'flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                    'flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground group',
                     selected && 'bg-accent text-accent-foreground'
                 )}
-                onClick={onSelect}
             >
-                <UserAvatar
-                    userId={user.id}
-                    className="h-6 w-6"
-                    showUserPopover
-                />
-                <span className="truncate flex-1 text-left">{user.name}</span>
+                <button
+                    type="button"
+                    className="flex flex-1 items-center gap-2 min-w-0"
+                    onClick={onSelect}
+                >
+                    <UserAvatar
+                        userId={user.id}
+                        className="h-6 w-6"
+                        showUserPopover
+                    />
+                    <span className="truncate flex-1 text-left">
+                        {user.name}
+                    </span>
+                </button>
                 <UnreadCount count={unreadCount} />
-            </button>
+                <button
+                    type="button"
+                    onClick={handleClose}
+                    className="opacity-0 group-hover:opacity-100 hover:text-foreground transition-opacity"
+                    title="Close conversation"
+                >
+                    <X className="h-3.5 w-3.5" />
+                </button>
+            </div>
         );
     }
 );
@@ -61,6 +98,7 @@ const DirectMessages = memo(() => {
     const [conversations, setConversations] = useState<
         TDirectMessageConversation[]
     >([]);
+    const [hiddenIds, setHiddenIds] = useState<number[]>(() => readHiddenDms());
     const [query, setQuery] = useState('');
     const users = useUsers();
     const channels = useChannels();
@@ -87,17 +125,23 @@ const DirectMessages = memo(() => {
         fetchConversations();
     }, [channels.length, fetchConversations]);
 
-    // auto-select the most recent conversation when none is selected or the
-    // previously selected one is no longer in the list
+    const visibleConversations = useMemo(() => {
+        if (hiddenIds.length === 0) return conversations;
+        const hidden = new Set(hiddenIds);
+        return conversations.filter((c) => !hidden.has(c.channelId));
+    }, [conversations, hiddenIds]);
+
+    // auto-select the most recent visible conversation when none is selected
+    // or the previously selected one was hidden/closed.
     useEffect(() => {
-        if (loading || conversations.length === 0) return;
-        const stillExists = conversations.some(
+        if (loading || visibleConversations.length === 0) return;
+        const stillExists = visibleConversations.some(
             (c) => c.channelId === selectedDmChannelId
         );
         if (!stillExists) {
-            setSelectedDmChannelId(conversations[0]!.channelId);
+            setSelectedDmChannelId(visibleConversations[0]!.channelId);
         }
-    }, [loading, conversations, selectedDmChannelId]);
+    }, [loading, visibleConversations, selectedDmChannelId]);
 
     // subscribe to new conversations being opened, when a new conversation is opened we refetch the list of conversations
     useEffect(() => {
@@ -112,7 +156,7 @@ const DirectMessages = memo(() => {
 
     const usersToStartDm = useMemo(() => {
         const directMessageUserIds = new Set(
-            conversations.map((dm) => dm.userId)
+            visibleConversations.map((dm) => dm.userId)
         );
 
         return users.filter(
@@ -123,7 +167,25 @@ const DirectMessages = memo(() => {
                 !directMessageUserIds.has(user.id) &&
                 user.name.toLowerCase().includes(query.trim().toLowerCase())
         );
-    }, [conversations, ownUserId, query, users]);
+    }, [visibleConversations, ownUserId, query, users]);
+
+    const unhideChannel = useCallback((channelId: number) => {
+        setHiddenIds((prev) => {
+            if (!prev.includes(channelId)) return prev;
+            const next = prev.filter((id) => id !== channelId);
+            writeHiddenDms(next);
+            return next;
+        });
+    }, []);
+
+    const onCloseConversation = useCallback((channelId: number) => {
+        setHiddenIds((prev) => {
+            if (prev.includes(channelId)) return prev;
+            const next = [...prev, channelId];
+            writeHiddenDms(next);
+            return next;
+        });
+    }, []);
 
     const onStartDm = useCallback(
         async (userId: number) => {
@@ -132,13 +194,15 @@ const DirectMessages = memo(() => {
             try {
                 const result = await trpc.dms.open.mutate({ userId });
 
+                // Reopening a previously closed DM un-hides it.
+                unhideChannel(result.channelId);
                 setSelectedDmChannelId(result.channelId);
                 await fetchConversations();
             } catch {
                 toast.error('Could not open direct message');
             }
         },
-        [fetchConversations]
+        [fetchConversations, unhideChannel]
     );
 
     return (
@@ -161,7 +225,7 @@ const DirectMessages = memo(() => {
                 </div>
             ) : (
                 <div className="space-y-0.5">
-                    {conversations.map((dm) => (
+                    {visibleConversations.map((dm) => (
                         <DirectMessageItem
                             key={dm.channelId}
                             dm={dm}
@@ -169,9 +233,10 @@ const DirectMessages = memo(() => {
                             onSelect={() =>
                                 setSelectedDmChannelId(dm.channelId)
                             }
+                            onClose={() => onCloseConversation(dm.channelId)}
                         />
                     ))}
-                    {conversations.length === 0 && (
+                    {visibleConversations.length === 0 && (
                         <div className="px-2 py-4 text-xs text-muted-foreground">
                             No direct messages yet
                         </div>

@@ -108,8 +108,8 @@ const Message = memo(
                                     {replyToUser?.name ?? 'Unknown'}
                                 </span>
                                 <span className="truncate opacity-70">
-                                    {message.replyTo.content
-                                        ? message.replyTo.content
+                                    {decrypted.replyContent
+                                        ? decrypted.replyContent
                                               .replace(/<[^>]*>/g, '')
                                               .slice(0, 100)
                                         : 'Click to see message'}
@@ -125,13 +125,13 @@ const Message = memo(
                                 message={displayMessage}
                                 disableFiles={disableFiles}
                                 disableReactions={disableReactions}
-                                disableVotes={disableVotes}
+                                disableVotes={disableVotes || !!channel?.isDm}
                             />
                         )}
                         {message.expiresAt != null && (
                             <ExpiresBadge expiresAt={message.expiresAt} />
                         )}
-                        {!isThreadReply && replyCount > 0 && (
+                        {!isThreadReply && !channel?.isDm && replyCount > 0 && (
                             <button
                                 type="button"
                                 onClick={onThreadClick}
@@ -154,6 +154,7 @@ const Message = memo(
                                 editable={message.editable ?? false}
                                 isPinned={message.pinned ?? false}
                                 disablePin={!!message.parentMessageId}
+                                disableThreads={!!channel?.isDm}
                                 isThreadReply={isThreadReply}
                             />
                         )}
@@ -161,6 +162,12 @@ const Message = memo(
                 ) : (
                     <MessageEditInline
                         message={message}
+                        initialContent={
+                            decrypted.status === 'decrypted'
+                                ? decrypted.content
+                                : (message.content ?? '')
+                        }
+                        e2ee={message.expiresAt != null ? decrypted.e2ee : null}
                         onBlur={() => setIsEditing(false)}
                     />
                 )}

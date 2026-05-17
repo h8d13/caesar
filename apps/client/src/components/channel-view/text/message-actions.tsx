@@ -35,6 +35,7 @@ type TMessageActionsProps = {
     isThreadReply?: boolean;
     isPinned?: boolean;
     disablePin?: boolean;
+    disableThreads?: boolean;
 };
 
 const MessageActions = memo(
@@ -47,7 +48,8 @@ const MessageActions = memo(
         editable,
         isThreadReply,
         isPinned,
-        disablePin
+        disablePin,
+        disableThreads
     }: TMessageActionsProps) => {
         const { recentEmojis } = useRecentEmojis();
         const recentEmojisToShow = useMemo(
@@ -130,7 +132,7 @@ const MessageActions = memo(
                         title="Reply"
                     />
                 )}
-                {!isThreadReply && (
+                {!isThreadReply && !disableThreads && (
                     <IconButton
                         size="sm"
                         variant="ghost"

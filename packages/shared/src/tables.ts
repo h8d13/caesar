@@ -133,7 +133,12 @@ export type TJoinedMessage = TMessage & {
   reactions: TJoinedMessageReaction[];
   scVotes: TMessageScVote[];
   replyCount?: number;
-  replyTo?: { id: number; content: string | null; userId: number } | null;
+  replyTo?: {
+    id: number;
+    content: string | null;
+    userId: number;
+    expiresAt: number | null;
+  } | null;
 };
 
 export type TJoinedEmoji = TEmoji & {

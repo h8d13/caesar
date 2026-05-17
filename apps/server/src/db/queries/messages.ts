@@ -129,15 +129,20 @@ const getMessage = async (
     replyCount = replyCountRow?.count ?? 0;
   }
 
-  let replyTo: { id: number; content: string | null; userId: number } | null =
-    null;
+  let replyTo: {
+    id: number;
+    content: string | null;
+    userId: number;
+    expiresAt: number | null;
+  } | null = null;
 
   if (message.replyToMessageId) {
     const replyToRow = await db
       .select({
         id: messages.id,
         content: messages.content,
-        userId: messages.userId
+        userId: messages.userId,
+        expiresAt: messages.expiresAt
       })
       .from(messages)
       .where(eq(messages.id, message.replyToMessageId))
@@ -307,7 +312,12 @@ const joinMessagesWithRelations = async (
 
   let replyToByMessage: Record<
     number,
-    { id: number; content: string | null; userId: number }
+    {
+      id: number;
+      content: string | null;
+      userId: number;
+      expiresAt: number | null;
+    }
   > = {};
 
   if (replyToIds.length > 0) {
@@ -315,7 +325,8 @@ const joinMessagesWithRelations = async (
       .select({
         id: messages.id,
         content: messages.content,
-        userId: messages.userId
+        userId: messages.userId,
+        expiresAt: messages.expiresAt
       })
       .from(messages)
       .where(inArray(messages.id, replyToIds));
