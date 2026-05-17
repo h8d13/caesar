@@ -1,10 +1,8 @@
-import { ChannelPermission, Permission, ServerEvents } from '@caesar/shared';
-import { VoiceRuntime } from '@server/runtimes/voice';
-import { invariant } from '@server/utils/invariant';
-import { protectedProcedure } from '@server/utils/trpc';
+import { ChannelPermission, ServerEvents } from '@caesar/shared';
+import { voiceProcedure } from '@server/utils/voice-procedure';
 import { z } from 'zod';
 
-const updateVoiceStateRoute = protectedProcedure
+const updateVoiceStateRoute = voiceProcedure
   .input(
     z.object({
       micMuted: z.boolean().optional(),
@@ -14,26 +12,13 @@ const updateVoiceStateRoute = protectedProcedure
     })
   )
   .mutation(async ({ input, ctx }) => {
-    await ctx.needsPermission(Permission.JOIN_VOICE_CHANNELS);
-
-    invariant(ctx.currentVoiceChannelId, {
-      code: 'BAD_REQUEST',
-      message: 'User is not in a voice channel'
-    });
-
     const validatedInput = { ...input };
 
     const [canSpeak, canUseWebcam, canShareScreen] = await Promise.all([
+      ctx.hasChannelPermission(ctx.voiceChannelId, ChannelPermission.SPEAK),
+      ctx.hasChannelPermission(ctx.voiceChannelId, ChannelPermission.WEBCAM),
       ctx.hasChannelPermission(
-        ctx.currentVoiceChannelId,
-        ChannelPermission.SPEAK
-      ),
-      ctx.hasChannelPermission(
-        ctx.currentVoiceChannelId,
-        ChannelPermission.WEBCAM
-      ),
-      ctx.hasChannelPermission(
-        ctx.currentVoiceChannelId,
+        ctx.voiceChannelId,
         ChannelPermission.SHARE_SCREEN
       )
     ]);
@@ -50,21 +35,14 @@ const updateVoiceStateRoute = protectedProcedure
       delete validatedInput.sharingScreen;
     }
 
-    const runtime = VoiceRuntime.findById(ctx.currentVoiceChannelId);
-
-    invariant(runtime, {
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'Voice runtime not found for this channel'
-    });
-
-    runtime.updateUserState(ctx.user.id, {
+    ctx.voiceRuntime.updateUserState(ctx.user.id, {
       ...validatedInput
     });
 
-    const newState = runtime.getUserState(ctx.user.id);
+    const newState = ctx.voiceRuntime.getUserState(ctx.user.id);
 
     ctx.pubsub.publish(ServerEvents.USER_VOICE_STATE_UPDATE, {
-      channelId: ctx.currentVoiceChannelId,
+      channelId: ctx.voiceChannelId,
       userId: ctx.user.id,
       state: newState
     });

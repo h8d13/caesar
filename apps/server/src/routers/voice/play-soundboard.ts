@@ -1,30 +1,18 @@
-import { ServerEvents } from '@caesar/shared';
-import { VoiceRuntime } from '@server/runtimes/voice';
-import { invariant } from '@server/utils/invariant';
-import { protectedProcedure } from '@server/utils/trpc';
+import { Permission, ServerEvents } from '@caesar/shared';
+import { voiceProcedure } from '@server/utils/voice-procedure';
 import { z } from 'zod';
 
-const playSoundboardRoute = protectedProcedure
+const playSoundboardRoute = voiceProcedure
   .input(
     z.object({
       soundId: z.number()
     })
   )
   .mutation(async ({ input, ctx }) => {
-    invariant(ctx.currentVoiceChannelId, {
-      code: 'BAD_REQUEST',
-      message: 'User is not in a voice channel'
-    });
-
-    const runtime = VoiceRuntime.findById(ctx.currentVoiceChannelId);
-
-    invariant(runtime, {
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'Voice runtime not found for this channel'
-    });
+    await ctx.needsPermission(Permission.USE_SOUNDBOARD);
 
     ctx.pubsub.publish(ServerEvents.SOUNDBOARD_PLAY, {
-      channelId: ctx.currentVoiceChannelId,
+      channelId: ctx.voiceChannelId,
       soundId: input.soundId
     });
   });

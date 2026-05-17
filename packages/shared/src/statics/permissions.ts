@@ -6,6 +6,7 @@ export enum Permission {
   JOIN_VOICE_CHANNELS = 'JOIN_VOICE_CHANNELS',
   SHARE_SCREEN = 'SHARE_SCREEN',
   ENABLE_WEBCAM = 'ENABLE_WEBCAM',
+  USE_SOUNDBOARD = 'USE_SOUNDBOARD',
   // ADMIN PERMISSIONS
   MANAGE_CHANNELS = 'MANAGE_CHANNELS',
   MANAGE_CHANNEL_PERMISSIONS = 'MANAGE_CHANNEL_PERMISSIONS',
@@ -29,6 +30,7 @@ export const permissionLabels: Record<Permission, string> = {
   [Permission.JOIN_VOICE_CHANNELS]: 'Join voice channels',
   [Permission.SHARE_SCREEN]: 'Share screen',
   [Permission.ENABLE_WEBCAM]: 'Enable webcam',
+  [Permission.USE_SOUNDBOARD]: 'Use soundboard',
   [Permission.MANAGE_CHANNELS]: 'Manage channels',
   [Permission.MANAGE_CHANNEL_PERMISSIONS]: 'Manage channel permissions',
   [Permission.MANAGE_CATEGORIES]: 'Manage categories',
@@ -53,6 +55,8 @@ export const permissionDescriptions: Record<Permission, string> = {
     'Grants the ability to join voice channels.',
   [Permission.SHARE_SCREEN]: 'Grants the ability to share the screen.',
   [Permission.ENABLE_WEBCAM]: 'Grants the ability to enable the webcam.',
+  [Permission.USE_SOUNDBOARD]:
+    'Grants the ability to play soundboard sounds in voice channels.',
   [Permission.MANAGE_CHANNELS]:
     'Grants the ability to create, update, and delete channels.',
   [Permission.MANAGE_CHANNEL_PERMISSIONS]:
@@ -82,7 +86,8 @@ export const DEFAULT_ROLE_PERMISSIONS = [
   Permission.SEND_MESSAGES,
   Permission.UPLOAD_FILES,
   Permission.SHARE_SCREEN,
-  Permission.ENABLE_WEBCAM
+  Permission.ENABLE_WEBCAM,
+  Permission.USE_SOUNDBOARD
 ];
 
 export enum UploadHeaders {

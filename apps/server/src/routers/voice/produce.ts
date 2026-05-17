@@ -1,16 +1,14 @@
 import {
   ChannelPermission,
   getMediasoupKind,
-  Permission,
   ServerEvents,
   StreamKind
 } from '@caesar/shared';
-import { VoiceRuntime } from '@server/runtimes/voice';
 import { invariant } from '@server/utils/invariant';
-import { protectedProcedure } from '@server/utils/trpc';
+import { voiceProcedure } from '@server/utils/voice-procedure';
 import { z } from 'zod';
 
-const produceRoute = protectedProcedure
+const produceRoute = voiceProcedure
   .input(
     z.object({
       transportId: z.string(),
@@ -19,38 +17,26 @@ const produceRoute = protectedProcedure
     })
   )
   .mutation(async ({ input, ctx }) => {
-    await ctx.needsPermission(Permission.JOIN_VOICE_CHANNELS);
-
-    invariant(ctx.currentVoiceChannelId, {
-      code: 'BAD_REQUEST',
-      message: 'User is not in a voice channel'
-    });
-
     if (input.kind === StreamKind.AUDIO) {
       await ctx.needsChannelPermission(
-        ctx.currentVoiceChannelId,
+        ctx.voiceChannelId,
         ChannelPermission.SPEAK
       );
     } else if (input.kind === StreamKind.VIDEO) {
       await ctx.needsChannelPermission(
-        ctx.currentVoiceChannelId,
+        ctx.voiceChannelId,
         ChannelPermission.WEBCAM
       );
     } else if (input.kind === StreamKind.SCREEN) {
       await ctx.needsChannelPermission(
-        ctx.currentVoiceChannelId,
+        ctx.voiceChannelId,
         ChannelPermission.SHARE_SCREEN
       );
     }
 
-    const runtime = VoiceRuntime.findById(ctx.currentVoiceChannelId);
-
-    invariant(runtime, {
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'Voice runtime not found for this channel'
-    });
-
-    const producerTransport = runtime.getProducerTransport(ctx.user.id);
+    const producerTransport = ctx.voiceRuntime.getProducerTransport(
+      ctx.user.id
+    );
 
     invariant(producerTransport, {
       code: 'NOT_FOUND',
@@ -63,13 +49,13 @@ const produceRoute = protectedProcedure
       appData: { kind: input.kind, userId: ctx.user.id }
     });
 
-    runtime.addProducer(ctx.user.id, input.kind, producer);
+    ctx.voiceRuntime.addProducer(ctx.user.id, input.kind, producer);
 
     ctx.pubsub.publishForChannel(
-      ctx.currentVoiceChannelId,
+      ctx.voiceChannelId,
       ServerEvents.VOICE_NEW_PRODUCER,
       {
-        channelId: ctx.currentVoiceChannelId,
+        channelId: ctx.voiceChannelId,
         remoteId: ctx.user.id,
         kind: input.kind
       }

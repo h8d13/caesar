@@ -1,10 +1,9 @@
-import { Permission, ServerEvents, StreamKind } from '@caesar/shared';
-import { VoiceRuntime } from '@server/runtimes/voice';
+import { ServerEvents, StreamKind } from '@caesar/shared';
 import { invariant } from '@server/utils/invariant';
-import { protectedProcedure } from '@server/utils/trpc';
+import { voiceProcedure } from '@server/utils/voice-procedure';
 import { z } from 'zod';
 
-const consumeRoute = protectedProcedure
+const consumeRoute = voiceProcedure
   .input(
     z.object({
       kind: z.enum(StreamKind),
@@ -13,35 +12,23 @@ const consumeRoute = protectedProcedure
     })
   )
   .mutation(async ({ input, ctx }) => {
-    await ctx.needsPermission(Permission.JOIN_VOICE_CHANNELS);
-
-    invariant(ctx.currentVoiceChannelId, {
-      code: 'BAD_REQUEST',
-      message: 'User is not in a voice channel'
-    });
-
-    const runtime = VoiceRuntime.findById(ctx.currentVoiceChannelId);
-
-    invariant(runtime, {
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'Voice runtime not found for this channel'
-    });
-
-    const producer = runtime.getProducer(input.kind, input.remoteId);
+    const producer = ctx.voiceRuntime.getProducer(input.kind, input.remoteId);
 
     invariant(producer, {
       code: 'NOT_FOUND',
       message: 'Producer not found'
     });
 
-    const userConsumerTransport = runtime.getConsumerTransport(ctx.user.id);
+    const userConsumerTransport = ctx.voiceRuntime.getConsumerTransport(
+      ctx.user.id
+    );
 
     invariant(userConsumerTransport, {
       code: 'NOT_FOUND',
       message: 'Consumer transport not found'
     });
 
-    const router = runtime.getRouter();
+    const router = ctx.voiceRuntime.getRouter();
     const routerCanConsume = router.canConsume({
       producerId: producer.id,
       rtpCapabilities: input.rtpCapabilities
@@ -58,7 +45,12 @@ const consumeRoute = protectedProcedure
       paused: false
     });
 
-    runtime.addConsumer(ctx.user.id, input.remoteId, input.kind, consumer);
+    ctx.voiceRuntime.addConsumer(
+      ctx.user.id,
+      input.remoteId,
+      input.kind,
+      consumer
+    );
 
     consumer.on('producerclose', () => {
       if (!ctx.currentVoiceChannelId) return;
