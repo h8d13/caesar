@@ -28,6 +28,7 @@ export enum LocalStorageKey {
     WHITEBOARD_SIDEBAR_WIDTH = 'caesar-whiteboard-sidebar-width',
     VOICE_CHAT_SIDEBAR_WIDTH = 'caesar-voice-chat-sidebar-width',
     BROWSER_NOTIFICATIONS_FOR_MENTIONS = 'caesar-browser-notifications-for-mentions',
+    BROWSER_NOTIFICATIONS_FOR_DMS = 'caesar-browser-notifications-for-dms',
     HIDDEN_STREAMS = 'caesar-hidden-streams',
     HIDDEN_DMS = 'caesar-hidden-dms',
     BIRTHDAY_LAST_SHOWN = 'caesar-birthday-last-shown'

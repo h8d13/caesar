@@ -116,3 +116,11 @@ export const setBrowserNotificationsForMentions = (enabled: boolean) => {
         enabled
     );
 };
+
+export const setBrowserNotificationsForDms = (enabled: boolean) => {
+    store.dispatch(appSliceActions.setBrowserNotificationsForDms(enabled));
+    setLocalStorageItemBool(
+        LocalStorageKey.BROWSER_NOTIFICATIONS_FOR_DMS,
+        enabled
+    );
+};

@@ -1,11 +1,13 @@
 import {
     setAutoJoinLastChannel,
     setBrowserNotifications,
+    setBrowserNotificationsForDms,
     setBrowserNotificationsForMentions
 } from '@/features/app/actions';
 import {
     useAutoJoinLastChannel,
     useBrowserNotifications,
+    useBrowserNotificationsForDms,
     useBrowserNotificationsForMentions
 } from '@/features/app/hooks';
 import {
@@ -24,6 +26,7 @@ const Others = memo(() => {
     const browserNotifications = useBrowserNotifications();
     const browserNotificationsForMentions =
         useBrowserNotificationsForMentions();
+    const browserNotificationsForDms = useBrowserNotificationsForDms();
 
     return (
         <Card>
@@ -66,6 +69,17 @@ const Others = memo(() => {
                         checked={browserNotificationsForMentions}
                         onCheckedChange={(value) =>
                             setBrowserNotificationsForMentions(value)
+                        }
+                    />
+                </Group>
+                <Group
+                    label="Notifications for DMs Only"
+                    description="Recieve browser notifications for new direct messages. This setting is ignored if 'Browser Notifications' is enabled."
+                >
+                    <Switch
+                        checked={browserNotificationsForDms}
+                        onCheckedChange={(value) =>
+                            setBrowserNotificationsForDms(value)
                         }
                     />
                 </Group>

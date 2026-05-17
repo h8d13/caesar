@@ -1,4 +1,5 @@
 import {
+    browserNotificationsForDmsSelector,
     browserNotificationsForMentionsSelector,
     browserNotificationsSelector,
     dmsOpenSelector,
@@ -123,6 +124,9 @@ export const addMessages = (
             browserNotificationsSelector(state);
         const notificationsForMentionsOnly =
             browserNotificationsForMentionsSelector(state);
+        const notificationsForDmsOnly =
+            browserNotificationsForDmsSelector(state);
+        const channelIsDm = !!channelByIdSelector(state, channelId)?.isDm;
         const targetMessage = messages[0];
         const isFromOwnUser = ownUserId === targetMessage.userId;
         // selectedDmChannelId persists across DM-panel close (so reopening
@@ -155,17 +159,21 @@ export const addMessages = (
 
             // only send browser notifications if the user is not currently viewing this channel
             if (!isChannelSelected || isWindowHidden) {
-                if (notificationsForMentionsOnly) {
-                    const isMentioned = hasMention(
-                        targetMessage.content ?? null,
-                        ownUserId
-                    );
+                // Precedence: "all" wins outright; otherwise mentions-only
+                // and DMs-only filters can each independently allow a
+                // notification (OR'd, not AND'd).
+                if (hasBrowserNotificationsEnabled) {
+                    sendBrowserNotification(targetMessage, channelId);
+                } else {
+                    const isMentioned =
+                        notificationsForMentionsOnly &&
+                        hasMention(targetMessage.content ?? null, ownUserId);
+                    const matchesDmFilter =
+                        notificationsForDmsOnly && channelIsDm;
 
-                    if (isMentioned) {
+                    if (isMentioned || matchesDmFilter) {
                         sendBrowserNotification(targetMessage, channelId);
                     }
-                } else if (hasBrowserNotificationsEnabled) {
-                    sendBrowserNotification(targetMessage, channelId);
                 }
             }
         }

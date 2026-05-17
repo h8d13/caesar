@@ -34,6 +34,9 @@ export const browserNotificationsSelector = (state: IRootState) =>
 export const browserNotificationsForMentionsSelector = (state: IRootState) =>
     state.app.browserNotificationsForMentions;
 
+export const browserNotificationsForDmsSelector = (state: IRootState) =>
+    state.app.browserNotificationsForDms;
+
 export const threadSidebarDataSelector = createSelector(
     [
         threadSidebarOpenSelector,
