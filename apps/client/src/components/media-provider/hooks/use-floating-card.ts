@@ -30,8 +30,7 @@ export const useFloatingCard = (
         getLocalStorageItemAsJSON<TPosition>(positionKey)
     );
     const [size, setSize] = useState<TSize>(
-        getLocalStorageItemAsJSON<TSize>(sizeKey) ??
-            DEFAULT_SIZE
+        getLocalStorageItemAsJSON<TSize>(sizeKey) ?? DEFAULT_SIZE
     );
     const [isDragging, setIsDragging] = useState(false);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });

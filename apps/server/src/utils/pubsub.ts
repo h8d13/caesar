@@ -153,6 +153,12 @@ type Events = {
     channelId: number;
     ephemeralMs: number | null;
   };
+  [ServerEvents.DM_CALL_RING]: {
+    channelId: number;
+    callerId: number;
+  };
+  [ServerEvents.DM_CALL_ACCEPTED]: { channelId: number };
+  [ServerEvents.DM_CALL_ENDED]: { channelId: number };
 
   [ServerEvents.SOUNDBOARD_PLAY]: {
     channelId: number;

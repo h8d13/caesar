@@ -1,6 +1,5 @@
 import { joinVoice } from '@/features/server/voice/actions';
 import { getTRPCClient } from '@/lib/trpc';
-import { useAppDispatch } from '@/store';
 import { Phone, PhoneOff } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -8,7 +7,6 @@ import { toast } from 'sonner';
 type TProps = { channelId: number };
 
 const DmCallButton = memo(({ channelId }: TProps) => {
-    const dispatch = useAppDispatch();
     const [outgoing, setOutgoing] = useState(false);
 
     // Clear outgoing state when peer accepts (we join voice).
@@ -18,7 +16,7 @@ const DmCallButton = memo(({ channelId }: TProps) => {
             onData: (data) => {
                 if (data.channelId !== channelId) return;
                 setOutgoing(false);
-                dispatch(joinVoice(channelId));
+                void joinVoice(channelId);
             }
         });
         // Peer rejected / cancelled before accepting.
@@ -32,7 +30,7 @@ const DmCallButton = memo(({ channelId }: TProps) => {
             sub.unsubscribe();
             endedSub.unsubscribe();
         };
-    }, [channelId, dispatch]);
+    }, [channelId]);
 
     const onCall = useCallback(async () => {
         try {

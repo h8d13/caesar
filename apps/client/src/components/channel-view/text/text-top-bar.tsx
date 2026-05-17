@@ -3,9 +3,9 @@ import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
 import { getTRPCClient } from '@/lib/trpc';
 import { useQueryClient } from '@tanstack/react-query';
 import { Hash, PenTool, Timer } from 'lucide-react';
-import { DmCallButton } from './dm-call-button';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { DmCallButton } from './dm-call-button';
 import { PinnedMessagesPopover } from './pinned-messages-popover';
 
 const parseDmPeerId = (

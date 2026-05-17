@@ -13,7 +13,7 @@ import { useFloatingCard } from './hooks/use-floating-card';
 const DmCallOverlay = memo(() => {
     const currentVoiceChannelId = useCurrentVoiceChannelId();
     const channel = useChannelById(currentVoiceChannelId ?? -1);
-    const { cardRef, cardStyle, handleMouseDown } = useFloatingCard(
+    const { cardRef, getStyle, handleMouseDown } = useFloatingCard(
         LocalStorageKey.DM_CALL_OVERLAY_POSITION,
         LocalStorageKey.DM_CALL_OVERLAY_SIZE
     );
@@ -23,7 +23,7 @@ const DmCallOverlay = memo(() => {
     return (
         <div
             ref={cardRef}
-            style={cardStyle}
+            style={getStyle()}
             className="absolute z-50 rounded-lg overflow-hidden border border-border bg-background shadow-xl flex flex-col"
         >
             <div

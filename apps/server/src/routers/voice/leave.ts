@@ -30,7 +30,9 @@ const leaveVoiceRoute = voiceProcedure.mutation(async ({ ctx }) => {
 
   // For DM calls: notify the peer so their overlay closes, destroy runtime if empty.
   if (channel.isDm) {
-    const participants = await getDirectMessageChannelParticipantIds(ctx.voiceChannelId);
+    const participants = await getDirectMessageChannelParticipantIds(
+      ctx.voiceChannelId
+    );
     const peerId = participants.find((id) => id !== ctx.user.id);
     if (peerId != null) {
       ctx.pubsub.publishFor(peerId, ServerEvents.DM_CALL_ENDED, {

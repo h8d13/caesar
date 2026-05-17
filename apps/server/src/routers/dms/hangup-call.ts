@@ -16,7 +16,9 @@ const hangupCallRoute = protectedProcedure
     // Clear pending ring if still in that state.
     pendingCalls.delete(input.channelId);
 
-    const participants = await getDirectMessageChannelParticipantIds(input.channelId);
+    const participants = await getDirectMessageChannelParticipantIds(
+      input.channelId
+    );
     const otherId = participants.find((id) => id !== ctx.userId);
 
     if (otherId != null) {

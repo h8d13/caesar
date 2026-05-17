@@ -10,7 +10,10 @@ import { z } from 'zod';
 
 // In-memory registry: channelId -> { callerId, peerId }.
 // Cleared on accept or hangup. Lives only for the duration of ringing.
-export const pendingCalls = new Map<number, { callerId: number; peerId: number }>();
+export const pendingCalls = new Map<
+  number,
+  { callerId: number; peerId: number }
+>();
 
 const callRoute = protectedProcedure
   .input(z.object({ channelId: z.number() }))
@@ -28,7 +31,9 @@ const callRoute = protectedProcedure
       message: 'Already in a call'
     });
 
-    const participants = await getDirectMessageChannelParticipantIds(input.channelId);
+    const participants = await getDirectMessageChannelParticipantIds(
+      input.channelId
+    );
     const peerId = participants.find((id) => id !== ctx.userId);
 
     invariant(peerId != null, {
