@@ -17,8 +17,8 @@ const UserSettings = memo(({ close }: TUserSettingsProps) => {
                     <TabsList className="mb-6">
                         <TabsTrigger value="devices">Devices</TabsTrigger>
                         <TabsTrigger value="profile">Profile</TabsTrigger>
-                        <TabsTrigger value="password">Password</TabsTrigger>
                         <TabsTrigger value="others">Others</TabsTrigger>
+                        <TabsTrigger value="password">Password</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="devices" className="space-y-6">
@@ -27,11 +27,11 @@ const UserSettings = memo(({ close }: TUserSettingsProps) => {
                     <TabsContent value="profile" className="space-y-6">
                         <Profile />
                     </TabsContent>
-                    <TabsContent value="password" className="space-y-6">
-                        <Password />
-                    </TabsContent>
                     <TabsContent value="others" className="space-y-6">
                         <Others />
+                    </TabsContent>
+                    <TabsContent value="password" className="space-y-6">
+                        <Password />
                     </TabsContent>
                 </Tabs>
             </div>
