@@ -16,7 +16,7 @@ import { useOwnUserId, useUsers } from '@/features/server/users/hooks';
 import { handleBuiltInCommand } from '@/helpers/built-in-commands';
 import { LocalStorageKey } from '@/helpers/storage';
 import { throttle } from '@/helpers/throttle';
-import { dmKey, hasPriv, seal } from '@/lib/e2ee';
+import { dmKey, hasPriv, open, seal } from '@/lib/e2ee';
 import { getTRPCClient } from '@/lib/trpc';
 import { useDmE2eeContext } from '@/lib/use-dm-e2ee';
 import {
@@ -27,6 +27,7 @@ import {
     type TJoinedMessage
 } from '@caesar/shared';
 import { Spinner } from '@caesar/ui';
+import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -68,6 +69,40 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
     const allUsers = useUsers();
     const ownUserId = useOwnUserId();
     const e2eeContext = useDmE2eeContext(channelId, channel?.isDm);
+
+    // Decrypt the "Replying to ..." preview shown above the compose area
+    // when the target message was ephemeral. Returns null on miss; we then
+    // fall back to a generic placeholder so no ciphertext ever leaks.
+    const replyingToIsEphemeral = replyingTo?.expiresAt != null;
+    const canDecryptReplyingTo =
+        replyingToIsEphemeral &&
+        replyingTo?.content != null &&
+        hasPriv() &&
+        e2eeContext?.peerPublicKey != null &&
+        e2eeContext.peerUserId !== null &&
+        ownUserId !== undefined;
+    const { data: replyingToDecrypted } = useQuery({
+        enabled: canDecryptReplyingTo,
+        queryKey: [
+            'e2ee',
+            'decrypt-replying-to',
+            replyingTo?.id,
+            replyingTo?.content
+        ],
+        queryFn: async () => {
+            const key = await dmKey(
+                e2eeContext!.peerPublicKey!,
+                ownUserId!,
+                e2eeContext!.peerUserId!
+            );
+            return open(key, replyingTo!.content!);
+        },
+        staleTime: Infinity,
+        retry: false
+    });
+    const replyingToPreview = replyingToIsEphemeral
+        ? (replyingToDecrypted ?? null)
+        : (replyingTo?.content ?? null);
     const mentionUsers = useMemo(
         () =>
             channel?.isDm
@@ -266,8 +301,8 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
                                 Replying to
                             </span>
                             <span className="font-medium truncate">
-                                {replyingTo.content
-                                    ? replyingTo.content
+                                {replyingToPreview
+                                    ? replyingToPreview
                                           .replace(/<[^>]*>/g, '')
                                           .slice(0, 80)
                                     : 'a message'}

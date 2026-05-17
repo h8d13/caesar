@@ -153,7 +153,9 @@ const Message = memo(
                                 channelId={message.channelId}
                                 editable={message.editable ?? false}
                                 isPinned={message.pinned ?? false}
-                                disablePin={!!message.parentMessageId}
+                                disablePin={
+                                    !!message.parentMessageId || !!channel?.isDm
+                                }
                                 disableThreads={!!channel?.isDm}
                                 isThreadReply={isThreadReply}
                             />
