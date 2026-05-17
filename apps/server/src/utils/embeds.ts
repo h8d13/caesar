@@ -49,6 +49,10 @@ const loadEmbeds = async () => {
   try {
     logger.debug('Extracting interface...');
 
+    // unzip merges, so a stale file from a previous builds
+    // don't linger across deploys. Clear first so
+    // the on-disk dir is always an exact mirror of the bundled zip.
+    await fs.rm(INTERFACE_PATH, { recursive: true, force: true });
     await unzipBlobToDirectory(interfaceBlob, INTERFACE_PATH);
   } catch (error) {
     logger.error('Failed to extract interface:', error);
@@ -58,6 +62,9 @@ const loadEmbeds = async () => {
   try {
     logger.debug('Extracting drizzle migrations...');
 
+    // same reasoning: keep DRIZZLE_PATH a verbatim mirror of the embedded
+    // zip so renamed/removed migrations don't haunt future runs or leave stales.
+    await fs.rm(DRIZZLE_PATH, { recursive: true, force: true });
     await unzipBlobToDirectory(drizzleBlob, DRIZZLE_PATH);
   } catch (error) {
     logger.error('Failed to extract drizzle migrations:', error);
