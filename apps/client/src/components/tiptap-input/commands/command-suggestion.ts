@@ -3,6 +3,7 @@ import { computePosition } from '@floating-ui/dom';
 import type { Editor } from '@tiptap/core';
 import { ReactRenderer } from '@tiptap/react';
 import { CommandList, type CommandListRef } from './command-list';
+import { destroySuggestion } from './destroy-suggestion';
 
 interface SuggestionProps {
     editor: Editor;
@@ -60,16 +61,7 @@ export const CommandSuggestion = {
                         items: props.items,
                         onSelect: (item: TBuiltInCommand) => {
                             props.command(item);
-
-                            if (
-                                component?.element &&
-                                document.body.contains(component.element)
-                            ) {
-                                document.body.removeChild(component.element);
-                            }
-
-                            component?.destroy();
-                            component = null;
+                            component = destroySuggestion(component);
                         }
                     },
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -90,16 +82,7 @@ export const CommandSuggestion = {
                     items: props.items,
                     onSelect: (item: TBuiltInCommand) => {
                         props.command(item);
-
-                        if (
-                            component?.element &&
-                            document.body.contains(component.element)
-                        ) {
-                            document.body.removeChild(component.element);
-                        }
-
-                        component?.destroy();
-                        component = null;
+                        component = destroySuggestion(component);
                     }
                 });
 
@@ -123,15 +106,7 @@ export const CommandSuggestion = {
             },
 
             onExit() {
-                if (
-                    component?.element &&
-                    document.body.contains(component.element)
-                ) {
-                    document.body.removeChild(component.element);
-                }
-
-                component?.destroy();
-                component = null;
+                component = destroySuggestion(component);
             }
         };
     }

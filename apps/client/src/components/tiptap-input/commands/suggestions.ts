@@ -2,6 +2,7 @@ import { computePosition } from '@floating-ui/dom';
 import type { Editor } from '@tiptap/core';
 import { ReactRenderer } from '@tiptap/react';
 import type { TEmojiItem } from '../helpers';
+import { destroySuggestion } from './destroy-suggestion';
 import { EmojiList, type EmojiListRef } from './emoji-list';
 
 interface EmojiStorage {
@@ -71,16 +72,7 @@ export const EmojiSuggestion = {
                         items: filteredItems,
                         onSelect: (item: TEmojiItem) => {
                             props.command(item);
-
-                            if (
-                                component?.element &&
-                                document.body.contains(component.element)
-                            ) {
-                                document.body.removeChild(component.element);
-                            }
-
-                            component?.destroy();
-                            component = null;
+                            component = destroySuggestion(component);
                         }
                     },
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -106,16 +98,7 @@ export const EmojiSuggestion = {
                     items: filteredItems,
                     onSelect: (item: TEmojiItem) => {
                         props.command(item);
-
-                        if (
-                            component?.element &&
-                            document.body.contains(component.element)
-                        ) {
-                            document.body.removeChild(component.element);
-                        }
-
-                        component?.destroy();
-                        component = null;
+                        component = destroySuggestion(component);
                     }
                 });
 
@@ -137,15 +120,7 @@ export const EmojiSuggestion = {
             },
 
             onExit() {
-                if (
-                    component?.element &&
-                    document.body.contains(component.element)
-                ) {
-                    document.body.removeChild(component.element);
-                }
-
-                component?.destroy();
-                component = null;
+                component = destroySuggestion(component);
             }
         };
     }
