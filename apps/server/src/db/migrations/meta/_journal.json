@@ -106,6 +106,13 @@
       "when": 1779443422853,
       "tag": "0014_backfill_use_soundboard",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "6",
+      "when": 1779529822853,
+      "tag": "0015_normalize_user_identities",
+      "breakpoints": true
     }
   ]
 }
