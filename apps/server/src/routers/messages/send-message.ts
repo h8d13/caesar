@@ -142,7 +142,7 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
         'Ephemeral state changed. Refresh and resend (the toggle was changed mid-send).'
     });
 
-    // Ciphertext is opaque base64 — sanitization would only corrupt it.
+    // Ciphertext is opaque base64 sanitization would only corrupt it.
     // Plaintext goes through the normal HTML sanitizer.
     const targetContent = input.isEncrypted
       ? input.content

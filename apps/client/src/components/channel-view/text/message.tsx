@@ -58,9 +58,7 @@ const Message = memo(
             [can, isFromOwnUser]
         );
 
-        // mention detection runs against the visible content (decrypted if
-        // available, original ciphertext otherwise — which trivially won't
-        // match any @mention pattern, so it's fine).
+        // highlight bar when @mentioned. checks decrypted content if E2EE.
         const isMentioned = useMemo(
             () => hasMention(displayMessage.content, ownUserId),
             [displayMessage.content, ownUserId]

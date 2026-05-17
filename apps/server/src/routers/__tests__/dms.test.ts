@@ -128,9 +128,13 @@ describe('dms router', () => {
     await caller1.dms.setEphemeral({ channelId, enabled: true });
 
     const before = Date.now();
+    // server invariant: ephemeral channels require isEncrypted=true. The
+    // content is just a marker string for the test (not real ciphertext) —
+    // this test only exercises expires_at + prune, not decryption.
     await caller1.messages.send({
       channelId,
       content: 'ephemeral',
+      isEncrypted: true,
       files: []
     });
     const after = Date.now();
