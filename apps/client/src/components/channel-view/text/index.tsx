@@ -144,10 +144,17 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
             const trpc = getTRPCClient();
 
             // E2EE: encrypt content if this DM is currently ephemeral.
-            // Refuse if our priv is missing (post-refresh) or peer hasn't
-            // registered a key yet.
+            // Re-fetch ephemeral state right before send to avoid sending
+            // ciphertext to a channel where the toggle was just turned off
+            // (server enforces the matching invariant either way).
             let content = message;
-            if (e2eeContext?.ephemeralMs != null) {
+            let isEncrypted = false;
+            const isDm = !!channel?.isDm;
+            const ephemeralMs = isDm
+                ? (await trpc.dms.getEphemeral.query({ channelId })).ephemeralMs
+                : null;
+
+            if (ephemeralMs != null) {
                 if (!hasPriv()) {
                     toast.error(
                         'Re-enter your password to send ephemeral messages.'
@@ -155,7 +162,7 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
                     return false;
                 }
                 if (
-                    !e2eeContext.peerPublicKey ||
+                    !e2eeContext?.peerPublicKey ||
                     e2eeContext.peerUserId === null ||
                     ownUserId === undefined
                 ) {
@@ -171,6 +178,7 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
                         e2eeContext.peerUserId
                     );
                     content = await seal(key, message);
+                    isEncrypted = true;
                 } catch (e) {
                     console.error('e2ee seal failed', e);
                     toast.error('Could not encrypt message.');
@@ -182,6 +190,7 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
                 await trpc.messages.send.mutate({
                     content,
                     channelId,
+                    isEncrypted,
                     files: files.map((f) => f.id),
                     ...(replyingTo ? { replyToMessageId: replyingTo.id } : {})
                 });
@@ -202,7 +211,8 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
             setNewMessageHandler,
             replyingTo,
             e2eeContext,
-            ownUserId
+            ownUserId,
+            channel?.isDm
         ]
     );
 

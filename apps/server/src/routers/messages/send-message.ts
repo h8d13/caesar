@@ -28,7 +28,10 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
       channelId: z.number(),
       files: z.array(z.string()).default([]),
       parentMessageId: z.number().optional(),
-      replyToMessageId: z.number().optional()
+      replyToMessageId: z.number().optional(),
+      // E2EE marker. true => content is base64 AES-GCM ciphertext, MUST
+      // skip HTML sanitization, and channel MUST currently be ephemeral.
+      isEncrypted: z.boolean().optional().default(false)
     })
   )
   .mutation(async ({ input, ctx }) => {
@@ -123,18 +126,33 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
       message: 'Message cannot be empty.'
     });
 
-    const targetContent = sanitizeMessageHtml(input.content);
+    const now = Date.now();
+    const ephemeralMs = isDmChannel
+      ? await getDmEphemeralMs(input.channelId)
+      : null;
+
+    // E2EE invariant: encryption flag must match the channel's current
+    // ephemeral state. Either both true or both false. Prevents a stale
+    // client cache from sending ciphertext to a non-ephemeral channel
+    // (where it would render as raw base64) or plaintext to an ephemeral
+    // channel (where it would defeat the purpose).
+    invariant(input.isEncrypted === (ephemeralMs !== null), {
+      code: 'BAD_REQUEST',
+      message:
+        'Ephemeral state changed. Refresh and resend (the toggle was changed mid-send).'
+    });
+
+    // Ciphertext is opaque base64 — sanitization would only corrupt it.
+    // Plaintext goes through the normal HTML sanitizer.
+    const targetContent = input.isEncrypted
+      ? input.content
+      : sanitizeMessageHtml(input.content);
 
     invariant(!isEmptyMessage(targetContent) || limitedFiles.length != 0, {
       code: 'BAD_REQUEST',
       message:
         'Your message only contained unsupported or removed content, so there was nothing to send.'
     });
-
-    const now = Date.now();
-    const ephemeralMs = isDmChannel
-      ? await getDmEphemeralMs(input.channelId)
-      : null;
 
     const message = await db
       .insert(messages)

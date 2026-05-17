@@ -1,6 +1,7 @@
 import { useChannelById } from '@/features/server/channels/hooks';
 import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
 import { getTRPCClient } from '@/lib/trpc';
+import { useQueryClient } from '@tanstack/react-query';
 import { Hash, PenTool, Timer } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -25,6 +26,18 @@ type TEphemeralToggleProps = {
 
 const EphemeralToggle = memo(({ channelId }: TEphemeralToggleProps) => {
     const [enabled, setEnabled] = useState(false);
+    const queryClient = useQueryClient();
+
+    // Keep the E2EE context cache (used by compose + render) consistent
+    // with the toggle state. Without this, compose would still think the
+    // channel is ephemeral after a toggle-off and encrypt regardless,
+    // which the server now rejects but produces a worse UX than a fresh
+    // local view.
+    const invalidateE2eeContext = useCallback(() => {
+        queryClient.invalidateQueries({
+            queryKey: ['dms', 'e2eeContext', channelId]
+        });
+    }, [queryClient, channelId]);
 
     useEffect(() => {
         let cancelled = false;
@@ -43,6 +56,7 @@ const EphemeralToggle = memo(({ channelId }: TEphemeralToggleProps) => {
             onData: (data) => {
                 if (data.channelId === channelId) {
                     setEnabled(data.ephemeralMs !== null);
+                    invalidateE2eeContext();
                 }
             }
         });
@@ -51,7 +65,7 @@ const EphemeralToggle = memo(({ channelId }: TEphemeralToggleProps) => {
             cancelled = true;
             sub.unsubscribe();
         };
-    }, [channelId]);
+    }, [channelId, invalidateE2eeContext]);
 
     const onToggle = useCallback(async () => {
         const trpc = getTRPCClient();
@@ -64,21 +78,18 @@ const EphemeralToggle = memo(({ channelId }: TEphemeralToggleProps) => {
                 channelId,
                 enabled: next
             });
+            invalidateE2eeContext();
         } catch {
             setEnabled(previous);
             toast.error('Could not update ephemeral mode');
         }
-    }, [channelId, enabled]);
+    }, [channelId, enabled, invalidateE2eeContext]);
 
     return (
         <button
             type="button"
             onClick={onToggle}
-            title={
-                enabled
-                    ? 'Encrypted Temp messages (24h)'
-                    : 'Normal DMs'
-            }
+            title={enabled ? 'Encrypted Temp messages (24h)' : 'Normal DMs'}
             className={`p-1.5 rounded-md transition-colors ${
                 enabled
                     ? 'bg-emerald-500/15 text-emerald-500'
