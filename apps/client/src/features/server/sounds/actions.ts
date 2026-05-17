@@ -120,9 +120,10 @@ const sfxOwnUserLeftVoiceChannel = () => {
     osc2.stop(now() + 0.3);
 };
 
-// MUTED_MIC bland low click
-const sfxOwnUserMutedMic = () => {
-    const osc = createOsc('sine', 350);
+// Single-tone 60ms blip used by the mute/unmute mic + sound feedback
+// sounds. Frequency selects the perceived pitch (low click vs high tone).
+const sfxBlip = (freq: number) => {
+    const osc = createOsc('sine', freq);
     const gain = createGain(0.05);
 
     gain.gain.exponentialRampToValueAtTime(0.0001, now() + 0.06);
@@ -132,41 +133,10 @@ const sfxOwnUserMutedMic = () => {
     osc.stop(now() + 0.06);
 };
 
-// UNMUTED_MIC bland slightly higher click
-const sfxOwnUserUnmutedMic = () => {
-    const osc = createOsc('sine', 500);
-    const gain = createGain(0.05);
-
-    gain.gain.exponentialRampToValueAtTime(0.0001, now() + 0.06);
-
-    osc.connect(gain).connect(audioCtx.destination);
-    osc.start();
-    osc.stop(now() + 0.06);
-};
-
-// MUTED_SOUND bland mid-low tone
-const sfxOwnUserMutedSound = () => {
-    const osc = createOsc('sine', 450);
-    const gain = createGain(0.05);
-
-    gain.gain.exponentialRampToValueAtTime(0.0001, now() + 0.06);
-
-    osc.connect(gain).connect(audioCtx.destination);
-    osc.start();
-    osc.stop(now() + 0.06);
-};
-
-// UNMUTED_SOUND bland mid-high tone
-const sfxOwnUserUnmutedSound = () => {
-    const osc = createOsc('sine', 650);
-    const gain = createGain(0.05);
-
-    gain.gain.exponentialRampToValueAtTime(0.0001, now() + 0.06);
-
-    osc.connect(gain).connect(audioCtx.destination);
-    osc.start();
-    osc.stop(now() + 0.06);
-};
+const sfxOwnUserMutedMic = () => sfxBlip(350); // bland low click
+const sfxOwnUserUnmutedMic = () => sfxBlip(500); // bland slightly higher click
+const sfxOwnUserMutedSound = () => sfxBlip(450); // bland mid-low tone
+const sfxOwnUserUnmutedSound = () => sfxBlip(650); // bland mid-high tone
 
 // STARTED_WEBCAM subtle layered activation
 const sfxOwnUserStartedWebcam = () => {
