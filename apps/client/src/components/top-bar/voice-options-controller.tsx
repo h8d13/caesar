@@ -1,3 +1,5 @@
+import { useMediaControl } from '@/components/media-provider/media-control-context';
+import { useOwnUserId } from '@/features/server/users/hooks';
 import {
     setHideNonVideoParticipants,
     setShowUserBannersInVoice
@@ -20,6 +22,16 @@ import { memo, useCallback } from 'react';
 const VoiceOptionsController = memo(() => {
     const hideNonVideoParticipants = useHideNonVideoParticipants();
     const showUserBanners = useShowUserBannersInVoice();
+    const ownUserId = useOwnUserId();
+    const { isStreamHidden, getUserVideoKey, toggleStreamVisibility } =
+        useMediaControl();
+
+    // Local-only: hides the own user card from this browser's grid. Other
+    // participants still see you. Reuses the same per-stream hide channel
+    // as the per-card eye toggle, so the two stay consistent.
+    const ownVideoKey =
+        ownUserId !== undefined ? getUserVideoKey(ownUserId) : null;
+    const hideOwnStream = ownVideoKey ? isStreamHidden(ownVideoKey) : false;
 
     const handleToggleHideNonVideo = useCallback((checked: boolean) => {
         setHideNonVideoParticipants(checked);
@@ -29,6 +41,10 @@ const VoiceOptionsController = memo(() => {
         setShowUserBannersInVoice(checked);
     }, []);
 
+    const handleToggleHideOwnStream = useCallback(() => {
+        if (ownVideoKey) toggleStreamVisibility(ownVideoKey);
+    }, [ownVideoKey, toggleStreamVisibility]);
+
     return (
         <Popover>
             <PopoverTrigger asChild>
@@ -37,7 +53,7 @@ const VoiceOptionsController = memo(() => {
                     size="sm"
                     className="h-6 px-2 transition-all duration-200 ease-in-out"
                 >
-                    <Tooltip content="Voice Options" asChild={false}>
+                    <Tooltip content="Options" asChild={false}>
                         <Settings className="w-4 h-4" />
                     </Tooltip>
                 </Button>
@@ -45,7 +61,7 @@ const VoiceOptionsController = memo(() => {
             <PopoverContent align="end" className="w-80">
                 <div className="space-y-3">
                     <h4 className="font-medium text-sm cursor-default mb-3">
-                        Voice Options
+                        Options
                     </h4>
 
                     <div className="flex items-center justify-between space-x-3">
@@ -81,6 +97,23 @@ const VoiceOptionsController = memo(() => {
                             id="show-user-banners"
                             checked={showUserBanners}
                             onCheckedChange={handleToggleShowUserBanners}
+                            data-1p-ignore
+                            data-lpignore="true"
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between space-x-3">
+                        <span
+                            onClick={handleToggleHideOwnStream}
+                            className="text-sm text-foreground cursor-pointer select-none flex-1"
+                        >
+                            Hide own stream
+                        </span>
+                        <Switch
+                            id="hide-own-stream"
+                            checked={hideOwnStream}
+                            onCheckedChange={handleToggleHideOwnStream}
+                            disabled={ownUserId === undefined}
                             data-1p-ignore
                             data-lpignore="true"
                         />

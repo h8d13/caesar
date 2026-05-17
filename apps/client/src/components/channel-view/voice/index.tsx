@@ -1,3 +1,4 @@
+import { useMediaControl } from '@/components/media-provider/media-control-context';
 import { useVoiceUsersByChannelId } from '@/features/server/hooks';
 import {
     useHideNonVideoParticipants,
@@ -22,6 +23,8 @@ const VoiceChannel = memo(({ channelId }: TChannelProps) => {
     const externalStreams = useVoiceChannelExternalStreamsList(channelId);
     const { pinnedCard, pinCard, unpinCard, isPinned } = usePinCardController();
     const hideNonVideoParticipants = useHideNonVideoParticipants();
+    const { isStreamHidden, getUserVideoKey, getUserScreenVideoKey } =
+        useMediaControl();
 
     const cards = useMemo(() => {
         const cards: React.ReactNode[] = [];
@@ -38,10 +41,22 @@ const VoiceChannel = memo(({ channelId }: TChannelProps) => {
 
         voiceUsers.forEach((voiceUser) => {
             const userCardId = `user-${voiceUser.id}`;
+            const videoLocallyHidden = isStreamHidden(
+                getUserVideoKey(voiceUser.id)
+            );
+            const screenLocallyHidden = isStreamHidden(
+                getUserScreenVideoKey(voiceUser.id)
+            );
             const hasVideo = voiceUser.state.webcamEnabled;
 
-            // Only show user card if not filtering, or if they have video
-            if (!shouldFilterNonVideo || hasVideo) {
+            // Skip the user card entirely when the local user has hidden
+            // this participant's video stream. Audio is rendered separately
+            // (VoiceAudioStreams), so hiding the visual tile does NOT kill
+            // sound — it just frees up the grid slot.
+            const showUserCard =
+                !videoLocallyHidden && (!shouldFilterNonVideo || hasVideo);
+
+            if (showUserCard) {
                 cards.push(
                     <VoiceUserCard
                         key={userCardId}
@@ -60,8 +75,8 @@ const VoiceChannel = memo(({ channelId }: TChannelProps) => {
                 );
             }
 
-            // Screen shares always have video, so always show them
-            if (voiceUser.state.sharingScreen) {
+            // Screen shares: same idea — locally hidden means no slot.
+            if (voiceUser.state.sharingScreen && !screenLocallyHidden) {
                 const screenShareCardId = `screen-share-${voiceUser.id}`;
 
                 cards.push(
@@ -116,7 +131,10 @@ const VoiceChannel = memo(({ channelId }: TChannelProps) => {
         isPinned,
         pinCard,
         unpinCard,
-        hideNonVideoParticipants
+        hideNonVideoParticipants,
+        isStreamHidden,
+        getUserVideoKey,
+        getUserScreenVideoKey
     ]);
 
     if (voiceUsers.length === 0) {
