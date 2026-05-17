@@ -1,9 +1,10 @@
 import { EditResourceCard } from '@/components/server-screens/edit-resource-card';
 import { UserAvatar } from '@/components/user-avatar';
+import { useChannelById } from '@/features/server/channels/hooks';
 import { useRoleById } from '@/features/server/roles/hooks';
 import { useUserById } from '@/features/server/users/hooks';
 import { getTRPCClient } from '@/lib/trpc';
-import { ChannelPermission, getTrpcError } from '@caesar/shared';
+import { ChannelPermission, ChannelType, getTrpcError } from '@caesar/shared';
 import { CardTitle } from '@caesar/ui';
 import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';
@@ -68,6 +69,14 @@ const Override = memo(
         const [overrideType, targetIdStr] = overrideId.split('-');
         const targetId = parseInt(targetIdStr, 10);
         const isRole = overrideType === 'role';
+        const channel = useChannelById(channelId);
+        // schema types channel.type as plain string (drizzle text column),
+        // narrow back to the enum and default to TEXT if anything
+        // unexpected lands here.
+        const channelType =
+            channel?.type === ChannelType.VOICE
+                ? ChannelType.VOICE
+                : ChannelType.TEXT;
 
         const onDeleteOverride = useCallback(async () => {
             const trpc = getTRPCClient();
@@ -157,6 +166,7 @@ const Override = memo(
             >
                 <ChannelPermissionList
                     permissions={localPermissions}
+                    channelType={channelType}
                     onTogglePermission={onTogglePermission}
                 />
             </EditResourceCard>
