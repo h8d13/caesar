@@ -87,7 +87,6 @@ const StatsPopover = memo(({ children }: StatsPopoverProps) => {
                                         Packets:{' '}
                                         {formatBigNumber(producer.packetsSent)}
                                     </div>
-                                    <div>RTT: {producer.rtt.toFixed(1)} ms</div>
                                 </div>
                             ) : (
                                 <div className="text-muted-foreground">

@@ -8,7 +8,6 @@ export type TransportStats = {
     packetsReceived: number;
     packetsSent: number;
     packetsLost: number;
-    rtt: number;
     jitter: number;
     timestamp: number;
 };
@@ -89,15 +88,6 @@ const useTransportStats = () => {
             let packetsLost = 0;
             let jitter = 0;
 
-            // RTT needs to come from the *active* candidate-pair, not any
-            // succeeded one. Browsers expose multiple succeeded pairs (one
-            // per local/remote candidate combo); only the nominated one has
-            // currentRoundTripTime populated. Two-pass: collect all
-            // candidate-pairs + the transport stat, then resolve the active
-            // pair by id, falling back to the nominated flag.
-            const candidatePairs = new Map<string, RTCIceCandidatePairStats>();
-            let selectedPairId: string | undefined;
-
             for (const stat of statsReport.values()) {
                 if (stat.type === 'outbound-rtp' && isProducer) {
                     bytesSent += stat.bytesSent || 0;
@@ -107,25 +97,8 @@ const useTransportStats = () => {
                     packetsReceived += stat.packetsReceived || 0;
                     packetsLost += stat.packetsLost || 0;
                     jitter += stat.jitter || 0;
-                } else if (stat.type === 'candidate-pair') {
-                    candidatePairs.set(stat.id, stat);
-                } else if (stat.type === 'transport') {
-                    selectedPairId ??= stat.selectedCandidatePairId;
                 }
             }
-
-            const activePair =
-                (selectedPairId && candidatePairs.get(selectedPairId)) ||
-                [...candidatePairs.values()].find(
-                    (p) => p.state === 'succeeded' && p.nominated
-                ) ||
-                [...candidatePairs.values()].find(
-                    (p) =>
-                        p.state === 'succeeded' &&
-                        (p.currentRoundTripTime ?? 0) > 0
-                );
-
-            const rtt = (activePair?.currentRoundTripTime ?? 0) * 1000;
 
             return {
                 bytesReceived,
@@ -133,7 +106,6 @@ const useTransportStats = () => {
                 packetsReceived,
                 packetsSent,
                 packetsLost,
-                rtt,
                 jitter,
                 timestamp: Date.now()
             };
