@@ -76,8 +76,8 @@ const EphemeralToggle = memo(({ channelId }: TEphemeralToggleProps) => {
             onClick={onToggle}
             title={
                 enabled
-                    ? 'Disappearing messages: on (24h)'
-                    : 'Disappearing messages: off'
+                    ? 'Encrypted Temp messages (24h)'
+                    : 'Normal DMs'
             }
             className={`p-1.5 rounded-md transition-colors ${
                 enabled
