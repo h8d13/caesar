@@ -7,12 +7,7 @@ import {
 import { store } from '@/features/store';
 import { getFileUrl } from '@/helpers/get-file-url';
 import { getTRPCClient } from '@/lib/trpc';
-import {
-    getPlainTextFromHtml,
-    hasMention,
-    TYPING_MS,
-    type TJoinedMessage
-} from '@caesar/shared';
+import { hasMention, TYPING_MS, type TJoinedMessage } from '@caesar/shared';
 import {
     channelByIdSelector,
     selectedChannelIdSelector
@@ -40,10 +35,12 @@ const sendBrowserNotification = (
         return;
     }
 
-    const textContent = getPlainTextFromHtml(message.content ?? '');
-
+    // Body is intentionally generic. Message content can be ephemeral E2EE
+    // ciphertext (base64) which must never reach the OS notification layer,
+    // and even plaintext leaks sensitive info to notification daemons /
+    // lock-screen previews / sync to other devices.
     const title = `${user?.name ?? 'Unknown'} in #${channel?.name ?? 'unknown'}`;
-    const body = textContent ? textContent : 'Sent an attachment';
+    const body = 'You have a new message.';
     const icon = user?.avatar ? getFileUrl(user.avatar) : undefined;
 
     new Notification(title, { body, icon });
