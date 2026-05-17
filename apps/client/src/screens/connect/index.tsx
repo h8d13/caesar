@@ -12,6 +12,7 @@ import {
     setSessionStorageItem
 } from '@/helpers/storage';
 import { useForm } from '@/hooks/use-form';
+import { derivePriv, setPriv } from '@/lib/e2ee';
 import { TestId } from '@caesar/shared';
 import {
     Alert,
@@ -95,6 +96,11 @@ const Connect = memo(() => {
             }
 
             const data = (await response.json()) as { token: string };
+
+            // E2EE: derive ephemeral-DM keypair from the plaintext password
+            // before discarding it. priv lives only in JS heap; pub is
+            // registered server-side by actions.ts:joinServer.
+            setPriv(derivePriv(values.password, values.identity));
 
             setSessionStorageItem(SessionStorageKey.TOKEN, data.token);
             setLocalStorageItemBool(

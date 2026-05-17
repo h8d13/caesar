@@ -8,6 +8,7 @@ import { dmsRouter } from './dms';
 import { emojisRouter } from './emojis';
 import { filesRouter } from './files';
 import { invitesRouter } from './invites';
+import { keysRouter } from './keys';
 import { messagesRouter } from './messages';
 import { othersRouter } from './others';
 import { rolesRouter } from './roles';
@@ -27,6 +28,7 @@ const appRouter = t.router({
   sounds: soundsRouter,
   roles: rolesRouter,
   invites: invitesRouter,
+  keys: keysRouter,
   voice: voiceRouter,
   categories: categoriesRouter,
   whiteboard: whiteboardRouter,

@@ -166,6 +166,16 @@ const users = sqliteTable(
   ]
 );
 
+// E2EE keypair registration for ephemeral DMs. Holds only the public half;
+// the private key is deterministically re-derived in the browser from the
+// user's password on every login and never persisted anywhere.
+const userKeys = sqliteTable('user_keys', {
+  userId: integer('user_id')
+    .primaryKey()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  publicKey: text('public_key').notNull()
+});
+
 const userRoles = sqliteTable(
   'user_roles',
   {
@@ -673,6 +683,7 @@ export {
   socialCreditLedger,
   socialCreditVotes,
   sounds,
+  userKeys,
   userRoles,
   users
 };

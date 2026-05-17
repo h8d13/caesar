@@ -1,6 +1,7 @@
 import { Dialog } from '@/components/dialogs/dialogs';
 import { logDebug } from '@/helpers/browser-logger';
 import { getHostFromServer } from '@/helpers/get-file-url';
+import { getMyPubB64 } from '@/lib/e2ee';
 import { cleanup, connectToTRPC, getTRPCClient } from '@/lib/trpc';
 import { type TPublicServerSettings, type TServerInfo } from '@caesar/shared';
 import { toast } from 'sonner';
@@ -67,6 +68,15 @@ export const joinServer = async (handshakeHash: string, password?: string) => {
     unsubscribeFromServer = initSubscriptions();
 
     store.dispatch(serverSliceActions.setInitialData(data));
+
+    // E2EE: register our public key if we derived one at login.
+    // idempotent server-side, best-effort here. priv is never sent.
+    const pub = getMyPubB64();
+    if (pub) {
+        trpc.keys.register
+            .mutate({ publicKey: pub })
+            .catch((e) => console.warn('e2ee key register failed', e));
+    }
 };
 
 export const disconnectFromServer = () => {

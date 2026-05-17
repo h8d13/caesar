@@ -12,11 +12,13 @@ import { useMessages } from '@/features/server/messages/hooks';
 import { consumePendingScrollTarget } from '@/features/server/messages/pending-scroll';
 import { playSound } from '@/features/server/sounds/actions';
 import { SoundType } from '@/features/server/types';
-import { useUsers } from '@/features/server/users/hooks';
+import { useOwnUserId, useUsers } from '@/features/server/users/hooks';
 import { handleBuiltInCommand } from '@/helpers/built-in-commands';
 import { LocalStorageKey } from '@/helpers/storage';
 import { throttle } from '@/helpers/throttle';
+import { dmKey, hasPriv, seal } from '@/lib/e2ee';
 import { getTRPCClient } from '@/lib/trpc';
+import { useDmE2eeContext } from '@/lib/use-dm-e2ee';
 import {
     ChannelPermission,
     DELETED_USER_IDENTITY_AND_NAME,
@@ -64,6 +66,8 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
     );
     const channel = useChannelById(channelId);
     const allUsers = useUsers();
+    const ownUserId = useOwnUserId();
+    const e2eeContext = useDmE2eeContext(channelId, channel?.isDm);
     const mentionUsers = useMemo(
         () =>
             channel?.isDm
@@ -139,9 +143,44 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
 
             const trpc = getTRPCClient();
 
+            // E2EE: encrypt content if this DM is currently ephemeral.
+            // Refuse if our priv is missing (post-refresh) or peer hasn't
+            // registered a key yet.
+            let content = message;
+            if (e2eeContext?.ephemeralMs != null) {
+                if (!hasPriv()) {
+                    toast.error(
+                        'Re-enter your password to send ephemeral messages.'
+                    );
+                    return false;
+                }
+                if (
+                    !e2eeContext.peerPublicKey ||
+                    e2eeContext.peerUserId === null ||
+                    ownUserId === undefined
+                ) {
+                    toast.error(
+                        'The other user must sign in once before ephemeral messages can be sent.'
+                    );
+                    return false;
+                }
+                try {
+                    const key = await dmKey(
+                        e2eeContext.peerPublicKey,
+                        ownUserId,
+                        e2eeContext.peerUserId
+                    );
+                    content = await seal(key, message);
+                } catch (e) {
+                    console.error('e2ee seal failed', e);
+                    toast.error('Could not encrypt message.');
+                    return false;
+                }
+            }
+
             try {
                 await trpc.messages.send.mutate({
-                    content: message,
+                    content,
                     channelId,
                     files: files.map((f) => f.id),
                     ...(replyingTo ? { replyToMessageId: replyingTo.id } : {})
@@ -157,7 +196,14 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
             setNewMessageHandler('');
             return true;
         },
-        [channelId, sendTypingSignal, setNewMessageHandler, replyingTo]
+        [
+            channelId,
+            sendTypingSignal,
+            setNewMessageHandler,
+            replyingTo,
+            e2eeContext,
+            ownUserId
+        ]
     );
 
     if (!channelCan(ChannelPermission.VIEW_CHANNEL) || loading) {

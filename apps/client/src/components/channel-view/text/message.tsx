@@ -1,11 +1,13 @@
 import { openThreadSidebar } from '@/features/app/actions';
 import { useThreadSidebar } from '@/features/app/hooks';
+import { useChannelById } from '@/features/server/channels/hooks';
 import { useCan } from '@/features/server/hooks';
 import {
     useIsOwnUser,
     useOwnUserId,
     useUserById
 } from '@/features/server/users/hooks';
+import { useDecryptedMessage } from '@/lib/use-decrypted-message';
 import { cn } from '@/lib/utils';
 import { hasMention, Permission, type TJoinedMessage } from '@caesar/shared';
 import { CornerUpRight, MessageSquareText } from 'lucide-react';
@@ -41,15 +43,27 @@ const Message = memo(
         const can = useCan();
         const { isOpen: isThreadOpen, parentMessageId: threadParentId } =
             useThreadSidebar();
+        const channel = useChannelById(message.channelId);
+        const decrypted = useDecryptedMessage(message, channel?.isDm);
+
+        const displayMessage = useMemo<TJoinedMessage>(() => {
+            if (decrypted.status === 'decrypted') {
+                return { ...message, content: decrypted.content };
+            }
+            return message;
+        }, [message, decrypted]);
 
         const canManage = useMemo(
             () => can(Permission.MANAGE_MESSAGES) || isFromOwnUser,
             [can, isFromOwnUser]
         );
 
+        // mention detection runs against the visible content (decrypted if
+        // available, original ciphertext otherwise — which trivially won't
+        // match any @mention pattern, so it's fine).
         const isMentioned = useMemo(
-            () => hasMention(message.content, ownUserId),
-            [message.content, ownUserId]
+            () => hasMention(displayMessage.content, ownUserId),
+            [displayMessage.content, ownUserId]
         );
 
         const isThreadReply = !!message.parentMessageId;
@@ -102,12 +116,18 @@ const Message = memo(
                                 </span>
                             </button>
                         )}
-                        <MessageRenderer
-                            message={message}
-                            disableFiles={disableFiles}
-                            disableReactions={disableReactions}
-                            disableVotes={disableVotes}
-                        />
+                        {decrypted.status === 'expired' ? (
+                            <span className="italic text-muted-foreground">
+                                expired
+                            </span>
+                        ) : (
+                            <MessageRenderer
+                                message={displayMessage}
+                                disableFiles={disableFiles}
+                                disableReactions={disableReactions}
+                                disableVotes={disableVotes}
+                            />
+                        )}
                         {message.expiresAt != null && (
                             <ExpiresBadge expiresAt={message.expiresAt} />
                         )}
