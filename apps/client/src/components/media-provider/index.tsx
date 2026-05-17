@@ -581,10 +581,12 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                 localAudioProducer.current?.on('@close', async () => {
                     logVoice('Audio producer closed');
 
-                    const trpc = getTRPCClient();
-
+                    // teardown race: this handler can fire after the WS+trpc
+                    // cleanup has already run (kick / disconnect / refresh).
+                    // wrap getTRPCClient too so the null-client throw doesn't
+                    // escape as an unhandled rejection.
                     try {
-                        await trpc.voice.closeProducer.mutate({
+                        await getTRPCClient().voice.closeProducer.mutate({
                             kind: StreamKind.AUDIO
                         });
                     } catch (error) {
@@ -662,10 +664,9 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                 localVideoProducer.current?.on('@close', async () => {
                     logVoice('Video producer closed');
 
-                    const trpc = getTRPCClient();
-
+                    // teardown race: see audio handler comment.
                     try {
-                        await trpc.voice.closeProducer.mutate({
+                        await getTRPCClient().voice.closeProducer.mutate({
                             kind: StreamKind.VIDEO
                         });
                     } catch (error) {
@@ -807,10 +808,9 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                 localScreenShareProducer.current?.on('@close', async () => {
                     logVoice('Screen share producer closed');
 
-                    const trpc = getTRPCClient();
-
+                    // teardown race: see audio handler comment.
                     try {
-                        await trpc.voice.closeProducer.mutate({
+                        await getTRPCClient().voice.closeProducer.mutate({
                             kind: StreamKind.SCREEN
                         });
                     } catch (error) {
