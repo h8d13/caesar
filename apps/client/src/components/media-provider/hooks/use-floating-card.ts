@@ -21,15 +21,16 @@ const DEFAULT_SIZE: TSize = { width: 384, height: 216 };
 const MIN_WIDTH = 200;
 const MIN_HEIGHT = 112;
 
-export const useFloatingCard = () => {
+export const useFloatingCard = (
+    positionKey: LocalStorageKey = LocalStorageKey.FLOATING_CARD_POSITION,
+    sizeKey: LocalStorageKey = LocalStorageKey.FLOATING_CARD_SIZE
+) => {
     const cardRef = useRef<HTMLDivElement>(null);
     const [position, setPosition] = useState<TPosition | undefined>(
-        getLocalStorageItemAsJSON<TPosition>(
-            LocalStorageKey.FLOATING_CARD_POSITION
-        )
+        getLocalStorageItemAsJSON<TPosition>(positionKey)
     );
     const [size, setSize] = useState<TSize>(
-        getLocalStorageItemAsJSON<TSize>(LocalStorageKey.FLOATING_CARD_SIZE) ??
+        getLocalStorageItemAsJSON<TSize>(sizeKey) ??
             DEFAULT_SIZE
     );
     const [isDragging, setIsDragging] = useState(false);
@@ -50,19 +51,13 @@ export const useFloatingCard = () => {
 
     useEffect(() => {
         if (position) {
-            setLocalStorageItemAsJSON<TPosition>(
-                LocalStorageKey.FLOATING_CARD_POSITION,
-                position
-            );
+            setLocalStorageItemAsJSON<TPosition>(positionKey, position);
         }
-    }, [position]);
+    }, [position, positionKey]);
 
     useEffect(() => {
-        setLocalStorageItemAsJSON<TSize>(
-            LocalStorageKey.FLOATING_CARD_SIZE,
-            size
-        );
-    }, [size]);
+        setLocalStorageItemAsJSON<TSize>(sizeKey, size);
+    }, [size, sizeKey]);
 
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
         if (!cardRef.current) return;

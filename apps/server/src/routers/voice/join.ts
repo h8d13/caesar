@@ -6,6 +6,7 @@ import {
 } from '@caesar/shared';
 import { config } from '@server/config';
 import { getChannelByIdOrThrow } from '@server/db/queries/channels';
+import { assertDmParticipant } from '@server/db/queries/dms';
 import { logger } from '@server/logger';
 import { VoiceRuntime } from '@server/runtimes/voice';
 import { invariant } from '@server/utils/invariant';
@@ -27,17 +28,21 @@ const joinVoiceRoute = rateLimitedProcedure(protectedProcedure, {
     })
   )
   .mutation(async ({ input, ctx }) => {
-    await Promise.all([
-      ctx.needsPermission(Permission.JOIN_VOICE_CHANNELS),
-      ctx.needsChannelPermission(input.channelId, ChannelPermission.JOIN)
-    ]);
-
     const channel = await getChannelByIdOrThrow(input.channelId);
 
-    invariant(channel.type === ChannelType.VOICE, {
-      code: 'BAD_REQUEST',
-      message: 'Channel is not a voice channel'
-    });
+    if (channel.isDm) {
+      // DM calls: just verify participant, no server-wide voice permission needed.
+      await assertDmParticipant(input.channelId, ctx.userId);
+    } else {
+      invariant(channel.type === ChannelType.VOICE, {
+        code: 'BAD_REQUEST',
+        message: 'Channel is not a voice channel'
+      });
+      await Promise.all([
+        ctx.needsPermission(Permission.JOIN_VOICE_CHANNELS),
+        ctx.needsChannelPermission(input.channelId, ChannelPermission.JOIN)
+      ]);
+    }
 
     const userAlreadyInVoiceChannel = VoiceRuntime.findRuntimeByUserId(
       ctx.user.id

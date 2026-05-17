@@ -58,6 +58,9 @@ export enum ServerEvents {
 
   DM_CONVERSATION_OPEN = 'dmConversationOpen',
   DM_EPHEMERAL_UPDATE = 'dmEphemeralUpdate',
+  DM_CALL_RING = 'dmCallRing',
+  DM_CALL_ACCEPTED = 'dmCallAccepted',
+  DM_CALL_ENDED = 'dmCallEnded',
 
   SOUNDBOARD_PLAY = 'soundboardPlay'
 }
