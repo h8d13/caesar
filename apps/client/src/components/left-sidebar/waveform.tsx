@@ -66,41 +66,20 @@ const Waveform = memo(({ className, isScreenSharing }: TIndicatorProps) => {
                 className="h-full w-full"
                 style={{ shapeRendering: 'geometricPrecision' }}
             >
-                <rect
-                    className="animate-wf-loop"
-                    rx="1"
-                    fill="currentColor"
-                    width="2"
-                    x="3"
-                />
-                <rect
-                    className="animate-wf-loop"
-                    rx="1"
-                    fill="currentColor"
-                    width="2"
-                    x="7"
-                />
-                <rect
-                    className="animate-wf-loop"
-                    rx="1"
-                    fill="currentColor"
-                    width="2"
-                    x="11"
-                />
-                <rect
-                    className="animate-wf-loop"
-                    rx="1"
-                    fill="currentColor"
-                    width="2"
-                    x="15"
-                />
-                <rect
-                    className="animate-wf-loop"
-                    rx="1"
-                    fill="currentColor"
-                    width="2"
-                    x="19"
-                />
+                {/* x positions of the 5 bars; the per-bar height + delay
+                    is driven by `.animate-wf-loop:nth-child(N)` rules in
+                    the <style> block below, so adding/removing a bar
+                    needs that nth-child list updated too. */}
+                {[3, 7, 11, 15, 19].map((x) => (
+                    <rect
+                        key={x}
+                        className="animate-wf-loop"
+                        rx="1"
+                        fill="currentColor"
+                        width="2"
+                        x={x}
+                    />
+                ))}
             </svg>
 
             <style>{`
