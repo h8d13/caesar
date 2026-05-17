@@ -1,20 +1,10 @@
 import { getTRPCClient } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
 import { ChannelType, parseTrpcErrors, type TTrpcErrors } from '@caesar/shared';
-import {
-    AutoFocus,
-    Button,
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    Group,
-    Input
-} from '@caesar/ui';
+import { AutoFocus, Group, Input } from '@caesar/ui';
 import { Hash, Mic } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
+import { FormDialogShell } from '../form-dialog-shell';
 import type { TDialogBaseProps } from '../types';
 
 type TChannelTypeItemProps = {
@@ -85,60 +75,46 @@ const CreateChannelDialog = memo(
         }, [name, categoryId, close, channelType]);
 
         return (
-            <Dialog open={isOpen}>
-                <DialogContent onInteractOutside={close} close={close}>
-                    <DialogHeader>
-                        <DialogTitle>Create New Channel</DialogTitle>
-                        <DialogDescription className="sr-only">
-                            Choose a channel type and name for the new channel
-                        </DialogDescription>
-                    </DialogHeader>
+            <FormDialogShell
+                isOpen={isOpen}
+                close={close}
+                title="Create New Channel"
+                confirmLabel="Create channel"
+                onConfirm={onSubmit}
+                confirmDisabled={loading || !name || !channelType}
+            >
+                <Group label="Channel type">
+                    <ChannelTypeItem
+                        title="Text Channel"
+                        description="Share text, images, files and more"
+                        icon={<Hash className="h-6 w-6" />}
+                        isActive={channelType === ChannelType.TEXT}
+                        onClick={() => setChannelType(ChannelType.TEXT)}
+                    />
 
-                    <Group label="Channel type">
-                        <ChannelTypeItem
-                            title="Text Channel"
-                            description="Share text, images, files and more"
-                            icon={<Hash className="h-6 w-6" />}
-                            isActive={channelType === ChannelType.TEXT}
-                            onClick={() => setChannelType(ChannelType.TEXT)}
+                    <ChannelTypeItem
+                        title="Voice Channel"
+                        description="Hangout with voice, video and screen sharing"
+                        icon={<Mic className="h-6 w-6" />}
+                        isActive={channelType === ChannelType.VOICE}
+                        onClick={() => setChannelType(ChannelType.VOICE)}
+                    />
+                </Group>
+
+                <Group label="Channel name">
+                    <AutoFocus>
+                        <Input
+                            placeholder="Channel name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            name="name"
+                            error={errors.name}
+                            resetError={setErrors}
+                            onEnter={onSubmit}
                         />
-
-                        <ChannelTypeItem
-                            title="Voice Channel"
-                            description="Hangout with voice, video and screen sharing"
-                            icon={<Mic className="h-6 w-6" />}
-                            isActive={channelType === ChannelType.VOICE}
-                            onClick={() => setChannelType(ChannelType.VOICE)}
-                        />
-                    </Group>
-
-                    <Group label="Channel name">
-                        <AutoFocus>
-                            <Input
-                                placeholder="Channel name"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                name="name"
-                                error={errors.name}
-                                resetError={setErrors}
-                                onEnter={onSubmit}
-                            />
-                        </AutoFocus>
-                    </Group>
-
-                    <DialogFooter className="gap-2">
-                        <Button variant="ghost" onClick={close}>
-                            Cancel
-                        </Button>
-                        <Button
-                            onClick={onSubmit}
-                            disabled={loading || !name || !channelType}
-                        >
-                            Create channel
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                    </AutoFocus>
+                </Group>
+            </FormDialogShell>
         );
     }
 );

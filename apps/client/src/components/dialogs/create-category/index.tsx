@@ -1,18 +1,8 @@
 import { useForm } from '@/hooks/use-form';
 import { getTRPCClient } from '@/lib/trpc';
-import {
-    AutoFocus,
-    Button,
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    Group,
-    Input
-} from '@caesar/ui';
+import { AutoFocus, Group, Input } from '@caesar/ui';
 import { memo, useCallback, useState } from 'react';
+import { FormDialogShell } from '../form-dialog-shell';
 import type { TDialogBaseProps } from '../types';
 
 type TCreateCategoryDialogProps = TDialogBaseProps;
@@ -43,35 +33,24 @@ const CreateCategoryDialog = memo(
         }, [values.name, close, setTrpcErrors]);
 
         return (
-            <Dialog open={isOpen}>
-                <DialogContent onInteractOutside={close} close={close}>
-                    <DialogHeader>
-                        <DialogTitle>Create New Category</DialogTitle>
-                        <DialogDescription className="sr-only">
-                            Enter a name for the new category
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <Group label="Category name">
-                        <AutoFocus>
-                            <Input
-                                {...r('name')}
-                                placeholder="Category name"
-                                onEnter={onSubmit}
-                            />
-                        </AutoFocus>
-                    </Group>
-
-                    <DialogFooter className="gap-2">
-                        <Button variant="ghost" onClick={close}>
-                            Cancel
-                        </Button>
-                        <Button onClick={onSubmit} disabled={loading}>
-                            Create Category
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <FormDialogShell
+                isOpen={isOpen}
+                close={close}
+                title="Create New Category"
+                confirmLabel="Create Category"
+                onConfirm={onSubmit}
+                confirmDisabled={loading}
+            >
+                <Group label="Category name">
+                    <AutoFocus>
+                        <Input
+                            {...r('name')}
+                            placeholder="Category name"
+                            onEnter={onSubmit}
+                        />
+                    </AutoFocus>
+                </Group>
+            </FormDialogShell>
         );
     }
 );
