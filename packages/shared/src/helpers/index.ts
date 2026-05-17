@@ -1,3 +1,4 @@
+export * from './canonical-identity';
 export * from './extract-urls';
 export * from './get-mediasoup-kind';
 export * from './get-random-string';

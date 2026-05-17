@@ -1,5 +1,5 @@
 import { PaginatedTable } from '@/components/paginated-table';
-import type { TJoinedUser } from '@caesar/shared';
+import { canonicalIdentity, type TJoinedUser } from '@caesar/shared';
 import { memo, useCallback } from 'react';
 import { TableUser } from './table-user';
 
@@ -11,11 +11,11 @@ type TUsersTableProps = {
 const UsersTable = memo(({ users, refetch }: TUsersTableProps) => {
     const searchFilter = useCallback(
         (user: TJoinedUser, searchTerm: string) => {
-            const query = searchTerm.toLowerCase();
+            const query = canonicalIdentity(searchTerm);
 
             return (
                 user.name.toLowerCase().includes(query) ||
-                user.identity?.toLowerCase().includes(query)
+                user.identity?.includes(query)
             );
         },
         []

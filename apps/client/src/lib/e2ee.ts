@@ -7,6 +7,7 @@
 // "ephemeral" = server TTL, not forward secrecy: password holder can
 // always rederive and read still-live msgs.
 
+import { canonicalIdentity } from '@caesar/shared';
 import { x25519 } from '@noble/curves/ed25519.js';
 import { argon2id } from '@noble/hashes/argon2.js';
 import { sha256 } from '@noble/hashes/sha2.js';
@@ -39,11 +40,9 @@ const getMyPubB64 = () => myPubB64;
 // === deterministic keypair derivation ========================================
 
 const derivePriv = (password: string, identity: string): Uint8Array => {
-    // match server's zod canonicalization in apps/server/src/http/login.ts
-    // so case/whitespace variants of the same account derive the same key.
-    const salt = sha256(
-        new TextEncoder().encode(identity.trim().toLowerCase())
-    );
+    // canonicalIdentity matches the server's /login zod transform; any
+    // drift between client + server breaks deterministic derivation.
+    const salt = sha256(new TextEncoder().encode(canonicalIdentity(identity)));
     return argon2id(password, salt, ARGON2);
 };
 
