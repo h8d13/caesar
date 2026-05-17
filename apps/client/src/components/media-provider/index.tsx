@@ -56,7 +56,6 @@ import {
     clearVoiceControlsBridge,
     setVoiceControlsBridge
 } from './controls-bridge';
-import { DmCallOverlay } from './dm-call-overlay';
 import { FloatingPinnedCard } from './floating-pinned-card';
 import { useLocalStreams } from './hooks/use-local-streams';
 import { useRemoteStreams } from './hooks/use-remote-streams';
@@ -1081,7 +1080,6 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             <MediaControlProvider>
                 <div className="relative">
                     <SpeakingDetector />
-                    <DmCallOverlay />
                     <FloatingPinnedCard
                         remoteUserStreams={remoteUserStreams}
                         externalStreams={externalStreams}

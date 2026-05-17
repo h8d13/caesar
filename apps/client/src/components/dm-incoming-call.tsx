@@ -3,32 +3,27 @@ import { joinVoice } from '@/features/server/voice/actions';
 import { useMedia } from '@/features/server/voice/hooks';
 import { getTRPCClient } from '@/lib/trpc';
 import { Phone, PhoneOff } from 'lucide-react';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 // Mounted once at the server level. Listens globally for incoming DM calls
-// and shows a persistent notification regardless of which channel is open.
+// and renders a persistent notification regardless of which channel is open.
+//
+// Rendered as a plain fixed-position element (NOT a sonner toast) because
+// sonner's toast.custom + manual toast.dismiss combo was unreliable across
+// re-renders of the toast content. A conditionally-rendered <div> can't
+// "stick" — when call === null, nothing is in the tree.
 const DmIncomingCall = memo(() => {
     const { init } = useMedia();
     const [call, setCall] = useState<{
         channelId: number;
         callerId: number;
     } | null>(null);
-    const toastIdRef = useRef<string | number | null>(null);
 
-    const dismiss = useCallback(() => {
-        if (toastIdRef.current != null) {
-            toast.dismiss(toastIdRef.current);
-            toastIdRef.current = null;
-        }
-        setCall(null);
-    }, []);
+    const dismiss = useCallback(() => setCall(null), []);
 
     const onAccept = useCallback(
         (channelId: number) => {
-            // Dismiss the toast immediately so it doesn't linger while the
-            // accept mutation + mediasoup setup chain runs. Errors surface
-            // via a separate toast.
             dismiss();
             (async () => {
                 try {
@@ -38,9 +33,6 @@ const DmIncomingCall = memo(() => {
                         toast.error('Failed to join voice channel');
                         return;
                     }
-                    // matches the regular voice-channel flow: pass the router
-                    // capabilities to mediasoup init so transport + producer
-                    // setup actually runs.
                     await init(caps, channelId);
                 } catch {
                     toast.error('Could not accept call');
@@ -81,38 +73,29 @@ const DmIncomingCall = memo(() => {
         };
     }, [dismiss]);
 
-    // Show/update toast when call state changes.
-    useEffect(() => {
-        if (!call) return;
+    if (!call) return null;
 
-        const id = toast.custom(
-            () => (
-                <IncomingCallToast
-                    callerId={call.callerId}
-                    onAccept={() => onAccept(call.channelId)}
-                    onReject={() => onReject(call.channelId)}
-                />
-            ),
-            { duration: Infinity, id: toastIdRef.current ?? undefined }
-        );
-        toastIdRef.current = id;
-    }, [call, onAccept, onReject]);
-
-    return null;
+    return (
+        <IncomingCallCard
+            callerId={call.callerId}
+            onAccept={() => onAccept(call.channelId)}
+            onReject={() => onReject(call.channelId)}
+        />
+    );
 });
 
-type TToastProps = {
+type TCardProps = {
     callerId: number;
     onAccept: () => void;
     onReject: () => void;
 };
 
-const IncomingCallToast = memo(
-    ({ callerId, onAccept, onReject }: TToastProps) => {
+const IncomingCallCard = memo(
+    ({ callerId, onAccept, onReject }: TCardProps) => {
         const caller = useUserById(callerId);
 
         return (
-            <div className="flex items-center gap-3 bg-card border border-border rounded-lg px-3 py-2 shadow-lg min-w-60">
+            <div className="fixed top-4 right-4 z-50 flex items-center gap-3 bg-card border border-border rounded-lg px-3 py-2 shadow-lg min-w-60">
                 <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground">
                         Incoming call

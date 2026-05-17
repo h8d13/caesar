@@ -7,8 +7,6 @@ export enum LocalStorageKey {
     DEVICES_SETTINGS = 'caesar-devices-settings',
     FLOATING_CARD_POSITION = 'caesar-floating-card-position',
     FLOATING_CARD_SIZE = 'caesar-floating-card-size',
-    DM_CALL_OVERLAY_POSITION = 'caesar-dm-call-overlay-position',
-    DM_CALL_OVERLAY_SIZE = 'caesar-dm-call-overlay-size',
     LEFT_SIDEBAR_STATE = 'caesar-left-sidebar-state',
     RIGHT_SIDEBAR_STATE = 'caesar-right-sidebar-state',
     VOICE_CHAT_SHOW_USER_BANNERS = 'caesar-voice-chat-show-user-banners',
