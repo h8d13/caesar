@@ -70,6 +70,7 @@ const E2eePasswordDialog = memo(({ isOpen, close }: TDialogBaseProps) => {
                         type="password"
                         autoComplete="current-password"
                         error={errors._general}
+                        onEnter={onSubmit}
                     />
                 </AutoFocus>
             </div>

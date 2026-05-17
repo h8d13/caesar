@@ -53,6 +53,7 @@ const ServerPasswordDialog = memo(
                             className="mt-2"
                             type="password"
                             error={errors._general}
+                            onEnter={onSubmit}
                         />
                     </AutoFocus>
                 </div>

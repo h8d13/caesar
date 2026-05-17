@@ -199,6 +199,7 @@ const Connect = memo(() => {
                             <Input
                                 {...r('identity')}
                                 autoComplete="username"
+                                onEnter={onConnectClick}
                                 data-testid={TestId.CONNECT_IDENTITY_INPUT}
                             />
                         </Group>
