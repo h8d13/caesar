@@ -34,8 +34,11 @@ createRoot(document.getElementById('root')!).render(
                 storageKey={LocalStorageKey.VITE_UI_THEME}
             >
                 <DebugInfo />
-                <Toaster />
                 <Provider store={store}>
+                    {/* Toaster must live INSIDE Provider so custom toast
+                        content (e.g., DmIncomingCall) can call useSelector
+                        without hitting a null Redux context. */}
+                    <Toaster />
                     <StoreDebug />
                     <DevicesProvider>
                         <DialogsProvider />
