@@ -12,11 +12,10 @@ import { memo, useCallback, useMemo, type RefObject } from 'react';
 import { voiceCardBaseClasses } from './card-base';
 import { CardControls } from './card-controls';
 import { CardGradient } from './card-gradient';
-import { FullscreenButton } from './fullscreen-button';
+import { CardTailControls } from './card-tail-controls';
 import { useMediaRefs } from './hooks/use-media-refs';
 import { useScreenShareZoom } from './hooks/use-screen-share-zoom';
 import { useVideoStats } from './hooks/use-video-stats';
-import { PinButton } from './pin-button';
 import { VolumeButton } from './volume-button';
 
 type tScreenShareControlsProps = {
@@ -53,13 +52,12 @@ const ScreenShareControls = memo(
                         size="sm"
                     />
                 )}
-                <FullscreenButton containerRef={containerRef} />
-                {showPinControls && (
-                    <PinButton
-                        isPinned={isPinned}
-                        handlePinToggle={handlePinToggle}
-                    />
-                )}
+                <CardTailControls
+                    containerRef={containerRef}
+                    showPinControls={showPinControls}
+                    isPinned={isPinned}
+                    handlePinToggle={handlePinToggle}
+                />
             </CardControls>
         );
     }
