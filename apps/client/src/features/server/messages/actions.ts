@@ -1,6 +1,7 @@
 import {
     browserNotificationsForMentionsSelector,
     browserNotificationsSelector,
+    dmsOpenSelector,
     selectedDmChannelIdSelector,
     threadSidebarDataSelector
 } from '@/features/app/selectors';
@@ -60,6 +61,7 @@ export const addMessages = (
     const state = store.getState();
     const selectedChannelId = selectedChannelIdSelector(state);
     const selectedDmChannelId = selectedDmChannelIdSelector(state);
+    const dmsOpen = dmsOpenSelector(state);
 
     const rootMessages = messages.filter((m) => !m.parentMessageId);
     const threadReplies = messages.filter((m) => !!m.parentMessageId);
@@ -115,10 +117,14 @@ export const addMessages = (
             browserNotificationsForMentionsSelector(state);
         const targetMessage = messages[0];
         const isFromOwnUser = ownUserId === targetMessage.userId;
-        const isChannelSelected = [
-            selectedChannelId,
-            selectedDmChannelId
-        ].includes(channelId);
+        // selectedDmChannelId persists across DM-panel close (so reopening
+        // returns to the same conversation), but it must not count as
+        // "currently viewing" once the panel is closed - otherwise unread
+        // updates + browser notifications get suppressed forever after
+        // first DM open.
+        const isChannelSelected =
+            selectedChannelId === channelId ||
+            (dmsOpen && selectedDmChannelId === channelId);
         const isWindowHidden = document?.hidden;
 
         if (!isFromOwnUser) {

@@ -1,4 +1,7 @@
-import { selectedDmChannelIdSelector } from '@/features/app/selectors';
+import {
+    dmsOpenSelector,
+    selectedDmChannelIdSelector
+} from '@/features/app/selectors';
 import { store } from '@/features/store';
 import type { TChannel, TChannelUserPermissionsMap } from '@caesar/shared';
 import { serverSliceActions } from '../slice';
@@ -68,6 +71,7 @@ export const setChannelReadState = (
     const state = store.getState();
     const selectedChannel = selectedChannelIdSelector(state);
     const selectedDmChannel = selectedDmChannelIdSelector(state);
+    const dmsOpen = dmsOpenSelector(state);
     const currentCount = channelReadStateByIdSelector(state, channelId);
 
     let nextCount: number | undefined;
@@ -80,8 +84,15 @@ export const setChannelReadState = (
 
     let actualCount = nextCount;
 
-    // if the channel is currently selected, set the read count to 0
-    if (selectedChannel === channelId || selectedDmChannel === channelId) {
+    // The DM channel only counts as "currently viewed" when the DM panel
+    // is open. selectedDmChannelId persists across panel close so the user
+    // returns to the same conversation, but it must not suppress unread
+    // updates while the user is back in the regular channel view.
+    const isViewingChannel =
+        selectedChannel === channelId ||
+        (dmsOpen && selectedDmChannel === channelId);
+
+    if (isViewingChannel) {
         actualCount = 0;
 
         // we also need to notify the server that the channel has been read
