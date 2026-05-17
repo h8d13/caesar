@@ -9,7 +9,7 @@ import { StreamKind } from '@caesar/shared';
 import { IconButton } from '@caesar/ui';
 import { Monitor, ZoomIn, ZoomOut } from 'lucide-react';
 import { memo, useCallback, useMemo, type RefObject } from 'react';
-import { CardControls } from './card-controls';
+import { CardControls, voiceCardBaseClasses } from './card-controls';
 import { CardGradient } from './card-gradient';
 import { FullscreenButton } from './fullscreen-button';
 import { useMediaRefs } from './hooks/use-media-refs';
@@ -145,13 +145,7 @@ const ScreenShareCard = memo(
         return (
             <div
                 ref={containerRef}
-                className={cn(
-                    'relative bg-card rounded-lg overflow-hidden group',
-                    'flex items-center justify-center',
-                    'w-full h-full',
-                    'border border-border',
-                    className
-                )}
+                className={cn(...voiceCardBaseClasses, className)}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}

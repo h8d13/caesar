@@ -11,7 +11,7 @@ import { getFileUrl } from '@/helpers/get-file-url';
 import { cn } from '@/lib/utils';
 import { HeadphoneOff, MicOff, Monitor, Video } from 'lucide-react';
 import { memo, useCallback, useRef } from 'react';
-import { CardControls } from './card-controls';
+import { CardControls, voiceCardBaseClasses } from './card-controls';
 import { CardGradient } from './card-gradient';
 import { FullscreenButton } from './fullscreen-button';
 import { useMediaRefs } from './hooks/use-media-refs';
@@ -62,10 +62,7 @@ const VoiceUserCard = memo(
             <div
                 ref={containerRef}
                 className={cn(
-                    'relative bg-card rounded-lg overflow-hidden group',
-                    'flex items-center justify-center',
-                    'w-full h-full',
-                    'border border-border',
+                    ...voiceCardBaseClasses,
                     isActivelySpeaking
                         ? speakingIntensity === 1
                             ? 'speaking-effect-low'

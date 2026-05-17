@@ -4,7 +4,7 @@ import type { TExternalStream } from '@caesar/shared';
 import { Avatar, AvatarFallback, AvatarImage, IconButton } from '@caesar/ui';
 import { Headphones, Router, Video, ZoomIn, ZoomOut } from 'lucide-react';
 import { memo, useCallback, type RefObject } from 'react';
-import { CardControls } from './card-controls';
+import { CardControls, voiceCardBaseClasses } from './card-controls';
 import { CardGradient } from './card-gradient';
 import { FullscreenButton } from './fullscreen-button';
 import { useMediaRefs } from './hooks/use-media-refs';
@@ -146,13 +146,7 @@ const ExternalStreamCard = memo(
         return (
             <div
                 ref={containerRef}
-                className={cn(
-                    'relative bg-card rounded-lg overflow-hidden group',
-                    'flex items-center justify-center',
-                    'w-full h-full',
-                    'border border-border',
-                    className
-                )}
+                className={cn(...voiceCardBaseClasses, className)}
                 onMouseDown={hasVideo ? handleMouseDown : undefined}
                 onMouseMove={hasVideo ? handleMouseMove : undefined}
                 onMouseUp={hasVideo ? handleMouseUp : undefined}

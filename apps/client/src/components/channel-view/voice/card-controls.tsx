@@ -1,5 +1,14 @@
 import { memo } from 'react';
 
+// Wrapper-div classes shared by every voice card (user, screen share,
+// external stream). Each card composes its own additions on top via cn().
+const voiceCardBaseClasses = [
+    'relative bg-card rounded-lg overflow-hidden group',
+    'flex items-center justify-center',
+    'w-full h-full',
+    'border border-border'
+];
+
 type TCardControlsProps = {
     children?: React.ReactNode;
 };
@@ -12,4 +21,4 @@ const CardControls = memo(({ children }: TCardControlsProps) => {
     );
 });
 
-export { CardControls };
+export { CardControls, voiceCardBaseClasses };
