@@ -12,7 +12,8 @@ import {
     setSessionStorageItem
 } from '@/helpers/storage';
 import { useForm } from '@/hooks/use-form';
-import { derivePriv, setPriv } from '@/lib/e2ee';
+import { derivePriv, getMyPubB64, setPriv } from '@/lib/e2ee';
+import { getTRPCClient } from '@/lib/trpc';
 import { TestId } from '@caesar/shared';
 import {
     Alert,
@@ -97,10 +98,22 @@ const Connect = memo(() => {
 
             const data = (await response.json()) as { token: string };
 
-            // E2EE: derive ephemeral-DM keypair from the plaintext password
-            // before discarding it. priv lives only in JS heap; pub is
-            // registered server-side by actions.ts:joinServer.
-            setPriv(derivePriv(values.password, values.identity));
+            // E2EE: argon2id is ~1-2s sync on main thread. Defer so
+            // connect() / Suspense fallback paint immediately; derive +
+            // register run after the loading spinner is already on screen.
+            const password = values.password;
+            const identity = values.identity;
+            setTimeout(() => {
+                setPriv(derivePriv(password, identity));
+                const pub = getMyPubB64();
+                if (pub) {
+                    getTRPCClient()
+                        .keys.register.mutate({ publicKey: pub })
+                        .catch((e) =>
+                            console.warn('e2ee key register failed', e)
+                        );
+                }
+            }, 0);
 
             setSessionStorageItem(SessionStorageKey.TOKEN, data.token);
             setLocalStorageItemBool(

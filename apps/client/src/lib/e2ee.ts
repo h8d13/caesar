@@ -39,7 +39,11 @@ const getMyPubB64 = () => myPubB64;
 // === deterministic keypair derivation ========================================
 
 const derivePriv = (password: string, identity: string): Uint8Array => {
-    const salt = sha256(new TextEncoder().encode(identity));
+    // match server's zod canonicalization in apps/server/src/http/login.ts
+    // so case/whitespace variants of the same account derive the same key.
+    const salt = sha256(
+        new TextEncoder().encode(identity.trim().toLowerCase())
+    );
     return argon2id(password, salt, ARGON2);
 };
 
