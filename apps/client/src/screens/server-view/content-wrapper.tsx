@@ -1,6 +1,7 @@
 import { TextChannel } from '@/components/channel-view/text';
 import { VoiceChannel } from '@/components/channel-view/voice';
 import {
+    useCurrentVoiceChannelId,
     useSelectedChannelId,
     useSelectedChannelType
 } from '@/features/server/channels/hooks';
@@ -95,13 +96,25 @@ const ContentWrapper = memo(
     ({ isDmMode, selectedDmChannelId }: TContentWrapperProps) => {
         const selectedChannelId = useSelectedChannelId();
         const selectedChannelType = useSelectedChannelType();
+        const currentVoiceChannelId = useCurrentVoiceChannelId();
         const serverName = useServerName();
 
         let content;
 
         if (isDmMode) {
             if (selectedDmChannelId) {
-                content = (
+                // If we're actively in a call WITH this DM, swap the text
+                // view for the full voice UI (matches regular voice channels).
+                // The DmCallOverlay floating window is only useful when the
+                // user has navigated AWAY from the active-call DM.
+                const inCallWithThisDm =
+                    currentVoiceChannelId === selectedDmChannelId;
+                content = inCallWithThisDm ? (
+                    <VoiceChannel
+                        key={selectedDmChannelId}
+                        channelId={selectedDmChannelId}
+                    />
+                ) : (
                     <TextChannel
                         key={selectedDmChannelId}
                         channelId={selectedDmChannelId}

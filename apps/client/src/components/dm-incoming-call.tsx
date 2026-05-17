@@ -1,5 +1,6 @@
 import { useUserById } from '@/features/server/users/hooks';
 import { joinVoice } from '@/features/server/voice/actions';
+import { useMedia } from '@/features/server/voice/hooks';
 import { getTRPCClient } from '@/lib/trpc';
 import { Phone, PhoneOff } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
@@ -8,6 +9,7 @@ import { toast } from 'sonner';
 // Mounted once at the server level. Listens globally for incoming DM calls
 // and shows a persistent notification regardless of which channel is open.
 const DmIncomingCall = memo(() => {
+    const { init } = useMedia();
     const [call, setCall] = useState<{
         channelId: number;
         callerId: number;
@@ -23,26 +25,39 @@ const DmIncomingCall = memo(() => {
     }, []);
 
     const onAccept = useCallback(
-        async (channelId: number) => {
-            try {
-                await getTRPCClient().dms.acceptCall.mutate({ channelId });
-                await joinVoice(channelId);
-            } catch {
-                toast.error('Could not accept call');
-            }
+        (channelId: number) => {
+            // Dismiss the toast immediately so it doesn't linger while the
+            // accept mutation + mediasoup setup chain runs. Errors surface
+            // via a separate toast.
             dismiss();
+            (async () => {
+                try {
+                    await getTRPCClient().dms.acceptCall.mutate({ channelId });
+                    const caps = await joinVoice(channelId);
+                    if (!caps) {
+                        toast.error('Failed to join voice channel');
+                        return;
+                    }
+                    // matches the regular voice-channel flow: pass the router
+                    // capabilities to mediasoup init so transport + producer
+                    // setup actually runs.
+                    await init(caps, channelId);
+                } catch {
+                    toast.error('Could not accept call');
+                }
+            })();
         },
-        [dismiss]
+        [dismiss, init]
     );
 
     const onReject = useCallback(
-        async (channelId: number) => {
-            try {
-                await getTRPCClient().dms.hangupCall.mutate({ channelId });
-            } catch {
-                /* ignore */
-            }
+        (channelId: number) => {
             dismiss();
+            getTRPCClient()
+                .dms.hangupCall.mutate({ channelId })
+                .catch(() => {
+                    /* peer may have hung up first, ignore */
+                });
         },
         [dismiss]
     );

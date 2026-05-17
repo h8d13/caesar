@@ -1,4 +1,5 @@
 import { joinVoice } from '@/features/server/voice/actions';
+import { useMedia } from '@/features/server/voice/hooks';
 import { getTRPCClient } from '@/lib/trpc';
 import { Phone, PhoneOff } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
@@ -7,16 +8,28 @@ import { toast } from 'sonner';
 type TProps = { channelId: number };
 
 const DmCallButton = memo(({ channelId }: TProps) => {
+    const { init } = useMedia();
     const [outgoing, setOutgoing] = useState(false);
 
     // Clear outgoing state when peer accepts (we join voice).
     useEffect(() => {
         const trpc = getTRPCClient();
         const sub = trpc.dms.onCallAccepted.subscribe(undefined, {
-            onData: (data) => {
+            onData: async (data) => {
                 if (data.channelId !== channelId) return;
                 setOutgoing(false);
-                void joinVoice(channelId);
+                try {
+                    const caps = await joinVoice(channelId);
+                    if (!caps) {
+                        toast.error('Failed to join voice channel');
+                        return;
+                    }
+                    // mirror the regular voice-join path so mediasoup
+                    // transport + producer get set up.
+                    await init(caps, channelId);
+                } catch {
+                    toast.error('Could not start voice');
+                }
             }
         });
         // Peer rejected / cancelled before accepting.
@@ -30,7 +43,7 @@ const DmCallButton = memo(({ channelId }: TProps) => {
             sub.unsubscribe();
             endedSub.unsubscribe();
         };
-    }, [channelId]);
+    }, [channelId, init]);
 
     const onCall = useCallback(async () => {
         try {
