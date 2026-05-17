@@ -107,7 +107,7 @@ const dmKey = async (
     ]);
 
     return crypto.subtle.deriveKey(
-        { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(), info },
+        { name: 'HKDF', hash: 'SHA-256', salt: new TextEncoder().encode('caesar-dm-v1'), info },
         base,
         { name: 'AES-GCM', length: 256 },
         false,
