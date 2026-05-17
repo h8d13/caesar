@@ -142,7 +142,8 @@ const FloatingPinnedCard = memo(
                     className="w-full h-full object-contain"
                 />
 
-                {/* Resize handles */}
+                {/* Resize handles. Corners (z-30) overlay edges (z-20) so
+                    diagonal resize wins at overlap zones. */}
                 <div
                     className="absolute bottom-0 right-0 left-0 h-1.5 cursor-s-resize z-20"
                     onMouseDown={(e) => handleResizeMouseDown(e, 's')}
@@ -152,8 +153,16 @@ const FloatingPinnedCard = memo(
                     onMouseDown={(e) => handleResizeMouseDown(e, 'e')}
                 />
                 <div
+                    className="absolute top-0 bottom-0 left-0 w-1.5 cursor-w-resize z-20"
+                    onMouseDown={(e) => handleResizeMouseDown(e, 'w')}
+                />
+                <div
                     className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-30"
                     onMouseDown={(e) => handleResizeMouseDown(e, 'se')}
+                />
+                <div
+                    className="absolute bottom-0 left-0 w-4 h-4 cursor-sw-resize z-30"
+                    onMouseDown={(e) => handleResizeMouseDown(e, 'sw')}
                 />
             </div>
         );

@@ -15,7 +15,7 @@ type TSize = {
     height: number;
 };
 
-type TResizeEdge = 'se' | 's' | 'e';
+type TResizeEdge = 'se' | 's' | 'e' | 'sw' | 'w';
 
 const DEFAULT_SIZE: TSize = { width: 384, height: 216 };
 const MIN_WIDTH = 200;
@@ -41,6 +41,11 @@ export const useFloatingCard = () => {
         startY: number;
         startWidth: number;
         startHeight: number;
+        // Card's top-left in parent coords at resize start. Needed for
+        // sw/w edges which grow the box leftward, which requires updating
+        // position.x in lock-step with the width change.
+        startLeft: number;
+        startTop: number;
     } | null>(null);
 
     useEffect(() => {
@@ -76,12 +81,16 @@ export const useFloatingCard = () => {
             if (!cardRef.current) return;
 
             const rect = cardRef.current.getBoundingClientRect();
+            const parentRect =
+                cardRef.current.parentElement?.getBoundingClientRect();
             resizeInfo.current = {
                 edge,
                 startX: e.clientX,
                 startY: e.clientY,
                 startWidth: rect.width,
-                startHeight: rect.height
+                startHeight: rect.height,
+                startLeft: rect.left - (parentRect?.left ?? 0),
+                startTop: rect.top - (parentRect?.top ?? 0)
             };
         },
         []
@@ -90,22 +99,42 @@ export const useFloatingCard = () => {
     const handleMouseMove = useCallback(
         (e: MouseEvent) => {
             if (resizeInfo.current) {
-                const { edge, startX, startY, startWidth, startHeight } =
-                    resizeInfo.current;
+                const {
+                    edge,
+                    startX,
+                    startY,
+                    startWidth,
+                    startHeight,
+                    startLeft,
+                    startTop
+                } = resizeInfo.current;
                 const dx = e.clientX - startX;
                 const dy = e.clientY - startY;
+                const growsLeft = edge === 'sw' || edge === 'w';
+                const onlyHorizontal = edge === 'e' || edge === 'w';
+                const onlyVertical = edge === 's';
 
-                setSize((prev) => {
-                    const newWidth =
-                        edge === 's'
-                            ? prev.width
-                            : Math.max(MIN_WIDTH, startWidth + dx);
-                    const newHeight =
-                        edge === 'e'
-                            ? prev.height
-                            : Math.max(MIN_HEIGHT, startHeight + dy);
-                    return { width: newWidth, height: newHeight };
-                });
+                const intendedWidth = growsLeft
+                    ? startWidth - dx
+                    : startWidth + dx;
+                const newWidth = onlyVertical
+                    ? startWidth
+                    : Math.max(MIN_WIDTH, intendedWidth);
+                const newHeight = onlyHorizontal
+                    ? startHeight
+                    : Math.max(MIN_HEIGHT, startHeight + dy);
+
+                setSize({ width: newWidth, height: newHeight });
+
+                if (growsLeft) {
+                    // Pin the right edge: as width clamps to MIN_WIDTH, left
+                    // stops moving instead of overshooting.
+                    const widthDelta = startWidth - newWidth;
+                    setPosition({
+                        x: Math.max(0, startLeft + widthDelta),
+                        y: startTop
+                    });
+                }
                 return;
             }
 
