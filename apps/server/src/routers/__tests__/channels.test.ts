@@ -126,7 +126,10 @@ describe('channels router', () => {
     expect(channel.categoryId).toBe(1);
   });
 
-  test('should create a new voice channel', async () => {
+  // creating a voice channel spins up a VoiceRuntime, which needs the
+  // mediasoup native worker. test:fast skips it.
+  const voiceTest = process.env.SKIP_MEDIASOUP ? test.skip : test;
+  voiceTest('should create a new voice channel', async () => {
     const { caller } = await initTest();
 
     await caller.channels.add({

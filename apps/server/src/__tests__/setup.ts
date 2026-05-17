@@ -51,7 +51,14 @@ let testsBaseUrl: string;
 
 beforeAll(async () => {
   await createHttpServer(9999);
-  await loadMediasoup();
+
+  // Loading mediasoup needs the native worker binary, which isn't
+  // always built locally (fresh checkouts, sandboxes without postinstall).
+  // CI runs the full suite; locally `SKIP_MEDIASOUP=1 bun test` lets
+  // every non-voice test pass without the binary present.
+  if (!process.env.SKIP_MEDIASOUP) {
+    await loadMediasoup();
+  }
 
   testsBaseUrl = 'http://localhost:9999';
 });

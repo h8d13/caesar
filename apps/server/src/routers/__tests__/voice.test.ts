@@ -1,7 +1,11 @@
 import { initTest } from '@server/__tests__/helpers';
 import { describe, expect, test } from 'bun:test';
 
-describe('voice router', () => {
+// Voice runtime requires the mediasoup native worker. `bun test:fast`
+// (SKIP_MEDIASOUP=1) leaves it unloaded, so the suite skips entirely.
+const d = process.env.SKIP_MEDIASOUP ? describe.skip : describe;
+
+d('voice router', () => {
   test('should rate limit excessive voice join attempts', async () => {
     const { caller } = await initTest(1);
 
