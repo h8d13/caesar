@@ -13,6 +13,7 @@ import {
   messages,
   userRoles
 } from '@caesar/shared/db/schema';
+import { invariant } from '@server/utils/invariant';
 import { getOnlineUserIds } from '@server/utils/wss';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '..';
@@ -390,10 +391,29 @@ const getChannelsReadStatesForUser = async (
   return readStateMap;
 };
 
+// Fetch a channel row by id or throw NOT_FOUND. Use only when the
+// caller wants the full row; for partial selects, write the query
+// directly so the projection stays visible at the call site.
+const getChannelByIdOrThrow = async (channelId: number): Promise<TChannel> => {
+  const channel = await db
+    .select()
+    .from(channels)
+    .where(eq(channels.id, channelId))
+    .get();
+
+  invariant(channel, {
+    code: 'NOT_FOUND',
+    message: 'Channel not found'
+  });
+
+  return channel;
+};
+
 export {
   getAffectedOnlineUserIdsForChannel,
   getAffectedUserIdsForChannel,
   getAllChannelUserPermissions,
+  getChannelByIdOrThrow,
   getChannelsForUser,
   getChannelsReadStatesForUser
 };

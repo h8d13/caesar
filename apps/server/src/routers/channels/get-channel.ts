@@ -1,9 +1,6 @@
 import { Permission } from '@caesar/shared';
-import { channels } from '@caesar/shared/db/schema';
-import { db } from '@server/db';
-import { invariant } from '@server/utils/invariant';
+import { getChannelByIdOrThrow } from '@server/db/queries/channels';
 import { protectedProcedure } from '@server/utils/trpc';
-import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 const getChannelRoute = protectedProcedure
@@ -15,18 +12,7 @@ const getChannelRoute = protectedProcedure
   .query(async ({ input, ctx }) => {
     await ctx.needsPermission(Permission.MANAGE_CHANNELS);
 
-    const channel = await db
-      .select()
-      .from(channels)
-      .where(eq(channels.id, input.channelId))
-      .get();
-
-    invariant(channel, {
-      code: 'NOT_FOUND',
-      message: 'Channel not found'
-    });
-
-    return channel;
+    return getChannelByIdOrThrow(input.channelId);
   });
 
 export { getChannelRoute };

@@ -4,14 +4,12 @@ import {
   Permission,
   ServerEvents
 } from '@caesar/shared';
-import { channels } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
-import { db } from '@server/db';
+import { getChannelByIdOrThrow } from '@server/db/queries/channels';
 import { logger } from '@server/logger';
 import { VoiceRuntime } from '@server/runtimes/voice';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
-import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 const joinVoiceRoute = rateLimitedProcedure(protectedProcedure, {
@@ -34,16 +32,7 @@ const joinVoiceRoute = rateLimitedProcedure(protectedProcedure, {
       ctx.needsChannelPermission(input.channelId, ChannelPermission.JOIN)
     ]);
 
-    const channel = await db
-      .select()
-      .from(channels)
-      .where(eq(channels.id, input.channelId))
-      .get();
-
-    invariant(channel, {
-      code: 'NOT_FOUND',
-      message: 'Channel not found'
-    });
+    const channel = await getChannelByIdOrThrow(input.channelId);
 
     invariant(channel.type === ChannelType.VOICE, {
       code: 'BAD_REQUEST',

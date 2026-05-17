@@ -1,6 +1,7 @@
 import { ActivityLogType, Permission } from '@caesar/shared';
 import { channels } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
+import { getChannelByIdOrThrow } from '@server/db/queries/channels';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
@@ -17,16 +18,7 @@ const rotateFileAccessTokenRoute = protectedProcedure
   .mutation(async ({ input, ctx }) => {
     await ctx.needsPermission(Permission.MANAGE_CHANNELS);
 
-    const channel = await db
-      .select()
-      .from(channels)
-      .where(eq(channels.id, input.channelId))
-      .get();
-
-    invariant(channel, {
-      code: 'NOT_FOUND',
-      message: 'Channel not found'
-    });
+    const channel = await getChannelByIdOrThrow(input.channelId);
 
     invariant(!channel.isDm, {
       code: 'FORBIDDEN',
