@@ -57,4 +57,33 @@ const getUserRoleIds = async (userId: number): Promise<number[]> => {
   return userRoleRecords.map((ur) => ur.roleId);
 };
 
-export { getDefaultRole, getRole, getRoles, getUserRoleIds };
+// Bulk equivalent of getUserRoleIds for queries that need to attach
+// roleIds to a list of users (or any join over user_roles). Returns a
+// Record<userId, roleId[]>; missing userIds default to [] at the call
+// site via `map[id] ?? []`.
+const getAllUserRoleIdsMap = async (): Promise<Record<number, number[]>> => {
+  const rolesByUser = await db
+    .select({
+      userId: userRoles.userId,
+      roleId: userRoles.roleId
+    })
+    .from(userRoles)
+    .all();
+
+  return rolesByUser.reduce(
+    (acc, { userId, roleId }) => {
+      if (!acc[userId]) acc[userId] = [];
+      acc[userId].push(roleId);
+      return acc;
+    },
+    {} as Record<number, number[]>
+  );
+};
+
+export {
+  getAllUserRoleIdsMap,
+  getDefaultRole,
+  getRole,
+  getRoles,
+  getUserRoleIds
+};

@@ -1,14 +1,9 @@
 import type { TInvite, TJoinedInvite } from '@caesar/shared';
-import {
-  files,
-  invites,
-  roles,
-  userRoles,
-  users
-} from '@caesar/shared/db/schema';
+import { files, invites, roles, users } from '@caesar/shared/db/schema';
 import { eq } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { db } from '..';
+import { getAllUserRoleIdsMap } from './roles';
 import { publicUserBaseFields, socialCreditSubquery } from './user-fields';
 
 const isInviteValid = async (
@@ -64,22 +59,7 @@ const getInvites = async (): Promise<TJoinedInvite[]> => {
     .leftJoin(bannerFiles, eq(users.bannerId, bannerFiles.id))
     .leftJoin(roles, eq(invites.roleId, roles.id));
 
-  const rolesByUser = await db
-    .select({
-      userId: userRoles.userId,
-      roleId: userRoles.roleId
-    })
-    .from(userRoles)
-    .all();
-
-  const rolesMap = rolesByUser.reduce(
-    (acc, { userId, roleId }) => {
-      if (!acc[userId]) acc[userId] = [];
-      acc[userId].push(roleId);
-      return acc;
-    },
-    {} as Record<number, number[]>
-  );
+  const rolesMap = await getAllUserRoleIdsMap();
 
   return rows.map((row) => ({
     ...row.invite,
@@ -87,7 +67,7 @@ const getInvites = async (): Promise<TJoinedInvite[]> => {
       ...row.creator,
       avatar: row.avatar,
       banner: row.banner,
-      roleIds: rolesMap[row.creator.id] || []
+      roleIds: rolesMap[row.creator.id] ?? []
     },
     role: row.role?.id ? row.role : null
   }));
