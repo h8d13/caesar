@@ -1,3 +1,4 @@
+import { EditResourceCard } from '@/components/server-screens/edit-resource-card';
 import { requestConfirmation } from '@/features/dialogs/actions';
 import { getFileUrl } from '@/helpers/get-file-url';
 import { getTRPCClient } from '@/lib/trpc';
@@ -6,18 +7,8 @@ import {
     type TJoinedEmoji,
     type TTrpcErrors
 } from '@caesar/shared';
-import {
-    Button,
-    Card,
-    CardAction,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    Input,
-    Label
-} from '@caesar/ui';
+import { CardTitle, Input, Label } from '@caesar/ui';
 import { filesize } from 'filesize';
-import { Trash2 } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { Emoji } from './emoji';
@@ -78,71 +69,47 @@ const UpdateEmoji = memo(
         );
 
         return (
-            <Card className="flex-1">
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <CardTitle>Edit Emoji</CardTitle>
-                        <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={onDeleteEmoji}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </div>
-                    <CardAction>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                onClick={() => setSelectedEmojiId(undefined)}
-                            >
-                                Close
-                            </Button>
-                            <Button
-                                onClick={onUpdateEmoji}
-                                disabled={selectedEmoji.name === name}
-                            >
-                                Save Changes
-                            </Button>
+            <EditResourceCard
+                leftHeader={<CardTitle>Edit Emoji</CardTitle>}
+                onDelete={onDeleteEmoji}
+                onClose={() => setSelectedEmojiId(undefined)}
+                onSave={onUpdateEmoji}
+                saveDisabled={selectedEmoji.name === name}
+            >
+                <div className="flex items-center gap-4 p-4 rounded-lg bg-muted">
+                    <Emoji
+                        src={getFileUrl(selectedEmoji.file)}
+                        name={selectedEmoji.name}
+                        className="h-16 w-16"
+                    />
+                    <div>
+                        <div className="font-medium">
+                            :{selectedEmoji.name}:
                         </div>
-                    </CardAction>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="flex items-center gap-4 p-4 rounded-lg bg-muted">
-                        <Emoji
-                            src={getFileUrl(selectedEmoji.file)}
-                            name={selectedEmoji.name}
-                            className="h-16 w-16"
-                        />
-                        <div>
-                            <div className="font-medium">
-                                :{selectedEmoji.name}:
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                                {filesize(selectedEmoji.file.size)} • Uploaded
-                                by {selectedEmoji.user.name}
-                            </div>
+                        <div className="text-sm text-muted-foreground">
+                            {filesize(selectedEmoji.file.size)} • Uploaded by{' '}
+                            {selectedEmoji.user.name}
                         </div>
                     </div>
+                </div>
 
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="emoji-name">Name</Label>
-                            <Input
-                                id="emoji-name"
-                                value={name}
-                                onChange={onNameChange}
-                                placeholder="Enter emoji name (no spaces or special characters)"
-                                error={errors.name}
-                            />
-                            <p className="text-xs text-muted-foreground">
-                                This will be used as :{selectedEmoji.name}: in
-                                messages
-                            </p>
-                        </div>
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="emoji-name">Name</Label>
+                        <Input
+                            id="emoji-name"
+                            value={name}
+                            onChange={onNameChange}
+                            placeholder="Enter emoji name (no spaces or special characters)"
+                            error={errors.name}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            This will be used as :{selectedEmoji.name}: in
+                            messages
+                        </p>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </EditResourceCard>
         );
     }
 );

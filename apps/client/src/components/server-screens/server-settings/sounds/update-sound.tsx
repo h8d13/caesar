@@ -1,3 +1,4 @@
+import { EditResourceCard } from '@/components/server-screens/edit-resource-card';
 import { requestConfirmation } from '@/features/dialogs/actions';
 import { getFileUrl } from '@/helpers/get-file-url';
 import { getTRPCClient } from '@/lib/trpc';
@@ -6,18 +7,9 @@ import {
     type TJoinedSound,
     type TTrpcErrors
 } from '@caesar/shared';
-import {
-    Button,
-    Card,
-    CardAction,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    Input,
-    Label
-} from '@caesar/ui';
+import { CardTitle, Input, Label } from '@caesar/ui';
 import { filesize } from 'filesize';
-import { Trash2, Volume2 } from 'lucide-react';
+import { Volume2 } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -77,71 +69,47 @@ const UpdateSound = memo(
         );
 
         return (
-            <Card className="flex-1">
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <CardTitle>Edit Sound</CardTitle>
-                        <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={onDeleteSound}
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </div>
-                    <CardAction>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                onClick={() => setSelectedSoundId(undefined)}
-                            >
-                                Close
-                            </Button>
-                            <Button
-                                onClick={onUpdateSound}
-                                disabled={selectedSound.name === name}
-                            >
-                                Save Changes
-                            </Button>
+            <EditResourceCard
+                leftHeader={<CardTitle>Edit Sound</CardTitle>}
+                onDelete={onDeleteSound}
+                onClose={() => setSelectedSoundId(undefined)}
+                onSave={onUpdateSound}
+                saveDisabled={selectedSound.name === name}
+            >
+                <div className="flex items-center gap-4 p-4 rounded-lg bg-muted">
+                    <Volume2 className="h-16 w-16 text-muted-foreground flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                        <div className="font-medium truncate">
+                            {selectedSound.name}
                         </div>
-                    </CardAction>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="flex items-center gap-4 p-4 rounded-lg bg-muted">
-                        <Volume2 className="h-16 w-16 text-muted-foreground flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                            <div className="font-medium truncate">
-                                {selectedSound.name}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                                {filesize(selectedSound.file.size)} • Uploaded
-                                by {selectedSound.user.name}
-                            </div>
+                        <div className="text-sm text-muted-foreground">
+                            {filesize(selectedSound.file.size)} • Uploaded by{' '}
+                            {selectedSound.user.name}
                         </div>
                     </div>
+                </div>
 
-                    <div>
-                        <audio
-                            controls
-                            src={getFileUrl(selectedSound.file)}
-                            className="w-full"
+                <div>
+                    <audio
+                        controls
+                        src={getFileUrl(selectedSound.file)}
+                        className="w-full"
+                    />
+                </div>
+
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="sound-name">Name</Label>
+                        <Input
+                            id="sound-name"
+                            value={name}
+                            onChange={onNameChange}
+                            placeholder="Enter sound name"
+                            error={errors.name}
                         />
                     </div>
-
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="sound-name">Name</Label>
-                            <Input
-                                id="sound-name"
-                                value={name}
-                                onChange={onNameChange}
-                                placeholder="Enter sound name"
-                                error={errors.name}
-                            />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+                </div>
+            </EditResourceCard>
         );
     }
 );

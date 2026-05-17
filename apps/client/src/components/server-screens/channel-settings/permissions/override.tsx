@@ -1,17 +1,10 @@
+import { EditResourceCard } from '@/components/server-screens/edit-resource-card';
 import { UserAvatar } from '@/components/user-avatar';
 import { useRoleById } from '@/features/server/roles/hooks';
 import { useUserById } from '@/features/server/users/hooks';
 import { getTRPCClient } from '@/lib/trpc';
 import { ChannelPermission, getTrpcError } from '@caesar/shared';
-import {
-    Button,
-    Card,
-    CardAction,
-    CardContent,
-    CardHeader,
-    CardTitle
-} from '@caesar/ui';
-import { Trash2 } from 'lucide-react';
+import { CardTitle } from '@caesar/ui';
 import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { ChannelPermissionList } from './channel-permission-list';
@@ -148,46 +141,25 @@ const Override = memo(
         );
 
         return (
-            <Card className="flex-1">
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            {overrideType === 'role' ? (
-                                <RoleHeader roleId={targetId} />
-                            ) : (
-                                <UserHeader userId={targetId} />
-                            )}
-                        </div>
-                        <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={onDeleteOverride}
-                            className="text-destructive hover:text-destructive"
-                        >
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </div>
-                    <CardAction>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                onClick={() => setSelectedOverrideId(undefined)}
-                            >
-                                Cancel
-                            </Button>
-                            <Button onClick={onUpdateOverride}>
-                                Save Changes
-                            </Button>
-                        </div>
-                    </CardAction>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <ChannelPermissionList
-                        permissions={localPermissions}
-                        onTogglePermission={onTogglePermission}
-                    />
-                </CardContent>
-            </Card>
+            <EditResourceCard
+                leftHeader={
+                    isRole ? (
+                        <RoleHeader roleId={targetId} />
+                    ) : (
+                        <UserHeader userId={targetId} />
+                    )
+                }
+                onDelete={onDeleteOverride}
+                deleteDestructive
+                onClose={() => setSelectedOverrideId(undefined)}
+                closeLabel="Cancel"
+                onSave={onUpdateOverride}
+            >
+                <ChannelPermissionList
+                    permissions={localPermissions}
+                    onTogglePermission={onTogglePermission}
+                />
+            </EditResourceCard>
         );
     }
 );
