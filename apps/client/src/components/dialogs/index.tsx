@@ -33,6 +33,11 @@ const DialogsMap = {
     ),
     [Dialog.DELETE_USER]: lazy(() =>
         import('./delete-user').then((m) => ({ default: m.DeleteUserDialog }))
+    ),
+    [Dialog.E2EE_PASSWORD]: lazy(() =>
+        import('./e2ee-password').then((m) => ({
+            default: m.E2eePasswordDialog
+        }))
     )
 };
 

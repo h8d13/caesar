@@ -1,8 +1,10 @@
+import { Dialog } from '@/components/dialogs/dialogs';
 import {
     MessageCompose,
     type TMessageComposeHandle
 } from '@/components/message-compose';
 import { ResizableSidebar } from '@/components/resizable-sidebar';
+import { openDialog } from '@/features/dialogs/actions';
 import { useChannelById } from '@/features/server/channels/hooks';
 import {
     useChannelCan,
@@ -191,9 +193,7 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
 
             if (ephemeralMs != null) {
                 if (!hasPriv()) {
-                    toast.error(
-                        'Re-enter your password to send ephemeral messages.'
-                    );
+                    openDialog(Dialog.E2EE_PASSWORD);
                     return false;
                 }
                 if (

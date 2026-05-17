@@ -49,6 +49,21 @@ const derivePriv = (password: string, identity: string): Uint8Array => {
 
 const derivePub = (priv: Uint8Array): Uint8Array => x25519.getPublicKey(priv);
 
+// Derive priv from password+identity and verify it matches the user's
+// registered pub. Sets priv on match. expectedPubB64=null skips the check
+// (use only when the user has no pub registered yet).
+const tryDeriveAndSet = (
+    password: string,
+    identity: string,
+    expectedPubB64: string | null
+): boolean => {
+    const priv = derivePriv(password, identity);
+    const pubB64 = bytesToBase64(x25519.getPublicKey(priv));
+    if (expectedPubB64 !== null && pubB64 !== expectedPubB64) return false;
+    setPriv(priv);
+    return true;
+};
+
 // === per-DM symmetric key (HKDF over ECDH shared secret) =====================
 
 const dmKey = async (
@@ -113,5 +128,6 @@ export {
     hasPriv,
     open,
     seal,
-    setPriv
+    setPriv,
+    tryDeriveAndSet
 };

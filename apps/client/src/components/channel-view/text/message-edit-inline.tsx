@@ -1,4 +1,6 @@
+import { Dialog } from '@/components/dialogs/dialogs';
 import { TiptapInput } from '@/components/tiptap-input';
+import { openDialog } from '@/features/dialogs/actions';
 import { dmKey, hasPriv, seal } from '@/lib/e2ee';
 import { getTRPCClient } from '@/lib/trpc';
 import type { TE2eeWriteContext } from '@/lib/use-decrypted-message';
@@ -38,9 +40,7 @@ const MessageEditInline = memo(
 
                 if (isEncrypted) {
                     if (!hasPriv()) {
-                        toast.error(
-                            'Re-enter your password to edit ephemeral messages.'
-                        );
+                        openDialog(Dialog.E2EE_PASSWORD);
                         onBlur();
                         return;
                     }

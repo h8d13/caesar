@@ -15,6 +15,7 @@ import { getMyVotesTodayRoute } from './get-my-votes-today';
 import { getUserInfoRoute } from './get-user-info';
 import { getUsersRoute } from './get-users';
 import { kickRoute } from './kick';
+import { meRoute } from './me';
 import { removeRoleRoute } from './remove-role';
 import { unbanRoute } from './unban';
 import { updatePasswordRoute } from './update-password';
@@ -30,6 +31,7 @@ export const usersRouter = t.router({
   updatePassword: updatePasswordRoute,
   getInfo: getUserInfoRoute,
   getAll: getUsersRoute,
+  me: meRoute,
   kick: kickRoute,
   ban: banRoute,
   unban: unbanRoute,
