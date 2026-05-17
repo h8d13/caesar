@@ -1,4 +1,4 @@
-import { closeServerScreens } from '@/features/server-screens/actions';
+import { SettingsFooterActions } from '@/components/server-screens/settings-footer-actions';
 import { useAdminStorage } from '@/features/server/admin/hooks';
 import {
     STORAGE_MAX_AVATAR_SIZE,
@@ -17,7 +17,6 @@ import {
 import {
     Button,
     Card,
-    CardAction,
     CardContent,
     CardDescription,
     CardHeader,
@@ -65,16 +64,7 @@ const Storage = memo(() => {
                     storage limits, backup options, and data retention policies
                     to ensure optimal performance and reliability.
                 </CardDescription>
-                <CardAction>
-                    <div className="flex gap-2">
-                        <Button variant="outline" onClick={closeServerScreens}>
-                            Cancel
-                        </Button>
-                        <Button onClick={submit} disabled={loading}>
-                            Save Changes
-                        </Button>
-                    </div>
-                </CardAction>
+                <SettingsFooterActions onSave={submit} loading={loading} />
             </CardHeader>
             <CardContent className="space-y-4">
                 <DiskMetrics diskMetrics={diskMetrics!} />
