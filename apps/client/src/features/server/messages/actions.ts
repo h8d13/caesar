@@ -40,7 +40,15 @@ const sendBrowserNotification = (
     // ciphertext (base64) which must never reach the OS notification layer,
     // and even plaintext leaks sensitive info to notification daemons /
     // lock-screen previews / sync to other devices.
-    const title = `${user?.name ?? 'Unknown'} in #${channel?.name ?? 'unknown'}`;
+    //
+    // DM channels carry an internal `DM - {userIdA}:{userIdB}` name (e.g.
+    // "DM - 2:31") which reads as a clock time in the notification chrome.
+    // For DMs we just show the sender; for regular channels we keep the
+    // `in #<channel>` suffix.
+    const userName = user?.name ?? 'Unknown';
+    const title = channel?.isDm
+        ? userName
+        : `${userName} in #${channel?.name ?? 'unknown'}`;
     const body = 'You have a new message.';
     const icon = user?.avatar ? getFileUrl(user.avatar) : undefined;
 
