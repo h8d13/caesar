@@ -1,24 +1,7 @@
-import { Permission } from '@caesar/shared';
-import { VoiceRuntime } from '@server/runtimes/voice';
-import { invariant } from '@server/utils/invariant';
-import { protectedProcedure } from '@server/utils/trpc';
+import { voiceProcedure } from '@server/utils/voice-procedure';
 
-const getProducersRoute = protectedProcedure.query(async ({ ctx }) => {
-  await ctx.needsPermission(Permission.JOIN_VOICE_CHANNELS);
-
-  invariant(ctx.currentVoiceChannelId, {
-    code: 'BAD_REQUEST',
-    message: 'User is not in a voice channel'
-  });
-
-  const runtime = VoiceRuntime.findById(ctx.currentVoiceChannelId);
-
-  invariant(runtime, {
-    code: 'INTERNAL_SERVER_ERROR',
-    message: 'Voice runtime not found for this channel'
-  });
-
-  return runtime.getRemoteIds(ctx.user.id);
-});
+const getProducersRoute = voiceProcedure.query(({ ctx }) =>
+  ctx.voiceRuntime.getRemoteIds(ctx.user.id)
+);
 
 export { getProducersRoute };

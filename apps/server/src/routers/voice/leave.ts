@@ -1,60 +1,34 @@
-import { ChannelType, Permission, ServerEvents } from '@caesar/shared';
-import { channels } from '@caesar/shared/db/schema';
-import { db } from '@server/db';
+import { ChannelType, ServerEvents } from '@caesar/shared';
+import { getChannelByIdOrThrow } from '@server/db/queries/channels';
 import { logger } from '@server/logger';
-import { VoiceRuntime } from '@server/runtimes/voice';
 import { invariant } from '@server/utils/invariant';
-import { protectedProcedure } from '@server/utils/trpc';
-import { eq } from 'drizzle-orm';
+import { voiceProcedure } from '@server/utils/voice-procedure';
 
-const leaveVoiceRoute = protectedProcedure.mutation(async ({ ctx }) => {
-  await ctx.needsPermission(Permission.JOIN_VOICE_CHANNELS);
-
-  invariant(ctx.currentVoiceChannelId, {
-    code: 'BAD_REQUEST',
-    message: 'User is not in a voice channel'
-  });
-
-  const channel = await db
-    .select()
-    .from(channels)
-    .where(eq(channels.id, ctx.currentVoiceChannelId))
-    .get();
-
-  invariant(channel, {
-    code: 'NOT_FOUND',
-    message: 'Channel not found'
-  });
+const leaveVoiceRoute = voiceProcedure.mutation(async ({ ctx }) => {
+  const channel = await getChannelByIdOrThrow(ctx.voiceChannelId);
 
   invariant(channel.type === ChannelType.VOICE, {
     code: 'BAD_REQUEST',
     message: 'Channel is not a voice channel'
   });
 
-  const runtime = VoiceRuntime.findById(ctx.currentVoiceChannelId);
-
-  invariant(runtime, {
-    code: 'INTERNAL_SERVER_ERROR',
-    message: 'Voice runtime not found for this channel'
-  });
-
-  const userInChannel = runtime.getUser(ctx.user.id);
+  const userInChannel = ctx.voiceRuntime.getUser(ctx.user.id);
 
   invariant(userInChannel, {
     code: 'BAD_REQUEST',
     message: 'User not in voice channel'
   });
 
-  runtime.removeUser(ctx.user.id);
+  ctx.voiceRuntime.removeUser(ctx.user.id);
 
-  const channelState = runtime.getState();
+  const channelState = ctx.voiceRuntime.getState();
 
   ctx.pubsub.publish(ServerEvents.USER_LEAVE_VOICE, {
-    channelId: ctx.currentVoiceChannelId,
+    channelId: ctx.voiceChannelId,
     userId: ctx.user.id
   });
   ctx.pubsub.publish(ServerEvents.VOICE_CHANNEL_STATE_UPDATE, {
-    channelId: ctx.currentVoiceChannelId,
+    channelId: ctx.voiceChannelId,
     activeSince: channelState.activeSince
   });
   ctx.currentVoiceChannelId = undefined;
