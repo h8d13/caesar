@@ -7,6 +7,7 @@ import {
     Side,
     type XYWH
 } from '@caesar/shared';
+import type { CSSProperties } from 'react';
 
 export const colors: Color[] = [
     { r: 243, g: 82, b: 35 },
@@ -22,6 +23,20 @@ export const colors: Color[] = [
 
 export function colorToCss(color: Color): string {
     return `rgb(${color.r}, ${color.g}, ${color.b})`;
+}
+
+export function getLayerStyle(
+    x: number,
+    y: number,
+    fill: Color,
+    selectionColor: string | undefined
+): CSSProperties {
+    return {
+        transform: `translate(${x}px, ${y}px)`,
+        fill: colorToCss(fill),
+        stroke: selectionColor || 'transparent',
+        strokeWidth: selectionColor ? 1 : 0
+    };
 }
 
 export function getContrastingTextColor(color: Color): string {

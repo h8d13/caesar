@@ -1,7 +1,7 @@
 import { type PathLayer } from '@caesar/shared';
 import getStroke from 'perfect-freehand';
 import { memo } from 'react';
-import { colorToCss, getSvgPathFromStroke } from '../utils';
+import { getLayerStyle, getSvgPathFromStroke } from '../utils';
 
 type PathProps = {
     layer: PathLayer;
@@ -25,12 +25,7 @@ const Path = memo(({ layer, onPointerDown, selectionColor }: PathProps) => {
         <path
             onPointerDown={onPointerDown}
             d={pathData}
-            style={{
-                transform: `translate(${x}px, ${y}px)`,
-                fill: colorToCss(fill),
-                stroke: selectionColor || 'transparent',
-                strokeWidth: selectionColor ? 1 : 0
-            }}
+            style={getLayerStyle(x, y, fill, selectionColor)}
         />
     );
 });

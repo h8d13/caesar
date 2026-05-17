@@ -1,6 +1,6 @@
 import { type Layer, LayerType } from '@caesar/shared';
 import { memo } from 'react';
-import { colorToCss } from '../utils';
+import { getLayerStyle } from '../utils';
 
 type PolygonProps = {
     layer: Layer;
@@ -34,12 +34,7 @@ const Polygon = memo(
             <polygon
                 onPointerDown={onPointerDown}
                 points={points}
-                style={{
-                    transform: `translate(${x}px, ${y}px)`,
-                    fill: colorToCss(fill),
-                    stroke: selectionColor || 'transparent',
-                    strokeWidth: selectionColor ? 1 : 0
-                }}
+                style={getLayerStyle(x, y, fill, selectionColor)}
             />
         );
     }

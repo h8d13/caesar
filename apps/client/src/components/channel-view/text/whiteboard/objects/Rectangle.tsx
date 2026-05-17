@@ -1,6 +1,6 @@
 import { type RectangleLayer } from '@caesar/shared';
 import { memo } from 'react';
-import { colorToCss } from '../utils';
+import { getLayerStyle } from '../utils';
 
 type RectangleProps = {
     layer: RectangleLayer;
@@ -19,12 +19,7 @@ const Rectangle = memo(
                 y={0}
                 width={width}
                 height={height}
-                style={{
-                    transform: `translate(${x}px, ${y}px)`,
-                    fill: colorToCss(fill),
-                    stroke: selectionColor || 'transparent',
-                    strokeWidth: selectionColor ? 1 : 0
-                }}
+                style={getLayerStyle(x, y, fill, selectionColor)}
             />
         );
     }

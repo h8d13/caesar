@@ -1,6 +1,6 @@
 import { type EllipseLayer } from '@caesar/shared';
 import { memo } from 'react';
-import { colorToCss } from '../utils';
+import { getLayerStyle } from '../utils';
 
 type EllipseProps = {
     layer: EllipseLayer;
@@ -19,12 +19,7 @@ const Ellipse = memo(
                 cy={height / 2}
                 rx={width / 2}
                 ry={height / 2}
-                style={{
-                    transform: `translate(${x}px, ${y}px)`,
-                    fill: colorToCss(fill),
-                    stroke: selectionColor || 'transparent',
-                    strokeWidth: selectionColor ? 1 : 0
-                }}
+                style={getLayerStyle(x, y, fill, selectionColor)}
             />
         );
     }
