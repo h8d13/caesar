@@ -78,7 +78,7 @@ export const permissionDescriptions: Record<Permission, string> = {
   [Permission.MANAGE_INVITES]:
     'Grants the ability to create, edit, and delete server invites.',
   [Permission.VIEW_USER_SENSITIVE_DATA]:
-    'Grants the ability to view user sensitive data like identity, IP address, and location.'
+    'Grants the ability to view user server interactions.'
 };
 
 export const DEFAULT_ROLE_PERMISSIONS = [
