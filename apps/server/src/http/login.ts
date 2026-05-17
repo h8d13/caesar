@@ -59,7 +59,7 @@ const loginRateLimiter = createRateLimiter({
 // the public /login endpoint. The specific reason is logged server-side
 // for legitimate operator debugging.
 const GENERIC_AUTH_ERROR =
-  'Invalid credentials. Check your username, password, and invite code.';
+  'Invalid credentials. Check your username/password or invite code.';
 
 const registerUser = async (
   identity: string,
@@ -246,6 +246,10 @@ const loginRouteHandler = async (
   // the password. The legit user (who knows their own password) still
   // gets a useful message.
   if (existingUser.banned) {
+    logger.info(
+      `[Auth] Banned user login attempt: "${existingUser.identity}" reason="${existingUser.banReason || 'none'}" (IP: ${connectionInfo?.ip || 'unknown'})`
+    );
+
     throw new HttpValidationError(
       'identity',
       `Identity banned: ${existingUser.banReason || 'No reason provided'}`
