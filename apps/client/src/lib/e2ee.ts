@@ -1,11 +1,11 @@
-// E2EE for ephemeral DMs.
+// E2EE for ephemeral DMs (expiresAt != null).
 //
-// scope: messages whose `expiresAt != null`. nothing else is encrypted.
-// model: deterministic per-login keypair from password + identity. private
-//        key lives only in this module's heap; never persisted, never sent.
+// priv = argon2id(password, identity). deterministic, heap-only,
+// never persisted/sent. wiped on refresh; rederived on manual login
+// (auto-login replays JWT only => no password => no priv => "expired").
 //
-// on refresh: priv is gone. ephemeral messages render as italicized
-// "expired" (the UI fallback). re-login to read them again before TTL.
+// "ephemeral" = server TTL, not forward secrecy: password holder can
+// always rederive and read still-live msgs.
 
 import { x25519 } from '@noble/curves/ed25519.js';
 import { argon2id } from '@noble/hashes/argon2.js';
