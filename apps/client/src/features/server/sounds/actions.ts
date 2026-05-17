@@ -320,6 +320,54 @@ const sfxRemoteUserStoppedScreenshare = () => {
     osc2.start(now() + 0.05);
     osc2.stop(now() + 0.2);
 };
+
+// INCOMING_CALL_RING
+const sfxIncomingCallRing = () => {
+    const chord = [
+        { freq: 440, gain: 0.06 }, // A
+        { freq: 554, gain: 0.05 }, // C#
+        { freq: 659, gain: 0.04 } // E
+    ];
+
+    const burst = (offset: number) => {
+        chord.forEach(({ freq, gain: g }) => {
+            const osc = createOsc('sine', freq);
+            const gain = createGain(g);
+
+            gain.gain.exponentialRampToValueAtTime(
+                0.0001,
+                now() + offset + 0.4
+            );
+
+            osc.connect(gain).connect(audioCtx.destination);
+            osc.start(now() + offset);
+            osc.stop(now() + offset + 0.4);
+        });
+
+        // Octave-up triangle adds a phone-bell shimmer without harshness.
+        const osc2 = createOsc('triangle', 880);
+        const gain2 = createGain(0.025);
+
+        gain2.gain.exponentialRampToValueAtTime(0.0001, now() + offset + 0.35);
+
+        osc2.connect(gain2).connect(audioCtx.destination);
+        osc2.start(now() + offset + 0.05);
+        osc2.stop(now() + offset + 0.4);
+    };
+
+    burst(0);
+    burst(0.55);
+};
+
+// Start a looping ring tone. Returns a stop function. Use from any
+// effect that conditionally rings (e.g. while a call invite is pending).
+export const startCallRingLoop = (): (() => void) => {
+    sfxIncomingCallRing();
+    // 2.5s cadence: ~1s of ring (two bursts) + ~1.5s of silence.
+    const interval = setInterval(sfxIncomingCallRing, 2500);
+    return () => clearInterval(interval);
+};
+
 export const playSound = (type: SoundType) => {
     switch (type) {
         case SoundType.MESSAGE_RECEIVED:
@@ -360,6 +408,9 @@ export const playSound = (type: SoundType) => {
             return sfxRemoteUserStartedScreenshare();
         case SoundType.REMOTE_USER_STOPPED_SCREENSHARE:
             return sfxRemoteUserStoppedScreenshare();
+
+        case SoundType.INCOMING_CALL_RING:
+            return sfxIncomingCallRing();
 
         default:
             return;

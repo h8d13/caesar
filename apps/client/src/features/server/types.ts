@@ -22,7 +22,9 @@ export enum SoundType {
     REMOTE_USER_JOINED_VOICE_CHANNEL = 'remote_user_joined_voice_channel',
     REMOTE_USER_LEFT_VOICE_CHANNEL = 'remote_user_left_voice_channel',
     REMOTE_USER_STARTED_SCREENSHARE = 'remote_user_started_screenshare',
-    REMOTE_USER_STOPPED_SCREENSHARE = 'remote_user_stopped_screenshare'
+    REMOTE_USER_STOPPED_SCREENSHARE = 'remote_user_stopped_screenshare',
+
+    INCOMING_CALL_RING = 'incoming_call_ring'
 }
 
 export type TMessagesMap = {

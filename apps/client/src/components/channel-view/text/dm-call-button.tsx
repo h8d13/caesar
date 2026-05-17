@@ -1,3 +1,4 @@
+import { startCallRingLoop } from '@/features/server/sounds/actions';
 import { joinVoice } from '@/features/server/voice/actions';
 import { useMedia } from '@/features/server/voice/hooks';
 import { getTRPCClient } from '@/lib/trpc';
@@ -10,6 +11,12 @@ type TProps = { channelId: number };
 const DmCallButton = memo(({ channelId }: TProps) => {
     const { init } = useMedia();
     const [outgoing, setOutgoing] = useState(false);
+
+    // Outgoing dial tone while waiting for peer to accept.
+    useEffect(() => {
+        if (!outgoing) return;
+        return startCallRingLoop();
+    }, [outgoing]);
 
     // Clear outgoing state when peer accepts (we join voice).
     useEffect(() => {
