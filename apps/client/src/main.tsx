@@ -8,6 +8,7 @@ import { DebugInfo } from './components/debug-info/index.tsx';
 import { StoreDebug } from './components/debug/store-debug.tsx';
 import { DevicesProvider } from './components/devices-provider/index.tsx';
 import { DialogsProvider } from './components/dialogs/index.tsx';
+import { E2eeKeyRegister } from './components/e2ee-key-register.tsx';
 import { AutoLoginController } from './components/routing/auto-login-controller.tsx';
 import { Routing } from './components/routing/index.tsx';
 import { ServerScreensProvider } from './components/server-screens/index.tsx';
@@ -40,6 +41,7 @@ createRoot(document.getElementById('root')!).render(
                         <DialogsProvider />
                         <ServerScreensProvider />
                         <AutoLoginController />
+                        <E2eeKeyRegister />
                         <Routing />
                     </DevicesProvider>
                 </Provider>

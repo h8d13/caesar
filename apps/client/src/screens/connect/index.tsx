@@ -12,8 +12,7 @@ import {
     setSessionStorageItem
 } from '@/helpers/storage';
 import { useForm } from '@/hooks/use-form';
-import { derivePriv, getMyPubB64, setPriv } from '@/lib/e2ee';
-import { getTRPCClient } from '@/lib/trpc';
+import { derivePriv, setPriv } from '@/lib/e2ee';
 import { TestId } from '@caesar/shared';
 import {
     Alert,
@@ -99,20 +98,15 @@ const Connect = memo(() => {
             const data = (await response.json()) as { token: string };
 
             // E2EE: argon2id is ~1-2s sync on main thread. Defer so
-            // connect() / Suspense fallback paint immediately; derive +
-            // register run after the loading spinner is already on screen.
+            // connect() / Suspense fallback paint immediately; derive
+            // runs after the loading spinner is already on screen. The
+            // <E2eeKeyRegister /> controller picks up the pub via the
+            // priv subscriber and registers once joinServer has set
+            // authenticated=true.
             const password = values.password;
             const identity = values.identity;
             setTimeout(() => {
                 setPriv(derivePriv(password, identity));
-                const pub = getMyPubB64();
-                if (pub) {
-                    getTRPCClient()
-                        .keys.register.mutate({ publicKey: pub })
-                        .catch((e) =>
-                            console.warn('e2ee key register failed', e)
-                        );
-                }
             }, 0);
 
             setSessionStorageItem(SessionStorageKey.TOKEN, data.token);
