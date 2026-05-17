@@ -8,11 +8,6 @@ import { toast } from 'sonner';
 
 // Mounted once at the server level. Listens globally for incoming DM calls
 // and renders a persistent notification regardless of which channel is open.
-//
-// Rendered as a plain fixed-position element (NOT a sonner toast) because
-// sonner's toast.custom + manual toast.dismiss combo was unreliable across
-// re-renders of the toast content. A conditionally-rendered <div> can't
-// "stick" — when call === null, nothing is in the tree.
 const DmIncomingCall = memo(() => {
     const { init } = useMedia();
     const [call, setCall] = useState<{

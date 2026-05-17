@@ -1,6 +1,7 @@
 import { TextChannel } from '@/components/channel-view/text';
 import { VoiceChannel } from '@/components/channel-view/voice';
 import {
+    useCurrentVoiceChannelId,
     useSelectedChannelId,
     useSelectedChannelType
 } from '@/features/server/channels/hooks';
@@ -95,13 +96,23 @@ const ContentWrapper = memo(
     ({ isDmMode, selectedDmChannelId }: TContentWrapperProps) => {
         const selectedChannelId = useSelectedChannelId();
         const selectedChannelType = useSelectedChannelType();
+        const currentVoiceChannelId = useCurrentVoiceChannelId();
         const serverName = useServerName();
 
         let content;
 
         if (isDmMode) {
             if (selectedDmChannelId) {
-                content = (
+                // Active DM call shows the full VoiceChannel UI inline.
+                // No floating modal call happens on this page.
+                const inCallWithThisDm =
+                    currentVoiceChannelId === selectedDmChannelId;
+                content = inCallWithThisDm ? (
+                    <VoiceChannel
+                        key={selectedDmChannelId}
+                        channelId={selectedDmChannelId}
+                    />
+                ) : (
                     <TextChannel
                         key={selectedDmChannelId}
                         channelId={selectedDmChannelId}
