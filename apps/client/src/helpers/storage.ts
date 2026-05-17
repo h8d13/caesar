@@ -21,8 +21,6 @@ export enum LocalStorageKey {
     CATEGORIES_EXPANDED = 'caesar-categories-expanded',
     AUTO_LOGIN = 'caesar-auto-login',
     AUTO_LOGIN_TOKEN = 'caesar-auto-login-token',
-    LAST_SELECTED_CHANNEL = 'caesar-last-selected-channel',
-    AUTO_JOIN_LAST_CHANNEL = 'caesar-auto-join-last-channel',
     BROWSER_NOTIFICATIONS = 'caesar-browser-notifications',
     NICKNAMES = 'caesar-nicknames',
     WHITEBOARD_SIDEBAR_WIDTH = 'caesar-whiteboard-sidebar-width',

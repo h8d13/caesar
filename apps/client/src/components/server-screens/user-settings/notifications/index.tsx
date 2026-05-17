@@ -1,11 +1,9 @@
 import {
-    setAutoJoinLastChannel,
     setBrowserNotifications,
     setBrowserNotificationsForDms,
     setBrowserNotificationsForMentions
 } from '@/features/app/actions';
 import {
-    useAutoJoinLastChannel,
     useBrowserNotifications,
     useBrowserNotificationsForDms,
     useBrowserNotificationsForMentions
@@ -21,8 +19,7 @@ import {
 } from '@caesar/ui';
 import { memo } from 'react';
 
-const Others = memo(() => {
-    const autoJoinLastChannel = useAutoJoinLastChannel();
+const Notifications = memo(() => {
     const browserNotifications = useBrowserNotifications();
     const browserNotificationsForMentions =
         useBrowserNotificationsForMentions();
@@ -31,27 +28,14 @@ const Others = memo(() => {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Others</CardTitle>
+                <CardTitle>Notifications</CardTitle>
                 <CardDescription>
-                    In this section, you can update settings related to{' '}
-                    {VITE_APP_NAME}'s behavior.
+                    Control which messages trigger browser notifications.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <Group
-                    label="Auto-Join Last Channel"
-                    description="Automatically select the last text channel you were in when you connect to the server."
-                >
-                    <Switch
-                        checked={autoJoinLastChannel}
-                        onCheckedChange={(value) =>
-                            setAutoJoinLastChannel(value)
-                        }
-                    />
-                </Group>
-                <Group
                     label="Browser Notifications"
-                    // description="When enabled, you will receive browser notifications for new messages."
                     description="Recieve browser notifications for all new messages."
                 >
                     <Switch
@@ -88,4 +72,4 @@ const Others = memo(() => {
     );
 });
 
-export { Others };
+export { Notifications };

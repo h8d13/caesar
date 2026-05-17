@@ -20,9 +20,6 @@ export const threadParentMessageIdSelector = (state: IRootState) =>
 export const threadChannelIdSelector = (state: IRootState) =>
     state.app.threadChannelId;
 
-export const autoJoinLastChannelSelector = (state: IRootState) =>
-    state.app.autoJoinLastChannel;
-
 export const dmsOpenSelector = (state: IRootState) => state.app.dmsOpen;
 
 export const selectedDmChannelIdSelector = (state: IRootState) =>

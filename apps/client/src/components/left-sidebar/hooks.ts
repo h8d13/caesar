@@ -1,4 +1,3 @@
-import { useAutoJoinLastChannel } from '@/features/app/hooks';
 import { setSelectedChannelId } from '@/features/server/channels/actions';
 import {
     useChannelsMap,
@@ -8,7 +7,7 @@ import { joinVoice } from '@/features/server/voice/actions';
 import { useMedia } from '@/features/server/voice/hooks';
 import { getLocalStorageItemAsJSON, LocalStorageKey } from '@/helpers/storage';
 import { ChannelType } from '@caesar/shared';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 const loadExpandedValue = (categoryId: number): boolean => {
@@ -59,7 +58,6 @@ const useCategoryExpanded = (categoryId: number) => {
 const useSelectChannel = () => {
     const { init } = useMedia();
     const currentVoiceChannelId = useCurrentVoiceChannelId();
-    const autoJoinLastChannel = useAutoJoinLastChannel();
     const channelsMap = useChannelsMap();
 
     const selectChannel = useCallback(
@@ -69,14 +67,6 @@ const useSelectChannel = () => {
             if (!channel) return;
 
             setSelectedChannelId(channel.id);
-
-            if (channel.type !== ChannelType.VOICE) {
-                // persist selected channel for non-voice channels
-                localStorage.setItem(
-                    LocalStorageKey.LAST_SELECTED_CHANNEL,
-                    channel.id.toString()
-                );
-            }
 
             if (
                 channel?.type === ChannelType.VOICE &&
@@ -102,23 +92,6 @@ const useSelectChannel = () => {
         },
         [channelsMap, currentVoiceChannelId, init]
     );
-
-    useEffect(() => {
-        if (!autoJoinLastChannel) return;
-
-        const lastSelectedChannelId = localStorage.getItem(
-            LocalStorageKey.LAST_SELECTED_CHANNEL
-        );
-
-        if (lastSelectedChannelId) {
-            const channelId = parseInt(lastSelectedChannelId, 10);
-            const lastChannel = channelsMap[channelId];
-
-            if (lastChannel) {
-                setSelectedChannelId(channelId);
-            }
-        }
-    }, [channelsMap, autoJoinLastChannel]);
 
     return selectChannel;
 };

@@ -84,12 +84,6 @@ export const resetApp = () => {
     );
 };
 
-export const setAutoJoinLastChannel = (autoJoin: boolean) => {
-    store.dispatch(appSliceActions.setAutoJoinLastChannel(autoJoin));
-
-    setLocalStorageItemBool(LocalStorageKey.AUTO_JOIN_LAST_CHANNEL, autoJoin);
-};
-
 export const setDmsOpen = (open: boolean) =>
     store.dispatch(appSliceActions.setDmsOpen(open));
 

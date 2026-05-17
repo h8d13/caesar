@@ -11,7 +11,6 @@ export interface TAppState {
     threadSidebarOpen: boolean;
     threadParentMessageId: number | undefined;
     threadChannelId: number | undefined;
-    autoJoinLastChannel: boolean;
     dmsOpen: boolean;
     selectedDmChannelId: number | undefined;
     browserNotifications: boolean;
@@ -28,10 +27,6 @@ const initialState: TAppState = {
     threadSidebarOpen: false,
     threadParentMessageId: undefined,
     threadChannelId: undefined,
-    autoJoinLastChannel: getLocalStorageItemBool(
-        LocalStorageKey.AUTO_JOIN_LAST_CHANNEL,
-        false
-    ),
     dmsOpen: false,
     selectedDmChannelId: undefined,
     browserNotifications: getLocalStorageItemBool(
@@ -79,9 +74,6 @@ export const appSlice = createSlice({
             state.threadSidebarOpen = action.payload.open;
             state.threadParentMessageId = action.payload.parentMessageId;
             state.threadChannelId = action.payload.channelId;
-        },
-        setAutoJoinLastChannel: (state, action: PayloadAction<boolean>) => {
-            state.autoJoinLastChannel = action.payload;
         },
         setIsAutoConnecting: (state, action: PayloadAction<boolean>) => {
             state.isAutoConnecting = action.payload;
