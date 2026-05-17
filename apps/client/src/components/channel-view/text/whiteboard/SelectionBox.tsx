@@ -67,51 +67,49 @@ const SelectionBox = memo(
                     pointerEvents="none"
                     style={{ strokeDasharray: '5 5' }}
                 />
-                {/* Corner handles */}
-                <rect
-                    x={bounds.x - HANDLE_WIDTH / 2}
-                    y={bounds.y - HANDLE_WIDTH / 2}
-                    width={HANDLE_WIDTH}
-                    height={HANDLE_WIDTH}
-                    fill="white"
-                    stroke="#3b82f6"
-                    strokeWidth={1}
-                    style={{ cursor: 'nwse-resize' }}
-                    onPointerDown={handlePointerDown(Side.Top + Side.Left)}
-                />
-                <rect
-                    x={bounds.x + bounds.width - HANDLE_WIDTH / 2}
-                    y={bounds.y - HANDLE_WIDTH / 2}
-                    width={HANDLE_WIDTH}
-                    height={HANDLE_WIDTH}
-                    fill="white"
-                    stroke="#3b82f6"
-                    strokeWidth={1}
-                    style={{ cursor: 'nesw-resize' }}
-                    onPointerDown={handlePointerDown(Side.Top + Side.Right)}
-                />
-                <rect
-                    x={bounds.x - HANDLE_WIDTH / 2}
-                    y={bounds.y + bounds.height - HANDLE_WIDTH / 2}
-                    width={HANDLE_WIDTH}
-                    height={HANDLE_WIDTH}
-                    fill="white"
-                    stroke="#3b82f6"
-                    strokeWidth={1}
-                    style={{ cursor: 'nesw-resize' }}
-                    onPointerDown={handlePointerDown(Side.Bottom + Side.Left)}
-                />
-                <rect
-                    x={bounds.x + bounds.width - HANDLE_WIDTH / 2}
-                    y={bounds.y + bounds.height - HANDLE_WIDTH / 2}
-                    width={HANDLE_WIDTH}
-                    height={HANDLE_WIDTH}
-                    fill="white"
-                    stroke="#3b82f6"
-                    strokeWidth={1}
-                    style={{ cursor: 'nwse-resize' }}
-                    onPointerDown={handlePointerDown(Side.Bottom + Side.Right)}
-                />
+                {/* Corner handles. Encoded as data so adding/removing
+                    a handle (e.g. mid-edge resize) is one array entry. */}
+                {(
+                    [
+                        {
+                            side: Side.Top + Side.Left,
+                            dx: 0,
+                            dy: 0,
+                            cursor: 'nwse-resize'
+                        },
+                        {
+                            side: Side.Top + Side.Right,
+                            dx: bounds.width,
+                            dy: 0,
+                            cursor: 'nesw-resize'
+                        },
+                        {
+                            side: Side.Bottom + Side.Left,
+                            dx: 0,
+                            dy: bounds.height,
+                            cursor: 'nesw-resize'
+                        },
+                        {
+                            side: Side.Bottom + Side.Right,
+                            dx: bounds.width,
+                            dy: bounds.height,
+                            cursor: 'nwse-resize'
+                        }
+                    ] as const
+                ).map(({ side, dx, dy, cursor }) => (
+                    <rect
+                        key={side}
+                        x={bounds.x + dx - HANDLE_WIDTH / 2}
+                        y={bounds.y + dy - HANDLE_WIDTH / 2}
+                        width={HANDLE_WIDTH}
+                        height={HANDLE_WIDTH}
+                        fill="white"
+                        stroke="#3b82f6"
+                        strokeWidth={1}
+                        style={{ cursor }}
+                        onPointerDown={handlePointerDown(side)}
+                    />
+                ))}
             </>
         );
     }
