@@ -4,7 +4,8 @@
 import { useOwnUserId } from '@/features/server/users/hooks';
 import { type TJoinedMessage } from '@caesar/shared';
 import { useQuery } from '@tanstack/react-query';
-import { dmKey, hasPriv, open } from './e2ee';
+import { useSyncExternalStore } from 'react';
+import { dmKey, getPrivVersion, hasPriv, open, subscribePriv } from './e2ee';
 import { useDmE2eeContext } from './use-dm-e2ee';
 
 // Bundle the crypto-context fields a caller needs for write paths
@@ -30,6 +31,11 @@ const useDecryptedMessage = (
 ): TDecryptResult => {
     const ctx = useDmE2eeContext(message.channelId, channelIsDm);
     const ownUserId = useOwnUserId();
+
+    // Subscribe to priv changes so an in-session re-derive (password
+    // prompt dialog) re-runs canDecrypt for every mounted message,
+    // not just the ones that happen to re-render for other reasons.
+    useSyncExternalStore(subscribePriv, getPrivVersion);
 
     const canDecrypt =
         message.expiresAt != null &&

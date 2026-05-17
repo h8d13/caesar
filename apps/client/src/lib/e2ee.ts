@@ -21,14 +21,39 @@ const ARGON2 = { t: 3, m: 64 * 1024, p: 1, dkLen: 32 };
 let myPriv: Uint8Array | null = null;
 let myPubB64: string | null = null;
 
+// React-observable change notification. Bumped on every priv mutation so
+// useSyncExternalStore-based consumers (see usePriv() below) re-render
+// when the in-session re-derive flips priv from null to set. Without
+// this, components that called hasPriv() during render kept their stale
+// "no priv" enabled flags and existing "expired" message bubbles never
+// re-tried decryption after the password-prompt dialog.
+let privVersion = 0;
+const privListeners = new Set<() => void>();
+
+const notifyPrivChange = () => {
+    privVersion++;
+    privListeners.forEach((listener) => listener());
+};
+
+const subscribePriv = (listener: () => void) => {
+    privListeners.add(listener);
+    return () => {
+        privListeners.delete(listener);
+    };
+};
+
+const getPrivVersion = () => privVersion;
+
 const setPriv = (priv: Uint8Array) => {
     myPriv = priv;
     myPubB64 = bytesToBase64(x25519.getPublicKey(priv));
+    notifyPrivChange();
 };
 
 const clearPriv = () => {
     myPriv = null;
     myPubB64 = null;
+    notifyPrivChange();
 };
 
 const hasPriv = () => myPriv !== null;
@@ -124,9 +149,11 @@ export {
     derivePub,
     dmKey,
     getMyPubB64,
+    getPrivVersion,
     hasPriv,
     open,
     seal,
     setPriv,
+    subscribePriv,
     tryDeriveAndSet
 };
