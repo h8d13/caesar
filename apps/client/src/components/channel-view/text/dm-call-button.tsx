@@ -34,7 +34,7 @@ const DmCallButton = memo(({ channelId }: TProps) => {
 
     const onCall = useCallback(async () => {
         try {
-            await getTRPCClient().dms.call.mutate({ channelId });
+            await getTRPCClient().dms.startCall.mutate({ channelId });
             setOutgoing(true);
         } catch {
             toast.error('Could not start call');

@@ -45,7 +45,7 @@ export const dmsRouter = t.router({
   getEphemeral: getEphemeralRoute,
   getE2eeContext: getE2eeContextRoute,
   setEphemeral: setEphemeralRoute,
-  call: callRoute,
+  startCall: callRoute,
   acceptCall: acceptCallRoute,
   hangupCall: hangupCallRoute,
   onConversationOpen: onDmConversationOpenRoute,
