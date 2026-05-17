@@ -19,6 +19,20 @@ const publicUserBaseFields = {
   createdAt: users.createdAt
 };
 
+// Superset for TJoinedUser-shaped queries: every public field plus the
+// owner-only / admin-only columns (identity, ban metadata, session epoch,
+// timestamps). Spread into a drizzle .select({ ... }) and add avatar/
+// banner joins + socialCredit (+ optionally password) at the call site.
+const joinedUserBaseFields = {
+  ...publicUserBaseFields,
+  identity: users.identity,
+  updatedAt: users.updatedAt,
+  lastLoginAt: users.lastLoginAt,
+  sessionEpoch: users.sessionEpoch,
+  banReason: users.banReason,
+  bannedAt: users.bannedAt
+};
+
 const socialCreditSubquery = sql<number>`(SELECT COALESCE(SUM(amount), 0) FROM social_credit_ledger WHERE target_id = ${users.id})`;
 
-export { publicUserBaseFields, socialCreditSubquery };
+export { joinedUserBaseFields, publicUserBaseFields, socialCreditSubquery };

@@ -9,8 +9,13 @@ import { count, eq, sum } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import jwt from 'jsonwebtoken';
 import { db } from '..';
+import { getAllUserRoleIdsMap } from './roles';
 import { getServerToken } from './server';
-import { publicUserBaseFields, socialCreditSubquery } from './user-fields';
+import {
+  joinedUserBaseFields,
+  publicUserBaseFields,
+  socialCreditSubquery
+} from './user-fields';
 
 const getPublicUserById = async (
   userId: number
@@ -61,26 +66,11 @@ const getPublicUsers = async (): Promise<TJoinedPublicUser[]> => {
     .leftJoin(bannerFiles, eq(users.bannerId, bannerFiles.id))
     .all();
 
-  const rolesByUser = await db
-    .select({
-      userId: userRoles.userId,
-      roleId: userRoles.roleId
-    })
-    .from(userRoles)
-    .all();
-
-  const rolesMap = rolesByUser.reduce(
-    (acc, { userId, roleId }) => {
-      if (!acc[userId]) acc[userId] = [];
-      acc[userId].push(roleId);
-      return acc;
-    },
-    {} as Record<number, number[]>
-  );
+  const rolesMap = await getAllUserRoleIdsMap();
 
   return results.map((result) => ({
     ...result,
-    roleIds: rolesMap[result.id] || []
+    roleIds: rolesMap[result.id] ?? []
   }));
 };
 
@@ -111,21 +101,7 @@ const getUserById = async (
 
   const user = await db
     .select({
-      id: users.id,
-      identity: users.identity,
-      name: users.name,
-      avatarId: users.avatarId,
-      bannerId: users.bannerId,
-      bio: users.bio,
-      birthday: users.birthday,
-      bannerColor: users.bannerColor,
-      createdAt: users.createdAt,
-      updatedAt: users.updatedAt,
-      lastLoginAt: users.lastLoginAt,
-      sessionEpoch: users.sessionEpoch,
-      banned: users.banned,
-      banReason: users.banReason,
-      bannedAt: users.bannedAt,
+      ...joinedUserBaseFields,
       socialCredit: socialCreditSubquery,
       avatar: avatarFiles,
       banner: bannerFiles
@@ -161,22 +137,8 @@ const getUserByIdentity = async (
 
   const user = await db
     .select({
-      id: users.id,
-      identity: users.identity,
-      name: users.name,
-      avatarId: users.avatarId,
-      bannerId: users.bannerId,
-      bio: users.bio,
-      birthday: users.birthday,
-      bannerColor: users.bannerColor,
-      createdAt: users.createdAt,
-      updatedAt: users.updatedAt,
+      ...joinedUserBaseFields,
       password: users.password,
-      lastLoginAt: users.lastLoginAt,
-      sessionEpoch: users.sessionEpoch,
-      banned: users.banned,
-      banReason: users.banReason,
-      bannedAt: users.bannedAt,
       socialCredit: socialCreditSubquery,
       avatar: avatarFiles,
       banner: bannerFiles
@@ -236,21 +198,7 @@ const getUsers = async (): Promise<TJoinedUser[]> => {
 
   const results = await db
     .select({
-      id: users.id,
-      name: users.name,
-      bannerColor: users.bannerColor,
-      bio: users.bio,
-      birthday: users.birthday,
-      avatarId: users.avatarId,
-      bannerId: users.bannerId,
-      updatedAt: users.updatedAt,
-      createdAt: users.createdAt,
-      identity: users.identity,
-      lastLoginAt: users.lastLoginAt,
-      sessionEpoch: users.sessionEpoch,
-      banned: users.banned,
-      banReason: users.banReason,
-      bannedAt: users.bannedAt,
+      ...joinedUserBaseFields,
       socialCredit: socialCreditSubquery,
       avatar: avatarFiles,
       banner: bannerFiles
@@ -260,45 +208,12 @@ const getUsers = async (): Promise<TJoinedUser[]> => {
     .leftJoin(bannerFiles, eq(users.bannerId, bannerFiles.id))
     .all();
 
-  // Get role IDs for all users
-  const rolesByUser = await db
-    .select({
-      userId: userRoles.userId,
-      roleId: userRoles.roleId
-    })
-    .from(userRoles)
-    .all();
-
-  const rolesMap = rolesByUser.reduce(
-    (acc, { userId, roleId }) => {
-      if (!acc[userId]) acc[userId] = [];
-      acc[userId].push(roleId);
-      return acc;
-    },
-    {} as Record<number, number[]>
-  );
+  const rolesMap = await getAllUserRoleIdsMap();
 
   return results.map((result) => ({
-    id: result.id,
-    name: result.name,
-    bannerColor: result.bannerColor,
-    bio: result.bio,
-    birthday: result.birthday,
-    avatarId: result.avatarId,
-    bannerId: result.bannerId,
-    avatar: result.avatar,
-    banner: result.banner,
-    createdAt: result.createdAt,
-    updatedAt: result.updatedAt,
-    identity: result.identity,
+    ...result,
     password: '',
-    lastLoginAt: result.lastLoginAt,
-    sessionEpoch: result.sessionEpoch,
-    banned: result.banned,
-    banReason: result.banReason,
-    bannedAt: result.bannedAt,
-    socialCredit: result.socialCredit,
-    roleIds: rolesMap[result.id] || []
+    roleIds: rolesMap[result.id] ?? []
   }));
 };
 
