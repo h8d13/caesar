@@ -23,6 +23,9 @@ type TMessageProps = {
     disableFiles?: boolean;
     disableReactions?: boolean;
     disableVotes?: boolean;
+    // Hide the ephemeral "24h" countdown bubble. Group view sets this on
+    // every message except the last so the TTL only shows once per group.
+    hideExpiresBadge?: boolean;
     onReply?: (message: TJoinedMessage) => void;
     onScrollToMessage?: (messageId: number) => void;
 };
@@ -34,6 +37,7 @@ const Message = memo(
         disableFiles,
         disableReactions,
         disableVotes,
+        hideExpiresBadge,
         onReply,
         onScrollToMessage
     }: TMessageProps) => {
@@ -126,7 +130,7 @@ const Message = memo(
                                 disableVotes={disableVotes || !!channel?.isDm}
                             />
                         )}
-                        {message.expiresAt != null && (
+                        {message.expiresAt != null && !hideExpiresBadge && (
                             <ExpiresBadge expiresAt={message.expiresAt} />
                         )}
                         {!isThreadReply && !channel?.isDm && replyCount > 0 && (

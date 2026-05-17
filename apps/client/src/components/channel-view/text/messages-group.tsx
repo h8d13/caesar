@@ -90,6 +90,9 @@ const MessagesGroup = memo(
                                     disableFiles={disableFiles}
                                     disableReactions={disableReactions}
                                     disableVotes={index !== group.length - 1}
+                                    hideExpiresBadge={
+                                        index !== group.length - 1
+                                    }
                                     onReply={onReply}
                                     onScrollToMessage={onScrollToMessage}
                                 />
