@@ -410,14 +410,12 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                                 currentNode = dtlnNode;
                                 microphoneDTLNWorkletNodeRef.current = dtlnNode;
 
-                                console.log(
-                                    '%c[DTLN] Initialized at 16kHz noise suppression is active',
-                                    'color: lime; font-weight: bold;'
+                                logVoice(
+                                    'DTLN initialized at 16kHz, noise suppression active.'
                                 );
                             } catch (error) {
-                                console.error(
-                                    '%c[DTLN] Failed to initialize noise suppression is NOT active',
-                                    'color: red; font-weight: bold;',
+                                logVoice(
+                                    'DTLN failed to initialize, noise suppression not active.',
                                     error
                                 );
                                 markDTLNWorkletUnavailable(
@@ -428,9 +426,8 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                             shouldUseDTLN &&
                             !dtlnAvailability.available
                         ) {
-                            console.warn(
-                                '%c[DTLN] Unavailable skipping noise suppression:',
-                                'color: orange; font-weight: bold;',
+                            logVoice(
+                                'DTLN unavailable, skipping noise suppression.',
                                 dtlnAvailability.reason
                             );
                         }
@@ -449,14 +446,12 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                                 microphoneRNNoiseWorkletNodeRef.current =
                                     rnnoiseNode;
 
-                                console.log(
-                                    '%c[RNNOISE] Initialized noise suppression is active',
-                                    'color: lime; font-weight: bold;'
+                                logVoice(
+                                    'RNNoise initialized, noise suppression active.'
                                 );
                             } catch (error) {
-                                console.error(
-                                    '%c[RNNOISE] Failed to initialize noise suppression is NOT active',
-                                    'color: red; font-weight: bold;',
+                                logVoice(
+                                    'RNNoise failed to initialize, noise suppression not active.',
                                     error
                                 );
                                 markRNNoiseWorkletUnavailable(

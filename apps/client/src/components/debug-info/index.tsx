@@ -33,7 +33,7 @@ const DebugInfo = memo(() => {
             'font-size: 12px; font-weight: bold;'
         );
         console.log(
-            '%cDO NOT PASTE ANY CODE HERE, THIS IS A BROWSER TOOL INTENDED FOR DEVELOPERS ONLY. IF SOMEONE TOLD YOU TO COPY-PASTE SOMETHING HERE, IT IS A SCAM AND THEY ARE TRYING TO STEAL YOUR ACCOUNT!',
+            '%cDO NOT PASTE ANY CODE HERE, THIS IS A BROWSER TOOL INTENDED FOR DEV USE ONLY.',
             'font-size: 12px; font-weight: bold; color: red; background: yellow; padding: 10px;'
         );
     }, []);
