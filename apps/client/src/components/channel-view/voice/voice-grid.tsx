@@ -34,7 +34,10 @@ const VoiceGrid = memo(
 
             let cols: number;
 
+            // 2 cards stack top/bottom: full-width 16:9 streams fit better
+            // than two tall-narrow halves in a typical landscape window.
             if (totalCards <= 1) cols = 1;
+            else if (totalCards === 2) cols = 1;
             else if (totalCards <= 4) cols = 2;
             else if (totalCards <= 9) cols = 3;
             else if (totalCards <= 16) cols = 4;
