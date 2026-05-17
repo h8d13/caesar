@@ -53,6 +53,14 @@ const loginRateLimiter = createRateLimiter({
   windowMs: config.rateLimiters.joinServer.windowMs
 });
 
+// Single opaque response for every auth-style failure (unknown identity,
+// wrong invite, wrong password, reserved sentinel). Distinguishable
+// responses let an attacker enumerate which usernames exist by probing
+// the public /login endpoint. The specific reason is logged server-side
+// for legitimate operator debugging.
+const GENERIC_AUTH_ERROR =
+  'Invalid credentials. Check your username, password, and invite code.';
+
 const registerUser = async (
   identity: string,
   password: string,
@@ -122,7 +130,8 @@ const loginRouteHandler = async (
   const data = zBody.parse(await getJsonBody(req));
 
   if (data.identity === DELETED_USER_IDENTITY_AND_NAME) {
-    throw new HttpValidationError('identity', 'This identity is reserved');
+    logger.info(`[Auth] Login attempt with reserved identity sentinel`);
+    throw new HttpValidationError('identity', GENERIC_AUTH_ERROR);
   }
 
   let existingUser = await getUserByIdentity(data.identity);
@@ -167,7 +176,10 @@ const loginRouteHandler = async (
       const result = await isInviteValid(data.invite);
 
       if (result.error) {
-        throw new HttpValidationError('identity', result.error);
+        logger.info(
+          `[Auth] Signup failed for "${data.identity}": ${result.error} (IP: ${connectionInfo?.ip || 'unknown'})`
+        );
+        throw new HttpValidationError('identity', GENERIC_AUTH_ERROR);
       }
 
       if (result.invite) {
@@ -216,13 +228,6 @@ const loginRouteHandler = async (
     }
   }
 
-  if (existingUser.banned) {
-    throw new HttpValidationError(
-      'identity',
-      `Identity banned: ${existingUser.banReason || 'No reason provided'}`
-    );
-  }
-
   const passwordMatches = await Bun.password.verify(
     data.password,
     existingUser.password
@@ -233,7 +238,18 @@ const loginRouteHandler = async (
       `[Auth] Failed login for "${existingUser.identity}" (IP: ${connectionInfo?.ip || 'unknown'})`
     );
 
-    throw new HttpValidationError('password', 'Invalid password');
+    throw new HttpValidationError('identity', GENERIC_AUTH_ERROR);
+  }
+
+  // Banned state is checked AFTER password verification so an attacker
+  // can't enumerate "which accounts are banned" without already knowing
+  // the password. The legit user (who knows their own password) still
+  // gets a useful message.
+  if (existingUser.banned) {
+    throw new HttpValidationError(
+      'identity',
+      `Identity banned: ${existingUser.banReason || 'No reason provided'}`
+    );
   }
 
   // single-session: every successful login bumps the user's session epoch.

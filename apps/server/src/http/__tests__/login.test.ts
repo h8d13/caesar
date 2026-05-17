@@ -31,7 +31,11 @@ describe('/login', () => {
     const data: any = await response.json();
 
     expect(data).toHaveProperty('errors');
-    expect(data.errors).toHaveProperty('password', 'Invalid password');
+    // generic anti-enumeration error: same string + same field as the
+    // "unknown identity / missing invite" path so the two cases are
+    // indistinguishable to a probing client.
+    expect(data.errors).toHaveProperty('identity');
+    expect(data.errors.identity).toMatch(/Invalid credentials/);
   });
 
   test('should fail signup without invite when DB has users', async () => {
@@ -43,7 +47,21 @@ describe('/login', () => {
     const data: any = await response.json();
 
     expect(data).toHaveProperty('errors');
-    expect(data.errors).toHaveProperty('identity', 'Invalid invite code');
+    expect(data.errors).toHaveProperty('identity');
+    expect(data.errors.identity).toMatch(/Invalid credentials/);
+  });
+
+  test('signup-without-invite and wrong-password return identical errors', async () => {
+    // Anti-enumeration: probing the endpoint must not let an attacker
+    // distinguish "this username does not exist" from "this username
+    // exists but the password is wrong."
+    const unknownUser = await login('nonexistent', 'somepassword');
+    const wrongPassword = await login('testowner', 'wrongpassword');
+
+    const u: any = await unknownUser.json();
+    const w: any = await wrongPassword.json();
+
+    expect(u.errors).toEqual(w.errors);
   });
 
   test('should allow registration with a valid invite', async () => {
