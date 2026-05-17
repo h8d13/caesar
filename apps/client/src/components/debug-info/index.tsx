@@ -4,8 +4,19 @@ import { memo } from 'react';
 const DebugInfo = memo(() => {
     useStrictEffect(() => {
         console.log(
-            '%cCAESAR',
-            'font-size: 64px; font-weight: bold; background: linear-gradient(90deg, #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'
+            '%c CAESAR ',
+            `
+            font: 900 64px/1 ui-sans-serif, system-ui, -apple-system, sans-serif;
+            letter-spacing: 8px;
+            padding: 16px 28px;
+
+            color: #fff;
+            background:
+                radial-gradient(circle, #2a2a2a 30%, transparent 31%) 0 0 / 8px 8px,
+                #000;
+
+            text-shadow: 0 2px 0 #000;
+            `
         );
         console.log(
             '%cVersion: %s',
@@ -18,7 +29,7 @@ const DebugInfo = memo(() => {
             import.meta.env.MODE
         );
         console.log(
-            '%cThis is a open source project, feel free to contribute: https://github.com/Sharkord/sharkord',
+            '%cThis is a open source project, feel free to contribute: https://github.com/h8d13/caesar',
             'font-size: 12px; font-weight: bold;'
         );
         console.log(
