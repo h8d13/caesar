@@ -50,10 +50,10 @@ const MultiSessionToggle = memo(() => {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Concurrent sessions</CardTitle>
+                <CardTitle>Sessions</CardTitle>
                 <CardDescription>
                     By default, signing in on another device disconnects your
-                    other sessions. Enable this to keep them all alive.
+                    other sessions. Enable this to keep them alive.
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">

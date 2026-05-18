@@ -38,7 +38,7 @@ const RecentSessions = memo(() => {
             <CardHeader>
                 <CardTitle>Recent sessions</CardTitle>
                 <CardDescription>
-                    Last 10 sign-ins on your account. Each row shows an opaque
+                    Last 10 sign-ins on your account. Each row shows
                     fingerprint of the client (same browser produces the same
                     hash) and when it happened.
                 </CardDescription>
