@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN allow_multiple_sessions INTEGER NOT NULL DEFAULT 0;

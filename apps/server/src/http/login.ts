@@ -256,17 +256,25 @@ const loginRouteHandler = async (
     );
   }
 
-  // single-session: every successful login bumps the user's session epoch.
-  // JWTs from prior sessions fail the equality check in getUserByToken and
-  // any active WS connections under those tokens are kicked below.
-  const updated = await db
-    .update(users)
-    .set({ sessionEpoch: sql`${users.sessionEpoch} + 1` })
-    .where(eq(users.id, existingUser.id))
-    .returning({ sessionEpoch: users.sessionEpoch })
-    .get();
+  // single-session by default: each /login bumps sessionEpoch so prior
+  // tokens fail the equality check in getUserByToken and prior WS
+  // connections get kicked below. Users opted in to multi-session keep the
+  // current epoch, so their existing tokens remain valid alongside the new
+  // one.
+  let sessionEpoch: number;
 
-  const sessionEpoch = updated?.sessionEpoch ?? 0;
+  if (existingUser.allowMultipleSessions) {
+    sessionEpoch = existingUser.sessionEpoch ?? 0;
+  } else {
+    const updated = await db
+      .update(users)
+      .set({ sessionEpoch: sql`${users.sessionEpoch} + 1` })
+      .where(eq(users.id, existingUser.id))
+      .returning({ sessionEpoch: users.sessionEpoch })
+      .get();
+
+    sessionEpoch = updated?.sessionEpoch ?? 0;
+  }
 
   const token = jwt.sign(
     { userId: existingUser.id, sessionEpoch },
@@ -274,15 +282,17 @@ const loginRouteHandler = async (
     { expiresIn: '604800s' /* 7 days */ }
   );
 
-  // boot any WS connections still attached under the previous epoch's token.
-  // The newly minted `token` is not yet on any client, so passing it as the
-  // exception is a no-op safety net.
-  closeUserSessions(
-    existingUser.id,
-    'Another device connected.',
-    DisconnectCode.SESSION_SUPERSEDED,
-    token
-  );
+  if (!existingUser.allowMultipleSessions) {
+    // boot any WS connections still attached under the previous epoch's
+    // token. The newly minted `token` is not yet on any client, so passing
+    // it as the exception is a no-op safety net.
+    closeUserSessions(
+      existingUser.id,
+      'Another device connected.',
+      DisconnectCode.SESSION_SUPERSEDED,
+      token
+    );
+  }
 
   res.setHeader(
     'Set-Cookie',

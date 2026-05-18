@@ -39,6 +39,20 @@ export const handleUserJoin = (user: TJoinedPublicUser) => {
     }
 };
 
+export const setAllowMultipleSessions = async (value: boolean) => {
+    const trpc = getTRPCClient();
+    const result = await trpc.users.setAllowMultipleSessions.mutate({ value });
+    const ownUserId = store.getState().server.ownUserId;
+
+    if (ownUserId) {
+        updateUser(ownUserId, {
+            allowMultipleSessions: result.allowMultipleSessions
+        });
+    }
+
+    return result.allowMultipleSessions;
+};
+
 export const setAppearOffline = async (value: boolean) => {
     const trpc = getTRPCClient();
     const result = await trpc.users.setAppearOffline.mutate({ value });

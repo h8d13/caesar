@@ -173,11 +173,12 @@ const publishUser = async (
   const targetEvent =
     type === 'create' ? ServerEvents.USER_CREATE : ServerEvents.USER_UPDATE;
 
-  // strip appearOffline at the broadcast boundary: this flag is a per-user
-  // privacy setting and must never reach peers. self-targeted updates use
-  // the mutation return value to refresh the local own-user state instead.
-  const { appearOffline, ...broadcastUser } = user;
+  // strip self-only flags at the broadcast boundary: these are per-user
+  // settings and must never reach peers. self-targeted updates use the
+  // respective mutation return values to refresh local own-user state.
+  const { appearOffline, allowMultipleSessions, ...broadcastUser } = user;
   void appearOffline;
+  void allowMultipleSessions;
 
   pubsub.publish(targetEvent, broadcastUser);
 };

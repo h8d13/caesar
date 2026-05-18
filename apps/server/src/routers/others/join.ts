@@ -99,7 +99,8 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
       return {
         ...u,
         status,
-        appearOffline: isSelf ? u.appearOffline : undefined
+        appearOffline: isSelf ? u.appearOffline : undefined,
+        allowMultipleSessions: isSelf ? u.allowMultipleSessions : undefined
       };
     });
 
@@ -114,9 +115,13 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
 
     logger.info(`%s joined the server`, ctx.user.name);
 
-    // broadcast to peers with the masked status and without the flag.
-    const { appearOffline: ownAppearOffline, ...broadcastBase } =
-      foundPublicUser;
+    // broadcast to peers with the masked status and without self-only flags.
+    const {
+      appearOffline: ownAppearOffline,
+      allowMultipleSessions: _ownMultiSession,
+      ...broadcastBase
+    } = foundPublicUser;
+    void _ownMultiSession;
 
     ctx.pubsub.publish(ServerEvents.USER_JOIN, {
       ...broadcastBase,

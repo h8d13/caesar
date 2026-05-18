@@ -116,6 +116,9 @@ type TPublicUser = Pick<
   // server only populates this on the requester's own row. peers never see
   // each other's appearOffline flag; their masked status is OFFLINE instead.
   appearOffline?: boolean;
+  // self-only. opt-in to concurrent sessions across devices; default false
+  // preserves the single-session-supersedes behavior.
+  allowMultipleSessions?: boolean;
 };
 
 export type TJoinedRole = TRole & {

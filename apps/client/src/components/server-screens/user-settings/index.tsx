@@ -3,6 +3,7 @@ import { memo } from 'react';
 import type { TServerScreenBaseProps } from '../screens';
 import { ServerScreenLayout } from '../server-screen-layout';
 import { Devices } from './devices';
+import { MultiSessionToggle } from './multi-session-toggle';
 import { Notifications } from './notifications';
 import { Password } from './password';
 import { Profile } from './profile';
@@ -34,6 +35,7 @@ const UserSettings = memo(({ close }: TUserSettingsProps) => {
                     </TabsContent>
                     <TabsContent value="security" className="space-y-6">
                         <Password />
+                        <MultiSessionToggle />
                     </TabsContent>
                 </Tabs>
             </div>

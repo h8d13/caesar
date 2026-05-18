@@ -154,11 +154,20 @@ const users = sqliteTable(
     appearOffline: integer('appear_offline', { mode: 'boolean' })
       .notNull()
       .default(false),
+    // when true, /login no longer bumps sessionEpoch, so concurrent sessions
+    // across devices remain valid. opt-in per user; default keeps the strict
+    // single-session behavior.
+    allowMultipleSessions: integer('allow_multiple_sessions', {
+      mode: 'boolean'
+    })
+      .notNull()
+      .default(false),
     lastLoginAt: integer('last_login_at')
       .notNull()
       .$defaultFn(() => Date.now()),
-    // single-session enforcement: incremented on every successful /login.
-    // JWTs carry the epoch they were minted at and are rejected on mismatch.
+    // single-session enforcement: incremented on every successful /login
+    // unless the user has allowMultipleSessions set. JWTs carry the epoch
+    // they were minted at and are rejected on mismatch.
     sessionEpoch: integer('session_epoch').notNull().default(0),
     createdAt: integer('created_at').notNull(),
     updatedAt: integer('updated_at')

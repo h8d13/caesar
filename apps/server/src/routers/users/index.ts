@@ -17,6 +17,7 @@ import { getUsersRoute } from './get-users';
 import { kickRoute } from './kick';
 import { meRoute } from './me';
 import { removeRoleRoute } from './remove-role';
+import { setAllowMultipleSessionsRoute } from './set-allow-multiple-sessions';
 import { setAppearOfflineRoute } from './set-appear-offline';
 import { unbanRoute } from './unban';
 import { updatePasswordRoute } from './update-password';
@@ -30,6 +31,7 @@ export const usersRouter = t.router({
   removeRole: removeRoleRoute,
   update: updateUserRoute,
   setAppearOffline: setAppearOfflineRoute,
+  setAllowMultipleSessions: setAllowMultipleSessionsRoute,
   updatePassword: updatePasswordRoute,
   getInfo: getUserInfoRoute,
   getAll: getUsersRoute,
