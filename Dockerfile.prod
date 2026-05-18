@@ -17,7 +17,7 @@ RUN cd apps/server && bun ./build/build.ts --target $TARGET
 FROM debian:bookworm-slim
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates && \
+    apt-get install -y --no-install-recommends ca-certificates libnss3-tools && \
     rm -rf /var/lib/apt/lists/* && \
     useradd -u 1000 -m -s /sbin/nologin caesar
 
