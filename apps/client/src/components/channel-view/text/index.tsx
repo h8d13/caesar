@@ -11,7 +11,10 @@ import {
     useTypingUsersByChannelId
 } from '@/features/server/hooks';
 import { useMessages } from '@/features/server/messages/hooks';
-import { consumePendingScrollTarget } from '@/features/server/messages/pending-scroll';
+import {
+    consumePendingScrollTarget,
+    usePendingScrollTarget
+} from '@/features/server/messages/pending-scroll';
 import { playSound } from '@/features/server/sounds/actions';
 import { SoundType } from '@/features/server/types';
 import { useOwnUserId, useUsers } from '@/features/server/users/hooks';
@@ -136,13 +139,17 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
         setReplyingTo(null);
     }, [channelId]);
 
+    const pendingScroll = usePendingScrollTarget();
+
     useEffect(() => {
         if (loading) return;
+        if (pendingScroll === null) return;
+
         const target = consumePendingScrollTarget();
         if (target) {
             scrollToMessage(target);
         }
-    }, [loading, scrollToMessage]);
+    }, [loading, pendingScroll, scrollToMessage]);
 
     const sendTypingSignal = useMemo(
         () =>

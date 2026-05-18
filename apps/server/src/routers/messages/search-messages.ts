@@ -2,7 +2,7 @@ import { ChannelPermission, ChannelType } from '@caesar/shared';
 import { channels, messages } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { protectedProcedure } from '@server/utils/trpc';
-import { and, desc, eq, inArray, isNull, like } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, like, or } from 'drizzle-orm';
 import { z } from 'zod';
 
 const searchMessagesRoute = protectedProcedure
@@ -21,6 +21,9 @@ const searchMessagesRoute = protectedProcedure
     // determine which channels to search
     let candidates: { id: number; isDm: boolean | null }[];
 
+    // DMs are stored as ChannelType.VOICE with `isDm=true` (the same channel
+    // also hosts the optional voice call), so the message-bearing channels
+    // are the union of TEXT channels and DMs.
     if (channelId !== undefined) {
       const channel = await db
         .select({ id: channels.id, type: channels.type, isDm: channels.isDm })
@@ -28,16 +31,17 @@ const searchMessagesRoute = protectedProcedure
         .where(eq(channels.id, channelId))
         .get();
 
-      if (!channel || channel.type !== ChannelType.TEXT) {
-        return [];
-      }
+      if (!channel) return [];
+      if (channel.type !== ChannelType.TEXT && !channel.isDm) return [];
 
       candidates = [{ id: channel.id, isDm: channel.isDm }];
     } else {
       candidates = await db
         .select({ id: channels.id, isDm: channels.isDm })
         .from(channels)
-        .where(eq(channels.type, ChannelType.TEXT));
+        .where(
+          or(eq(channels.type, ChannelType.TEXT), eq(channels.isDm, true))
+        );
     }
 
     // filter to channels the user can view (DM participation is handled
