@@ -71,9 +71,9 @@ const RecentSessions = memo(() => {
                 )}
                 {!isLoading && data && data.length > 0 && (
                     <ul className="flex flex-col gap-1">
-                        {data.map((session, i) => (
+                        {data.map((session) => (
                             <li
-                                key={`${session.hash}-${session.createdAt}-${i}`}
+                                key={`${session.hash}-${session.createdAt}`}
                                 className="flex items-center justify-between text-sm"
                             >
                                 <span className="font-mono text-muted-foreground">
