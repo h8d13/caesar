@@ -22,7 +22,7 @@ const Users = memo(() => {
             <CardHeader>
                 <CardTitle>Users</CardTitle>
                 <CardDescription>
-                    Manage server users and their permissions
+                    Manage server users and their permissions.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

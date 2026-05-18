@@ -13,7 +13,7 @@ import {
     useThreadSidebar
 } from '@/features/app/hooks';
 import { setSelectedChannelId } from '@/features/server/channels/actions';
-import { usePublicServerSettings } from '@/features/server/hooks';
+import { useCan, usePublicServerSettings } from '@/features/server/hooks';
 import { getLocalStorageItemBool, LocalStorageKey } from '@/helpers/storage';
 import { useBirthdayToasts } from '@/hooks/use-birthday-toasts';
 import { useSwipeGestures } from '@/hooks/use-swipe-gestures';
@@ -35,6 +35,8 @@ const ServerView = memo(() => {
     const dmsOpen = useDmsOpen();
     const selectedDmChannelId = useSelectedDmChannelId();
     const publicSettings = usePublicServerSettings();
+    const can = useCan();
+    const canUseDms = can(Permission.USE_DMS);
     const previousServerChannelIdRef = useRef<number | undefined>(undefined);
     const { isOpen: isThreadSidebarOpen } = useThreadSidebar();
 
@@ -83,14 +85,17 @@ const ServerView = memo(() => {
     });
 
     useEffect(() => {
-        if (publicSettings?.directMessagesEnabled === false && dmsOpen) {
+        const dmsBlocked =
+            publicSettings?.directMessagesEnabled === false || !canUseDms;
+
+        if (dmsBlocked && dmsOpen) {
             setDmsOpen(false);
 
             if (previousServerChannelIdRef.current) {
                 setSelectedChannelId(previousServerChannelIdRef.current);
             }
         }
-    }, [publicSettings?.directMessagesEnabled, dmsOpen]);
+    }, [publicSettings?.directMessagesEnabled, canUseDms, dmsOpen]);
 
     return (
         <MediaProvider>

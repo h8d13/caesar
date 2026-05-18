@@ -100,6 +100,13 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
       assertDmChannel(input.channelId, ctx.userId)
     ]);
 
+    if (isDmChannel) {
+      invariant(await ctx.hasPermission(Permission.USE_DMS), {
+        code: 'FORBIDDEN',
+        message: 'You do not have permission to use direct messages'
+      });
+    }
+
     const { storageMaxFilesPerMessage } = settings;
 
     const limitedFiles = input.files.slice(

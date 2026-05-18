@@ -28,7 +28,7 @@ const General = memo(() => {
             <CardHeader>
                 <CardTitle>Server Information</CardTitle>
                 <CardDescription>
-                    Manage your server's basic information
+                    Manage your server's settings.
                 </CardDescription>
                 <SettingsFooterActions onSave={submit} loading={loading} />
             </CardHeader>

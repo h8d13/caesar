@@ -2,11 +2,13 @@ import { ResizableSidebar } from '@/components/resizable-sidebar';
 import { useDmsOpen } from '@/features/app/hooks';
 import { setSelectedChannelId } from '@/features/server/channels/actions';
 import {
+    useCan,
     usePublicServerSettings,
     useServerName
 } from '@/features/server/hooks';
 import { LocalStorageKey } from '@/helpers/storage';
 import { cn } from '@/lib/utils';
+import { Permission } from '@caesar/shared';
 import { memo } from 'react';
 import { Categories } from './categories';
 import { DirectMessages } from './direct-messages';
@@ -28,6 +30,8 @@ const LeftSidebar = memo(({ className, isOpen = true }: TLeftSidebarProps) => {
     const serverName = useServerName();
     const dmsOpen = useDmsOpen();
     const publicSettings = usePublicServerSettings();
+    const can = useCan();
+    const canUseDms = can(Permission.USE_DMS);
 
     return (
         <ResizableSidebar
@@ -50,7 +54,7 @@ const LeftSidebar = memo(({ className, isOpen = true }: TLeftSidebarProps) => {
                     <ServerDropdownMenu />
                 </div>
             </div>
-            {publicSettings?.directMessagesEnabled && <DmButton />}
+            {publicSettings?.directMessagesEnabled && canUseDms && <DmButton />}
             <div className="flex-1 overflow-y-auto">
                 {dmsOpen ? <DirectMessages /> : <Categories />}
             </div>

@@ -1,4 +1,4 @@
-import { ChannelType, ServerEvents } from '@caesar/shared';
+import { ChannelType, Permission, ServerEvents } from '@caesar/shared';
 import { channels, directMessages, users } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
@@ -27,6 +27,11 @@ const openDirectMessageRoute = rateLimitedProcedure(protectedProcedure, {
     invariant(settings.directMessagesEnabled, {
       code: 'FORBIDDEN',
       message: 'Direct messages are disabled on this server'
+    });
+
+    invariant(await ctx.hasPermission(Permission.USE_DMS), {
+      code: 'FORBIDDEN',
+      message: 'You do not have permission to use direct messages'
     });
 
     invariant(input.userId !== ctx.userId, {

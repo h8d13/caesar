@@ -27,7 +27,7 @@ const Invites = memo(() => {
                 <div>
                     <CardTitle>Server Invites</CardTitle>
                     <CardDescription>
-                        Manage invitation links for users to join the server
+                        Manage invitation links for users to join the server.
                     </CardDescription>
                 </div>
                 <Button

@@ -3,7 +3,11 @@ import {
     setModViewOpen,
     setSelectedDmChannelId
 } from '@/features/app/actions';
-import { usePublicServerSettings, useUserRoles } from '@/features/server/hooks';
+import {
+    useCan,
+    usePublicServerSettings,
+    useUserRoles
+} from '@/features/server/hooks';
 import { useIsOwnUser, useUserById } from '@/features/server/users/hooks';
 import { getFileUrl } from '@/helpers/get-file-url';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
@@ -80,6 +84,7 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
     const roles = useUserRoles(userId);
     const settings = usePublicServerSettings();
     const isOwnUser = useIsOwnUser(userId);
+    const can = useCan();
     const [isEditingNickname, setIsEditingNickname] = useState(false);
     const [nicknameInput, setNicknameInput] = useState('');
     const [, forceUpdate] = useState(0);
@@ -166,7 +171,10 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
 
     const isDeleted = user.name === DELETED_USER_IDENTITY_AND_NAME;
     const showDmButton =
-        settings?.directMessagesEnabled && !isDeleted && !isOwnUser;
+        settings?.directMessagesEnabled &&
+        can(Permission.USE_DMS) &&
+        !isDeleted &&
+        !isOwnUser;
 
     return (
         <Popover>
