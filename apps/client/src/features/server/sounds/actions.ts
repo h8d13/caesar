@@ -36,6 +36,17 @@ export const ensureAudioCtxReady = (): void => {
     getAudioCtx();
 };
 
+// Fallback for entry paths without an explicit gesture (auto-login)
+if (typeof window !== 'undefined') {
+    const warm = () => {
+        ensureAudioCtxReady();
+        window.removeEventListener('pointerdown', warm);
+        window.removeEventListener('keydown', warm);
+    };
+    window.addEventListener('pointerdown', warm);
+    window.addEventListener('keydown', warm);
+}
+
 const SOUNDS_VOLUME = 2;
 
 const now = () => getAudioCtx().currentTime;
