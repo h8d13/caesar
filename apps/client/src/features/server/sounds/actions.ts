@@ -1,17 +1,29 @@
 import { SoundType } from '../types';
 
-const audioCtx = new (
-    window.AudioContext ||
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).webkitAudioContext
-)();
+// Constructed lazily on first sound: browsers refuse to start an
+// AudioContext before a user gesture, which fires the noisy
+// "AudioContext was prevented from starting automatically" warning if
+// we eagerly new() it at module load. By the time playSound fires (msg
+// received, voice join, etc.) the user has already interacted with the
+// page, so the context starts in `running` state.
+let _audioCtx: AudioContext | null = null;
+const getAudioCtx = (): AudioContext => {
+    if (!_audioCtx) {
+        _audioCtx = new (
+            window.AudioContext ||
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (window as any).webkitAudioContext
+        )();
+    }
+    return _audioCtx;
+};
 
 const SOUNDS_VOLUME = 2;
 
-const now = () => audioCtx.currentTime;
+const now = () => getAudioCtx().currentTime;
 
 const createOsc = (type: OscillatorType, freq: number) => {
-    const osc = audioCtx.createOscillator();
+    const osc = getAudioCtx().createOscillator();
 
     osc.type = type;
     osc.frequency.setValueAtTime(freq, now());
@@ -20,7 +32,7 @@ const createOsc = (type: OscillatorType, freq: number) => {
 };
 
 const createGain = (value = 1) => {
-    const gain = audioCtx.createGain();
+    const gain = getAudioCtx().createGain();
 
     gain.gain.setValueAtTime(value * SOUNDS_VOLUME, now());
 
@@ -34,7 +46,7 @@ const sfxMessageReceived = () => {
 
     gain.gain.exponentialRampToValueAtTime(0.0001, now() + 0.05);
 
-    osc.connect(gain).connect(audioCtx.destination);
+    osc.connect(gain).connect(getAudioCtx().destination);
     osc.start();
     osc.stop(now() + 0.05);
 };
@@ -46,7 +58,7 @@ const sfxMessageSent = () => {
 
     gain.gain.exponentialRampToValueAtTime(0.0001, now() + 0.04);
 
-    osc.connect(gain).connect(audioCtx.destination);
+    osc.connect(gain).connect(getAudioCtx().destination);
     osc.start();
     osc.stop(now() + 0.04);
 };
@@ -66,7 +78,7 @@ const sfxOwnUserJoinedVoiceChannel = () => {
 
         gain.gain.exponentialRampToValueAtTime(0.0001, now() + 0.25);
 
-        osc.connect(gain).connect(audioCtx.destination);
+        osc.connect(gain).connect(getAudioCtx().destination);
         osc.start();
         osc.stop(now() + 0.25);
     });
@@ -83,7 +95,7 @@ const sfxOwnUserJoinedVoiceChannel = () => {
 
         gain.gain.exponentialRampToValueAtTime(0.0001, now() + 0.3);
 
-        osc.connect(gain).connect(audioCtx.destination);
+        osc.connect(gain).connect(getAudioCtx().destination);
         osc.start(now() + 0.08);
         osc.stop(now() + 0.3);
     });
@@ -104,7 +116,7 @@ const sfxOwnUserLeftVoiceChannel = () => {
 
         gain.gain.exponentialRampToValueAtTime(0.0001, now() + 0.3);
 
-        osc.connect(gain).connect(audioCtx.destination);
+        osc.connect(gain).connect(getAudioCtx().destination);
         osc.start();
         osc.stop(now() + 0.3);
     });
@@ -115,7 +127,7 @@ const sfxOwnUserLeftVoiceChannel = () => {
 
     gain2.gain.exponentialRampToValueAtTime(0.0001, now() + 0.25);
 
-    osc2.connect(gain2).connect(audioCtx.destination);
+    osc2.connect(gain2).connect(getAudioCtx().destination);
     osc2.start(now() + 0.05);
     osc2.stop(now() + 0.3);
 };
@@ -128,7 +140,7 @@ const sfxBlip = (freq: number) => {
 
     gain.gain.exponentialRampToValueAtTime(0.0001, now() + 0.06);
 
-    osc.connect(gain).connect(audioCtx.destination);
+    osc.connect(gain).connect(getAudioCtx().destination);
     osc.start();
     osc.stop(now() + 0.06);
 };
@@ -145,7 +157,7 @@ const sfxOwnUserStartedWebcam = () => {
 
     gain1.gain.exponentialRampToValueAtTime(0.0001, now() + 0.12);
 
-    osc1.connect(gain1).connect(audioCtx.destination);
+    osc1.connect(gain1).connect(getAudioCtx().destination);
     osc1.start();
     osc1.stop(now() + 0.12);
 
@@ -154,7 +166,7 @@ const sfxOwnUserStartedWebcam = () => {
 
     gain2.gain.exponentialRampToValueAtTime(0.0001, now() + 0.1);
 
-    osc2.connect(gain2).connect(audioCtx.destination);
+    osc2.connect(gain2).connect(getAudioCtx().destination);
     osc2.start(now() + 0.04);
     osc2.stop(now() + 0.12);
 };
@@ -167,7 +179,7 @@ const sfxOwnUserStoppedWebcam = () => {
     osc1.frequency.exponentialRampToValueAtTime(500, now() + 0.12);
     gain1.gain.exponentialRampToValueAtTime(0.0001, now() + 0.14);
 
-    osc1.connect(gain1).connect(audioCtx.destination);
+    osc1.connect(gain1).connect(getAudioCtx().destination);
     osc1.start();
     osc1.stop(now() + 0.14);
 };
@@ -188,7 +200,7 @@ const sfxOwnUserStartedScreenshare = () => {
 
         gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
 
-        osc.connect(gain).connect(audioCtx.destination);
+        osc.connect(gain).connect(getAudioCtx().destination);
         osc.start(t);
         osc.stop(t + 0.1);
     });
@@ -199,7 +211,7 @@ const sfxOwnUserStartedScreenshare = () => {
 
     gain2.gain.exponentialRampToValueAtTime(0.0001, now() + 0.2);
 
-    osc2.connect(gain2).connect(audioCtx.destination);
+    osc2.connect(gain2).connect(getAudioCtx().destination);
     osc2.start(now() + 0.08);
     osc2.stop(now() + 0.22);
 };
@@ -212,7 +224,7 @@ const sfxOwnUserStoppedScreenshare = () => {
     osc1.frequency.exponentialRampToValueAtTime(550, now() + 0.18);
     gain1.gain.exponentialRampToValueAtTime(0.0001, now() + 0.2);
 
-    osc1.connect(gain1).connect(audioCtx.destination);
+    osc1.connect(gain1).connect(getAudioCtx().destination);
     osc1.start();
     osc1.stop(now() + 0.2);
 
@@ -222,7 +234,7 @@ const sfxOwnUserStoppedScreenshare = () => {
     osc2.frequency.exponentialRampToValueAtTime(700, now() + 0.18);
     gain2.gain.exponentialRampToValueAtTime(0.0001, now() + 0.2);
 
-    osc2.connect(gain2).connect(audioCtx.destination);
+    osc2.connect(gain2).connect(getAudioCtx().destination);
     osc2.start(now() + 0.05);
     osc2.stop(now() + 0.2);
 };
@@ -242,7 +254,7 @@ const sfxRemoteUserJoinedVoiceChannel = () => {
 
         gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
 
-        osc.connect(gain).connect(audioCtx.destination);
+        osc.connect(gain).connect(getAudioCtx().destination);
         osc.start(t);
         osc.stop(t + 0.2);
     });
@@ -263,7 +275,7 @@ const sfxRemoteUserLeftVoiceChannel = () => {
 
         gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
 
-        osc.connect(gain).connect(audioCtx.destination);
+        osc.connect(gain).connect(getAudioCtx().destination);
         osc.start(t);
         osc.stop(t + 0.2);
     });
@@ -283,7 +295,7 @@ const sfxRemoteUserStartedScreenshare = () => {
 
         gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
 
-        osc.connect(gain).connect(audioCtx.destination);
+        osc.connect(gain).connect(getAudioCtx().destination);
         osc.start(t);
         osc.stop(t + 0.1);
     });
@@ -293,7 +305,7 @@ const sfxRemoteUserStartedScreenshare = () => {
 
     gain2.gain.exponentialRampToValueAtTime(0.0001, now() + 0.2);
 
-    osc2.connect(gain2).connect(audioCtx.destination);
+    osc2.connect(gain2).connect(getAudioCtx().destination);
     osc2.start(now() + 0.08);
     osc2.stop(now() + 0.22);
 };
@@ -306,7 +318,7 @@ const sfxRemoteUserStoppedScreenshare = () => {
     osc1.frequency.exponentialRampToValueAtTime(550, now() + 0.18);
     gain1.gain.exponentialRampToValueAtTime(0.0001, now() + 0.2);
 
-    osc1.connect(gain1).connect(audioCtx.destination);
+    osc1.connect(gain1).connect(getAudioCtx().destination);
     osc1.start();
     osc1.stop(now() + 0.2);
 
@@ -316,7 +328,7 @@ const sfxRemoteUserStoppedScreenshare = () => {
     osc2.frequency.exponentialRampToValueAtTime(700, now() + 0.18);
     gain2.gain.exponentialRampToValueAtTime(0.0001, now() + 0.2);
 
-    osc2.connect(gain2).connect(audioCtx.destination);
+    osc2.connect(gain2).connect(getAudioCtx().destination);
     osc2.start(now() + 0.05);
     osc2.stop(now() + 0.2);
 };
@@ -339,7 +351,7 @@ const sfxIncomingCallRing = () => {
                 now() + offset + 0.4
             );
 
-            osc.connect(gain).connect(audioCtx.destination);
+            osc.connect(gain).connect(getAudioCtx().destination);
             osc.start(now() + offset);
             osc.stop(now() + offset + 0.4);
         });
@@ -350,7 +362,7 @@ const sfxIncomingCallRing = () => {
 
         gain2.gain.exponentialRampToValueAtTime(0.0001, now() + offset + 0.35);
 
-        osc2.connect(gain2).connect(audioCtx.destination);
+        osc2.connect(gain2).connect(getAudioCtx().destination);
         osc2.start(now() + offset + 0.05);
         osc2.stop(now() + offset + 0.4);
     };
