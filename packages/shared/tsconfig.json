@@ -27,12 +27,8 @@
     "noPropertyAccessFromIndexSignature": false,
 
     "paths": {
-      "@/*": ["./src/*"],
-      "@server/*": ["../../apps/server/src/*"]
+      "@/*": ["./src/*"]
     }
   },
-  // include server's ambient declarations because check-types follows
-  // trpc.ts -> AppRouter -> server source (wss.ts uses ws module
-  // augmentations, config.ts uses fs/promises.exists, etc).
-  "include": ["src", "../../apps/server/src/declarations.d.ts"]
+  "include": ["src"]
 }
