@@ -55,9 +55,7 @@ describe('dms router', () => {
 
     const { channelId } = await caller1.dms.open({ userId: 2 });
 
-    await expect(
-      caller3.dms.wipeConversation({ channelId })
-    ).rejects.toThrow();
+    await expect(caller3.dms.wipeConversation({ channelId })).rejects.toThrow();
   });
 
   test('wipeConversation rejects on non-DM channels', async () => {
