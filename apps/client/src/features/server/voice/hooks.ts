@@ -1,4 +1,7 @@
-import { MediaProviderContext } from '@/components/media-provider';
+import {
+    MediaProviderContext,
+    MediaStatsContext
+} from '@/components/media-provider';
 import type { IRootState } from '@/features/store';
 import { useContext } from 'react';
 import { useSelector } from 'react-redux';
@@ -44,6 +47,8 @@ export const useMedia = () => {
 
     return context;
 };
+
+export const useMediaStats = () => useContext(MediaStatsContext);
 
 export const useOwnVoiceState = () => useSelector(ownVoiceStateSelector);
 

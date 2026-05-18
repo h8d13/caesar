@@ -1,4 +1,4 @@
-import { useMedia } from '@/features/server/voice/hooks';
+import { useMediaStats } from '@/features/server/voice/hooks';
 import { formatBigNumber } from '@/helpers/format-big-number';
 import { Popover, PopoverContent, PopoverTrigger } from '@caesar/ui';
 import { filesize } from 'filesize';
@@ -22,7 +22,7 @@ const hardwareEncoders = [
 const softwareEncoders = ['libvpx', 'openh264', 'libaom', 'software'];
 
 const StatsPopover = memo(({ children }: StatsPopoverProps) => {
-    const { transportStats } = useMedia();
+    const transportStats = useMediaStats();
 
     const {
         producer,

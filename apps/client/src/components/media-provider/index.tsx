@@ -89,7 +89,6 @@ enum ConnectionStatus {
 export type TMediaProvider = {
     loading: boolean;
     connectionStatus: ConnectionStatus;
-    transportStats: TransportStatsData;
     audioVideoRefsMap: Map<number, AudioVideoRefs>;
     ownVoiceState: TVoiceUserState;
     getOrCreateRefs: (remoteId: number) => AudioVideoRefs;
@@ -116,21 +115,26 @@ export type TMediaProvider = {
     > &
     ReturnType<typeof useVoiceControls>;
 
+const DEFAULT_TRANSPORT_STATS: TransportStatsData = {
+    producer: null,
+    consumer: null,
+    screenShare: null,
+    totalBytesReceived: 0,
+    totalBytesSent: 0,
+    isMonitoring: false,
+    currentBitrateReceived: 0,
+    currentBitrateSent: 0,
+    averageBitrateReceived: 0,
+    averageBitrateSent: 0
+};
+
+const MediaStatsContext = createContext<TransportStatsData>(
+    DEFAULT_TRANSPORT_STATS
+);
+
 const MediaProviderContext = createContext<TMediaProvider>({
     loading: false,
     connectionStatus: ConnectionStatus.DISCONNECTED,
-    transportStats: {
-        producer: null,
-        consumer: null,
-        screenShare: null,
-        totalBytesReceived: 0,
-        totalBytesSent: 0,
-        isMonitoring: false,
-        currentBitrateReceived: 0,
-        currentBitrateSent: 0,
-        averageBitrateReceived: 0,
-        averageBitrateSent: 0
-    },
     audioVideoRefsMap: new Map(),
     getOrCreateRefs: () => ({
         videoRef: { current: null },
@@ -1023,7 +1027,6 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         () => ({
             loading,
             connectionStatus,
-            transportStats,
             audioVideoRefsMap: audioVideoRefsMap.current,
             getOrCreateRefs,
             getConsumerCodec,
@@ -1048,7 +1051,6 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         [
             loading,
             connectionStatus,
-            transportStats,
             getOrCreateRefs,
             getConsumerCodec,
             pauseConsumer,
@@ -1072,20 +1074,22 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
 
     return (
         <MediaProviderContext.Provider value={contextValue}>
-            <MediaControlProvider>
-                <div className="relative">
-                    <SpeakingDetector />
-                    <FloatingPinnedCard
-                        remoteUserStreams={remoteUserStreams}
-                        externalStreams={externalStreams}
-                        localScreenShareStream={localScreenShareStream}
-                        localVideoStream={localVideoStream}
-                    />
-                    {children}
-                </div>
-            </MediaControlProvider>
+            <MediaStatsContext.Provider value={transportStats}>
+                <MediaControlProvider>
+                    <div className="relative">
+                        <SpeakingDetector />
+                        <FloatingPinnedCard
+                            remoteUserStreams={remoteUserStreams}
+                            externalStreams={externalStreams}
+                            localScreenShareStream={localScreenShareStream}
+                            localVideoStream={localVideoStream}
+                        />
+                        {children}
+                    </div>
+                </MediaControlProvider>
+            </MediaStatsContext.Provider>
         </MediaProviderContext.Provider>
     );
 });
 
-export { MediaProvider, MediaProviderContext };
+export { MediaProvider, MediaProviderContext, MediaStatsContext };

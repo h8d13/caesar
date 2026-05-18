@@ -3,7 +3,7 @@ import {
     type TVolumeKey
 } from '@/components/media-provider/media-control-context';
 import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
-import { useMedia } from '@/features/server/voice/hooks';
+import { useMedia, useMediaStats } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
 import { StreamKind } from '@caesar/shared';
 import { IconButton } from '@caesar/ui';
@@ -92,7 +92,8 @@ const ScreenShareCard = memo(
             hasScreenShareStream,
             hasScreenShareAudioStream
         } = useMediaRefs(userId);
-        const { transportStats, getConsumerCodec } = useMedia();
+        const { getConsumerCodec } = useMedia();
+        const transportStats = useMediaStats();
         const videoStats = useVideoStats(screenShareRef, hasScreenShareStream);
 
         const codec = useMemo(() => {

@@ -1,7 +1,7 @@
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
 import { useChannelCan } from '@/features/server/hooks';
 import { leaveVoice } from '@/features/server/voice/actions';
-import { useMedia } from '@/features/server/voice/hooks';
+import { useMedia, useMediaStats } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
 import { ChannelPermission } from '@caesar/shared';
 import { Button, Tooltip } from '@caesar/ui';
@@ -25,13 +25,9 @@ import { StatsPopover } from './stats-popover';
 const VoiceControl = memo(() => {
     const voiceChannelId = useCurrentVoiceChannelId();
     const channelCan = useChannelCan(voiceChannelId);
-    const {
-        ownVoiceState,
-        toggleWebcam,
-        toggleScreenShare,
-        connectionStatus,
-        transportStats
-    } = useMedia();
+    const { ownVoiceState, toggleWebcam, toggleScreenShare, connectionStatus } =
+        useMedia();
+    const transportStats = useMediaStats();
 
     const connectionInfo = useMemo(() => {
         switch (connectionStatus) {

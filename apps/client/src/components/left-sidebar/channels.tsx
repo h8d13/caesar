@@ -214,7 +214,10 @@ const Channel = memo(({ channelId, isSelected, onSelect }: TChannelProps) => {
     const channel = useChannelById(channelId);
     const channelCan = useChannelCan(channelId);
     const can = useCan();
-    const onClick = useCallback(() => onSelect(channelId), [onSelect, channelId]);
+    const onClick = useCallback(
+        () => onSelect(channelId),
+        [onSelect, channelId]
+    );
 
     const {
         attributes,
