@@ -28,6 +28,7 @@ export default defineConfig({
     },
     define: {
         VITE_APP_NAME: JSON.stringify(manifest.name),
-        VITE_APP_VERSION: JSON.stringify(pkg.version)
+        VITE_APP_VERSION: JSON.stringify(pkg.version),
+        VITE_APP_REPO_URL: JSON.stringify(manifest.repository)
     }
 });

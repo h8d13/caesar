@@ -7,6 +7,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.prod
+      args:
+        CAESAR_BUILD_VERSION: ${CAESAR_BUILD_VERSION:-}
     container_name: caesar
     restart: unless-stopped
     stop_grace_period: 2s

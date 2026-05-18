@@ -1,6 +1,7 @@
 {
   "name": "Caesar",
   "description": "Lightweight self-hosted chat with voice, video, and screen sharing.",
+  "repository": "https://github.com/h8d13/caesar",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#171717",

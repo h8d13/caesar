@@ -98,7 +98,11 @@ type TTarget = {
 };
 
 const compile = async ({ out, target }: TTarget) => {
-  const version = await getCurrentVersion();
+  // Prefer the build-time CAESAR_BUILD_VERSION env (set by up.sh to the git
+  // short hash). Fall back to the version field in package.json when running
+  // outside the docker build pipeline (e.g. local bun run build).
+  const version =
+    process.env.CAESAR_BUILD_VERSION || (await getCurrentVersion());
   const mediasoupVersion = await getMediasoupVersion();
   const mediasoupBinary = await downloadMediasoupBinary(
     mediasoupVersion,

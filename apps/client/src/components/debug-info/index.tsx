@@ -29,7 +29,7 @@ const DebugInfo = memo(() => {
             import.meta.env.MODE
         );
         console.log(
-            '%cThis is a open source project, feel free to contribute: https://github.com/h8d13/caesar',
+            `%cThis is a open source project, feel free to contribute: ${VITE_APP_REPO_URL}`,
             'font-size: 12px; font-weight: bold;'
         );
         console.log(

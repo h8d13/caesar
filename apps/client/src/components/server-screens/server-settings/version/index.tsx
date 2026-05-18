@@ -9,7 +9,7 @@ import {
     CardTitle,
     Group
 } from '@caesar/ui';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, ExternalLink } from 'lucide-react';
 import { memo } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -32,6 +32,18 @@ const Version = memo(() => {
                             {info?.version || 'Unknown'}
                         </span>
                     </div>
+                </Group>
+
+                <Group label="Repository">
+                    <a
+                        href={VITE_APP_REPO_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        <ExternalLink className="h-4 w-4" />
+                        <span className="font-mono">{VITE_APP_REPO_URL}</span>
+                    </a>
                 </Group>
 
                 <div className="flex justify-end pt-4">

@@ -45,6 +45,12 @@ else
     echo "no containers running"
 fi
 
+# build version: git short hash of HEAD. up.sh pulls latest above, so the
+# tree always matches origin; no dirty marker needed. helpers.ts picks this
+# up over package.json.
+export CAESAR_BUILD_VERSION=$(git rev-parse --short HEAD)
+echo "Building version: $CAESAR_BUILD_VERSION"
+
 # convenience wrapper for prod builds
 docker system prune -f && docker compose --profile prod build --no-cache && docker compose --profile prod up -d
 # can add --progress=plain for easier debug
