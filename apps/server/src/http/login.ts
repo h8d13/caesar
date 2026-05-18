@@ -61,6 +61,12 @@ const loginRateLimiter = createRateLimiter({
 const GENERIC_AUTH_ERROR =
   'Invalid credentials. Check your username/password or invite code.';
 
+// First char must be a Unicode letter or digit; following chars allow
+// letter, digit, underscore, hyphen. Caps at 32 chars. Enforced on signup
+// only via registerUser so existing weird identities (pre-validation) can
+// still log in.
+const IDENTITY_REGEX = /^[\p{L}\p{N}][\p{L}\p{N}_-]{0,31}$/u;
+
 const registerUser = async (
   identity: string,
   password: string,
@@ -68,6 +74,13 @@ const registerUser = async (
   inviteRoleId?: number | null,
   ip?: string
 ): Promise<TJoinedUser> => {
+  if (!IDENTITY_REGEX.test(identity)) {
+    throw new HttpValidationError(
+      'identity',
+      'Identity must start with a letter or number and contain only letters, numbers, _ or -.'
+    );
+  }
+
   const hashedPassword = (await Bun.password.hash(password)).toString();
 
   const defaultRole = await getDefaultRole();

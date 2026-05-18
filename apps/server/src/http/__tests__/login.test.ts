@@ -64,6 +64,43 @@ describe('/login', () => {
     expect(u.errors).toEqual(w.errors);
   });
 
+  test('signup rejects identities with non-alphanumeric prefix or symbols', async () => {
+    await tdb.insert(invites).values({
+      code: 'FORMATINVITE',
+      creatorId: 1,
+      maxUses: 5,
+      uses: 0,
+      expiresAt: Date.now() + 86400000,
+      createdAt: Date.now()
+    });
+
+    const cases = ["' or '1'='1", '-leading-dash', '@admin', 'has space'];
+
+    for (const identity of cases) {
+      const response = await login(identity, 'password123', 'FORMATINVITE');
+      expect(response.status).toBe(400);
+
+      const data: any = await response.json();
+      expect(data.errors?.identity).toMatch(/letters/);
+    }
+  });
+
+  test('signup accepts standard alphanumeric and _ / -', async () => {
+    await tdb.insert(invites).values({
+      code: 'GOODFORMAT',
+      creatorId: 1,
+      maxUses: 10,
+      uses: 0,
+      expiresAt: Date.now() + 86400000,
+      createdAt: Date.now()
+    });
+
+    for (const identity of ['alice', 'bob_42', 'eve-x', 'h8d13']) {
+      const response = await login(identity, 'password123', 'GOODFORMAT');
+      expect(response.status).toBe(200);
+    }
+  });
+
   test('should allow registration with a valid invite', async () => {
     await tdb.insert(invites).values({
       code: 'TESTINVITE123',

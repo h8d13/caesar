@@ -1,4 +1,5 @@
 import type { IRootState } from '@/features/store';
+import { getRenderedUsername } from '@/helpers/get-rendered-username';
 import { UserStatus } from '@caesar/shared';
 import { createSelector } from '@reduxjs/toolkit';
 import { createCachedSelector } from 're-reselect';
@@ -31,7 +32,12 @@ export const usersSelector = createSelector(
                 return aStatus - bStatus;
             }
 
-            return a.name.localeCompare(b.name, undefined, {
+            // sort by the same string the UI shows: a locally-set nickname
+            // takes precedence over user.name.
+            const aName = getRenderedUsername(a, a.id);
+            const bName = getRenderedUsername(b, b.id);
+
+            return aName.localeCompare(bName, undefined, {
                 sensitivity: 'base'
             });
         });

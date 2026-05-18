@@ -84,7 +84,7 @@ const Profile = memo(() => {
             <CardContent className="space-y-4">
                 <AvatarManager user={ownPublicUser} />
 
-                <Group label="Username">
+                <Group label="Display name">
                     <Input placeholder="Username" {...r('name')} />
                 </Group>
 
