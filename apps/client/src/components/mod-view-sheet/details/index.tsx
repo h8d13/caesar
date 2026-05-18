@@ -1,5 +1,7 @@
 import { Protect } from '@/components/protect';
-import { Permission } from '@caesar/shared';
+import { requestTextInput } from '@/features/dialogs/actions';
+import { getTRPCClient } from '@/lib/trpc';
+import { getTrpcError, Permission } from '@caesar/shared';
 import {
     Card,
     CardContent,
@@ -17,9 +19,11 @@ import {
     EyeClosed,
     Gavel,
     IdCard,
-    Network
+    Network,
+    Pencil
 } from 'lucide-react';
-import { memo, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
+import { toast } from 'sonner';
 import { useModViewContext } from '../context';
 
 type TRowProps = {
@@ -65,8 +69,29 @@ const Row = memo(
 );
 
 const Details = memo(() => {
-    const { user, logins } = useModViewContext();
+    const { user, logins, refetch } = useModViewContext();
     const lastLogin = logins[0]; // TODO: in the future we might show a list of logins, atm we just show info about the last one
+
+    const onRenameIdentity = useCallback(async () => {
+        const next = await requestTextInput({
+            title: 'Rename identity',
+            message: `Current: ${user.identity}. New identity must start with a letter or digit (letters, digits, _, - only). The user will be signed out and must use the new identity to log back in.`,
+            confirmLabel: 'Rename'
+        });
+
+        if (!next) return;
+
+        try {
+            await getTRPCClient().users.renameIdentity.mutate({
+                userId: user.id,
+                identity: next
+            });
+            toast.success('Identity updated');
+            refetch();
+        } catch (error) {
+            toast.error(getTrpcError(error, 'Could not rename identity'));
+        }
+    }, [user.id, user.identity, refetch]);
 
     return (
         <Card>
@@ -87,14 +112,28 @@ const Details = memo(() => {
                     />
 
                     <Protect permission={Permission.VIEW_USER_SENSITIVE_DATA}>
-                        <Row
-                            icon={
-                                <IdCard className="h-4 w-4 text-muted-foreground" />
-                            }
-                            label="Identity"
-                            value={user.identity}
-                            hidden
-                        />
+                        <div className="flex items-center">
+                            <div className="flex-1">
+                                <Row
+                                    icon={
+                                        <IdCard className="h-4 w-4 text-muted-foreground" />
+                                    }
+                                    label="Identity"
+                                    value={user.identity}
+                                    hidden
+                                />
+                            </div>
+                            <Protect permission={Permission.MANAGE_USERS}>
+                                <Tooltip content="Rename identity">
+                                    <IconButton
+                                        role="button"
+                                        onClick={onRenameIdentity}
+                                        className="text-muted-foreground inline-flex h-6 w-6 items-center justify-center rounded bg-transparent hover:bg-accent hover:text-foreground cursor-pointer transition-colors focus:outline-none ml-1"
+                                        icon={Pencil}
+                                    />
+                                </Tooltip>
+                            </Protect>
+                        </div>
 
                         <Row
                             icon={

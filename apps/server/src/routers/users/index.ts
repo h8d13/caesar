@@ -19,6 +19,7 @@ import { kickRoute } from './kick';
 import { meRoute } from './me';
 import { onMyLoginRoute } from './on-my-login';
 import { removeRoleRoute } from './remove-role';
+import { renameIdentityRoute } from './rename-identity';
 import { setAllowMultipleSessionsRoute } from './set-allow-multiple-sessions';
 import { setAppearOfflineRoute } from './set-appear-offline';
 import { signOutOtherSessionsRoute } from './sign-out-other-sessions';
@@ -33,6 +34,7 @@ export const usersRouter = t.router({
   addRole: addRoleRoute,
   removeRole: removeRoleRoute,
   update: updateUserRoute,
+  renameIdentity: renameIdentityRoute,
   setAppearOffline: setAppearOfflineRoute,
   setAllowMultipleSessions: setAllowMultipleSessionsRoute,
   signOutOtherSessions: signOutOtherSessionsRoute,

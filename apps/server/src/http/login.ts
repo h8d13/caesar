@@ -3,6 +3,7 @@ import {
   canonicalIdentity,
   DELETED_USER_IDENTITY_AND_NAME,
   DisconnectCode,
+  IDENTITY_REGEX,
   type TJoinedUser
 } from '@caesar/shared';
 import {
@@ -60,12 +61,6 @@ const loginRateLimiter = createRateLimiter({
 // for legitimate operator debugging.
 const GENERIC_AUTH_ERROR =
   'Invalid credentials. Check your username/password or invite code.';
-
-// First char must be a Unicode letter or digit; following chars allow
-// letter, digit, underscore, hyphen. Caps at 32 chars. Enforced on signup
-// only via registerUser so existing weird identities (pre-validation) can
-// still log in.
-const IDENTITY_REGEX = /^[\p{L}\p{N}][\p{L}\p{N}_-]{0,31}$/u;
 
 const registerUser = async (
   identity: string,

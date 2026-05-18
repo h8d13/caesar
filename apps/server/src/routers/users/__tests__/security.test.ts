@@ -107,6 +107,93 @@ describe('users.signOutOtherSessions', () => {
   });
 });
 
+describe('users.renameIdentity', () => {
+  test('admin can rename a peer; mirrors name when it equaled identity', async () => {
+    const { caller: adminCaller } = await initTest(1);
+
+    // align name with identity to mirror the post-signup default state
+    // (login.ts seeds `name: identity` on signup).
+    await tdb.update(users).set({ name: 'testuser' }).where(eq(users.id, 2));
+
+    await adminCaller.users.renameIdentity({
+      userId: 2,
+      identity: 'renamed-user'
+    });
+
+    const row = await tdb
+      .select({ identity: users.identity, name: users.name })
+      .from(users)
+      .where(eq(users.id, 2))
+      .get();
+
+    expect(row?.identity).toBe('renamed-user');
+    expect(row?.name).toBe('renamed-user');
+  });
+
+  test('preserves custom display name when it differs from old identity', async () => {
+    const { caller: adminCaller } = await initTest(1);
+
+    await tdb
+      .update(users)
+      .set({ name: 'Custom Display' })
+      .where(eq(users.id, 2));
+
+    await adminCaller.users.renameIdentity({
+      userId: 2,
+      identity: 'renamed-again'
+    });
+
+    const row = await tdb
+      .select({ identity: users.identity, name: users.name })
+      .from(users)
+      .where(eq(users.id, 2))
+      .get();
+
+    expect(row?.identity).toBe('renamed-again');
+    expect(row?.name).toBe('Custom Display');
+  });
+
+  test('bumps target user`s sessionEpoch so existing JWTs invalidate', async () => {
+    const { caller: adminCaller } = await initTest(1);
+    const before = await epochFor(2);
+
+    await adminCaller.users.renameIdentity({
+      userId: 2,
+      identity: 'rename-epoch-test'
+    });
+
+    const after = await epochFor(2);
+    expect(after).toBe(before + 1);
+  });
+
+  test('rejects malformed identities (leading symbol, spaces, etc.)', async () => {
+    const { caller: adminCaller } = await initTest(1);
+
+    for (const bad of ["' or '1'='1", '-leading', '@nope', 'has space']) {
+      await expect(
+        adminCaller.users.renameIdentity({ userId: 2, identity: bad })
+      ).rejects.toThrow(/letters/);
+    }
+  });
+
+  test('rejects taking an identity already in use', async () => {
+    const { caller: adminCaller } = await initTest(1);
+
+    // testowner already exists (id=1)
+    await expect(
+      adminCaller.users.renameIdentity({ userId: 2, identity: 'testowner' })
+    ).rejects.toThrow(/already taken/);
+  });
+
+  test('non-admins cannot rename anyone', async () => {
+    const { caller: nonAdmin } = await initTest(2);
+
+    await expect(
+      nonAdmin.users.renameIdentity({ userId: 1, identity: 'hack' })
+    ).rejects.toThrow();
+  });
+});
+
 describe('users.getMySessions', () => {
   test('returns sha256(userAgent)[:8] + createdAt for the caller, ordered newest first', async () => {
     const { caller } = await initTest(1);
