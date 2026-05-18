@@ -1,5 +1,6 @@
 import { useMediaControl } from '@/components/media-provider/media-control-context';
 import { useVoiceUsersByChannelId } from '@/features/server/hooks';
+import { useOwnUserId } from '@/features/server/users/hooks';
 import {
     useHideNonVideoParticipants,
     useVoiceChannelExternalStreamsList
@@ -23,6 +24,7 @@ const VoiceChannel = memo(({ channelId }: TChannelProps) => {
     const externalStreams = useVoiceChannelExternalStreamsList(channelId);
     const { pinnedCard, pinCard, unpinCard, isPinned } = usePinCardController();
     const hideNonVideoParticipants = useHideNonVideoParticipants();
+    const ownUserId = useOwnUserId();
     const { isStreamHidden, getUserVideoKey, getUserScreenVideoKey } =
         useMediaControl();
 
@@ -52,9 +54,13 @@ const VoiceChannel = memo(({ channelId }: TChannelProps) => {
             // Skip the user card entirely when the local user has hidden
             // this participant's video stream. Audio is rendered separately
             // (VoiceAudioStreams), so hiding the visual tile does NOT kill
-            // sound — it just frees up the grid slot.
+            // sound it just frees up the grid slot. Own card is exempt:
+            // hiding "own stream" suppresses the local video preview INSIDE
+            // the card (see useMediaRefs)
+            const isOwn = voiceUser.id === ownUserId;
             const showUserCard =
-                !videoLocallyHidden && (!shouldFilterNonVideo || hasVideo);
+                (isOwn || !videoLocallyHidden) &&
+                (!shouldFilterNonVideo || hasVideo);
 
             if (showUserCard) {
                 cards.push(
@@ -134,7 +140,8 @@ const VoiceChannel = memo(({ channelId }: TChannelProps) => {
         hideNonVideoParticipants,
         isStreamHidden,
         getUserVideoKey,
-        getUserScreenVideoKey
+        getUserScreenVideoKey,
+        ownUserId
     ]);
 
     if (voiceUsers.length === 0) {

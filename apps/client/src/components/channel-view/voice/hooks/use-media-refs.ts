@@ -42,11 +42,17 @@ const useMediaRefs = (
         externalVideoRef
     } = getOrCreateRefs(remoteId);
 
+    const videoHidden = isStreamHidden(getUserVideoKey(remoteId));
+    const screenVideoHidden = isStreamHidden(getUserScreenVideoKey(remoteId));
     const videoStream = useMemo(() => {
-        if (isOwnUser) return localVideoStream;
+        if (isOwnUser) {
+            // "Hide own stream" toggle suppresses local preview without
+            // removing the own card from the grid (see voice/index.tsx).
+            return videoHidden ? undefined : localVideoStream;
+        }
 
         return remoteUserStreams[remoteId]?.[StreamKind.VIDEO];
-    }, [remoteUserStreams, remoteId, isOwnUser, localVideoStream]);
+    }, [remoteUserStreams, remoteId, isOwnUser, localVideoStream, videoHidden]);
 
     const audioStream = useMemo(() => {
         if (isOwnUser) return undefined;
@@ -87,9 +93,6 @@ const useMediaRefs = (
 
     const userScreenVolumeKey = getUserScreenVolumeKey(remoteId);
     const userScreenVolume = getVolume(userScreenVolumeKey);
-
-    const videoHidden = isStreamHidden(getUserVideoKey(remoteId));
-    const screenVideoHidden = isStreamHidden(getUserScreenVideoKey(remoteId));
 
     useEffect(() => {
         if (isOwnUser) return;
