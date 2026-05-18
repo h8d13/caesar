@@ -65,7 +65,7 @@ const UserControl = memo(() => {
                         <div className="flex items-center space-x-1">
                             <span className="text-xs text-muted-foreground capitalize">
                                 {appearOffline
-                                    ? 'online (hidden)'
+                                    ? 'offline'
                                     : ownPublicUser.status}
                             </span>
                             <Tooltip
