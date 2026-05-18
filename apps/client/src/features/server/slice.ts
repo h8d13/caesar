@@ -262,6 +262,12 @@ export const serverSlice = createSlice({
                 (m) => m.id !== action.payload.messageId
             );
         },
+        clearChannelMessages: (
+            state,
+            action: PayloadAction<{ channelId: number }>
+        ) => {
+            state.messagesMap[action.payload.channelId] = [];
+        },
 
         // THREAD MESSAGES ------------------------------------------------------------
 

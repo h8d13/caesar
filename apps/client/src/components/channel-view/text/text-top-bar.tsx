@@ -1,12 +1,55 @@
+import { requestConfirmation } from '@/features/dialogs/actions';
 import { useChannelById } from '@/features/server/channels/hooks';
 import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
 import { getTRPCClient } from '@/lib/trpc';
+import { getTrpcError } from '@caesar/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { Hash, PenTool, Timer } from 'lucide-react';
+import { Hash, PenTool, Timer, Trash2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DmCallButton } from './dm-call-button';
 import { PinnedMessagesPopover } from './pinned-messages-popover';
+
+type TWipeConversationButtonProps = {
+    channelId: number;
+};
+
+const WipeConversationButton = memo(
+    ({ channelId }: TWipeConversationButtonProps) => {
+        const onClick = useCallback(async () => {
+            const confirmed = await requestConfirmation({
+                title: 'Delete entire conversation?',
+                message:
+                    'This deletes every message in this DM for both participants. The other person will also see the conversation cleared. This cannot be undone.',
+                confirmLabel: 'Delete all',
+                variant: 'danger'
+            });
+
+            if (!confirmed) return;
+
+            try {
+                await getTRPCClient().dms.wipeConversation.mutate({
+                    channelId
+                });
+            } catch (error) {
+                toast.error(
+                    getTrpcError(error, 'Could not delete the conversation')
+                );
+            }
+        }, [channelId]);
+
+        return (
+            <button
+                type="button"
+                onClick={onClick}
+                title="Delete entire conversation"
+                className="p-1.5 rounded-md transition-colors hover:bg-destructive/15 text-muted-foreground hover:text-destructive"
+            >
+                <Trash2 size={16} />
+            </button>
+        );
+    }
+);
 
 const parseDmPeerId = (
     channelName: string | null | undefined,
@@ -162,6 +205,7 @@ const TextTopbar = memo(
                         <div className="flex items-center gap-1">
                             <DmCallButton channelId={channelId} />
                             <EphemeralToggle channelId={channelId} />
+                            <WipeConversationButton channelId={channelId} />
                         </div>
                     ) : (
                         <div className="flex items-center gap-1">

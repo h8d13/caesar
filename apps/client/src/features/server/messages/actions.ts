@@ -205,6 +205,10 @@ export const updateMessage = (channelId: number, message: TJoinedMessage) => {
     }
 };
 
+export const clearChannelMessages = (channelId: number) => {
+    store.dispatch(serverSliceActions.clearChannelMessages({ channelId }));
+};
+
 export const deleteMessage = (channelId: number, messageId: number) => {
     // delete from both maps, the message could be a thread reply or root
     store.dispatch(serverSliceActions.deleteMessage({ channelId, messageId }));

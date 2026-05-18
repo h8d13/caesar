@@ -6,6 +6,69 @@ import { describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
 describe('dms router', () => {
+  test('wipeConversation removes all messages for both participants', async () => {
+    const { caller: caller1 } = await initTest(1);
+    const { caller: caller2 } = await initTest(2);
+
+    const { channelId } = await caller1.dms.open({ userId: 2 });
+
+    await caller1.messages.send({ channelId, content: 'one', files: [] });
+    await caller2.messages.send({ channelId, content: 'two', files: [] });
+    await caller1.messages.send({ channelId, content: 'three', files: [] });
+
+    const before = await caller1.messages.get({
+      channelId,
+      cursor: null,
+      limit: 50
+    });
+    expect(before.messages.length).toBe(3);
+
+    // either participant can wipe
+    await caller2.dms.wipeConversation({ channelId });
+
+    const afterCaller1 = await caller1.messages.get({
+      channelId,
+      cursor: null,
+      limit: 50
+    });
+    const afterCaller2 = await caller2.messages.get({
+      channelId,
+      cursor: null,
+      limit: 50
+    });
+
+    expect(afterCaller1.messages.length).toBe(0);
+    expect(afterCaller2.messages.length).toBe(0);
+
+    // channel itself still exists (we only wiped messages)
+    const followup = await caller1.messages.send({
+      channelId,
+      content: 'after wipe',
+      files: []
+    });
+    expect(followup).toBeDefined();
+  });
+
+  test('wipeConversation rejects non-participants', async () => {
+    const { caller: caller1 } = await initTest(1);
+    const { caller: caller3 } = await initTest(3);
+
+    const { channelId } = await caller1.dms.open({ userId: 2 });
+
+    await expect(
+      caller3.dms.wipeConversation({ channelId })
+    ).rejects.toThrow();
+  });
+
+  test('wipeConversation rejects on non-DM channels', async () => {
+    const { caller } = await initTest(1);
+
+    // channel id 1 is the default seeded TEXT channel, not a DM
+    await expect(caller.dms.wipeConversation({ channelId: 1 })).rejects.toThrow(
+      /DM/
+    );
+  });
+
   test('should create a direct message channel and allow messaging', async () => {
     const { caller: caller1 } = await initTest(1);
     const { caller: caller2 } = await initTest(2);

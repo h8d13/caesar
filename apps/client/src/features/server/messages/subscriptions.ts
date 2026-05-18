@@ -4,6 +4,7 @@ import type { TJoinedMessage } from '@caesar/shared';
 import {
     addMessages,
     addTypingUser,
+    clearChannelMessages,
     deleteMessage,
     updateMessage,
     updateReplyCount
@@ -36,6 +37,14 @@ const subscribeToMessages = () => {
         },
         onError: (err) =>
             console.error('onMessageDelete subscription error:', err)
+    });
+
+    const onDmWipedSub = trpc.dms.onWiped.subscribe(undefined, {
+        onData: ({ channelId }: { channelId: number }) => {
+            logDebug('[EVENTS] dms.onWiped', { channelId });
+            clearChannelMessages(channelId);
+        },
+        onError: (err) => console.error('onDmWiped subscription error:', err)
     });
 
     const onMessageTypingSub = trpc.messages.onTyping.subscribe(undefined, {
@@ -88,6 +97,7 @@ const subscribeToMessages = () => {
         onMessageSub.unsubscribe();
         onMessageUpdateSub.unsubscribe();
         onMessageDeleteSub.unsubscribe();
+        onDmWipedSub.unsubscribe();
         onMessageTypingSub.unsubscribe();
         onThreadReplyCountUpdateSub.unsubscribe();
     };

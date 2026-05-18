@@ -153,6 +153,7 @@ type Events = {
     channelId: number;
     ephemeralMs: number | null;
   };
+  [ServerEvents.DM_WIPED]: { channelId: number };
   [ServerEvents.DM_CALL_RING]: {
     channelId: number;
     callerId: number;

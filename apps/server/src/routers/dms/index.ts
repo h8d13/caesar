@@ -8,6 +8,7 @@ import { getEphemeralRoute } from './get-ephemeral';
 import { hangupCallRoute } from './hangup-call';
 import { openDirectMessageRoute } from './open-direct-message';
 import { setEphemeralRoute } from './set-ephemeral';
+import { wipeConversationRoute } from './wipe-conversation';
 
 const onDmConversationOpenRoute = protectedProcedure.subscription(
   async ({ ctx }) => {
@@ -27,6 +28,10 @@ const onDmEphemeralUpdateRoute = protectedProcedure.subscription(
   }
 );
 
+const onDmWipedRoute = protectedProcedure.subscription(async ({ ctx }) => {
+  return ctx.pubsub.subscribeFor(ctx.userId, ServerEvents.DM_WIPED);
+});
+
 const onCallRingRoute = protectedProcedure.subscription(async ({ ctx }) => {
   return ctx.pubsub.subscribeFor(ctx.userId, ServerEvents.DM_CALL_RING);
 });
@@ -45,11 +50,13 @@ export const dmsRouter = t.router({
   getEphemeral: getEphemeralRoute,
   getE2eeContext: getE2eeContextRoute,
   setEphemeral: setEphemeralRoute,
+  wipeConversation: wipeConversationRoute,
   startCall: callRoute,
   acceptCall: acceptCallRoute,
   hangupCall: hangupCallRoute,
   onConversationOpen: onDmConversationOpenRoute,
   onEphemeralUpdate: onDmEphemeralUpdateRoute,
+  onWiped: onDmWipedRoute,
   onCallRing: onCallRingRoute,
   onCallAccepted: onCallAcceptedRoute,
   onCallEnded: onCallEndedRoute
