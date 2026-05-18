@@ -11,6 +11,7 @@ import { getUserByToken } from '../db/queries/users';
 import { verifyFileToken } from '../helpers/files-crypto';
 import { PUBLIC_PATH } from '../helpers/paths';
 import { logger } from '../logger';
+import { buildEtag, sendNotModified } from './helpers';
 
 const pipeFileStream = (
   filePath: string,
@@ -131,6 +132,28 @@ const publicRouteHandler = async (
 
   const stat = fs.statSync(filePath);
 
+  // Uploaded files are content-immutable: the name is server-assigned and a
+  // re-upload produces a new name. private (not public) because access is
+  // auth-gated and, for private channels, also file-token-gated.
+  const etag = buildEtag(null, stat);
+  const lastModified = stat.mtime.toUTCString();
+  const cacheControl = 'private, max-age=31536000, immutable';
+
+  const rangeHeader = req.headers.range;
+
+  // 304 only applies to full responses; range requests get fresh 206 bodies.
+  if (
+    !rangeHeader &&
+    sendNotModified(req, res, {
+      etag,
+      lastModified,
+      cacheControl,
+      mtimeMs: stat.mtimeMs
+    })
+  ) {
+    return res;
+  }
+
   const inlineAllowlist = [
     'image/png',
     'image/jpeg',
@@ -155,8 +178,6 @@ const publicRouteHandler = async (
   );
 
   const dispositionHeader = `${contentDisposition}; filename="${safeFileName}"; filename*=UTF-8''${encodedFileName}`;
-
-  const rangeHeader = req.headers.range;
 
   if (rangeHeader) {
     const match = rangeHeader.match(/^bytes=(\d+)-(\d*)$/);
@@ -187,7 +208,10 @@ const publicRouteHandler = async (
       'Content-Length': contentLength,
       'Content-Range': `bytes ${start}-${end}/${stat.size}`,
       'Accept-Ranges': 'bytes',
-      'Content-Disposition': dispositionHeader
+      'Content-Disposition': dispositionHeader,
+      'Cache-Control': cacheControl,
+      ETag: etag,
+      'Last-Modified': lastModified
     });
 
     pipeFileStream(filePath, res, { start, end });
@@ -196,7 +220,10 @@ const publicRouteHandler = async (
       'Content-Type': dbFile.mimeType,
       'Content-Length': stat.size,
       'Accept-Ranges': 'bytes',
-      'Content-Disposition': dispositionHeader
+      'Content-Disposition': dispositionHeader,
+      'Cache-Control': cacheControl,
+      ETag: etag,
+      'Last-Modified': lastModified
     });
 
     pipeFileStream(filePath, res);
