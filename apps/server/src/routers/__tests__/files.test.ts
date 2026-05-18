@@ -2,6 +2,7 @@ import type { TTempFile } from '@caesar/shared';
 import { initTest, login, uploadFile } from '@server/__tests__/helpers';
 import { fileManager } from '@server/utils/file-manager';
 import { beforeEach, describe, expect, test } from 'bun:test';
+import { existsSync } from 'fs';
 import fs from 'fs/promises';
 
 describe('files router', () => {
@@ -39,13 +40,13 @@ describe('files router', () => {
   test('should delete a temporary file', async () => {
     const { caller } = await initTest();
 
-    expect(await fs.exists(tempFile.path)).toBe(true);
+    expect(existsSync(tempFile.path)).toBe(true);
 
     await caller.files.deleteTemporary({
       fileId: tempFile.id
     });
 
-    expect(await fs.exists(tempFile.path)).toBe(false);
+    expect(existsSync(tempFile.path)).toBe(false);
   });
 
   test('should throw when deleting a non-existent temporary file', async () => {
@@ -69,6 +70,6 @@ describe('files router', () => {
       'You do not have permission to delete this temporary file'
     );
 
-    expect(await fs.exists(tempFile.path)).toBe(true);
+    expect(existsSync(tempFile.path)).toBe(true);
   });
 });

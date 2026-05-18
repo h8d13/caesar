@@ -4,6 +4,7 @@ import { login, uploadFile } from '@server/__tests__/helpers';
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
 import { TMP_PATH } from '@server/helpers/paths';
 import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
+import { existsSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
 import { sanitizeFileName } from '../helpers';
@@ -54,7 +55,7 @@ describe('/upload', () => {
     expect(data.userId).toBe(1);
     expect(data.path).toBe(expectedPath);
 
-    expect(await fs.exists(expectedPath)).toBe(true);
+    expect(existsSync(expectedPath)).toBe(true);
     expect(await fs.readFile(expectedPath, 'utf-8')).toBe(
       'Hello, this is a test file for upload.'
     );
@@ -137,7 +138,7 @@ describe('/upload', () => {
     const data = (await response.json()) as TTempFile;
 
     expect(data.originalName).toBe('test file (1) [copy].txt');
-    expect(await fs.exists(data.path)).toBe(true);
+    expect(existsSync(data.path)).toBe(true);
   });
 
   test('should handle empty files', async () => {
@@ -151,7 +152,7 @@ describe('/upload', () => {
     const data = (await response.json()) as TTempFile;
 
     expect(data.size).toBe(0);
-    expect(await fs.exists(data.path)).toBe(true);
+    expect(existsSync(data.path)).toBe(true);
   });
 
   test('should handle different file types', async () => {
@@ -170,7 +171,7 @@ describe('/upload', () => {
 
     expect(data.extension).toBe('.json');
     expect(data.originalName).toBe('data.json');
-    expect(await fs.exists(data.path)).toBe(true);
+    expect(existsSync(data.path)).toBe(true);
   });
 
   test('should handle files with no extension', async () => {
@@ -184,7 +185,7 @@ describe('/upload', () => {
     const data = (await response.json()) as TTempFile;
 
     expect(data.originalName).toBe('Makefile');
-    expect(await fs.exists(data.path)).toBe(true);
+    expect(existsSync(data.path)).toBe(true);
   });
 
   test('should handle files with multiple dots in name', async () => {
@@ -215,7 +216,7 @@ describe('/upload', () => {
     const data = (await response.json()) as TTempFile;
 
     expect(data.originalName).toBe(longName);
-    expect(await fs.exists(data.path)).toBe(true);
+    expect(existsSync(data.path)).toBe(true);
   });
 
   test('should upload multiple files sequentially', async () => {
@@ -231,8 +232,8 @@ describe('/upload', () => {
     const data2 = (await response2.json()) as TTempFile;
 
     expect(data1.id).not.toBe(data2.id);
-    expect(await fs.exists(data1.path)).toBe(true);
-    expect(await fs.exists(data2.path)).toBe(true);
+    expect(existsSync(data1.path)).toBe(true);
+    expect(existsSync(data2.path)).toBe(true);
   });
 
   test('should generate unique MD5 hashes for different files', async () => {
@@ -275,7 +276,7 @@ describe('/upload', () => {
 
     expect(data.extension).toBe('.png');
     expect(data.size).toBe(8);
-    expect(await fs.exists(data.path)).toBe(true);
+    expect(existsSync(data.path)).toBe(true);
   });
 
   test('should reject filenames with path traversal (../)', async () => {

@@ -4,6 +4,7 @@ import { tdb } from '@server/__tests__/setup';
 import { PUBLIC_PATH, TMP_PATH, UPLOADS_PATH } from '@server/helpers/paths';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
+import { existsSync } from 'fs';
 import fs from 'fs/promises';
 import { afterEach } from 'node:test';
 import path from 'path';
@@ -59,7 +60,7 @@ describe('file manager', () => {
     expect(tempFile.path).toContain(TMP_PATH);
     expect(tempFile.path).toContain(tempFile.id);
 
-    expect(await fs.exists(tempFile.path)).toBe(true);
+    expect(existsSync(tempFile.path)).toBe(true);
   });
 
   test('should retrieve temporary file by id', async () => {
@@ -97,7 +98,7 @@ describe('file manager', () => {
       userId: 1
     });
 
-    expect(await fs.exists(tempFile.path)).toBe(true);
+    expect(existsSync(tempFile.path)).toBe(true);
 
     expect(fileManager.getTemporaryFile(tempFile.id)).toBeDefined();
 
@@ -105,7 +106,7 @@ describe('file manager', () => {
 
     expect(fileManager.getTemporaryFile(tempFile.id)).toBeUndefined();
 
-    expect(await fs.exists(tempFile.path)).toBe(false);
+    expect(existsSync(tempFile.path)).toBe(false);
   });
 
   test('should throw error for non-existent temporary file', async () => {
@@ -188,8 +189,8 @@ describe('file manager', () => {
 
     const publicPath = path.join(PUBLIC_PATH, savedFile.name);
 
-    expect(await fs.exists(publicPath)).toBe(true);
-    expect(await fs.exists(tempFile.path)).toBe(false);
+    expect(existsSync(publicPath)).toBe(true);
+    expect(existsSync(tempFile.path)).toBe(false);
 
     expect(fileManager.getTemporaryFile(tempFile.id)).toBeUndefined();
   });

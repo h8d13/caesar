@@ -13,6 +13,7 @@ import { PUBLIC_PATH } from '@server/helpers/paths';
 import { fileManager } from '@server/utils/file-manager';
 import { describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
+import { existsSync } from 'fs';
 import fs from 'fs/promises';
 import { beforeEach } from 'node:test';
 import path from 'path';
@@ -119,7 +120,7 @@ describe('/public', () => {
 
       const filePath = path.join(PUBLIC_PATH, dbFile!.name);
 
-      expect(await fs.exists(filePath)).toBe(true);
+      expect(existsSync(filePath)).toBe(true);
 
       const content = await fs.readFile(filePath, 'utf-8');
 
@@ -255,7 +256,7 @@ describe('/public', () => {
     expect(dbFile).toBeDefined();
 
     // file exists and it's linked to a message
-    expect(await fs.exists(path.join(PUBLIC_PATH, dbFile!.name))).toBe(true);
+    expect(existsSync(path.join(PUBLIC_PATH, dbFile!.name))).toBe(true);
 
     const { caller } = await initTest();
 
@@ -273,7 +274,7 @@ describe('/public', () => {
     expect(afterDbFile).toBeUndefined();
 
     // file is deleted from disk
-    expect(await fs.exists(path.join(PUBLIC_PATH, dbFile!.name))).toBe(false);
+    expect(existsSync(path.join(PUBLIC_PATH, dbFile!.name))).toBe(false);
   });
 
   test('should delete file inside message when channel is deleted', async () => {
@@ -284,7 +285,7 @@ describe('/public', () => {
     expect(dbFile).toBeDefined();
 
     // file exists and it's linked to a message
-    expect(await fs.exists(path.join(PUBLIC_PATH, dbFile!.name))).toBe(true);
+    expect(existsSync(path.join(PUBLIC_PATH, dbFile!.name))).toBe(true);
 
     const { caller } = await initTest();
 
@@ -307,7 +308,7 @@ describe('/public', () => {
     expect(afterDbFile).toBeUndefined();
 
     // file is deleted from disk
-    expect(await fs.exists(path.join(PUBLIC_PATH, dbFile!.name))).toBe(false);
+    expect(existsSync(path.join(PUBLIC_PATH, dbFile!.name))).toBe(false);
   });
 
   test('should return 403 when trying to access a private channel file without token', async () => {
