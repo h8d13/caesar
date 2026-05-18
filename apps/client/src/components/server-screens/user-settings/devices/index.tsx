@@ -61,18 +61,6 @@ import ResolutionFpsControl from './resolution-fps-control';
 
 const DEFAULT_NAME = 'default';
 
-const dedupeByEffectiveId = (
-    devices: (MediaDeviceInfo | undefined)[]
-): (MediaDeviceInfo | undefined)[] => {
-    const seen = new Set<string>();
-    return devices.filter((device) => {
-        const key = device?.deviceId || DEFAULT_NAME;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-    });
-};
-
 const Devices = memo(() => {
     const currentVoiceChannelId = useCurrentVoiceChannelId();
     const settings = usePublicServerSettings();
@@ -247,30 +235,6 @@ const Devices = memo(() => {
     }, []);
 
     const hasMicrophones = inputDevices.length > 0;
-    const hasDefaultPlaybackOption = playbackDevices.some(
-        (device) => device?.deviceId === DEFAULT_NAME
-    );
-    const hasDefaultVideoOption = videoDevices.some(
-        (device) => device?.deviceId === DEFAULT_NAME
-    );
-
-    // Collapse devices that would render with the same Select value. Browsers
-    // return empty deviceId for every device until the user grants camera/mic
-    // permission, so without this we end up with N items all mapped to
-    // DEFAULT_NAME -> Radix Select then marks every one as selected and
-    // concatenates their labels in the trigger.
-    const dedupedInputDevices = useMemo(
-        () => dedupeByEffectiveId(inputDevices),
-        [inputDevices]
-    );
-    const dedupedPlaybackDevices = useMemo(
-        () => dedupeByEffectiveId(playbackDevices),
-        [playbackDevices]
-    );
-    const dedupedVideoDevices = useMemo(
-        () => dedupeByEffectiveId(videoDevices),
-        [videoDevices]
-    );
 
     const maxBitrate = useMemo(
         () =>
@@ -324,12 +288,7 @@ const Devices = memo(() => {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
-                                    {!hasDefaultPlaybackOption && (
-                                        <SelectItem value={DEFAULT_NAME}>
-                                            Default Output
-                                        </SelectItem>
-                                    )}
-                                    {dedupedPlaybackDevices.map((device) => (
+                                    {playbackDevices.map((device) => (
                                         <SelectItem
                                             key={device?.deviceId}
                                             value={
@@ -359,7 +318,7 @@ const Devices = memo(() => {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        {dedupedInputDevices.map((device) => (
+                                        {inputDevices.map((device) => (
                                             <SelectItem
                                                 key={device?.deviceId}
                                                 value={
@@ -584,12 +543,7 @@ const Devices = memo(() => {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        {!hasDefaultVideoOption && (
-                                            <SelectItem value={DEFAULT_NAME}>
-                                                Default Webcam
-                                            </SelectItem>
-                                        )}
-                                        {dedupedVideoDevices.map((device) => (
+                                        {videoDevices.map((device) => (
                                             <SelectItem
                                                 key={device?.deviceId}
                                                 value={
