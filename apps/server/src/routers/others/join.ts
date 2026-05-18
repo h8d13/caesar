@@ -84,15 +84,17 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
     ]);
 
     // statuses are computed from the joiner's POV:
-    // - the joiner themselves always sees their real status (and keeps the
-    //   `appearOffline` flag, so the UI toggle reflects truth);
-    // - peers are masked to OFFLINE when their `appearOffline` is true, and
+    // - the joiner's own row keeps the real connection status mask: when
+    //   appearOffline is true, status is OFFLINE for everyone (including
+    //   self) so the UI matches what peers see. the `appearOffline` flag
+    //   itself is kept only on the self row so the eye toggle reflects
+    //   truth.
+    // - peers see masked status when their `appearOffline` is true, and
     //   the flag itself is stripped so it never leaves the server.
     const processedPublicUsers = publicUsers.map((u) => {
       const isSelf = u.id === ctx.user.id;
       const realStatus = ctx.getStatusById(u.id);
-      const status =
-        !isSelf && u.appearOffline ? UserStatus.OFFLINE : realStatus;
+      const status = u.appearOffline ? UserStatus.OFFLINE : realStatus;
 
       return {
         ...u,

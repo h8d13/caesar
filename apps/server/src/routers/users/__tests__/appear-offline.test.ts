@@ -1,3 +1,4 @@
+import { UserStatus } from '@caesar/shared';
 import { initTest } from '@server/__tests__/helpers';
 import { describe, expect, test } from 'bun:test';
 
@@ -13,6 +14,9 @@ describe('users.setAppearOffline', () => {
 
     expect(ownRow).toBeDefined();
     expect(ownRow?.appearOffline).toBe(true);
+    // self's status is also masked: members-list / right-sidebar reads
+    // from the same row and must reflect the appear-offline choice.
+    expect(ownRow?.status).toBe(UserStatus.OFFLINE);
   });
 
   test('strips appearOffline from peer rows in the join response', async () => {
@@ -26,7 +30,7 @@ describe('users.setAppearOffline', () => {
     expect(peerRow).toBeDefined();
     expect(peerRow?.appearOffline).toBeUndefined();
     // status should be masked OFFLINE for peers
-    expect(peerRow?.status).toBe('offline');
+    expect(peerRow?.status).toBe(UserStatus.OFFLINE);
   });
 
   test('toggling back to false flips the flag', async () => {

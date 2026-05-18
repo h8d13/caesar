@@ -29,8 +29,11 @@ export const handleUserJoin = (user: TJoinedPublicUser) => {
     const state = store.getState();
     const foundUser = userByIdSelector(state, user.id);
 
+    // trust the broadcast status: the server masks it to OFFLINE for users
+    // who have appearOffline=true. hard-coding ONLINE here previously made
+    // appear-offline invisible to peers.
     if (foundUser) {
-        updateUser(user.id, { ...user, status: UserStatus.ONLINE });
+        updateUser(user.id, user);
     } else {
         addUser(user);
     }
@@ -42,7 +45,14 @@ export const setAppearOffline = async (value: boolean) => {
     const ownUserId = store.getState().server.ownUserId;
 
     if (ownUserId) {
-        updateUser(ownUserId, { appearOffline: result.appearOffline });
+        // mirror the server's status mask locally so the members list
+        // updates without waiting for a re-join.
+        updateUser(ownUserId, {
+            appearOffline: result.appearOffline,
+            status: result.appearOffline
+                ? UserStatus.OFFLINE
+                : UserStatus.ONLINE
+        });
     }
 
     return result.appearOffline;
