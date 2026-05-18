@@ -2,6 +2,7 @@ import { startCallRingLoop } from '@/features/server/sounds/actions';
 import { joinVoice } from '@/features/server/voice/actions';
 import { useMedia } from '@/features/server/voice/hooks';
 import { getTRPCClient } from '@/lib/trpc';
+import { getTrpcError } from '@caesar/shared';
 import { Phone, PhoneOff } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -56,8 +57,8 @@ const DmCallButton = memo(({ channelId }: TProps) => {
         try {
             await getTRPCClient().dms.startCall.mutate({ channelId });
             setOutgoing(true);
-        } catch {
-            toast.error('Could not start call');
+        } catch (e) {
+            toast.error(getTrpcError(e, 'Could not start call'));
         }
     }, [channelId]);
 
