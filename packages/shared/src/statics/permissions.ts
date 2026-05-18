@@ -60,7 +60,7 @@ export const permissionDescriptions: Record<Permission, string> = {
   [Permission.MANAGE_CHANNELS]:
     'Grants the ability to create, update, and delete channels.',
   [Permission.MANAGE_CHANNEL_PERMISSIONS]:
-    'Grants the ability to manage channel-specific permissions for roles and users.',
+    'Grants the ability to manage channel-specific permissions per role.',
   [Permission.MANAGE_CATEGORIES]:
     'Grants the ability to create, update, and delete categories.',
   [Permission.MANAGE_ROLES]:
@@ -72,7 +72,7 @@ export const permissionDescriptions: Record<Permission, string> = {
   [Permission.MANAGE_SETTINGS]: 'Grants the ability to manage server settings.',
   [Permission.MANAGE_USERS]: 'Grants the ability to manage users.',
   [Permission.MANAGE_MESSAGES]:
-    'Grants the ability to manage messages from all users by editing or deleting them.',
+    'Grants the ability to edit/delete messages from all users.',
   [Permission.MANAGE_STORAGE]:
     'Grants the ability to manage storage, such as enabling or disabling uploads.',
   [Permission.MANAGE_INVITES]:
