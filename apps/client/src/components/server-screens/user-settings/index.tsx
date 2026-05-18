@@ -20,7 +20,7 @@ const UserSettings = memo(({ close }: TUserSettingsProps) => {
                         <TabsTrigger value="notifications">
                             Notifications
                         </TabsTrigger>
-                        <TabsTrigger value="password">Password</TabsTrigger>
+                        <TabsTrigger value="security">Security</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="devices" className="space-y-6">
@@ -32,7 +32,7 @@ const UserSettings = memo(({ close }: TUserSettingsProps) => {
                     <TabsContent value="notifications" className="space-y-6">
                         <Notifications />
                     </TabsContent>
-                    <TabsContent value="password" className="space-y-6">
+                    <TabsContent value="security" className="space-y-6">
                         <Password />
                     </TabsContent>
                 </Tabs>
