@@ -37,7 +37,7 @@ const VoiceUser = memo(({ user }: TVoiceUserProps) => {
                 <UserAvatar
                     userId={user.id}
                     className={cn('h-5 w-5 rounded-full', speakingClass)}
-                    showUserPopover={true}
+                    showUserPopover={false}
                     showStatusBadge={false}
                 />
 
