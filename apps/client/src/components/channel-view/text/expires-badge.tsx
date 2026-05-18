@@ -1,4 +1,4 @@
-import { Timer } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
 
 const MINUTE = 60 * 1000;
@@ -31,7 +31,7 @@ const ExpiresBadge = memo(({ expiresAt }: TExpiresBadgeProps) => {
             className="inline-flex items-center gap-0.5 text-xs text-muted-foreground/80"
             title={`Disappears at ${new Date(expiresAt).toLocaleString()}`}
         >
-            <Timer className="h-3 w-3" />
+            <Lock className="h-3 w-3" />
             {formatRemaining(remaining)}
         </span>
     );
