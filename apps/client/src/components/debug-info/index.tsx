@@ -19,11 +19,6 @@ const DebugInfo = memo(() => {
             `
         );
         console.log(
-            '%cVersion: %s',
-            'font-size: 16px; font-weight: bold;',
-            VITE_APP_VERSION
-        );
-        console.log(
             '%cEnvironment: %s',
             'font-size: 16px; font-weight: bold;',
             import.meta.env.MODE
