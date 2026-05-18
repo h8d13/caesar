@@ -19,8 +19,7 @@ export default defineConfig({
     assetsInclude: ['**/*.wasm'],
     build: {
         target: 'esnext',
-        chunkSizeWarningLimit: 1000,
-        sourcemap: process.env.SOURCEMAP ? 'hidden' : false
+        chunkSizeWarningLimit: 1000
     },
     resolve: {
         alias: {

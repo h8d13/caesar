@@ -9,7 +9,6 @@ services:
       dockerfile: Dockerfile.prod
       args:
         CAESAR_BUILD_VERSION: ${CAESAR_BUILD_VERSION:-}
-        SOURCEMAP: ${SOURCEMAP:-}
     container_name: caesar
     restart: unless-stopped
     stop_grace_period: 2s
@@ -52,7 +51,6 @@ services:
       dockerfile: Dockerfile.prod
       args:
         CAESAR_BUILD_VERSION: ${CAESAR_BUILD_VERSION:-}
-        SOURCEMAP: ${SOURCEMAP:-}
     container_name: caesar-prod-dev
     restart: "no"
     stop_grace_period: 2s
