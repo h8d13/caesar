@@ -23,15 +23,31 @@ const VoiceOptionsController = memo(() => {
     const hideNonVideoParticipants = useHideNonVideoParticipants();
     const showUserBanners = useShowUserBannersInVoice();
     const ownUserId = useOwnUserId();
-    const { isStreamHidden, getUserVideoKey, toggleStreamVisibility } =
-        useMediaControl();
+    const {
+        isStreamHidden,
+        getUserVideoKey,
+        getUserScreenVideoKey,
+        toggleStreamVisibility
+    } = useMediaControl();
 
-    // Local-only: hides the own user card from this browser's grid. Other
-    // participants still see you. Reuses the same per-stream hide channel
-    // as the per-card eye toggle, so the two stay consistent.
+    // Local-only "hide own stream":
+    //   - own user card: stays in the grid, webcam preview is replaced
+    //     with the avatar (see useMediaRefs + the isOwn exemption in
+    //     voice/index.tsx).
+    //   - own screen-share card: removed from the grid entirely. The
+    //     card is purely the preview — without it there's nothing
+    //     useful to render in a placeholder.
+    // Other participants are unaffected on either count.
     const ownVideoKey =
         ownUserId !== undefined ? getUserVideoKey(ownUserId) : null;
-    const hideOwnStream = ownVideoKey ? isStreamHidden(ownVideoKey) : false;
+    const ownScreenKey =
+        ownUserId !== undefined ? getUserScreenVideoKey(ownUserId) : null;
+    const videoHidden = ownVideoKey ? isStreamHidden(ownVideoKey) : false;
+    const screenHidden = ownScreenKey ? isStreamHidden(ownScreenKey) : false;
+    // Switch reflects "both hidden". Toggling forces both keys into the
+    // new state so the pair stays in lockstep regardless of any earlier
+    // manual per-card eye toggle.
+    const hideOwnStream = videoHidden && screenHidden;
 
     const handleToggleHideNonVideo = useCallback((checked: boolean) => {
         setHideNonVideoParticipants(checked);
@@ -42,8 +58,21 @@ const VoiceOptionsController = memo(() => {
     }, []);
 
     const handleToggleHideOwnStream = useCallback(() => {
-        if (ownVideoKey) toggleStreamVisibility(ownVideoKey);
-    }, [ownVideoKey, toggleStreamVisibility]);
+        const target = !hideOwnStream;
+        if (ownVideoKey && videoHidden !== target) {
+            toggleStreamVisibility(ownVideoKey);
+        }
+        if (ownScreenKey && screenHidden !== target) {
+            toggleStreamVisibility(ownScreenKey);
+        }
+    }, [
+        hideOwnStream,
+        ownVideoKey,
+        ownScreenKey,
+        videoHidden,
+        screenHidden,
+        toggleStreamVisibility
+    ]);
 
     return (
         <Popover>
