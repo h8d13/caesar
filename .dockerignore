@@ -8,6 +8,7 @@
 
 data
 data-prod-dev
+data-test
 experiments
 
 apps/client/dist

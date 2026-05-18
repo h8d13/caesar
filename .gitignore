@@ -7,5 +7,6 @@
 .direnv/
 data/
 data-prod-dev/
+data-test/
 .idea**
 .note**
