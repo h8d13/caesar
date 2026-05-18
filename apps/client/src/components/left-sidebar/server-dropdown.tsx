@@ -61,7 +61,7 @@ const ServerDropdownMenu = memo(() => {
                     onClick={disconnectFromServer}
                     className="text-destructive focus:text-destructive"
                 >
-                    Disconnect
+                    Log-out
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>

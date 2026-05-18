@@ -1,6 +1,12 @@
 import { Dialog } from '@/components/dialogs/dialogs';
 import { logDebug } from '@/helpers/browser-logger';
 import { getHostFromServer } from '@/helpers/get-file-url';
+import {
+    LocalStorageKey,
+    removeLocalStorageItem,
+    removeSessionStorageItem,
+    SessionStorageKey
+} from '@/helpers/storage';
 import { cleanup, connectToTRPC, getTRPCClient } from '@/lib/trpc';
 import { type TPublicServerSettings, type TServerInfo } from '@caesar/shared';
 import { toast } from 'sonner';
@@ -76,6 +82,12 @@ export const joinServer = async (handshakeHash: string, password?: string) => {
 };
 
 export const disconnectFromServer = () => {
+    // Explicit logout: wipe the persisted token up-front before cleanup so
+    // it survives any beforeunload race (cleanup's localStorage clear is
+    // gated on isNavigatingAway to protect refresh, which can flip true
+    // between click and the cleanup line otherwise).
+    removeLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN);
+    removeSessionStorageItem(SessionStorageKey.TOKEN);
     cleanup();
     unsubscribeFromServer?.();
 };

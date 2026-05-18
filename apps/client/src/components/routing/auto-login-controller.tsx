@@ -4,11 +4,9 @@ import { connect } from '@/features/server/actions';
 import { useDisconnectInfo, useIsConnected } from '@/features/server/hooks';
 import {
     getLocalStorageItem,
-    getLocalStorageItemBool,
     LocalStorageKey,
     removeLocalStorageItem,
     SessionStorageKey,
-    setLocalStorageItemBool,
     setSessionStorageItem
 } from '@/helpers/storage';
 import { memo, useEffect, useRef } from 'react';
@@ -30,18 +28,16 @@ const AutoLoginController = memo(() => {
             return;
         }
 
-        const autoLoginEnabled = getLocalStorageItemBool(
-            LocalStorageKey.AUTO_LOGIN
-        );
-
         const savedToken = getLocalStorageItem(
             LocalStorageKey.AUTO_LOGIN_TOKEN
         );
 
-        if (!autoLoginEnabled || !savedToken) {
-            // auto-login not enabled or no token saved, do nothing
-            return;
-        }
+        // Any tab of this browser whose localStorage carries a token resumes
+        // the session silently. This is what makes a second tab share the
+        // first tab's session instead of forcing a new /login (which would
+        // bump sessionEpoch and kick the first tab). The `AUTO_LOGIN` bool
+        // is kept as a user preference but no longer gates reuse.
+        if (!savedToken) return;
 
         autoLoginAttempted.current = true;
 
@@ -50,13 +46,12 @@ const AutoLoginController = memo(() => {
 
         connect()
             .catch(() => {
-                // token expired or invalid clear auto-login state so the user
-                // sees the connect screen and can log in manually
+                // token expired / epoch stale clear it so the user sees the
+                // connect screen and can log in manually.
                 removeLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN);
-                setLocalStorageItemBool(LocalStorageKey.AUTO_LOGIN, false);
             })
             .finally(() => {
-                // reset auto-login attempt state so if the user logs out and back in they can try auto-login again
+                // reset attempt state so if the user logs out and back in they can resume again
                 autoLoginAttempted.current = false;
                 setIsAutoConnecting(false);
             });

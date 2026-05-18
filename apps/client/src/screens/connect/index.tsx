@@ -5,7 +5,6 @@ import {
     getLocalStorageItem,
     getLocalStorageItemBool,
     LocalStorageKey,
-    removeLocalStorageItem,
     SessionStorageKey,
     setLocalStorageItem,
     setLocalStorageItemBool,
@@ -109,20 +108,18 @@ const Connect = memo(() => {
                 setPriv(derivePriv(password, identity));
             }, 0);
 
+            // Token lives in localStorage so every tab of this browser shares
+            // the same session (sessionStorage is per-tab and would force a
+            // fresh /login on each new tab, which bumps sessionEpoch and
+            // kicks the existing tab). The `autoLogin` checkbox is kept as a
+            // user preference recorded in localStorage but no longer gates
+            // where the token goes; cross-tab sharing is unconditional.
             setSessionStorageItem(SessionStorageKey.TOKEN, data.token);
+            setLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN, data.token);
             setLocalStorageItemBool(
                 LocalStorageKey.AUTO_LOGIN,
                 values.autoLogin
             );
-
-            if (values.autoLogin) {
-                setLocalStorageItem(
-                    LocalStorageKey.AUTO_LOGIN_TOKEN,
-                    data.token
-                );
-            } else {
-                removeLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN);
-            }
 
             await connect();
         } catch (error) {
@@ -234,7 +231,7 @@ const Connect = memo(() => {
                     >
                         <Switch checked={values.autoLogin} />
                         <span className="text-sm font-medium cursor-pointer">
-                            Login automatically
+                            Login automatically?
                         </span>
                     </div>
 
