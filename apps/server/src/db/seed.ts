@@ -1,7 +1,6 @@
 import {
   ChannelType,
   DEFAULT_ROLE_PERMISSIONS,
-  OWNER_ROLE_ID,
   Permission,
   sha256,
   STORAGE_DEFAULT_MAX_AVATAR_SIZE,
@@ -13,18 +12,15 @@ import {
   STORAGE_QUOTA,
   type TICategory,
   type TIChannel,
-  type TIMessage,
   type TIRole,
   type TISettings
 } from '@caesar/shared';
 import {
   categories,
   channels,
-  messages,
   rolePermissions,
   roles,
-  settings,
-  userRoles
+  settings
 } from '@caesar/shared/db/schema';
 import { randomUUIDv7 } from 'bun';
 import { logger } from '../logger';
@@ -115,16 +111,6 @@ const seedDatabase = async () => {
     }
   ];
 
-  const initialMessages: TIMessage[] = [
-    {
-      channelId: 1,
-      content: '<p>Welcome to Caesar!</p>',
-      metadata: null,
-      userId: 1,
-      createdAt: firstStart
-    }
-  ];
-
   const initialRolePermissions: {
     [roleId: number]: Permission[];
   } = {
@@ -135,7 +121,6 @@ const seedDatabase = async () => {
   await db.insert(categories).values(initialCategories);
   await db.insert(channels).values(initialChannels);
   await db.insert(roles).values(initialRoles);
-  await db.insert(messages).values(initialMessages);
 
   for (const [roleId, permissions] of Object.entries(initialRolePermissions)) {
     for (const permission of permissions) {
@@ -147,12 +132,11 @@ const seedDatabase = async () => {
     }
   }
 
-  await db.insert(userRoles).values({
-    userId: 1,
-    roleId: OWNER_ROLE_ID,
-    createdAt: firstStart
-  });
-
+  // The first user assigns themselves the Owner role via useSecretToken
+  // (apps/server/src/routers/others/use-secret-token.ts) using the token
+  // printed below. We don't pre-insert a userRoles row here because the
+  // user it would reference doesn't exist yet, and PRAGMA foreign_keys
+  // rejects the dangling FK.
   console.log(
     'First-time setup. Save this owner token, it is not recoverable:'
   );
