@@ -7,6 +7,7 @@
 .envrc
 
 data
+data-prod-dev
 experiments
 
 apps/client/dist
@@ -19,4 +20,5 @@ Dockerfile.*
 .dockerignore
 
 LICENSE
+readme
 *.md

@@ -38,6 +38,44 @@ services:
       - caddy_data:/data
       - caddy_config:/config
 
+  # Prod-dev: real prod binary + self-signed HTTPS on :8443, sibling of
+  # the prod stack. Coexists with the prod profile (different ports +
+  # container names + data dir). `up.sh --prod-dev` wipes ./data-prod-dev
+  # before each run so every test starts clean; the dir itself is the same
+  # shape as ./data so you can poke at it after a run if needed.
+  # Set CAESAR_WEBRTC_ANNOUNCED_ADDRESS=<lan-ip> only when testing from
+  # another device on the LAN; localhost-only works without it.
+  caesar-prod-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      args:
+        CAESAR_BUILD_VERSION: ${CAESAR_BUILD_VERSION:-}
+    container_name: caesar-prod-dev
+    restart: "no"
+    stop_grace_period: 2s
+    profiles: ["prod-dev"]
+    ports:
+      - "40001:40000/tcp"
+      - "40001:40000/udp"
+    environment:
+      CAESAR_PORT: "4991"
+      CAESAR_WEBRTC_ANNOUNCED_ADDRESS: ${CAESAR_WEBRTC_ANNOUNCED_ADDRESS:-}
+    volumes:
+      - ./data-prod-dev:/home/caesar/.config/caesar
+
+  caddy-prod-dev:
+    image: caddy:alpine
+    container_name: caesar-caddy-prod-dev
+    restart: "no"
+    profiles: ["prod-dev"]
+    depends_on:
+      - caesar-prod-dev
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./caddy/Caddyfile.prod-dev:/etc/caddy/Caddyfile:ro
+
   # Dev: Runs bun install then runs Vite + Bun server
   caesar-dev:
     build:

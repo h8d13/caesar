@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
-confirm() {
-read -r -p "Are you sure? [y/N] " response
-if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
-then
-    continue
-else
-    exit 0
-fi
-}
+# confirm() {
+# read -r -p "Are you sure? [y/N] " response
+# if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+# then
+#     continue
+# else
+#     exit 0
+# fi
+# }
 
 # case "$1" in
     # -l | --logs)
@@ -23,6 +23,23 @@ fi
     # rm -rf data && docker system prune -a --volumes
     # ;;
 # esac
+
+# Prod-dev: hermetic test of the real prod binary on https://localhost:8443
+# (self-signed). Skips git pull / system prune / container nuke so it stays
+# safe to run alongside the real prod or while iterating on local commits.
+# Wipes ./data-prod-dev each invocation so every test starts clean; the
+# real ./data is never touched.
+if [ "${1:-}" = "--prod-dev" ]; then
+    command -v docker >/dev/null || { echo "docker not found"; exit 1; }
+    docker compose version >/dev/null 2>&1 || { echo "docker compose not found"; exit 1; }
+    export CAESAR_BUILD_VERSION="$(git rev-parse --short HEAD 2>/dev/null || echo local)"
+    echo "prod-dev: building version $CAESAR_BUILD_VERSION"
+    docker compose --profile prod-dev down
+    rm -rf ./data-prod-dev
+    docker compose --profile prod-dev build && \
+        docker compose --profile prod-dev up
+    exit $?
+fi
 
 # make sure we are up to date
 command -v git >/dev/null || { echo "git not found"; exit 1; }

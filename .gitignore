@@ -6,5 +6,6 @@
 /experiments
 .direnv/
 data/
+data-prod-dev/
 .idea**
 .note**
