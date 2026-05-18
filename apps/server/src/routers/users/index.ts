@@ -11,6 +11,7 @@ import {
   onUserLeaveRoute,
   onUserUpdateRoute
 } from './events';
+import { getMySessionsRoute } from './get-my-sessions';
 import { getMyVotesTodayRoute } from './get-my-votes-today';
 import { getUserInfoRoute } from './get-user-info';
 import { getUsersRoute } from './get-users';
@@ -44,6 +45,7 @@ export const usersRouter = t.router({
   delete: deleteUserRoute,
   voteSocialCredit: voteSocialCreditRoute,
   getMyVotesToday: getMyVotesTodayRoute,
+  getMySessions: getMySessionsRoute,
   onJoin: onUserJoinRoute,
   onLeave: onUserLeaveRoute,
   onUpdate: onUserUpdateRoute,

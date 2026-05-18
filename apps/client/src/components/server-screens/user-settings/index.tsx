@@ -7,6 +7,7 @@ import { MultiSessionToggle } from './multi-session-toggle';
 import { Notifications } from './notifications';
 import { Password } from './password';
 import { Profile } from './profile';
+import { RecentSessions } from './recent-sessions';
 
 type TUserSettingsProps = TServerScreenBaseProps;
 
@@ -35,6 +36,7 @@ const UserSettings = memo(({ close }: TUserSettingsProps) => {
                     </TabsContent>
                     <TabsContent value="security" className="space-y-6">
                         <MultiSessionToggle />
+                        <RecentSessions />
                         <Password />
                     </TabsContent>
                 </Tabs>

@@ -192,7 +192,7 @@ const TextTopbar = memo(
                             className="self-center text-muted-foreground"
                             size={16}
                         />
-                        <span className="font-bold truncate max-w-40 leading-none">
+                        <span className="font-bold max-w-40 leading-none">
                             {info.name || 'No topic'}
                         </span>
                         {info.topic && (
