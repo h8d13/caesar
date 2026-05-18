@@ -1,6 +1,11 @@
-import { setAllowMultipleSessions } from '@/features/server/users/actions';
+import { requestConfirmation } from '@/features/dialogs/actions';
+import {
+    setAllowMultipleSessions,
+    signOutOtherSessions
+} from '@/features/server/users/actions';
 import { useOwnPublicUser } from '@/features/server/users/hooks';
 import {
+    Button,
     Card,
     CardContent,
     CardDescription,
@@ -23,6 +28,25 @@ const MultiSessionToggle = memo(() => {
         }
     }, [enabled]);
 
+    const onSignOutOthers = useCallback(async () => {
+        const confirmed = await requestConfirmation({
+            title: 'Sign out other sessions?',
+            message:
+                'Every session of your account except this one will be disconnected and will need to sign in again.',
+            confirmLabel: 'Sign out others',
+            variant: 'danger'
+        });
+
+        if (!confirmed) return;
+
+        try {
+            await signOutOtherSessions();
+            toast.success('Signed out other sessions');
+        } catch {
+            toast.error('Could not sign out other sessions');
+        }
+    }, []);
+
     return (
         <Card>
             <CardHeader>
@@ -32,7 +56,7 @@ const MultiSessionToggle = memo(() => {
                     other sessions. Enable this to keep them all alive.
                 </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col gap-4">
                 <div
                     className="flex items-center gap-3 w-fit cursor-pointer"
                     onClick={onToggle}
@@ -42,6 +66,13 @@ const MultiSessionToggle = memo(() => {
                         Allow multiple sessions on this account
                     </span>
                 </div>
+                <Button
+                    variant="outline"
+                    className="w-fit text-destructive hover:text-destructive"
+                    onClick={onSignOutOthers}
+                >
+                    Sign out other sessions
+                </Button>
             </CardContent>
         </Card>
     );

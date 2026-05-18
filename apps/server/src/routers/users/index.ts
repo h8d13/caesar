@@ -19,6 +19,7 @@ import { meRoute } from './me';
 import { removeRoleRoute } from './remove-role';
 import { setAllowMultipleSessionsRoute } from './set-allow-multiple-sessions';
 import { setAppearOfflineRoute } from './set-appear-offline';
+import { signOutOtherSessionsRoute } from './sign-out-other-sessions';
 import { unbanRoute } from './unban';
 import { updatePasswordRoute } from './update-password';
 import { updateUserRoute } from './update-user';
@@ -32,6 +33,7 @@ export const usersRouter = t.router({
   update: updateUserRoute,
   setAppearOffline: setAppearOfflineRoute,
   setAllowMultipleSessions: setAllowMultipleSessionsRoute,
+  signOutOtherSessions: signOutOtherSessionsRoute,
   updatePassword: updatePasswordRoute,
   getInfo: getUserInfoRoute,
   getAll: getUsersRoute,

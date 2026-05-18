@@ -34,8 +34,8 @@ const UserSettings = memo(({ close }: TUserSettingsProps) => {
                         <Notifications />
                     </TabsContent>
                     <TabsContent value="security" className="space-y-6">
-                        <Password />
                         <MultiSessionToggle />
+                        <Password />
                     </TabsContent>
                 </Tabs>
             </div>

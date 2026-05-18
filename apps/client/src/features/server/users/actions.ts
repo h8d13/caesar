@@ -1,4 +1,11 @@
 import { store } from '@/features/store';
+import {
+    getLocalStorageItem,
+    LocalStorageKey,
+    SessionStorageKey,
+    setLocalStorageItem,
+    setSessionStorageItem
+} from '@/helpers/storage';
 import { getTRPCClient } from '@/lib/trpc';
 import { UserStatus, type TJoinedPublicUser } from '@caesar/shared';
 import { serverSliceActions } from '../slice';
@@ -37,6 +44,23 @@ export const handleUserJoin = (user: TJoinedPublicUser) => {
     } else {
         addUser(user);
     }
+};
+
+export const signOutOtherSessions = async () => {
+    const trpc = getTRPCClient();
+    const result = await trpc.users.signOutOtherSessions.mutate();
+
+    // Caller's current WS is preserved server-side, but its old token is
+    // epoch-stale. Swap the new one into storage so the next reconnect /
+    // page reload uses it. Only touch localStorage if it was already in
+    // use (cross-tab opt-in); we don't want to silently enable persistence.
+    setSessionStorageItem(SessionStorageKey.TOKEN, result.token);
+
+    if (getLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN)) {
+        setLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN, result.token);
+    }
+
+    return result.token;
 };
 
 export const setAllowMultipleSessions = async (value: boolean) => {
