@@ -9,6 +9,10 @@ let db: BunSQLiteDatabase;
 const loadDb = async () => {
   const sqlite = new Database(DB_PATH, { create: true, strict: true });
 
+  sqlite.run('PRAGMA journal_mode = WAL;');
+  sqlite.run('PRAGMA synchronous = NORMAL;');
+  sqlite.run('PRAGMA busy_timeout = 5000;');
+  sqlite.run('PRAGMA cache_size = -32000;');
   sqlite.run('PRAGMA foreign_keys = ON;');
 
   db = drizzle({ client: sqlite });
