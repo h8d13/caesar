@@ -19,7 +19,7 @@ FROM debian:bookworm-slim
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates && \
     rm -rf /var/lib/apt/lists/* && \
-    useradd -m -s /sbin/nologin caesar
+    useradd -u 1000 -m -s /sbin/nologin caesar
 
 COPY --from=builder --chown=caesar:caesar --chmod=755 /app/apps/server/build/out/caesar-* /usr/local/bin/caesar
 

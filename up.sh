@@ -34,10 +34,19 @@ if [ "${1:-}" = "--prod-dev" ]; then
     docker compose version >/dev/null 2>&1 || { echo "docker compose not found"; exit 1; }
     export CAESAR_BUILD_VERSION="$(git rev-parse --short HEAD 2>/dev/null || echo local)"
     echo "prod-dev: building version $CAESAR_BUILD_VERSION"
-    docker compose --profile prod-dev down
+    # Separate project name so prod-dev gets its own default network. With
+    # the default `name: caesar` from compose.yaml both stacks would share
+    # caesar_default, and `down` would fight the other stack's containers
+    # over network removal.
+    COMPOSE="docker compose -p caesar-prod-dev --profile prod-dev"
+    $COMPOSE down
     rm -rf ./data-prod-dev
-    docker compose --profile prod-dev build && \
-        docker compose --profile prod-dev up
+    # pre-create the bind-mount target so it's owned by the host user
+    # (typically uid 1000, matching the `caesar` user inside the image).
+    # if docker creates it lazily, it would be root-owned and the in-
+    # container caesar would EACCES on mkdir uploads/.
+    mkdir -p ./data-prod-dev
+    $COMPOSE build && $COMPOSE up
     exit $?
 fi
 
