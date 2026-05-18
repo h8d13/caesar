@@ -30,7 +30,26 @@ import { invariant } from './invariant';
 import { pubsub } from './pubsub';
 import type { Context } from './trpc';
 
+// Server-local extension of the ws WebSocket. Replaces the previous
+// global `declare module 'ws'` augmentation: keeping it local stops the
+// shape leaking into client typecheck through tRPC type inference.
+type AuthedWebSocket = WebSocket & { userId?: number; token: string };
+
+// Attach our session fields to a freshly connected WebSocket. Object.assign
+// both does the runtime attach and produces the typed intersection, so we
+// dont need a separate cast at the call site.
+const attachSessionFields = (ws: WebSocket): AuthedWebSocket =>
+  Object.assign(ws, {
+    userId: undefined as number | undefined,
+    token: ''
+  });
+
 let wss: WebSocketServer | undefined;
+
+const authedClients = (): Set<AuthedWebSocket> => {
+  if (!wss) return new Set();
+  return wss.clients as unknown as Set<AuthedWebSocket>;
+};
 
 const usersIpMap = new Map<number, string>();
 const connectedAt = new Map<number, number>();
@@ -54,7 +73,7 @@ const closeUserSessions = (
 ) => {
   if (!wss) return;
 
-  wss.clients.forEach((client) => {
+  authedClients().forEach((client) => {
     if (client.userId !== userId) return;
     if (exceptToken && client.token === exceptToken) return;
 
@@ -71,7 +90,7 @@ const getOnlineUserIds = (): number[] => {
 
   const userIdSet = new Set<number>();
 
-  wss.clients.forEach((client) => {
+  authedClients().forEach((client) => {
     if (client.userId) {
       userIdSet.add(client.userId);
     }
@@ -175,18 +194,20 @@ const createContext = async ({
 
   const getOwnWs = () => {
     if (!wss) return undefined;
-    return Array.from(wss.clients).find((client) => client.token === token);
+    return Array.from(authedClients()).find((client) => client.token === token);
   };
 
   const getUserWs = (userId: number) => {
     if (!wss) return undefined;
-    return Array.from(wss.clients).find((client) => client.userId === userId);
+    return Array.from(authedClients()).find(
+      (client) => client.userId === userId
+    );
   };
 
   const getStatusById = (userId: number) => {
     if (!wss) return UserStatus.OFFLINE;
 
-    const isConnected = Array.from(wss.clients).some(
+    const isConnected = Array.from(authedClients()).some(
       (ws) => ws.userId === userId
     );
 
@@ -196,7 +217,9 @@ const createContext = async ({
   const setWsUserId = (userId: number) => {
     if (!wss) return;
 
-    const ws = Array.from(wss.clients).find((client) => client.token === token);
+    const ws = Array.from(authedClients()).find(
+      (client) => client.token === token
+    );
 
     if (ws) {
       ws.userId = userId;
@@ -206,7 +229,9 @@ const createContext = async ({
   const getConnectionInfo = () => {
     if (!wss) return getWsInfo(undefined, req);
 
-    const ws = Array.from(wss.clients).find((client) => client.token === token);
+    const ws = Array.from(authedClients()).find(
+      (client) => client.token === token
+    );
 
     if (!ws) return undefined;
 
@@ -276,9 +301,8 @@ const createWsServer = async (server: http.Server) => {
   return new Promise<WebSocketServer>((resolve) => {
     wss = new WebSocketServer({ server });
 
-    wss.on('connection', (ws) => {
-      ws.userId = undefined;
-      ws.token = '';
+    wss.on('connection', (incoming) => {
+      const ws = attachSessionFields(incoming);
 
       ws.once('message', async (message) => {
         try {
@@ -298,7 +322,7 @@ const createWsServer = async (server: http.Server) => {
         if (!userId) return;
 
         // only mark as offline when there are no other active sessions
-        const hasOtherSessions = Array.from(wss?.clients ?? []).some(
+        const hasOtherSessions = Array.from(authedClients()).some(
           (client) =>
             client !== ws &&
             client.userId === userId &&

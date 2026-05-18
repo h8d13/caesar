@@ -1,3 +1,4 @@
+import { existsSync } from 'fs';
 import fs from 'fs/promises';
 import { parse, stringify } from 'ini';
 import z from 'zod';
@@ -128,7 +129,7 @@ let config: TConfig = structuredClone(defaultConfig);
 
 await ensureServerDirs();
 
-const configExists = await fs.exists(CONFIG_INI_PATH);
+const configExists = existsSync(CONFIG_INI_PATH);
 
 if (!configExists) {
   // config does not exist, create it with the default config

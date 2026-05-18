@@ -1,5 +1,12 @@
 import { IS_DEVELOPMENT, IS_TEST } from '../env';
 
+// Test seam: lets tests force the limiter to allow everything. Module-scoped
+// instead of a global flag so server typecheck doesnt need an ambient.
+let rateLimitingDisabled = false;
+const setRateLimitingDisabled = (value: boolean) => {
+  rateLimitingDisabled = value;
+};
+
 type TFixedWindowRateLimiterOptions = {
   maxRequests: number;
   windowMs: number;
@@ -35,7 +42,7 @@ class FixedWindowRateLimiter {
   }
 
   public consume = (key: string): TRateLimitResult => {
-    if ((IS_DEVELOPMENT && !IS_TEST) || globalThis.disableRateLimiting) {
+    if ((IS_DEVELOPMENT && !IS_TEST) || rateLimitingDisabled) {
       // disable rate limiting in development but not in tests
       return {
         allowed: true,
@@ -107,5 +114,5 @@ class FixedWindowRateLimiter {
   };
 }
 
-export { FixedWindowRateLimiter };
+export { FixedWindowRateLimiter, setRateLimitingDisabled };
 export type { TRateLimitResult };

@@ -11,8 +11,8 @@ import {
 } from '@/helpers/storage';
 // AppRouter is the server's router type; imported directly via the
 // @server/* alias (the agreed channel for cross-workspace server refs).
-import { type AppRouter } from '@server/routers';
 import { type TConnectionParams } from '@caesar/shared';
+import { type AppRouter } from '@server/routers';
 import { createTRPCProxyClient, createWSClient, wsLink } from '@trpc/client';
 
 let wsClient: ReturnType<typeof createWSClient> | null = null;

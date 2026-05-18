@@ -2,6 +2,7 @@ import { ChannelPermission, Permission } from '@caesar/shared';
 import { rolePermissions, settings } from '@caesar/shared/db/schema';
 import { initTest, uploadFile } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
+import { setRateLimitingDisabled } from '@server/utils/rate-limiters';
 import { describe, expect, test } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 
@@ -609,7 +610,7 @@ describe('messages router', () => {
   });
 
   test('should fetch all messages until targetMessageId plus 20 older', async () => {
-    globalThis.disableRateLimiting = true;
+    setRateLimitingDisabled(true);
 
     const { caller } = await initTest();
 
@@ -672,7 +673,7 @@ describe('messages router', () => {
       true
     );
 
-    globalThis.disableRateLimiting = false;
+    setRateLimitingDisabled(false);
   });
 
   test('should throw when targetMessageId is not in channel', async () => {
