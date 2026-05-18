@@ -71,7 +71,9 @@ fi
 # tree always matches origin; no dirty marker needed. helpers.ts picks this
 # up over package.json.
 export CAESAR_BUILD_VERSION=$(git rev-parse --short HEAD)
-echo "BUILDING VERSION HASH: $CAESAR_BUILD_VERSION"
+echo ""
+echo "BUILDING CAESAR VERSION HASH: $CAESAR_BUILD_VERSION"
+echo ""
 
 # convenience wrapper for prod builds
 docker system prune -f && docker compose --profile prod build --no-cache && docker compose --profile prod up -d

@@ -11,11 +11,16 @@ const updateUserRoute = protectedProcedure
     z.object({
       name: z
         .string()
-        .min(1)
-        .max(24)
-        .refine((val) => val !== DELETED_USER_IDENTITY_AND_NAME, {
-          message: 'Protected username'
-        }),
+        .transform((s) => s.trim())
+        .pipe(
+          z
+            .string()
+            .min(1, 'Display name cannot be blank')
+            .max(24)
+            .refine((val) => val !== DELETED_USER_IDENTITY_AND_NAME, {
+              message: 'Protected username'
+            })
+        ),
       bannerColor: z
         .string()
         .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Invalid hex color'),
