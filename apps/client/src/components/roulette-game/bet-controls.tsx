@@ -27,6 +27,41 @@ type SavedBet = {
     amount: number;
 };
 
+type TPhaseCountdownProps = {
+    phaseStartedAt: number | null;
+    phaseDuration: number | null;
+};
+
+const PhaseCountdown = memo(
+    ({ phaseStartedAt, phaseDuration }: TPhaseCountdownProps) => {
+        const [remaining, setRemaining] = useState<number | null>(null);
+
+        useEffect(() => {
+            if (!phaseStartedAt || !phaseDuration) {
+                setRemaining(null);
+                return;
+            }
+
+            const update = () => {
+                const elapsed = Date.now() - phaseStartedAt;
+                const left = Math.max(0, phaseDuration - elapsed);
+                setRemaining(left);
+            };
+
+            update();
+            const interval = setInterval(update, 100);
+            return () => clearInterval(interval);
+        }, [phaseStartedAt, phaseDuration]);
+
+        if (remaining === null) return null;
+        return (
+            <span className="text-sm tabular-nums text-muted-foreground">
+                {(remaining / 1000).toFixed(1)}s
+            </span>
+        );
+    }
+);
+
 const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
     const phase = useRoulettePhase();
     const bets = useRouletteBets();
@@ -34,7 +69,6 @@ const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
     const phaseStartedAt = useRoulettePhaseStartedAt();
     const phaseDuration = useRoulettePhaseDuration();
     const [selectedChip, setSelectedChip] = useState(10);
-    const [remaining, setRemaining] = useState<number | null>(null);
     const [autoBet, setAutoBet] = useState(false);
     const lastBets = useRef<SavedBet[]>([]);
 
@@ -76,23 +110,6 @@ const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
         }
     }, [autoBet, phase]);
 
-    useEffect(() => {
-        if (!phaseStartedAt || !phaseDuration) {
-            setRemaining(null);
-            return;
-        }
-
-        const update = () => {
-            const elapsed = Date.now() - phaseStartedAt;
-            const left = Math.max(0, phaseDuration - elapsed);
-            setRemaining(left);
-        };
-
-        update();
-        const interval = setInterval(update, 100);
-        return () => clearInterval(interval);
-    }, [phaseStartedAt, phaseDuration]);
-
     const ownBets = bets.filter((b) => b.userId === ownUserId);
 
     const handleClearBets = useCallback(async () => {
@@ -108,8 +125,6 @@ const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
             }
         }
     }, [phase, ownBets]);
-
-    const seconds = remaining !== null ? (remaining / 1000).toFixed(1) : null;
 
     const phaseLabel =
         phase === RoulettePhase.BETTING
@@ -128,11 +143,10 @@ const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
                     <span className="text-sm font-medium text-muted-foreground">
                         {phaseLabel}
                     </span>
-                    {seconds !== null && (
-                        <span className="text-sm tabular-nums text-muted-foreground">
-                            {seconds}s
-                        </span>
-                    )}
+                    <PhaseCountdown
+                        phaseStartedAt={phaseStartedAt}
+                        phaseDuration={phaseDuration}
+                    />
                 </div>
 
                 {/* Chip selector + custom + auto */}

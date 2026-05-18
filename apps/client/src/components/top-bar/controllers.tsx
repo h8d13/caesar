@@ -227,15 +227,15 @@ const MediaController = memo(({ channelId }: MediaControllerProps) => {
     return (
         <Popover>
             <PopoverTrigger asChild>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 transition-all duration-200 ease-in-out"
-                >
-                    <Tooltip content="Controls" asChild={false}>
+                <Tooltip content="Controls">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 transition-all duration-200 ease-in-out"
+                    >
                         <Settings2 className="w-4 h-4" />
-                    </Tooltip>
-                </Button>
+                    </Button>
+                </Tooltip>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-80">
                 <div className="space-y-2">
