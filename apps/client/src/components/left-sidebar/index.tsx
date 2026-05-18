@@ -1,4 +1,7 @@
 import { ResizableSidebar } from '@/components/resizable-sidebar';
+import {
+    setDmsOpen,
+} from '@/features/app/actions';
 import { useDmsOpen } from '@/features/app/hooks';
 import { setSelectedChannelId } from '@/features/server/channels/actions';
 import {
@@ -45,8 +48,12 @@ const LeftSidebar = memo(({ className, isOpen = true }: TLeftSidebarProps) => {
         >
             <div className="flex w-full justify-between h-12 items-center border-b border-border px-4">
                 <h2
-                    className="font-semibold text-foreground truncate cursor-pointer"
-                    onClick={() => setSelectedChannelId(undefined)}
+                    className="font-semibold text-foreground noselect truncate cursor-pointer"
+                    onClick={() => {
+                        // Reset both views if clicked, non selectable.
+                        setSelectedChannelId(undefined);
+                        setDmsOpen(false);
+                    }}
                 >
                     {serverName}
                 </h2>
