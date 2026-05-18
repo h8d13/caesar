@@ -48,7 +48,7 @@ const LeftSidebar = memo(({ className, isOpen = true }: TLeftSidebarProps) => {
         >
             <div className="flex w-full justify-between h-12 items-center border-b border-border px-4">
                 <h2
-                    className="font-semibold text-foreground noselect truncate cursor-pointer"
+                    className="font-semibold text-foreground select-none truncate cursor-pointer"
                     onClick={() => {
                         // Reset both views if clicked, non selectable.
                         setSelectedChannelId(undefined);
