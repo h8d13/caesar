@@ -8,6 +8,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps['theme']}
       className="toaster group"
+      // Always show the close X. Swipe-to-dismiss was non-obvious;
+      // the X gives a discoverable affordance.
+      closeButton
       style={
         {
           '--normal-bg': 'var(--popover)',

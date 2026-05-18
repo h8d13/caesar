@@ -64,8 +64,13 @@ const useVoiceControls = ({
             }
         } catch (error) {
             updateOwnVoiceState({ micMuted: !newState });
+            // Unmuting starts a getUserMedia stream
+            // empty-message hazard as the webcam path. Use a fixed string.
+            const isUnmuting = !newState;
             toast.error(
-                getTrpcError(error, 'Failed to update microphone state')
+                isUnmuting
+                    ? 'Could not start microphone. Check your input device in Settings.'
+                    : getTrpcError(error, 'Failed to update microphone state')
             );
         } finally {
             isTogglingMic.current = false;
@@ -133,7 +138,7 @@ const useVoiceControls = ({
             await trpc.voice.updateState.mutate({
                 webcamEnabled: newState
             });
-        } catch (error) {
+        } catch {
             updateOwnVoiceState({ webcamEnabled: false });
 
             try {
@@ -141,8 +146,11 @@ const useVoiceControls = ({
             } catch {
                 // ignore
             }
-
-            toast.error(getTrpcError(error, 'Failed to update webcam state'));
+            toast.error(
+                newState
+                    ? 'Could not start webcam. Check your camera in Settings.'
+                    : 'Failed to update webcam state.'
+            );
         } finally {
             isTogglingWebcam.current = false;
         }
@@ -201,8 +209,12 @@ const useVoiceControls = ({
                 // ignore
             }
 
+            // getDisplayMedia rejection on cancel / denial is also a
+            // DOMException with no useful message. Same fix as webcam.
             toast.error(
-                getTrpcError(error, 'Failed to update screen share state')
+                newState
+                    ? 'Could not start screen share.'
+                    : getTrpcError(error, 'Failed to update screen share state')
             );
         } finally {
             isTogglingScreenShare.current = false;

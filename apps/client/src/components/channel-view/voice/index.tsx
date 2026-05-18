@@ -81,7 +81,7 @@ const VoiceChannel = memo(({ channelId }: TChannelProps) => {
                 );
             }
 
-            // Screen shares: same idea — locally hidden means no slot.
+            // Screen shares: same idea locally hidden means no slot.
             if (voiceUser.state.sharingScreen && !screenLocallyHidden) {
                 const screenShareCardId = `screen-share-${voiceUser.id}`;
 
