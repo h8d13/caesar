@@ -149,6 +149,11 @@ const users = sqliteTable(
     bannedAt: integer('banned_at'),
     bannerColor: text('banner_color'),
     birthday: text('birthday'),
+    // when true, peers see this user as OFFLINE regardless of connection
+    // state. the user themselves still sees their real status.
+    appearOffline: integer('appear_offline', { mode: 'boolean' })
+      .notNull()
+      .default(false),
     lastLoginAt: integer('last_login_at')
       .notNull()
       .$defaultFn(() => Date.now()),

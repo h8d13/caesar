@@ -113,6 +113,9 @@ type TPublicUser = Pick<
   | 'createdAt'
 > & {
   status?: UserStatus;
+  // server only populates this on the requester's own row. peers never see
+  // each other's appearOffline flag; their masked status is OFFLINE instead.
+  appearOffline?: boolean;
 };
 
 export type TJoinedRole = TRole & {

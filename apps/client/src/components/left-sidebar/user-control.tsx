@@ -1,12 +1,15 @@
 import { openServerScreen } from '@/features/server-screens/actions';
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
 import { useChannelCan } from '@/features/server/hooks';
+import { setAppearOffline } from '@/features/server/users/actions';
 import { useOwnPublicUser } from '@/features/server/users/hooks';
 import { useMedia } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
 import { ChannelPermission } from '@caesar/shared';
-import { Button } from '@caesar/ui';
+import { Button, Tooltip } from '@caesar/ui';
 import {
+    Eye,
+    EyeOff,
     HeadphoneOff,
     Headphones,
     Mic,
@@ -15,6 +18,7 @@ import {
     Settings
 } from 'lucide-react';
 import { memo, useCallback } from 'react';
+import { toast } from 'sonner';
 import { ServerScreen } from '../server-screens/screens';
 import { UserAvatar } from '../user-avatar';
 import { UserPopover } from '../user-popover';
@@ -33,6 +37,16 @@ const UserControl = memo(() => {
         openServerScreen(ServerScreen.GAMES);
     }, []);
 
+    const appearOffline = ownPublicUser?.appearOffline ?? false;
+
+    const handleToggleAppearOffline = useCallback(async () => {
+        try {
+            await setAppearOffline(!appearOffline);
+        } catch {
+            toast.error('Could not update visibility');
+        }
+    }, [appearOffline]);
+
     if (!ownPublicUser) return null;
 
     return (
@@ -50,8 +64,32 @@ const UserControl = memo(() => {
                         </span>
                         <div className="flex items-center space-x-1">
                             <span className="text-xs text-muted-foreground capitalize">
-                                {ownPublicUser.status}
+                                {appearOffline
+                                    ? 'online (hidden)'
+                                    : ownPublicUser.status}
                             </span>
+                            <Tooltip
+                                content={
+                                    appearOffline
+                                        ? 'Stop appearing offline'
+                                        : 'Appear offline to others'
+                                }
+                            >
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleToggleAppearOffline();
+                                    }}
+                                    className="text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    {appearOffline ? (
+                                        <EyeOff className="h-3 w-3" />
+                                    ) : (
+                                        <Eye className="h-3 w-3" />
+                                    )}
+                                </button>
+                            </Tooltip>
                         </div>
                     </div>
                 </div>

@@ -1,3 +1,4 @@
+import { store } from '@/features/store';
 import { logDebug } from '@/helpers/browser-logger';
 import { getTRPCClient } from '@/lib/trpc';
 import { UserStatus, type TJoinedPublicUser } from '@caesar/shared';
@@ -12,9 +13,16 @@ import {
 const subscribeToUsers = () => {
     const trpc = getTRPCClient();
 
+    // own-status broadcasts (join/leave) reflect a peer-facing view; the
+    // user themselves should always see their real connection state, so
+    // ignore presence events targeting the own user.
+    const isOwnUser = (userId: number) =>
+        store.getState().server.ownUserId === userId;
+
     const onUserJoinSub = trpc.users.onJoin.subscribe(undefined, {
         onData: (user: TJoinedPublicUser) => {
             logDebug('[EVENTS] users.onJoin', { user });
+            if (isOwnUser(user.id)) return;
             handleUserJoin(user);
         },
         onError: (err) => console.error('onUserJoin subscription error:', err)
@@ -31,6 +39,7 @@ const subscribeToUsers = () => {
     const onUserLeaveSub = trpc.users.onLeave.subscribe(undefined, {
         onData: (userId: number) => {
             logDebug('[EVENTS] users.onLeave', { userId });
+            if (isOwnUser(userId)) return;
             updateUser(userId, { status: UserStatus.OFFLINE });
         },
         onError: (err) => console.error('onUserLeave subscription error:', err)

@@ -1,4 +1,5 @@
 import { store } from '@/features/store';
+import { getTRPCClient } from '@/lib/trpc';
 import { UserStatus, type TJoinedPublicUser } from '@caesar/shared';
 import { serverSliceActions } from '../slice';
 import { userByIdSelector } from './selectors';
@@ -33,4 +34,16 @@ export const handleUserJoin = (user: TJoinedPublicUser) => {
     } else {
         addUser(user);
     }
+};
+
+export const setAppearOffline = async (value: boolean) => {
+    const trpc = getTRPCClient();
+    const result = await trpc.users.setAppearOffline.mutate({ value });
+    const ownUserId = store.getState().server.ownUserId;
+
+    if (ownUserId) {
+        updateUser(ownUserId, { appearOffline: result.appearOffline });
+    }
+
+    return result.appearOffline;
 };

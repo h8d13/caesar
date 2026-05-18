@@ -83,10 +83,23 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
       getPublicSettings()
     ]);
 
-    const processedPublicUsers = publicUsers.map((u) => ({
-      ...u,
-      status: ctx.getStatusById(u.id)
-    }));
+    // statuses are computed from the joiner's POV:
+    // - the joiner themselves always sees their real status (and keeps the
+    //   `appearOffline` flag, so the UI toggle reflects truth);
+    // - peers are masked to OFFLINE when their `appearOffline` is true, and
+    //   the flag itself is stripped so it never leaves the server.
+    const processedPublicUsers = publicUsers.map((u) => {
+      const isSelf = u.id === ctx.user.id;
+      const realStatus = ctx.getStatusById(u.id);
+      const status =
+        !isSelf && u.appearOffline ? UserStatus.OFFLINE : realStatus;
+
+      return {
+        ...u,
+        status,
+        appearOffline: isSelf ? u.appearOffline : undefined
+      };
+    });
 
     const foundPublicUser = processedPublicUsers.find(
       (u) => u.id === ctx.user.id
@@ -99,9 +112,13 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
 
     logger.info(`%s joined the server`, ctx.user.name);
 
+    // broadcast to peers with the masked status and without the flag.
+    const { appearOffline: ownAppearOffline, ...broadcastBase } =
+      foundPublicUser;
+
     ctx.pubsub.publish(ServerEvents.USER_JOIN, {
-      ...foundPublicUser,
-      status: UserStatus.ONLINE
+      ...broadcastBase,
+      status: ownAppearOffline ? UserStatus.OFFLINE : UserStatus.ONLINE
     });
 
     if (connectionInfo?.ip) {
