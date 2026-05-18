@@ -1,5 +1,6 @@
 import { connect } from '@/features/server/actions';
 import { useInfo } from '@/features/server/hooks';
+import { ensureAudioCtxReady } from '@/features/server/sounds/actions';
 import { getFileUrl, getUrlFromServer } from '@/helpers/get-file-url';
 import {
     getLocalStorageItem,
@@ -64,6 +65,11 @@ const Connect = memo(() => {
         isSignup && values.confirmPassword !== values.password;
 
     const onConnectClick = useCallback(async () => {
+        // Pre-warm the AudioContext inside this gesture stack so
+        // event-driven sounds (incoming-call ring, msg pings) can play
+        // later without the browser keeping the context suspended.
+        ensureAudioCtxReady();
+
         if (isSignup && values.password !== values.confirmPassword) {
             setErrors({
                 confirmPassword: 'Passwords do not match'

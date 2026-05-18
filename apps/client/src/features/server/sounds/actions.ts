@@ -3,9 +3,13 @@ import { SoundType } from '../types';
 // Constructed lazily on first sound: browsers refuse to start an
 // AudioContext before a user gesture, which fires the noisy
 // "AudioContext was prevented from starting automatically" warning if
-// we eagerly new() it at module load. By the time playSound fires (msg
-// received, voice join, etc.) the user has already interacted with the
-// page, so the context starts in `running` state.
+// we eagerly new() it at module load.
+//
+// Catch: if the first sound is event-driven (e.g. a WS DM_CALL_RING
+// arriving on the callee while they're idle), the context is created
+// without a recent gesture and starts in `suspended` state, silent.
+// Callers that want guaranteed audio must call ensureAudioCtxReady()
+// from a gesture-tied path (login click is the canonical one).
 let _audioCtx: AudioContext | null = null;
 const getAudioCtx = (): AudioContext => {
     if (!_audioCtx) {
@@ -15,7 +19,21 @@ const getAudioCtx = (): AudioContext => {
             (window as any).webkitAudioContext
         )();
     }
+    if (_audioCtx.state === 'suspended') {
+        // best-effort resume; succeeds when called inside a gesture stack,
+        // no-op when not (browser keeps it suspended).
+        _audioCtx.resume().catch(() => {
+            /* policy declined; will retry on next call */
+        });
+    }
     return _audioCtx;
+};
+
+// Call from a user-gesture path (e.g. login click handler) to make sure
+// the AudioContext exists and is `running` before any event-driven sound
+// (incoming call ring, etc.) tries to play. Idempotent.
+export const ensureAudioCtxReady = (): void => {
+    getAudioCtx();
 };
 
 const SOUNDS_VOLUME = 2;
@@ -371,12 +389,61 @@ const sfxIncomingCallRing = () => {
     burst(0.55);
 };
 
+// PEER_INCOMING_CALL_RING brighter ascending arpeggio for the callee side.
+// The caller hears the mellow A-minor chord from sfxIncomingCallRing as
+// their dial tone; the callee hears this so the two ends are audibly
+// distinct and the incoming side feels more attention-grabbing.
+const sfxPeerIncomingCallRing = () => {
+    // G major arpeggio rising: G5 -> B5 -> D6, then octave shimmer.
+    const notes = [
+        { freq: 784, offset: 0 }, // G5
+        { freq: 988, offset: 0.09 }, // B5
+        { freq: 1175, offset: 0.18 } // D6
+    ];
+
+    const burst = (start: number) => {
+        notes.forEach(({ freq, offset }) => {
+            const t = now() + start + offset;
+            const osc = createOsc('sine', freq);
+            const gain = createGain(0.08);
+
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+
+            osc.connect(gain).connect(getAudioCtx().destination);
+            osc.start(t);
+            osc.stop(t + 0.2);
+        });
+
+        // Brightness layer: triangle on the top note an octave up, fading
+        // through the burst tail. Gives it a notification-bell feel.
+        const osc2 = createOsc('triangle', 2349); // D7
+        const gain2 = createGain(0.025);
+
+        gain2.gain.exponentialRampToValueAtTime(0.0001, now() + start + 0.45);
+
+        osc2.connect(gain2).connect(getAudioCtx().destination);
+        osc2.start(now() + start + 0.18);
+        osc2.stop(now() + start + 0.45);
+    };
+
+    burst(0);
+    burst(0.55);
+};
+
 // Start a looping ring tone. Returns a stop function. Use from any
 // effect that conditionally rings (e.g. while a call invite is pending).
 export const startCallRingLoop = (): (() => void) => {
     sfxIncomingCallRing();
     // 2.5s cadence: ~1s of ring (two bursts) + ~1.5s of silence.
     const interval = setInterval(sfxIncomingCallRing, 2500);
+    return () => clearInterval(interval);
+};
+
+// Callee-side variant. Brighter arpeggio so caller and callee don't sound
+// identical and the incoming side feels alerting rather than waiting.
+export const startPeerIncomingCallRingLoop = (): (() => void) => {
+    sfxPeerIncomingCallRing();
+    const interval = setInterval(sfxPeerIncomingCallRing, 2300);
     return () => clearInterval(interval);
 };
 

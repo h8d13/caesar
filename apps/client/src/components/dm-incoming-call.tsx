@@ -1,3 +1,4 @@
+import { startPeerIncomingCallRingLoop } from '@/features/server/sounds/actions';
 import { useUserById } from '@/features/server/users/hooks';
 import { joinVoice } from '@/features/server/voice/actions';
 import { useMedia } from '@/features/server/voice/hooks';
@@ -67,6 +68,14 @@ const DmIncomingCall = memo(() => {
             endedSub.unsubscribe();
         };
     }, [dismiss]);
+
+    // Audible incoming-call ring on the callee while the card is up.
+    // Caller has their own dial-tone loop in DmCallButton; this variant
+    // is brighter and faster so the two ends sound distinct.
+    useEffect(() => {
+        if (!call) return;
+        return startPeerIncomingCallRingLoop();
+    }, [call]);
 
     if (!call) return null;
 
