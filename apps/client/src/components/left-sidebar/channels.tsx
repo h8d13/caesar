@@ -167,12 +167,27 @@ const ItemWrapper = memo(
         style,
         disabled = false
     }: TItemWrapperProps) => {
+        // Plain <div> isn't keyboard-reachable. Adding role + tabIndex + a
+        // key handler makes Tab focus the row and Enter/Space activate it,
+        // matching every other selectable element in the app. Kept as a
+        // <div> so @dnd-kit drag-handle listeners spread cleanly.
+        const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+            if (disabled) return;
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick();
+            }
+        };
+
         return (
             <div
                 {...dragHandleProps}
                 style={style}
+                role="button"
+                tabIndex={disabled ? -1 : 0}
+                aria-disabled={disabled || undefined}
                 className={cn(
-                    'flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground select-none cursor-pointer',
+                    'flex w-full items-center gap-2 rounded px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground select-none cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     {
                         'bg-accent text-accent-foreground': isSelected,
                         'cursor-default opacity-50 hover:bg-transparent hover:text-muted-foreground':
@@ -181,6 +196,7 @@ const ItemWrapper = memo(
                     className
                 )}
                 onClick={disabled ? undefined : onClick}
+                onKeyDown={handleKeyDown}
             >
                 {children}
             </div>

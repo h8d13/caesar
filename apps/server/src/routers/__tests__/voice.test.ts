@@ -10,6 +10,9 @@ d('voice router', () => {
     const { caller } = await initTest(1);
 
     for (let i = 0; i < 20; i++) {
+      // channelId 999999 doesn't exist; the handler throws 'Channel not
+      // found' before reaching the permission check. Specific message is
+      // incidental — the point is each call still consumes a rate token.
       await expect(
         caller.voice.join({
           channelId: 999999,
@@ -18,7 +21,7 @@ d('voice router', () => {
             soundMuted: false
           }
         })
-      ).rejects.toThrow('Insufficient channel permissions');
+      ).rejects.toThrow('Channel not found');
     }
 
     await expect(
