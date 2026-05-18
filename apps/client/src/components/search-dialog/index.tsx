@@ -1,3 +1,5 @@
+import { setDmsOpen, setSelectedDmChannelId } from '@/features/app/actions';
+import { useDmsOpen, useSelectedDmChannelId } from '@/features/app/hooks';
 import { setSelectedChannelId } from '@/features/server/channels/actions';
 import { useChannelsMap } from '@/features/server/channels/hooks';
 import { setPendingScrollTarget } from '@/features/server/messages/pending-scroll';
@@ -20,11 +22,36 @@ type SearchResult = {
     channelId: number;
     userId: number;
     createdAt: number;
+    isDm: boolean;
 };
 
 type TSearchDialogProps = {
     open: boolean;
     onClose: () => void;
+};
+
+// Build an excerpt centered on the first occurrence of `query` in `text`.
+// Falls back to a prefix slice when the match is near the start or absent.
+const EXCERPT_BEFORE = 50;
+const EXCERPT_AFTER = 90;
+
+const buildExcerpt = (text: string, query: string): string => {
+    if (!text) return '';
+
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+
+    if (idx === -1) {
+        return text.length <= EXCERPT_BEFORE + EXCERPT_AFTER
+            ? text
+            : text.slice(0, EXCERPT_BEFORE + EXCERPT_AFTER) + '...';
+    }
+
+    const start = Math.max(0, idx - EXCERPT_BEFORE);
+    const end = Math.min(text.length, idx + query.length + EXCERPT_AFTER);
+    const prefix = start > 0 ? '...' : '';
+    const suffix = end < text.length ? '...' : '';
+
+    return prefix + text.slice(start, end) + suffix;
 };
 
 const formatRelativeTime = (timestamp: number) => {
@@ -49,11 +76,6 @@ const stripHtml = (html: string) =>
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>');
 
-const truncate = (text: string, maxLength: number) => {
-    if (text.length <= maxLength) return text;
-    return text.slice(0, maxLength) + '...';
-};
-
 const SearchDialog = ({ open, onClose }: TSearchDialogProps) => {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<SearchResult[]>([]);
@@ -64,6 +86,12 @@ const SearchDialog = ({ open, onClose }: TSearchDialogProps) => {
 
     const channelsMap = useChannelsMap();
     const users = useUsers();
+    const dmsOpen = useDmsOpen();
+    const selectedDmChannelId = useSelectedDmChannelId();
+
+    // When the dialog is opened while viewing a DM, scope to that DM.
+    const scopedChannelId =
+        dmsOpen && selectedDmChannelId ? selectedDmChannelId : undefined;
 
     const usersMap = useMemo(() => {
         const map: Record<number, string> = {};
@@ -73,28 +101,32 @@ const SearchDialog = ({ open, onClose }: TSearchDialogProps) => {
         return map;
     }, [users]);
 
-    const doSearch = useCallback(async (searchQuery: string) => {
-        if (!searchQuery.trim()) {
-            setResults([]);
-            setSearched(false);
-            return;
-        }
+    const doSearch = useCallback(
+        async (searchQuery: string) => {
+            if (!searchQuery.trim()) {
+                setResults([]);
+                setSearched(false);
+                return;
+            }
 
-        setLoading(true);
-        setSearched(true);
+            setLoading(true);
+            setSearched(true);
 
-        try {
-            const trpc = getTRPCClient();
-            const data = await trpc.messages.search.query({
-                query: searchQuery.trim()
-            });
-            setResults(data);
-        } catch {
-            setResults([]);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+            try {
+                const trpc = getTRPCClient();
+                const data = await trpc.messages.search.query({
+                    query: searchQuery.trim(),
+                    channelId: scopedChannelId
+                });
+                setResults(data);
+            } catch {
+                setResults([]);
+            } finally {
+                setLoading(false);
+            }
+        },
+        [scopedChannelId]
+    );
 
     const onQueryChange = useCallback(
         (value: string) => {
@@ -115,7 +147,14 @@ const SearchDialog = ({ open, onClose }: TSearchDialogProps) => {
         (result: SearchResult) => {
             onClose();
             setPendingScrollTarget(result.id);
-            setSelectedChannelId(result.channelId);
+
+            if (result.isDm) {
+                setDmsOpen(true);
+                setSelectedDmChannelId(result.channelId);
+            } else {
+                setDmsOpen(false);
+                setSelectedChannelId(result.channelId);
+            }
         },
         [onClose]
     );
@@ -154,7 +193,11 @@ const SearchDialog = ({ open, onClose }: TSearchDialogProps) => {
                         ref={inputRef}
                         value={query}
                         onChange={(e) => onQueryChange(e.target.value)}
-                        placeholder="Search messages..."
+                        placeholder={
+                            scopedChannelId
+                                ? 'Search this conversation...'
+                                : 'Search messages...'
+                        }
                         className="border-0 shadow-none focus-visible:ring-0 px-2 h-9 text-sm flex-1"
                     />
                 </div>
@@ -183,21 +226,25 @@ const SearchDialog = ({ open, onClose }: TSearchDialogProps) => {
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                                     <span className="flex items-center gap-0.5">
                                         <Hash className="w-3 h-3" />
-                                        {channelsMap[result.channelId]?.name ??
-                                            'unknown'}
+                                        {result.isDm
+                                            ? (usersMap[result.userId] ?? 'DM')
+                                            : (channelsMap[result.channelId]
+                                                  ?.name ?? 'unknown')}
                                     </span>
-                                    <span>
-                                        {usersMap[result.userId] ??
-                                            'Unknown User'}
-                                    </span>
+                                    {!result.isDm && (
+                                        <span>
+                                            {usersMap[result.userId] ??
+                                                'Unknown User'}
+                                        </span>
+                                    )}
                                     <span className="ml-auto">
                                         {formatRelativeTime(result.createdAt)}
                                     </span>
                                 </div>
                                 <div className="text-sm truncate">
-                                    {truncate(
+                                    {buildExcerpt(
                                         stripHtml(result.content ?? ''),
-                                        120
+                                        query
                                     )}
                                 </div>
                             </button>

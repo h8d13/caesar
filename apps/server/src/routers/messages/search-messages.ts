@@ -9,22 +9,43 @@ const searchMessagesRoute = protectedProcedure
   .input(
     z.object({
       query: z.string().min(1).max(200),
-      limit: z.number().default(25)
+      limit: z.number().default(25),
+      // when set, restricts the search to a single channel (DM or text).
+      // permission is still verified per-channel via hasChannelPermission.
+      channelId: z.number().optional()
     })
   )
   .query(async ({ ctx, input }) => {
-    const { query, limit } = input;
+    const { query, limit, channelId } = input;
 
-    // get all text channels
-    const allTextChannels = await db
-      .select({ id: channels.id })
-      .from(channels)
-      .where(eq(channels.type, ChannelType.TEXT));
+    // determine which channels to search
+    let candidates: { id: number; isDm: boolean | null }[];
 
-    // filter to channels the user can view
+    if (channelId !== undefined) {
+      const channel = await db
+        .select({ id: channels.id, type: channels.type, isDm: channels.isDm })
+        .from(channels)
+        .where(eq(channels.id, channelId))
+        .get();
+
+      if (!channel || channel.type !== ChannelType.TEXT) {
+        return [];
+      }
+
+      candidates = [{ id: channel.id, isDm: channel.isDm }];
+    } else {
+      candidates = await db
+        .select({ id: channels.id, isDm: channels.isDm })
+        .from(channels)
+        .where(eq(channels.type, ChannelType.TEXT));
+    }
+
+    // filter to channels the user can view (DM participation is handled
+    // inside hasChannelPermission)
     const accessibleIds: number[] = [];
+    const isDmByChannelId = new Map<number, boolean>();
 
-    for (const channel of allTextChannels) {
+    for (const channel of candidates) {
       const canView = await ctx.hasChannelPermission(
         channel.id,
         ChannelPermission.VIEW_CHANNEL
@@ -32,6 +53,7 @@ const searchMessagesRoute = protectedProcedure
 
       if (canView) {
         accessibleIds.push(channel.id);
+        isDmByChannelId.set(channel.id, channel.isDm === true);
       }
     }
 
@@ -39,7 +61,7 @@ const searchMessagesRoute = protectedProcedure
       return [];
     }
 
-    const results = await db
+    const rows = await db
       .select({
         id: messages.id,
         content: messages.content,
@@ -58,7 +80,10 @@ const searchMessagesRoute = protectedProcedure
       .orderBy(desc(messages.createdAt))
       .limit(limit);
 
-    return results;
+    return rows.map((row) => ({
+      ...row,
+      isDm: isDmByChannelId.get(row.channelId) ?? false
+    }));
   });
 
 export { searchMessagesRoute };
