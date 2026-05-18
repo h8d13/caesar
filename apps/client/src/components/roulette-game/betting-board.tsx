@@ -7,7 +7,7 @@ import {
 import { cn } from '@/lib/utils';
 import { RouletteBetType, RoulettePhase } from '@caesar/shared/games/roulette';
 import { Zap } from 'lucide-react';
-import { memo, useCallback, useContext } from 'react';
+import { Fragment, memo, useCallback, useContext } from 'react';
 import { toast } from 'sonner';
 import { ChipAmountContext } from './chip-amount-context';
 import { BOARD_ROWS, getNumberColor } from './constants';
@@ -132,11 +132,8 @@ const BettingBoard = memo(() => {
                     />
                     {/* Numbers + 2:1 for each row */}
                     {BOARD_ROWS.map((row, rowIndex) => (
-                        <>
-                            <div
-                                key={`row-${rowIndex}`}
-                                className="grid grid-cols-12"
-                            >
+                        <Fragment key={rowIndex}>
+                            <div className="grid grid-cols-12">
                                 {row.map((num) => (
                                     <BoardCell
                                         key={num}
@@ -160,7 +157,6 @@ const BettingBoard = memo(() => {
                                 ))}
                             </div>
                             <BoardCell
-                                key={`col-${rowIndex}`}
                                 label="← 3:1"
                                 onClick={() =>
                                     onPlaceBet(columnBetTypes[rowIndex]!, null)
@@ -171,7 +167,7 @@ const BettingBoard = memo(() => {
                                     null
                                 )}
                             />
-                        </>
+                        </Fragment>
                     ))}
                 </div>
 
