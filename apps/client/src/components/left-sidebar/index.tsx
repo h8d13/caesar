@@ -1,7 +1,5 @@
 import { ResizableSidebar } from '@/components/resizable-sidebar';
-import {
-    setDmsOpen,
-} from '@/features/app/actions';
+import { setDmsOpen } from '@/features/app/actions';
 import { useDmsOpen } from '@/features/app/hooks';
 import { setSelectedChannelId } from '@/features/server/channels/actions';
 import {

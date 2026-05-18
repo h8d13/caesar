@@ -5,7 +5,7 @@
 
 import { useOwnUserId } from '@/features/server/users/hooks';
 import { useForm } from '@/hooks/use-form';
-import { tryDeriveAndSet } from '@/lib/e2ee';
+import { tryDeriveAndSetAsync } from '@/lib/e2ee';
 import { getTRPCClient } from '@/lib/trpc';
 import { AutoFocus, Input } from '@caesar/ui';
 import { memo, useCallback, useState } from 'react';
@@ -31,11 +31,13 @@ const E2eePasswordDialog = memo(({ isOpen, close }: TDialogBaseProps) => {
                 trpc.keys.getPublic.query({ userId: ownUserId })
             ]);
 
-            // argon2id is ~1-2s sync on the main thread; yield first so the
-            // button's disabled state can paint before the hash blocks.
-            await new Promise<void>((resolve) => setTimeout(resolve, 0));
-
-            const ok = tryDeriveAndSet(values.password, identity, publicKey);
+            // argon2id runs in a worker (lib/e2ee.worker.ts), so the
+            // main thread stays responsive while we wait.
+            const ok = await tryDeriveAndSetAsync(
+                values.password,
+                identity,
+                publicKey
+            );
 
             if (!ok) {
                 setErrors({ _general: 'Wrong password.' });

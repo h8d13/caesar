@@ -62,8 +62,7 @@ const hasPriv = () => myPriv !== null;
 // idempotent register: caller can fire this at any auth checkpoint.
 const getMyPubB64 = () => myPubB64;
 
-// === deterministic keypair derivation ========================================
-
+// deterministic keypair derivation
 const derivePriv = (password: string, identity: string): Uint8Array => {
     // canonicalIdentity matches the server's /login zod transform; any
     // drift between client + server breaks deterministic derivation.
@@ -88,8 +87,80 @@ const tryDeriveAndSet = (
     return true;
 };
 
-// === per-DM symmetric key (HKDF over ECDH shared secret) =====================
+// worker-backed async derivation (avoids freezing the main thread)
+//
+// argon2id with the params above blocks 1-5s depending on the machine.
+// On the login flow that block translates to a frozen UI; if the user
+// is on a slow device or the tab is throttled it can read as "hang".
+// The worker computes off-thread; callers await a Promise.
+//
+// Sync derivePriv() above stays available for tests + any caller that
+// genuinely needs synchronous behavior. UI callers should prefer
+// derivePrivAsync / tryDeriveAndSetAsync.
 
+let _worker: Worker | null = null;
+let _workerSeq = 0;
+const _workerPending = new Map<
+    number,
+    {
+        resolve: (priv: Uint8Array) => void;
+        reject: (err: Error) => void;
+    }
+>();
+
+const getWorker = (): Worker => {
+    if (_worker) return _worker;
+
+    _worker = new Worker(new URL('./e2ee.worker.ts', import.meta.url), {
+        type: 'module'
+    });
+    _worker.onmessage = (
+        e: MessageEvent<{ id: number; priv?: Uint8Array; error?: string }>
+    ) => {
+        const pending = _workerPending.get(e.data.id);
+        if (!pending) return;
+        _workerPending.delete(e.data.id);
+        if (e.data.error) pending.reject(new Error(e.data.error));
+        else if (e.data.priv) pending.resolve(e.data.priv);
+    };
+    _worker.onerror = (e) => {
+        // Fail every outstanding job; subsequent calls re-init via getWorker.
+        for (const p of _workerPending.values()) p.reject(new Error(e.message));
+        _workerPending.clear();
+        _worker = null;
+    };
+
+    return _worker;
+};
+
+const derivePrivAsync = (
+    password: string,
+    identity: string
+): Promise<Uint8Array> =>
+    new Promise((resolve, reject) => {
+        const id = ++_workerSeq;
+        _workerPending.set(id, { resolve, reject });
+        getWorker().postMessage({
+            id,
+            password,
+            identityCanonical: canonicalIdentity(identity),
+            params: ARGON2
+        });
+    });
+
+const tryDeriveAndSetAsync = async (
+    password: string,
+    identity: string,
+    expectedPubB64: string | null
+): Promise<boolean> => {
+    const priv = await derivePrivAsync(password, identity);
+    const pubB64 = bytesToBase64(x25519.getPublicKey(priv));
+    if (expectedPubB64 !== null && pubB64 !== expectedPubB64) return false;
+    setPriv(priv);
+    return true;
+};
+
+// per-DM symmetric key (HKDF over ECDH shared secret)
 const dmKey = async (
     peerPub: Uint8Array,
     uidA: number,
@@ -120,8 +191,7 @@ const dmKey = async (
     );
 };
 
-// === seal / open =============================================================
-
+// seal / open
 // output format: nonce(12) || ciphertext, base64. fits messages.content TEXT.
 const seal = async (key: CryptoKey, plaintext: string): Promise<string> => {
     const nonce = crypto.getRandomValues(new Uint8Array(12));
@@ -151,6 +221,7 @@ const open = async (key: CryptoKey, payloadB64: string): Promise<string> => {
 export {
     clearPriv,
     derivePriv,
+    derivePrivAsync,
     derivePub,
     dmKey,
     getMyPubB64,
@@ -160,5 +231,6 @@ export {
     seal,
     setPriv,
     subscribePriv,
-    tryDeriveAndSet
+    tryDeriveAndSet,
+    tryDeriveAndSetAsync
 };

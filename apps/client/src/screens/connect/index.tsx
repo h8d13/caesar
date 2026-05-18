@@ -13,7 +13,7 @@ import {
     setSessionStorageItem
 } from '@/helpers/storage';
 import { useForm } from '@/hooks/use-form';
-import { derivePriv, setPriv } from '@/lib/e2ee';
+import { derivePrivAsync, setPriv } from '@/lib/e2ee';
 import { TestId } from '@caesar/shared';
 import {
     Alert,
@@ -103,17 +103,19 @@ const Connect = memo(() => {
 
             const data = (await response.json()) as { token: string };
 
-            // E2EE: argon2id is ~1-2s sync on main thread. Defer so
-            // connect() / Suspense fallback paint immediately; derive
-            // runs after the loading spinner is already on screen. The
+            // E2EE: argon2id runs in a Web Worker so the main thread
+            // stays responsive (login spinner keeps animating). The
             // <E2eeKeyRegister /> controller picks up the pub via the
             // priv subscriber and registers once joinServer has set
             // authenticated=true.
             const password = values.password;
             const identity = values.identity;
-            setTimeout(() => {
-                setPriv(derivePriv(password, identity));
-            }, 0);
+            derivePrivAsync(password, identity)
+                .then(setPriv)
+                .catch(() => {
+                    // derivation failed; user can retry via the e2ee
+                    // password dialog if they need ephemeral DMs.
+                });
 
             // Toggle gates cross-tab session sharing. When ON, the token is
             // written to localStorage so other tabs of this browser silently
