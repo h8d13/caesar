@@ -17,6 +17,7 @@ import { getUserInfoRoute } from './get-user-info';
 import { getUsersRoute } from './get-users';
 import { kickRoute } from './kick';
 import { meRoute } from './me';
+import { onMyLoginRoute } from './on-my-login';
 import { removeRoleRoute } from './remove-role';
 import { setAllowMultipleSessionsRoute } from './set-allow-multiple-sessions';
 import { setAppearOfflineRoute } from './set-appear-offline';
@@ -50,5 +51,6 @@ export const usersRouter = t.router({
   onLeave: onUserLeaveRoute,
   onUpdate: onUserUpdateRoute,
   onCreate: onUserCreateRoute,
-  onDelete: onUserDeleteRoute
+  onDelete: onUserDeleteRoute,
+  onMyLogin: onMyLoginRoute
 });

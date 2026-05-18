@@ -6,8 +6,8 @@ import {
     CardHeader,
     CardTitle
 } from '@caesar/ui';
-import { useQuery } from '@tanstack/react-query';
-import { memo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { memo, useEffect } from 'react';
 
 const formatRelative = (ts: number): string => {
     const diff = Date.now() - ts;
@@ -28,19 +28,34 @@ const formatRelative = (ts: number): string => {
 };
 
 const RecentSessions = memo(() => {
+    const queryClient = useQueryClient();
     const { data, isLoading } = useQuery({
         queryKey: ['users', 'getMySessions'],
         queryFn: () => getTRPCClient().users.getMySessions.query()
     });
+
+    // Live-update: server publishes USER_LOGIN_RECORDED to the user's own
+    // subscriber when a new logins row is inserted. Re-fetch on receipt.
+    useEffect(() => {
+        const sub = getTRPCClient().users.onMyLogin.subscribe(undefined, {
+            onData: () => {
+                queryClient.invalidateQueries({
+                    queryKey: ['users', 'getMySessions']
+                });
+            }
+        });
+
+        return () => sub.unsubscribe();
+    }, [queryClient]);
 
     return (
         <Card>
             <CardHeader>
                 <CardTitle>Recent sessions</CardTitle>
                 <CardDescription>
-                    Last 10 sign-ins on your account. Each row shows
-                    fingerprint of the client (same browser produces the same
-                    hash) and when it happened.
+                    Last 10 sign-ins on your account. Each row shows fingerprint
+                    of the client (same browser produces the same hash) and when
+                    it happened.
                 </CardDescription>
             </CardHeader>
             <CardContent>

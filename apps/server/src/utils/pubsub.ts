@@ -46,6 +46,10 @@ type Events = {
     userId: number;
     deletedUserId: number; // the special Deleted User placeholder
   };
+  // self-only: published when a new logins row is inserted for a user.
+  // payload is empty by design (the client re-fetches the hashed list via
+  // users.getMySessions rather than receiving raw UA / ip over the wire).
+  [ServerEvents.USER_LOGIN_RECORDED]: object;
 
   [ServerEvents.CHANNEL_CREATE]: TChannel;
   [ServerEvents.CHANNEL_UPDATE]: TChannel;

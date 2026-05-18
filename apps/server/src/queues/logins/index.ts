@@ -1,8 +1,10 @@
+import { ServerEvents } from '@caesar/shared';
 import { logins } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { hashIp } from '@server/helpers/hash-ip';
 import { logger } from '@server/logger';
 import type { TConnectionInfo } from '@server/types';
+import { pubsub } from '@server/utils/pubsub';
 import Queue from 'queue';
 
 const loginsQueue = new Queue({
@@ -33,6 +35,9 @@ const enqueueLogin = (userId: number, info: TConnectionInfo | undefined) => {
       })
       .returning()
       .get();
+
+    // Tell the user's own tab(s) to refresh the Recent sessions list.
+    pubsub.publishFor(userId, ServerEvents.USER_LOGIN_RECORDED, {});
 
     callback?.();
   });

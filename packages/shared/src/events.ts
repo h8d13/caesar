@@ -56,6 +56,8 @@ export enum ServerEvents {
   WHITEBOARD_CURSOR_UPDATE = 'whiteboardCursorUpdate',
   WHITEBOARD_CLEAR = 'whiteboardClear',
 
+  USER_LOGIN_RECORDED = 'userLoginRecorded',
+
   DM_CONVERSATION_OPEN = 'dmConversationOpen',
   DM_EPHEMERAL_UPDATE = 'dmEphemeralUpdate',
   DM_WIPED = 'dmWiped',
