@@ -56,31 +56,11 @@ const createHttpServer = async (port: number = config.server.port) => {
   return new Promise<http.Server>((resolve) => {
     const server = http.createServer(
       async (req: http.IncomingMessage, res: http.ServerResponse) => {
-        // CORS: reflect the request origin if it matches the Host header's origin
-        const origin = req.headers.origin;
         const host = req.headers.host;
 
-        if (origin && host) {
-          try {
-            const originHostname = new URL(origin).hostname;
-            const requestHostname = host.split(':')[0];
-
-            if (originHostname === requestHostname) {
-              res.setHeader('Access-Control-Allow-Origin', origin);
-              res.setHeader('Vary', 'Origin');
-            }
-          } catch {
-            // malformed origin, skip CORS headers
-          }
-        }
-
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        res.setHeader(
-          'Access-Control-Allow-Headers',
-          'Content-Type, Authorization'
-        );
-
-        // Security headers
+        // Security headers. caesar is same-origin only (client + API behind
+        // the same Caddy host), so no CORS allow-* is needed. Dropping
+        // them reduces attack surface for cross-origin probes.
         res.setHeader('X-Content-Type-Options', 'nosniff');
         res.setHeader('X-Frame-Options', 'DENY');
         res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -89,6 +69,18 @@ const createHttpServer = async (port: number = config.server.port) => {
           'max-age=31536000; includeSubDomains'
         );
         res.setHeader('Content-Security-Policy', buildCsp());
+        // Restrict powerful features. caesar uses mic + cam + screen
+        // capture; everything else is explicitly denied so nested iframes
+        // (e.g. the youtube embed) can't request them.
+        res.setHeader(
+          'Permissions-Policy',
+          'camera=(self), microphone=(self), display-capture=(self), geolocation=(), payment=(), usb=(), midi=()'
+        );
+        // Process isolation + resource scope. COOP isolates the browsing
+        // context from cross-origin openers; CORP prevents other origins
+        // from loading caesar resources via <img>/<script>/etc.
+        res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+        res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
 
         // Redirect HTTP to HTTPS when behind a reverse proxy
         const forwardedProto = req.headers['x-forwarded-proto'];
