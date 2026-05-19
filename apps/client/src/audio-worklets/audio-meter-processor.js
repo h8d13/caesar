@@ -112,3 +112,6 @@ class AudioMeterProcessor extends AudioWorkletProcessor {
 }
 
 registerProcessor(MICROPHONE_AUDIO_METER_WORKLET_NAME, AudioMeterProcessor);
+
+//# sourceURL=audio-meter-processor.js
+

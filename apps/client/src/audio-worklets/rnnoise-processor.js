@@ -288,3 +288,6 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
 }
 
 registerProcessor(RNNOISE_WORKLET_NAME, RNNoiseProcessor);
+
+//# sourceURL=rnnoise-processor.js
+

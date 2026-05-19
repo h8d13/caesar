@@ -139,3 +139,6 @@ class NoiseGateProcessor extends AudioWorkletProcessor {
 }
 
 registerProcessor(MICROPHONE_NOISE_GATE_WORKLET_NAME, NoiseGateProcessor);
+
+//# sourceURL=noise-gate-processor.js
+
