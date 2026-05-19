@@ -1,12 +1,12 @@
-import { OWNER_ROLE_ID, Permission } from '@caesar/shared';
+import { Permission } from '@caesar/shared';
 import { userRoles } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
-import { getUserRoleIds } from '@server/db/queries/roles';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { assertCanModifyOwnerRole } from './assert-can-modify-owner-role';
 
 const addRoleRoute = protectedProcedure
   .input(
@@ -33,15 +33,7 @@ const addRoleRoute = protectedProcedure
       message: 'User already has this role'
     });
 
-    const assingingUserRoles = await getUserRoleIds(ctx.userId);
-    const hasOwnerRole = assingingUserRoles.includes(OWNER_ROLE_ID);
-
-    if (!hasOwnerRole && input.roleId === OWNER_ROLE_ID) {
-      invariant(false, {
-        code: 'FORBIDDEN',
-        message: 'Only users with the owner role can assign the owner role'
-      });
-    }
+    await assertCanModifyOwnerRole(ctx.userId, input.roleId, 'assign');
 
     await db.insert(userRoles).values({
       userId: input.userId,

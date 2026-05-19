@@ -6,6 +6,7 @@ import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { assertCanModifyOwnerRole } from './assert-can-modify-owner-role';
 
 const removeRoleRoute = protectedProcedure
   .input(
@@ -16,6 +17,8 @@ const removeRoleRoute = protectedProcedure
   )
   .mutation(async ({ ctx, input }) => {
     await ctx.needsPermission(Permission.MANAGE_USERS);
+
+    await assertCanModifyOwnerRole(ctx.userId, input.roleId, 'remove');
 
     const existing = await db
       .select()
