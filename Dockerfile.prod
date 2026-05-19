@@ -7,9 +7,9 @@ ENV CAESAR_BUILD_VERSION=${CAESAR_BUILD_VERSION}
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 
-# MEDIASOUP_WORKER_BIN tells mediasoup-node's postinstall to skip its
-# local build (no python+pip / no toolchain). We fetch the kernel6
-# prebuilt below and copy it into the runtime data dir at startup.
+# Tells mediasoup-node's postinstall to skip its local build. We fetch
+# the kernel6 prebuilt below and copy it into the runtime data dir at
+# startup via embeds.ts.
 ENV MEDIASOUP_WORKER_BIN=/usr/local/bin/mediasoup-worker
 
 RUN corepack enable
@@ -25,43 +25,46 @@ RUN scripts/fetch-mediasoup-worker.sh /usr/local/bin
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile
 RUN pnpm --filter @caesar/client build
-RUN pnpm --filter @caesar/server build
+# Bundle (esbuild) + SEA (postject) -> apps/server/dist/caesar.
+RUN pnpm --filter @caesar/server build:sea
 
-# Self-contained server bundle. devDeps stripped.
+# Prod node_modules for the externalized deps (argon2 native bindings +
+# mediasoup JS wrapper). The SEA binary expects to find these at
+# /app/node_modules at runtime (process.cwd() == /app).
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm --filter @caesar/server deploy --prod /deploy/server
 
 # Static assets the server expects to find on disk on first boot.
-# loadEmbeds() copies these into DATA_PATH at startup (mirrors the bun
-# `embeddedFiles` extraction flow from master).
+# loadEmbeds() copies these into DATA_PATH at startup.
 RUN mkdir -p /staging \
     && cp -r /app/apps/client/dist /staging/interface \
     && cp -r /app/apps/server/src/db/migrations /staging/drizzle \
     && cp /usr/local/bin/mediasoup-worker /staging/mediasoup-worker
 
 # --- Runtime stage ---
-FROM node:24-slim
+FROM debian:bookworm-slim
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates libnss3-tools && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    useradd -u 1000 -m -s /sbin/nologin caesar
 
 ENV CAESAR_ENV=production
 
-# WORKDIR creates /app as root; chown it to node so the runtime user can
-# write to it (loadEmbeds copies into DATA_PATH under HOME, but other
-# code paths may touch CWD).
 WORKDIR /app
-RUN chown node:node /app
+RUN chown caesar:caesar /app
 
-COPY --from=builder --chown=node:node /deploy/server /app
-COPY --from=builder --chown=node:node /staging /app/static-prod-assets
+# SEA binary contains node + the server ESM bundle as an asset.
+# Bootstrap extracts the bundle to /app/.caesar-runtime.mjs on boot
+# and dynamic-imports it (so bare specifiers resolve to ./node_modules).
+COPY --from=builder --chown=caesar:caesar --chmod=755 \
+    /app/apps/server/dist/caesar /usr/local/bin/caesar
 
-USER node
+# Sidecar node_modules for the externals (argon2 + mediasoup tree).
+COPY --from=builder --chown=caesar:caesar /deploy/server/node_modules /app/node_modules
+COPY --from=builder --chown=caesar:caesar /staging /app/static-prod-assets
+
+USER caesar
 EXPOSE 4991 40000
 
-# Run tsx via node directly (not via `pnpm exec`): pnpm's verify-deps-on-run
-# would otherwise self-heal at container start, downloading pnpm via Corepack
-# and writing temp files to /app — EACCES under the non-root user. tsx is a
-# runtime dep so `pnpm deploy --prod` keeps it.
-CMD ["node", "node_modules/tsx/dist/cli.mjs", "./src/index.ts"]
+CMD ["caesar"]
