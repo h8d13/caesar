@@ -1,5 +1,5 @@
+import * as serverModule from '@server/db/queries/server';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import * as serverModule from '../../db/queries/server';
 import { generateFileToken, verifyFileToken } from '../files-crypto';
 
 // vi.mock can't intercept this module: setupFiles transitively import
