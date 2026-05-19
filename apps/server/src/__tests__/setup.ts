@@ -124,8 +124,8 @@ beforeEach(async () => {
 
   // Wipe rows; reuse the migrated schema. FKs off during wipe so DELETE
   // order doesn't matter. AUTOINCREMENT counters reset via sqlite_sequence
-  // so each test starts with id=1, matching the bun:sqlite semantics tests
-  // were written against.
+  // so each test starts with id=1, matching the deterministic-ID semantics
+  // tests were written against.
   await sqlite.execute('PRAGMA foreign_keys = OFF;');
   for (const table of userTables) {
     await sqlite.execute(`DELETE FROM "${table}";`);

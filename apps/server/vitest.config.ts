@@ -8,9 +8,9 @@ export default defineConfig({
     }
   },
   test: {
-    // Preserve the bun preload order: dirs/migrations first, then mock the db
-    // module, then the global lifecycle hooks. setupFiles run in order before
-    // each test file's imports resolve, matching bun's preload semantics.
+    // Order matches the original preload chain: dirs/migrations first, then
+    // mock the db module, then the global lifecycle hooks. setupFiles run
+    // in declaration order before each test file's imports resolve.
     setupFiles: [
       './src/__tests__/prepare.ts',
       './src/__tests__/mock-db.ts',

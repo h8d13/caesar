@@ -38,7 +38,7 @@ class CoinflipRuntime {
 
   async start() {
     // Clean up any stale pending/flipping challenges from previous server runs
-    const stale = db
+    const stale = await db
       .select({
         id: coinflipGames.id,
         creatorLedgerEntryId: coinflipGames.creatorLedgerEntryId,
@@ -67,7 +67,8 @@ class CoinflipRuntime {
         await this.callbacks.onUserBalanceChanged(game.opponentId!);
       }
 
-      db.update(coinflipGames)
+      await db
+        .update(coinflipGames)
         .set({ status: 'expired', resolvedAt: Date.now() })
         .where(eq(coinflipGames.id, game.id))
         .run();
@@ -102,7 +103,7 @@ class CoinflipRuntime {
     }
 
     // Check if user already has a pending challenge
-    const existing = db
+    const existing = await db
       .select({ id: coinflipGames.id })
       .from(coinflipGames)
       .where(
@@ -123,7 +124,7 @@ class CoinflipRuntime {
     }
 
     // Insert game row first to get the ID
-    const game = db
+    const game = await db
       .insert(coinflipGames)
       .values({
         creatorId: userId,
@@ -141,13 +142,13 @@ class CoinflipRuntime {
       game.id
     );
 
-    db.update(coinflipGames)
+    await db.update(coinflipGames)
       .set({ creatorLedgerEntryId: ledgerEntryId })
       .where(eq(coinflipGames.id, game.id))
       .run();
 
     const expireTimer = setTimeout(() => {
-      this.expireChallenge(game.id);
+      void this.expireChallenge(game.id);
     }, CHALLENGE_EXPIRE_MS);
 
     this.activeTimers.set(game.id, {
@@ -164,7 +165,7 @@ class CoinflipRuntime {
   }
 
   async acceptChallenge(challengeId: number, userId: number): Promise<void> {
-    const game = db
+    const game = await db
       .select()
       .from(coinflipGames)
       .where(eq(coinflipGames.id, challengeId))
@@ -191,7 +192,7 @@ class CoinflipRuntime {
       challengeId
     );
 
-    db.update(coinflipGames)
+    await db.update(coinflipGames)
       .set({
         opponentId: userId,
         opponentLedgerEntryId: ledgerEntryId,
@@ -215,12 +216,12 @@ class CoinflipRuntime {
     await this.callbacks.onUserBalanceChanged(userId);
 
     setTimeout(() => {
-      this.resolveChallenge(challengeId);
+      void this.resolveChallenge(challengeId);
     }, FLIP_DURATION_MS);
   }
 
   async cancelChallenge(challengeId: number, userId: number): Promise<void> {
-    const game = db
+    const game = await db
       .select()
       .from(coinflipGames)
       .where(eq(coinflipGames.id, challengeId))
@@ -242,7 +243,7 @@ class CoinflipRuntime {
       await this.callbacks.updateLedgerEntry(game.creatorLedgerEntryId, 0);
     }
 
-    db.update(coinflipGames)
+    await db.update(coinflipGames)
       .set({ status: 'cancelled', resolvedAt: Date.now() })
       .where(eq(coinflipGames.id, challengeId))
       .run();
@@ -255,7 +256,7 @@ class CoinflipRuntime {
   // --- Private methods ---
 
   private async resolveChallenge(challengeId: number) {
-    const game = db
+    const game = await db
       .select()
       .from(coinflipGames)
       .where(eq(coinflipGames.id, challengeId))
@@ -270,7 +271,7 @@ class CoinflipRuntime {
     const loserId = creatorWins ? game.opponentId! : game.creatorId;
 
     // Look up names
-    const userRows = db
+    const userRows = await db
       .select({ id: users.id, name: users.name })
       .from(users)
       .where(inArray(users.id, [winnerId, loserId]))
@@ -290,7 +291,7 @@ class CoinflipRuntime {
     await this.callbacks.updateLedgerEntry(winnerLedgerEntryId, game.amount);
     await this.callbacks.updateLedgerEntry(loserLedgerEntryId, -game.amount);
 
-    db.update(coinflipGames)
+    await db.update(coinflipGames)
       .set({
         status: CoinflipStatus.RESOLVED,
         result,
@@ -324,7 +325,7 @@ class CoinflipRuntime {
   }
 
   private async expireChallenge(challengeId: number) {
-    const game = db
+    const game = await db
       .select()
       .from(coinflipGames)
       .where(eq(coinflipGames.id, challengeId))
@@ -336,7 +337,7 @@ class CoinflipRuntime {
       await this.callbacks.updateLedgerEntry(game.creatorLedgerEntryId, 0);
     }
 
-    db.update(coinflipGames)
+    await db.update(coinflipGames)
       .set({ status: 'expired', resolvedAt: Date.now() })
       .where(eq(coinflipGames.id, challengeId))
       .run();

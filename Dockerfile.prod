@@ -1,20 +1,31 @@
+# syntax=docker/dockerfile:1.7
 ARG CAESAR_BUILD_VERSION
 
 FROM node:24-slim AS builder
 ARG CAESAR_BUILD_VERSION
 ENV CAESAR_BUILD_VERSION=${CAESAR_BUILD_VERSION}
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
 
 RUN corepack enable
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential python3 ca-certificates \
+    build-essential python3 python3-pip ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY . .
 
-RUN pnpm install --frozen-lockfile
+# pnpm store cache survives layer rebuilds; only invalidated by pnpm-lock.yaml.
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile
 RUN pnpm --filter @caesar/client build
 RUN pnpm --filter @caesar/server build
+
+# pnpm deploy produces a self-contained dir for just @caesar/server with its
+# transitive deps resolved into a flat node_modules. devDeps stripped via
+# --prod. Client static output is also copied so the server can serve it.
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm --filter @caesar/server deploy --prod /deploy/server
 
 # --- Runtime stage ---
 FROM node:24-slim
@@ -25,13 +36,17 @@ RUN apt-get update && \
     useradd -u 1000 -m -s /sbin/nologin caesar
 
 RUN corepack enable
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
 
 WORKDIR /app
-COPY --from=builder --chown=caesar:caesar /app /app
+COPY --from=builder --chown=caesar:caesar /deploy/server /app
+# Client built assets, referenced by the server's interface route.
+COPY --from=builder --chown=caesar:caesar /app/apps/client/dist /app/interface
 
 USER caesar
 EXPOSE 4991 40000
 
 # tsx runs the TS source directly. If you later compile to JS via tsc, swap
-# this to `node ./apps/server/dist/index.js` (and skip the tsx dep).
-CMD ["pnpm", "--filter", "@caesar/server", "exec", "tsx", "./src/index.ts"]
+# this to `node ./dist/index.js` (and drop the tsx dep from prod).
+CMD ["pnpm", "exec", "tsx", "./src/index.ts"]

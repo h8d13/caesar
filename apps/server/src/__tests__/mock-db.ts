@@ -2,8 +2,8 @@ import { type LibSQLDatabase } from 'drizzle-orm/libsql';
 import { vi } from 'vitest';
 
 /**
- * This file is preloaded FIRST (via bunfig.toml) to mock the db module
- * before any other code imports it.
+ * This file is preloaded FIRST (via vitest.config.ts setupFiles) to mock
+ * the db module before any other code imports it.
  *
  * Architecture:
  * 1. mock-db.ts (this file) - Creates initial db for module imports
@@ -39,12 +39,9 @@ vi.mock('../db/index', () => ({
   loadDb: async () => {} // No-op in tests
 }));
 
-// Top-level await on initDb was needed under bun:test so module-import
-// time db reads got a usable handle. Under vitest the top-level await
-// combined with vi.mock hoisting + setupFiles ordering caused export
-// bindings to read as undefined in consumers. setup.ts's beforeEach
-// already creates a fresh db per test; the proxy tolerates a null tdb
-// until that fires.
+// setup.ts's beforeEach creates a fresh db per test and calls setTestDb
+// to point the proxy at it. The proxy tolerates a null tdb in the brief
+// window between this module's evaluation and the first beforeEach.
 
 const setTestDb = (newDb: LibSQLDatabase) => {
   tdb = newDb;

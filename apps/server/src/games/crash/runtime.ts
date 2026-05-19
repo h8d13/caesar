@@ -123,7 +123,7 @@ class CrashRuntime {
       this.roundId
     );
 
-    const bet = db
+    const bet = await db
       .insert(crashBets)
       .values({
         roundId: this.roundId,
@@ -177,7 +177,7 @@ class CrashRuntime {
 
     await this.callbacks.updateLedgerEntry(bet.ledgerEntryId, profit);
 
-    db.update(crashBets)
+    await db.update(crashBets)
       .set({ cashedOutAt: cashoutMultiplier, profit })
       .where(eq(crashBets.id, bet.betId))
       .run();
@@ -195,7 +195,7 @@ class CrashRuntime {
     this.crashPoint = this.generateCrashPoint();
     this.phaseStartedAt = Date.now();
 
-    const round = db
+    const round = await db
       .insert(crashRounds)
       .values({
         crashPoint: this.crashPoint,
@@ -210,14 +210,14 @@ class CrashRuntime {
     this.notifyStateSubscribers();
 
     setTimeout(() => {
-      this.startFlyingPhase();
+      void this.startFlyingPhase();
     }, BETTING_PHASE_DURATION_MS);
   }
 
-  private startFlyingPhase() {
+  private async startFlyingPhase() {
     if (this.activeBets.length === 0) {
       this.multiplier = this.crashPoint;
-      this.startCrashedPhase();
+      await this.startCrashedPhase();
       return;
     }
 
@@ -229,25 +229,25 @@ class CrashRuntime {
     this.notifyStateSubscribers();
 
     this.tickInterval = setInterval(() => {
-      this.tick();
+      void this.tick();
     }, MULTIPLIER_TICK_INTERVAL_MS);
   }
 
-  private tick() {
+  private async tick() {
     const elapsed = (Date.now() - this.flyingStartedAt) / 1000;
     this.multiplier =
       Math.floor(Math.exp(MULTIPLIER_GROWTH_RATE * elapsed) * 100) / 100;
 
     if (this.multiplier >= this.crashPoint) {
       this.multiplier = this.crashPoint;
-      this.crash();
+      await this.crash();
       return;
     }
 
     this.notifyStateSubscribers();
   }
 
-  private crash() {
+  private async crash() {
     if (this.tickInterval) {
       clearInterval(this.tickInterval);
       this.tickInterval = null;
@@ -262,14 +262,14 @@ class CrashRuntime {
       }
     }
 
-    this.startCrashedPhase();
+    await this.startCrashedPhase();
   }
 
-  private startCrashedPhase() {
+  private async startCrashedPhase() {
     this.phase = CrashPhase.CRASHED;
     this.phaseStartedAt = Date.now();
 
-    db.update(crashRounds)
+    await db.update(crashRounds)
       .set({ endedAt: Date.now() })
       .where(eq(crashRounds.id, this.roundId))
       .run();
@@ -284,7 +284,7 @@ class CrashRuntime {
     this.notifyResultSubscribers(result);
 
     setTimeout(() => {
-      this.startBettingPhase();
+      void this.startBettingPhase();
     }, CRASHED_PHASE_DURATION_MS);
   }
 

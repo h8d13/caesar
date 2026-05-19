@@ -50,7 +50,7 @@ const routeHandlers: Partial<
   }
 };
 
-// this http server implementation is temporary and will be moved to bun server later when things are more stable
+// this http server implementation is temporary and will be moved to a more capable framework later
 
 const createHttpServer = async (port: number = config.server.port) => {
   return new Promise<http.Server>((resolve) => {

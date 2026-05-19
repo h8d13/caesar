@@ -19,7 +19,7 @@ export default defineConfig({
         }
     ],
     server: {
-        // Forward HTTP server routes to bun :4991 so dev is same-origin.
+        // Forward HTTP server routes to the Node server on :4991 so dev is same-origin.
         // tRPC WebSocket connects directly to :4991 (no CORS preflight on WS).
         proxy: {
             '/info': 'http://localhost:4991',

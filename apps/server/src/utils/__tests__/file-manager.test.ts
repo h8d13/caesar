@@ -2,11 +2,10 @@ import { StorageOverflowAction } from '@caesar/shared';
 import { files, settings } from '@caesar/shared/db/schema';
 import { tdb } from '@server/__tests__/setup';
 import { PUBLIC_PATH, TMP_PATH, UPLOADS_PATH } from '@server/helpers/paths';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
-import { afterEach } from 'node:test';
 import path from 'path';
 import { fileManager } from '../file-manager';
 

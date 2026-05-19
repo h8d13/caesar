@@ -226,7 +226,7 @@ class FileManager {
     await moveFile(tempFile.path, destinationPath);
     await this.removeTemporaryFile(tempFileId, true);
 
-    return db
+    return await db
       .insert(files)
       .values({
         name: fileName,

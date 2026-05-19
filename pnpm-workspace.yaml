@@ -1,3 +1,12 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+
+# Whitelist of native deps whose postinstall scripts we permit.
+# strictDepBuilds is true by default in pnpm 11 — unreviewed builds fail.
+# (mediasoup still requires python+pip to build the worker locally; ship a
+# prebuilt mediasoup-worker binary in deploy artifacts to skip that.)
+onlyBuiltDependencies:
+  - argon2
+  - esbuild
+  - mediasoup

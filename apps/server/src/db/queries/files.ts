@@ -135,9 +135,12 @@ const getOrphanedFileIds = async (): Promise<number[]> => {
 };
 
 const isFileOrphaned = async (fileId: number): Promise<boolean> => {
-  const result = await db.get(sql`
-    SELECT 
-      CASE 
+  // libsql returns rows as { columnName: value } objects (drizzle's libsql
+  // driver); the previous bun-sqlite path returned positional arrays.
+  // Read by alias so the same code works regardless of driver.
+  const result = (await db.get(sql`
+    SELECT
+      CASE
         WHEN NOT EXISTS (SELECT 1 FROM message_files mf WHERE mf.file_id = ${fileId})
         AND NOT EXISTS (SELECT 1 FROM users u WHERE u.avatar_id = ${fileId} OR u.banner_id = ${fileId})
         AND NOT EXISTS (SELECT 1 FROM emojis e WHERE e.file_id = ${fileId})
@@ -147,11 +150,11 @@ const isFileOrphaned = async (fileId: number): Promise<boolean> => {
         THEN 1
         ELSE 0
       END as isOrphaned
-  `);
+  `)) as { isOrphaned: number } | number[] | undefined;
 
-  const isOrphaned = Array.isArray(result) ? result[0] === 1 : false;
-
-  return isOrphaned;
+  if (!result) return false;
+  const flag = Array.isArray(result) ? result[0] : result.isOrphaned;
+  return flag === 1;
 };
 
 export {

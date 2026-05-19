@@ -14,7 +14,7 @@ const createGameLedgerBindings = (ledgerableType: string) => ({
     amount: number,
     ledgerableId: number
   ) => {
-    const entry = db
+    const entry = await db
       .insert(socialCreditLedger)
       .values({
         targetId: userId,
@@ -28,7 +28,7 @@ const createGameLedgerBindings = (ledgerableType: string) => ({
     return entry.id;
   },
   updateLedgerEntry: async (entryId: number, newAmount: number) => {
-    db.update(socialCreditLedger)
+    await db.update(socialCreditLedger)
       .set({ amount: newAmount })
       .where(eq(socialCreditLedger.id, entryId))
       .run();
@@ -37,7 +37,7 @@ const createGameLedgerBindings = (ledgerableType: string) => ({
     await publishUser(userId, 'update');
   },
   getBalance: async (userId: number) => {
-    const result = db
+    const result = await db
       .select({
         balance: sql<number>`COALESCE(SUM(${socialCreditLedger.amount}), 0)`
       })

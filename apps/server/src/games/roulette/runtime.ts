@@ -85,8 +85,8 @@ class RouletteRuntime {
     };
   }
 
-  getHistory(limit: number = 20): TRouletteRoundHistory[] {
-    const rows = db
+  async getHistory(limit: number = 20): Promise<TRouletteRoundHistory[]> {
+    const rows = await db
       .select({
         id: rouletteRounds.id,
         winningNumber: rouletteRounds.winningNumber,
@@ -140,7 +140,7 @@ class RouletteRuntime {
       this.roundId
     );
 
-    const bet = db
+    const bet = await db
       .insert(rouletteBets)
       .values({
         roundId: this.roundId,
@@ -189,7 +189,7 @@ class RouletteRuntime {
     // Refund by setting ledger entry to 0
     await this.callbacks.updateLedgerEntry(bet.ledgerEntryId, 0);
 
-    db.delete(rouletteBets).where(eq(rouletteBets.id, bet.betId)).run();
+    await db.delete(rouletteBets).where(eq(rouletteBets.id, bet.betId)).run();
 
     this.activeBets.splice(betIndex, 1);
 
@@ -206,7 +206,7 @@ class RouletteRuntime {
     this.lightningNumbers = this.generateLightningNumbers();
     this.phaseStartedAt = Date.now();
 
-    const round = db
+    const round = await db
       .insert(rouletteRounds)
       .values({
         winningNumber: this.winningNumber,
@@ -233,7 +233,7 @@ class RouletteRuntime {
     this.notifyStateSubscribers();
 
     setTimeout(() => {
-      this.startResultPhase();
+      void this.startResultPhase();
     }, SPINNING_PHASE_DURATION_MS);
   }
 
@@ -261,7 +261,7 @@ class RouletteRuntime {
           bet.profit = -bet.amount;
         }
 
-        db.update(rouletteBets)
+        await db.update(rouletteBets)
           .set({ profit: bet.profit })
           .where(eq(rouletteBets.id, bet.betId))
           .run();
@@ -270,7 +270,7 @@ class RouletteRuntime {
       }
     }
 
-    db.update(rouletteRounds)
+    await db.update(rouletteRounds)
       .set({ endedAt: Date.now() })
       .where(eq(rouletteRounds.id, this.roundId))
       .run();
@@ -292,7 +292,7 @@ class RouletteRuntime {
     this.notifyResultSubscribers(result);
 
     setTimeout(() => {
-      this.startBettingPhase();
+      void this.startBettingPhase();
     }, RESULT_PHASE_DURATION_MS);
   }
 

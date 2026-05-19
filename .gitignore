@@ -8,6 +8,6 @@
 data/
 data-prod-dev/
 data-test/
-.idea**
-.note**
+.**idea**
+.**note**
 .vite-devmaps/

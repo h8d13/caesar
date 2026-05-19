@@ -6,7 +6,7 @@
     ":semanticCommits",
     ":timezone(Europe/Lisbon)"
   ],
-  "enabledManagers": ["bun", "github-actions", "dockerfile", "docker-compose"],
+  "enabledManagers": ["pnpm", "github-actions", "dockerfile", "docker-compose"],
   "rangeStrategy": "bump",
   "prConcurrentLimit": 5,
   "prHourlyLimit": 2,
@@ -40,8 +40,8 @@
       "groupName": "docker"
     },
     {
-      "matchPackageNames": ["bun", "oven-sh/setup-bun"],
-      "groupName": "bun runtime"
+      "matchPackageNames": ["node", "actions/setup-node"],
+      "groupName": "node runtime"
     },
     {
       "matchPackageNames": ["typescript", "@types/node", "mediasoup"],

@@ -2,20 +2,10 @@
   "name": "caesar",
   "version": "0.0.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "trustedDependencies": [
-    "mediasoup"
-  ],
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "argon2",
-      "better-sqlite3",
-      "esbuild",
-      "mediasoup"
-    ]
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=24",
+    "pnpm": ">=10"
   },
   "scripts": {
     "test": "pnpm -r --if-present test",

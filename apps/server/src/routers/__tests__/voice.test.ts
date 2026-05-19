@@ -1,7 +1,7 @@
 import { initTest } from '@server/__tests__/helpers';
 import { describe, expect, test } from 'vitest';
 
-// Voice runtime requires the mediasoup native worker. `bun test:fast`
+// Voice runtime requires the mediasoup native worker. `pnpm test:fast`
 // (SKIP_MEDIASOUP=1) leaves it unloaded, so the suite skips entirely.
 const d = process.env.SKIP_MEDIASOUP ? describe.skip : describe;
 

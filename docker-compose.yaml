@@ -2,7 +2,7 @@ name: caesar
 
 services:
   # Production: compiled binary with embedded frontend
-  # assumes x86_64 or adapt bungig.toml and mediasoup download
+  # assumes x86_64; mediasoup-worker prebuilt is fetched for linux-x64
   caesar:
     build:
       context: .
@@ -76,7 +76,7 @@ services:
     volumes:
       - ./caddy/Caddyfile.prod-dev:/etc/caddy/Caddyfile:ro
 
-  # Dev: Runs bun install then runs Vite + Bun server
+  # Dev: pnpm install + Vite + Node server
   caesar-dev:
     build:
       context: .
@@ -92,7 +92,7 @@ services:
     environment:
       CAESAR_PORT: "4991"
     volumes:
-      - ./data:/home/bun/.config/caesar 
+      - ./data:/home/node/.config/caesar
       # here named volume would be more appropriate
 
 volumes:

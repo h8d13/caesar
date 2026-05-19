@@ -11,11 +11,11 @@ const getGameHistoryRoute = protectedProcedure
       page: z.number().int().min(0).default(0)
     })
   )
-  .query(({ input }) => {
+  .query(async ({ input }) => {
     const offset = input.page * PAGE_SIZE;
 
     // Union query across all 3 game types, all resolved bets (wins AND losses), sorted by time
-    const rows = db.all<{
+    const rows = await db.all<{
       userName: string;
       game: string;
       detail: string;
