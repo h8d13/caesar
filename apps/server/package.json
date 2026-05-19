@@ -1,7 +1,6 @@
 {
   "name": "@caesar/server",
-  "version": "0.0.8",
-  "module": "src/index.ts",
+  "version": "0.0.0",
   "type": "module",
   "private": true,
   "scripts": {
@@ -10,8 +9,6 @@
     "dev:debug": "DEBUG=* tsx watch ./src/index.ts",
     "build": "node build/bundle.mjs",
     "build:sea": "node build/bundle.mjs && node build/sea.mjs",
-    "db:gen": "npx drizzle-kit generate --dialect sqlite --schema ../../packages/shared/src/db/schema.ts --out ./src/db/migrations",
-    "db:check": "npx drizzle-kit check --dialect sqlite --out ./src/db/migrations",
     "format": "prettier --write \"**/*.ts*\" --config ./.prettierrc.json",
     "format:check": "prettier --check \"**/*.ts*\" --config ./.prettierrc.json",
     "lint": "eslint ./src --report-unused-disable-directives",
@@ -34,7 +31,6 @@
     "@types/sanitize-html": "^2.16.1",
     "@types/ws": "^8.18.1",
     "@eslint/js": "^10.0.1",
-    "drizzle-kit": "^0.31.10",
     "eslint": "^10.4.0",
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^17.6.0",
