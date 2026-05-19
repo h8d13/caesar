@@ -1,10 +1,5 @@
 import path from 'path';
-import {
-  CAESAR_MEDIASOUP_BIN_NAME,
-  IS_DEVELOPMENT,
-  IS_TEST,
-  SERVER_VERSION
-} from '../utils/env';
+import { IS_DEVELOPMENT, IS_TEST, SERVER_VERSION } from '../utils/env';
 import { getAppDataPath } from './fs';
 
 const DATA_PATH = IS_TEST
@@ -23,7 +18,7 @@ const MEDIASOUP_PATH = path.resolve(DATA_PATH, 'mediasoup');
 const CONFIG_INI_PATH = path.resolve(DATA_PATH, 'config.ini');
 const MEDIASOUP_BINARY_PATH = IS_DEVELOPMENT
   ? undefined
-  : path.join(MEDIASOUP_PATH, CAESAR_MEDIASOUP_BIN_NAME || 'mediasoup-worker');
+  : path.join(MEDIASOUP_PATH, 'mediasoup-worker');
 const SRC_MIGRATIONS_PATH = path.join(process.cwd(), 'src', 'db', 'migrations');
 
 export {

@@ -1,7 +1,6 @@
 // these values are injected at build time
 const CAESAR_ENV = process.env.CAESAR_ENV;
 const CAESAR_BUILD_VERSION = process.env.CAESAR_BUILD_VERSION;
-const CAESAR_MEDIASOUP_BIN_NAME = process.env.CAESAR_MEDIASOUP_BIN_NAME;
 
 const SERVER_VERSION =
   typeof CAESAR_BUILD_VERSION !== 'undefined'
@@ -13,16 +12,8 @@ const IS_PRODUCTION = env === 'production';
 const IS_DEVELOPMENT = !IS_PRODUCTION;
 const IS_TEST = process.env.NODE_ENV === 'test';
 
-if (IS_PRODUCTION) {
-  if (!CAESAR_MEDIASOUP_BIN_NAME) {
-    throw new Error('CAESAR_MEDIASOUP_BIN is not defined');
-  }
-}
+// Master (Bun) required CAESAR_MEDIASOUP_BIN_NAME because the embedded
+// binary was renamed per build target. On Node the binary always lives at
+// MEDIASOUP_PATH/mediasoup-worker, so the env var is no longer required.
 
-export {
-  CAESAR_MEDIASOUP_BIN_NAME,
-  IS_DEVELOPMENT,
-  IS_PRODUCTION,
-  IS_TEST,
-  SERVER_VERSION
-};
+export { IS_DEVELOPMENT, IS_PRODUCTION, IS_TEST, SERVER_VERSION };
