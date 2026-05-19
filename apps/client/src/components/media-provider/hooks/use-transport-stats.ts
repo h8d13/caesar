@@ -183,10 +183,9 @@ const useTransportStats = () => {
                 intervalRef.current = null;
             }
 
-            setStats((prev) => ({
-                ...prev,
-                isMonitoring: false
-            }));
+            setStats((prev) =>
+                prev.isMonitoring ? { ...prev, isMonitoring: false } : prev
+            );
 
             logVoice('Stopped transport stats monitoring (transports closed)');
             return;
@@ -278,10 +277,9 @@ const useTransportStats = () => {
                     intervalRef.current = null;
                 }
 
-                setStats((prev) => ({
-                    ...prev,
-                    isMonitoring: false
-                }));
+                setStats((prev) =>
+                    prev.isMonitoring ? { ...prev, isMonitoring: false } : prev
+                );
 
                 logVoice(
                     'Stopped transport stats monitoring (all transports closed)'
@@ -430,10 +428,9 @@ const useTransportStats = () => {
         consumerTransportRef.current = null;
         screenShareProducerRef.current = null;
 
-        setStats((prev) => ({
-            ...prev,
-            isMonitoring: false
-        }));
+        setStats((prev) =>
+            prev.isMonitoring ? { ...prev, isMonitoring: false } : prev
+        );
 
         logVoice('Stopped transport stats monitoring');
     }, []);
@@ -464,9 +461,15 @@ const useTransportStats = () => {
         logVoice('Transport stats reset');
     }, []);
 
+    // Latest-stats ref lets printStats stay identity-stable while still
+    // logging the current snapshot. Without this, the [stats] dep produced a
+    // new callback every tick, re-running the window-prop effect each second.
+    const statsRef = useRef(stats);
+    statsRef.current = stats;
+
     const printStats = useCallback(() => {
-        logVoice('Current Transport Stats:', { stats });
-    }, [stats]);
+        logVoice('Current Transport Stats:', { stats: statsRef.current });
+    }, []);
 
     useEffect(() => {
         window.printVoiceStats = printStats;

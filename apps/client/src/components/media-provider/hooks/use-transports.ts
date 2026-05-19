@@ -10,7 +10,7 @@ import {
     type RtpCapabilities,
     type Transport
 } from 'mediasoup-client/types';
-import { useCallback, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 type TUseTransportParams = {
     addRemoteUserStream: (
@@ -583,19 +583,36 @@ const useTransports = ({
         logVoice('Transports cleanup complete');
     }, []);
 
-    return {
-        producerTransport,
-        consumerTransport,
-        consumers,
-        createProducerTransport,
-        createConsumerTransport,
-        consume,
-        consumeExistingProducers,
-        cleanupTransports,
-        getConsumerCodec,
-        pauseConsumer,
-        resumeConsumer
-    };
+    // All ref objects (producerTransport, consumerTransport, consumers) are
+    // stable across renders by definition of useRef. All callbacks above are
+    // useCallback'd with stable deps. Memoizing the return shape on those
+    // identities means MediaProvider only re-spreads when something material
+    // changed, instead of every render.
+    return useMemo(
+        () => ({
+            producerTransport,
+            consumerTransport,
+            consumers,
+            createProducerTransport,
+            createConsumerTransport,
+            consume,
+            consumeExistingProducers,
+            cleanupTransports,
+            getConsumerCodec,
+            pauseConsumer,
+            resumeConsumer
+        }),
+        [
+            createProducerTransport,
+            createConsumerTransport,
+            consume,
+            consumeExistingProducers,
+            cleanupTransports,
+            getConsumerCodec,
+            pauseConsumer,
+            resumeConsumer
+        ]
+    );
 };
 
 export { useTransports };

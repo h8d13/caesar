@@ -16,7 +16,7 @@ import {
     Wifi,
     WifiOff
 } from 'lucide-react';
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { ExternalAudioStreams } from '../channel-view/voice/external-audio-streams';
 import { SoundboardPopover } from '../channel-view/voice/soundboard-popover';
 import { VoiceAudioStreams } from '../channel-view/voice/voice-audio-streams';
@@ -28,6 +28,10 @@ const VoiceControl = memo(() => {
     const { ownVoiceState, toggleWebcam, toggleScreenShare, connectionStatus } =
         useMedia();
     const transportStats = useMediaStats();
+
+    const handleDisconnect = useCallback(() => {
+        leaveVoice({ reason: 'user_disconnect_button' });
+    }, []);
 
     const connectionInfo = useMemo(() => {
         switch (connectionStatus) {
@@ -138,9 +142,7 @@ const VoiceControl = memo(() => {
                     <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() =>
-                            leaveVoice({ reason: 'user_disconnect_button' })
-                        }
+                        onClick={handleDisconnect}
                     >
                         <PhoneOff className="h-3.5 w-3.5 mr-1.5" />
                         Disconnect

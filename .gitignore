@@ -10,3 +10,4 @@ data-prod-dev/
 data-test/
 .idea**
 .note**
+.vite-devmaps/

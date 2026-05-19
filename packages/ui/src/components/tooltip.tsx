@@ -16,14 +16,13 @@ function TooltipProvider({
   );
 }
 
+// TooltipRoot no longer wraps in its own TooltipProvider. The provider must
+// be mounted once near the app root; nesting one per tooltip multiplies
+// provider state and re-runs the delayDuration default per instance.
 function TooltipRoot({
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
-  return (
-    <TooltipProvider>
-      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
-    </TooltipProvider>
-  );
+  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />;
 }
 
 function TooltipTrigger({
@@ -63,17 +62,22 @@ type TTooltipProps = {
   asChild?: boolean;
 };
 
-const Tooltip = ({
+// Memo wrapper. Like Button, this bails on children-identity diff in the
+// common JSX-children case, but pays off when callers stabilize the child
+// element (e.g. passing a ref or memoized icon).
+const Tooltip = React.memo(function Tooltip({
   children,
   content,
   sideOffset = 4,
   asChild = true
-}: TTooltipProps) => (
-  <TooltipRoot delayDuration={200}>
-    <TooltipTrigger asChild={asChild}>{children}</TooltipTrigger>
-    <TooltipContent sideOffset={sideOffset}>{content}</TooltipContent>
-  </TooltipRoot>
-);
+}: TTooltipProps) {
+  return (
+    <TooltipRoot delayDuration={200}>
+      <TooltipTrigger asChild={asChild}>{children}</TooltipTrigger>
+      <TooltipContent sideOffset={sideOffset}>{content}</TooltipContent>
+    </TooltipRoot>
+  );
+});
 
 export {
   Tooltip,

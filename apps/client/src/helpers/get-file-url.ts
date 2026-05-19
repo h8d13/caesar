@@ -9,8 +9,10 @@ const getHostFromServer = () => {
 };
 
 const getUrlFromServer = () => {
+    // In dev, hit the vite origin so the dev proxy forwards HTTP to :4991.
+    // Avoids cross-origin CORS without carving a dev branch into the server.
     if (import.meta.env.MODE === 'development') {
-        return 'http://localhost:4991';
+        return window.location.origin;
     }
 
     const host = window.location.host;

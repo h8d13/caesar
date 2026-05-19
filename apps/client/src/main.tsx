@@ -1,4 +1,4 @@
-import { Toaster } from '@caesar/ui';
+import { Toaster, TooltipProvider } from '@caesar/ui';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import 'prosemirror-view/style/prosemirror.css';
 import { StrictMode } from 'react';
@@ -40,13 +40,17 @@ createRoot(document.getElementById('root')!).render(
                         without hitting a null Redux context. */}
                     <Toaster />
                     <StoreDebug />
-                    <DevicesProvider>
-                        <DialogsProvider />
-                        <ServerScreensProvider />
-                        <AutoLoginController />
-                        <E2eeKeyRegister />
-                        <Routing />
-                    </DevicesProvider>
+                    {/* Single TooltipProvider for the whole app. Tooltip /
+                        TooltipRoot no longer instantiate their own. */}
+                    <TooltipProvider delayDuration={200}>
+                        <DevicesProvider>
+                            <DialogsProvider />
+                            <ServerScreensProvider />
+                            <AutoLoginController />
+                            <E2eeKeyRegister />
+                            <Routing />
+                        </DevicesProvider>
+                    </TooltipProvider>
                 </Provider>
             </ThemeProvider>
         </QueryClientProvider>

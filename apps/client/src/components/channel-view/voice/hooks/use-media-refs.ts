@@ -44,6 +44,14 @@ const useMediaRefs = (
 
     const videoHidden = isStreamHidden(getUserVideoKey(remoteId));
     const screenVideoHidden = isStreamHidden(getUserScreenVideoKey(remoteId));
+
+    // Slice the per-user view once. Redux-toolkit/immer keeps unchanged
+    // sub-references stable, so this slice only flips identity when THIS
+    // user's streams actually change. Using it in deps prevents the memos
+    // below from invalidating when other users' streams update.
+    const userStreams = remoteUserStreams[remoteId];
+    const externalStream = externalStreams[remoteId];
+
     const videoStream = useMemo(() => {
         if (isOwnUser) {
             // "Hide own stream" toggle suppresses local preview without
@@ -51,42 +59,38 @@ const useMediaRefs = (
             return videoHidden ? undefined : localVideoStream;
         }
 
-        return remoteUserStreams[remoteId]?.[StreamKind.VIDEO];
-    }, [remoteUserStreams, remoteId, isOwnUser, localVideoStream, videoHidden]);
+        return userStreams?.[StreamKind.VIDEO];
+    }, [userStreams, isOwnUser, localVideoStream, videoHidden]);
 
     const audioStream = useMemo(() => {
         if (isOwnUser) return undefined;
 
-        return remoteUserStreams[remoteId]?.[StreamKind.AUDIO];
-    }, [remoteUserStreams, remoteId, isOwnUser]);
+        return userStreams?.[StreamKind.AUDIO];
+    }, [userStreams, isOwnUser]);
 
     const screenShareStream = useMemo(() => {
         if (isOwnUser) return localScreenShareStream;
 
-        return remoteUserStreams[remoteId]?.[StreamKind.SCREEN];
-    }, [remoteUserStreams, remoteId, isOwnUser, localScreenShareStream]);
+        return userStreams?.[StreamKind.SCREEN];
+    }, [userStreams, isOwnUser, localScreenShareStream]);
 
     const screenShareAudioStream = useMemo(() => {
         if (isOwnUser) return undefined;
 
-        return remoteUserStreams[remoteId]?.[StreamKind.SCREEN_AUDIO];
-    }, [remoteUserStreams, remoteId, isOwnUser]);
+        return userStreams?.[StreamKind.SCREEN_AUDIO];
+    }, [userStreams, isOwnUser]);
 
     const externalAudioStream = useMemo(() => {
         if (isOwnUser) return undefined;
 
-        const external = externalStreams[remoteId];
-
-        return external?.audioStream;
-    }, [externalStreams, remoteId, isOwnUser]);
+        return externalStream?.audioStream;
+    }, [externalStream, isOwnUser]);
 
     const externalVideoStream = useMemo(() => {
         if (isOwnUser) return undefined;
 
-        const external = externalStreams[remoteId];
-
-        return external?.videoStream;
-    }, [externalStreams, remoteId, isOwnUser]);
+        return externalStream?.videoStream;
+    }, [externalStream, isOwnUser]);
 
     const userVolumeKey = getUserVolumeKey(remoteId);
     const userVolume = getVolume(userVolumeKey);
@@ -224,20 +228,46 @@ const useMediaRefs = (
         externalAudioStream
     ]);
 
-    return {
-        videoRef,
-        audioRef,
-        screenShareRef,
-        screenShareAudioRef,
-        externalAudioRef,
-        externalVideoRef,
-        hasAudioStream: !!audioStream,
-        hasVideoStream: !!videoStream && !videoHidden,
-        hasScreenShareStream: !!screenShareStream && !screenVideoHidden,
-        hasScreenShareAudioStream: !!screenShareAudioStream,
-        hasExternalAudioStream: !!externalAudioStream,
-        hasExternalVideoStream: !!externalVideoStream
-    };
+    const hasAudioStream = !!audioStream;
+    const hasVideoStream = !!videoStream && !videoHidden;
+    const hasScreenShareStream = !!screenShareStream && !screenVideoHidden;
+    const hasScreenShareAudioStream = !!screenShareAudioStream;
+    const hasExternalAudioStream = !!externalAudioStream;
+    const hasExternalVideoStream = !!externalVideoStream;
+
+    // Stabilize the return shape so memo'd consumers (voice-user-card,
+    // external-audio-streams) skip re-renders when nothing they care about
+    // changed. Refs from getOrCreateRefs() are stable per-id.
+    return useMemo(
+        () => ({
+            videoRef,
+            audioRef,
+            screenShareRef,
+            screenShareAudioRef,
+            externalAudioRef,
+            externalVideoRef,
+            hasAudioStream,
+            hasVideoStream,
+            hasScreenShareStream,
+            hasScreenShareAudioStream,
+            hasExternalAudioStream,
+            hasExternalVideoStream
+        }),
+        [
+            videoRef,
+            audioRef,
+            screenShareRef,
+            screenShareAudioRef,
+            externalAudioRef,
+            externalVideoRef,
+            hasAudioStream,
+            hasVideoStream,
+            hasScreenShareStream,
+            hasScreenShareAudioStream,
+            hasExternalAudioStream,
+            hasExternalVideoStream
+        ]
+    );
 };
 
 export { useMediaRefs };

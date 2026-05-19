@@ -36,7 +36,11 @@ const buttonVariants = cva(
   }
 );
 
-function Button({
+// React.memo on a leaf primitive only pays off when parents pass stable
+// props (memoized handlers, stable children). Buttons with inline JSX
+// children still bail on children-identity diff, but icon-only and string-
+// child cases see real reuse. Cheap to add, no downside for cold paths.
+const Button = React.memo(function Button({
   className,
   variant,
   size,
@@ -55,6 +59,6 @@ function Button({
       {...props}
     />
   );
-}
+});
 
 export { Button, buttonVariants };
