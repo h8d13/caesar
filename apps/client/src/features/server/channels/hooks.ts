@@ -3,7 +3,6 @@ import { useSelector } from 'react-redux';
 import {
     channelByIdSelector,
     channelPermissionsByIdSelector,
-    channelsByCategoryIdSelector,
     channelsMapSelector,
     channelsSelector,
     currentVoiceChannelIdSelector,
@@ -18,11 +17,6 @@ export const useChannels = () =>
 
 export const useChannelById = (channelId: number) =>
     useSelector((state: IRootState) => channelByIdSelector(state, channelId));
-
-export const useChannelsByCategoryId = (categoryId: number) =>
-    useSelector((state: IRootState) =>
-        channelsByCategoryIdSelector(state, categoryId)
-    );
 
 export const useSelectedChannelId = () =>
     useSelector(selectedChannelIdSelector);
