@@ -24,15 +24,15 @@ RUN scripts/fetch-mediasoup-worker.sh /usr/local/bin
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile
-RUN pnpm --filter @node/client build
-# Bundle (esbuild) + SEA (postject) -> apps/server/dist/node.
-RUN pnpm --filter @node/server build:sea
+RUN pnpm --filter @caesar/client build
+# Bundle (esbuild) + SEA (postject) -> apps/server/dist/caesar.
+RUN pnpm --filter @caesar/server build:sea
 
 # Prod node_modules for the externalized deps (argon2 native bindings +
 # mediasoup JS wrapper). The SEA binary expects to find these at
 # /app/node_modules at runtime (process.cwd() == /app).
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm --filter @node/server deploy --prod /deploy/server
+    pnpm --filter @caesar/server deploy --prod /deploy/server
 
 # Static assets the server expects to find on disk on first boot.
 # loadEmbeds() copies these into DATA_PATH at startup.
