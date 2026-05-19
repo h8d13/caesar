@@ -32,19 +32,20 @@ FROM node:24-slim
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates libnss3-tools && \
-    rm -rf /var/lib/apt/lists/* && \
-    useradd -u 1000 -m -s /sbin/nologin caesar
+    rm -rf /var/lib/apt/lists/*
 
 RUN corepack enable
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 
+# node:24-slim ships a non-root `node` user at UID 1000. Reuse it instead
+# of useradd-ing another at the same UID (which collides and exits 4).
 WORKDIR /app
-COPY --from=builder --chown=caesar:caesar /deploy/server /app
+COPY --from=builder --chown=node:node /deploy/server /app
 # Client built assets, referenced by the server's interface route.
-COPY --from=builder --chown=caesar:caesar /app/apps/client/dist /app/interface
+COPY --from=builder --chown=node:node /app/apps/client/dist /app/interface
 
-USER caesar
+USER node
 EXPOSE 4991 40000
 
 # tsx runs the TS source directly. If you later compile to JS via tsc, swap

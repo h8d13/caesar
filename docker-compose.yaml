@@ -19,7 +19,7 @@ services:
     environment:
       CAESAR_PORT: "4991"
     volumes:
-      - ./data:/home/caesar/.config/caesar
+      - ./data:/home/node/.config/caesar
 
   # HTTPS reverse proxy see caddy/Caddyfile
   caddy:
@@ -62,7 +62,7 @@ services:
       CAESAR_PORT: "4991"
       CAESAR_WEBRTC_ANNOUNCED_ADDRESS: ${CAESAR_WEBRTC_ANNOUNCED_ADDRESS:-}
     volumes:
-      - ./data-prod-dev:/home/caesar/.config/caesar
+      - ./data-prod-dev:/home/node/.config/caesar
 
   caddy-prod-dev:
     image: caddy:alpine
