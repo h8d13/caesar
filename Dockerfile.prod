@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 ARG CAESAR_BUILD_VERSION
 
-FROM node:24-slim AS builder
+FROM node:24.15.0-slim AS builder
 ARG CAESAR_BUILD_VERSION
 ENV CAESAR_BUILD_VERSION=${CAESAR_BUILD_VERSION}
 ENV PNPM_HOME=/pnpm
