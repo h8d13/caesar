@@ -76,8 +76,8 @@ const VoiceOptionsController = memo(() => {
 
     return (
         <Popover>
-            <PopoverTrigger asChild>
-                <Tooltip content="Options">
+            <Tooltip content="Options">
+                <PopoverTrigger asChild>
                     <Button
                         variant="ghost"
                         size="sm"
@@ -85,8 +85,8 @@ const VoiceOptionsController = memo(() => {
                     >
                         <Settings className="w-4 h-4" />
                     </Button>
-                </Tooltip>
-            </PopoverTrigger>
+                </PopoverTrigger>
+            </Tooltip>
             <PopoverContent align="end" className="w-80">
                 <div className="space-y-3">
                     <h4 className="font-medium text-sm cursor-default mb-3">
