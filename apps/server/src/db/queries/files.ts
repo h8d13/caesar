@@ -57,14 +57,15 @@ const getExceedingOldFiles = async (newFileSize: number) => {
   return filesToDelete;
 };
 
-const getFilesByMessageId = async (messageId: number): Promise<TFile[]> =>
-  db
+const getFilesByMessageId = async (messageId: number): Promise<TFile[]> => {
+  const rows = await db
     .select()
     .from(messageFiles)
     .innerJoin(files, eq(messageFiles.fileId, files.id))
     .where(eq(messageFiles.messageId, messageId))
-    .all()
-    .map((row) => row.files);
+    .all();
+  return rows.map((row) => row.files);
+};
 
 const getFilesByUserId = async (userId: number): Promise<TFile[]> => {
   const result = await db

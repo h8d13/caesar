@@ -11,7 +11,7 @@ import { loadCrons } from '@server/crons';
 import { generateFileToken } from '@server/helpers/files-crypto';
 import { PUBLIC_PATH } from '@server/helpers/paths';
 import { fileManager } from '@server/utils/file-manager';
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
@@ -145,14 +145,14 @@ describe('/public', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('Content-Type')).toInclude('text/plain');
+    expect(response.headers.get('Content-Type')).toContain('text/plain');
     expect(response.headers.get('Content-Length')).toBe(
       dbFile!.size.toString()
     );
     const disposition = response.headers.get('Content-Disposition');
 
-    expect(disposition).toInclude(`filename="${dbFile!.originalName}"`);
-    expect(disposition).toInclude(
+    expect(disposition).toContain(`filename="${dbFile!.originalName}"`);
+    expect(disposition).toContain(
       `filename*=UTF-8''${encodeURIComponent(dbFile!.originalName)}`
     );
 
@@ -455,7 +455,7 @@ describe('/public', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('Content-Type')).toInclude('text/plain');
+    expect(response.headers.get('Content-Type')).toContain('text/plain');
 
     const responseText = await response.text();
 
@@ -628,7 +628,7 @@ describe('/public', () => {
     expect(disposition).toBeDefined();
     expect(disposition).not.toContain('\r');
     expect(disposition).not.toContain('\n');
-    expect(disposition).toInclude("filename*=UTF-8''");
+    expect(disposition).toContain("filename*=UTF-8''");
   });
 
   test('should not allow path traversal to read arbitrary files', async () => {

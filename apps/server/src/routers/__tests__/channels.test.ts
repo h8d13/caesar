@@ -5,7 +5,7 @@ import {
   generateFileToken,
   verifyFileToken
 } from '@server/helpers/files-crypto';
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 
 describe('channels router', () => {
   test('should throw when user lacks permissions (add)', async () => {

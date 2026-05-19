@@ -88,8 +88,8 @@ class CoinflipRuntime {
     };
   }
 
-  getState(): TCoinflipStateUpdate {
-    return { challenges: this.getActiveChallenges() };
+  async getState(): Promise<TCoinflipStateUpdate> {
+    return { challenges: await this.getActiveChallenges() };
   }
 
   async createChallenge(
@@ -346,8 +346,8 @@ class CoinflipRuntime {
     await this.callbacks.onUserBalanceChanged(game.creatorId);
   }
 
-  private getActiveChallenges(): TCoinflipChallenge[] {
-    const games = db
+  private async getActiveChallenges(): Promise<TCoinflipChallenge[]> {
+    const games = await db
       .select()
       .from(coinflipGames)
       .where(
@@ -377,7 +377,7 @@ class CoinflipRuntime {
 
     const userRows =
       userIds.size > 0
-        ? db
+        ? await db
             .select({ id: users.id, name: users.name })
             .from(users)
             .where(inArray(users.id, Array.from(userIds)))

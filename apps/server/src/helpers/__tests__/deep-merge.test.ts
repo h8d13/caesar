@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { parse } from 'ini';
 import { deepMerge } from '../deep-merge';
 

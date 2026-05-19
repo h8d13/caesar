@@ -1,31 +1,37 @@
-ARG TARGET=bun-linux-x64
 ARG CAESAR_BUILD_VERSION
 
-FROM oven/bun:latest AS builder
-ARG TARGET
+FROM node:24-slim AS builder
 ARG CAESAR_BUILD_VERSION
 ENV CAESAR_BUILD_VERSION=${CAESAR_BUILD_VERSION}
 
+RUN corepack enable
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential python3 ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 COPY . .
-RUN bun install
 
-# Build using the build script
-RUN cd apps/server && bun ./build/build.ts --target $TARGET
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @caesar/client build
+RUN pnpm --filter @caesar/server build
 
 # --- Runtime stage ---
-FROM debian:bookworm-slim
+FROM node:24-slim
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates libnss3-tools && \
     rm -rf /var/lib/apt/lists/* && \
     useradd -u 1000 -m -s /sbin/nologin caesar
 
-COPY --from=builder --chown=caesar:caesar --chmod=755 /app/apps/server/build/out/caesar-* /usr/local/bin/caesar
+RUN corepack enable
+
+WORKDIR /app
+COPY --from=builder --chown=caesar:caesar /app /app
 
 USER caesar
-WORKDIR /home/caesar
-
 EXPOSE 4991 40000
 
-CMD ["caesar"]
+# tsx runs the TS source directly. If you later compile to JS via tsc, swap
+# this to `node ./apps/server/dist/index.js` (and skip the tsx dep).
+CMD ["pnpm", "--filter", "@caesar/server", "exec", "tsx", "./src/index.ts"]

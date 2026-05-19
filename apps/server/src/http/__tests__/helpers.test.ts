@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { EventEmitter } from 'events';
 import type http from 'http';
 import {

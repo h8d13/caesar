@@ -1,6 +1,6 @@
 import { UserStatus } from '@caesar/shared';
 import { initTest } from '@server/__tests__/helpers';
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 
 describe('users.setAppearOffline', () => {
   test('persists the flag and surfaces it on the next joinServer for self', async () => {

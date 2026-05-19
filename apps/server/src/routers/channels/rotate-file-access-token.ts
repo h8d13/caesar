@@ -5,7 +5,7 @@ import { getChannelByIdOrThrow } from '@server/db/queries/channels';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
-import { randomUUIDv7 } from 'bun';
+import { randomUUIDv7 } from '@server/utils/uuid';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 

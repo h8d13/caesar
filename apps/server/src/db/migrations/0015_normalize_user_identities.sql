@@ -23,7 +23,7 @@ WHERE id IN (
   FROM ranked
   WHERE row_number > 1
 );
--->statement-breakpoint
+--> statement-breakpoint
 UPDATE users
 SET identity = LOWER(TRIM(identity))
 WHERE identity <> LOWER(TRIM(identity));

@@ -5,7 +5,7 @@ import { publishChannel } from '@server/db/publishers';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { VoiceRuntime } from '@server/runtimes/voice';
 import { protectedProcedure } from '@server/utils/trpc';
-import { randomUUIDv7 } from 'bun';
+import { randomUUIDv7 } from '@server/utils/uuid';
 import { desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 

@@ -12,7 +12,7 @@ import {
   type TRouletteStateUpdate
 } from '@caesar/shared/games/roulette';
 import { db } from '@server/db';
-import { randomInt } from 'crypto';
+import { createHash, randomInt } from 'crypto';
 import { desc, eq, isNotNull } from 'drizzle-orm';
 import {
   BETTING_PHASE_DURATION_MS,
@@ -317,9 +317,9 @@ class RouletteRuntime {
   }
 
   private hashWinningNumber(number: number): string {
-    const hasher = new Bun.CryptoHasher('sha256');
-    hasher.update(String(number) + '-' + Date.now());
-    return hasher.digest('hex');
+    return createHash('sha256')
+      .update(String(number) + '-' + Date.now())
+      .digest('hex');
   }
 
   private getPublicBets(): TRouletteActiveBet[] {

@@ -2,7 +2,7 @@ import { messages, settings } from '@caesar/shared/db/schema';
 import { initTest } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { pruneExpiredMessages } from '@server/crons/prune-expired';
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { eq } from 'drizzle-orm';
 
 describe('dms router', () => {

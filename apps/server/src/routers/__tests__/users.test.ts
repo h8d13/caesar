@@ -19,7 +19,8 @@ import {
 } from '@caesar/shared/db/schema';
 import { initTest, uploadFile } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
-import { describe, expect, test } from 'bun:test';
+import { verifyPassword } from '@server/utils/password';
+import { describe, expect, test } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 
 describe('users router', () => {
@@ -116,8 +117,8 @@ describe('users router', () => {
 
     // verify sensitive fields are cleared
     users.forEach((user) => {
-      expect(user.password).toBeEmpty();
-      expect(user.identity).toBeEmpty();
+      expect(user.password).toBe('');
+      expect(user.identity).toBe('');
     });
   });
 
@@ -176,7 +177,7 @@ describe('users router', () => {
     expect(info.user).toBeDefined();
     expect(info.user.id).toBe(1);
 
-    expect(info.user.identity).toBeEmpty();
+    expect(info.user.identity).toBe('');
     expect(info.logins.length).toBeGreaterThan(0);
 
     info.logins.forEach((login) => {
@@ -254,10 +255,10 @@ describe('users router', () => {
     expect(row!.password).not.toBe(newPassword);
 
     // should be hashed with argon2
-    expect(row!.password).toStartWith('$argon2');
+    expect(row!.password).toMatch(/^\$argon2/);
 
     // should verify against the new password
-    const isValid = await Bun.password.verify(newPassword, row!.password);
+    const isValid = await verifyPassword(newPassword, row!.password);
     expect(isValid).toBe(true);
   });
 

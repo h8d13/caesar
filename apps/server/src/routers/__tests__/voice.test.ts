@@ -1,5 +1,5 @@
 import { initTest } from '@server/__tests__/helpers';
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 
 // Voice runtime requires the mediasoup native worker. `bun test:fast`
 // (SKIP_MEDIASOUP=1) leaves it unloaded, so the suite skips entirely.

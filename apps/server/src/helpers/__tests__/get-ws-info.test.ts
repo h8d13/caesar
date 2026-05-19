@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import type http from 'http';
 import { getWsInfo } from '../get-ws-info';
 

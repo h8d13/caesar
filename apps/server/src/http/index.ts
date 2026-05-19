@@ -177,7 +177,12 @@ const createHttpServer = async (port: number = config.server.port) => {
 
     server.on('close', () => {
       logger.debug('HTTP server closed');
-      process.exit(0);
+      // Under vitest, the worker reuses one server across test files; the
+      // server may close during teardown/restart cycles. Exiting on close
+      // there kills the worker mid-suite and aborts remaining files.
+      if (process.env.NODE_ENV !== 'test') {
+        process.exit(0);
+      }
     });
 
     server.listen(port);

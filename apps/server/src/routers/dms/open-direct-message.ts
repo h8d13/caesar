@@ -7,7 +7,7 @@ import { getDirectMessageChannel, normalizePair } from '@server/db/queries/dms';
 import { getSettings } from '@server/db/queries/server';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
-import { randomUUIDv7 } from 'bun';
+import { randomUUIDv7 } from '@server/utils/uuid';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 

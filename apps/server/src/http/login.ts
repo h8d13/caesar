@@ -28,6 +28,7 @@ import { getWsInfo } from '../helpers/get-ws-info';
 import { logger } from '../logger';
 import { enqueueActivityLog } from '../queues/activity-log';
 import { invariant } from '../utils/invariant';
+import { hashPassword, verifyPassword } from '../utils/password';
 import {
   createRateLimiter,
   getClientRateLimitKey,
@@ -76,7 +77,7 @@ const registerUser = async (
     );
   }
 
-  const hashedPassword = (await Bun.password.hash(password)).toString();
+  const hashedPassword = await hashPassword(password);
 
   const defaultRole = await getDefaultRole();
 
@@ -236,7 +237,7 @@ const loginRouteHandler = async (
     }
   }
 
-  const passwordMatches = await Bun.password.verify(
+  const passwordMatches = await verifyPassword(
     data.password,
     existingUser.password
   );

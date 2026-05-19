@@ -1,6 +1,6 @@
 import { testsBaseUrl } from '@server/__tests__/setup';
 import { INTERFACE_PATH } from '@server/helpers/paths';
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { beforeAll, describe, expect, test } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 

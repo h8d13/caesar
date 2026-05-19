@@ -3,7 +3,7 @@ import { invites, roles, userRoles, users } from '@caesar/shared/db/schema';
 import { login } from '@server/__tests__/helpers';
 import { TEST_SECRET_TOKEN } from '@server/__tests__/seed';
 import { tdb } from '@server/__tests__/setup';
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 

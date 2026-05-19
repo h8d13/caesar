@@ -19,6 +19,7 @@ import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { pubsub } from '@server/utils/pubsub';
 import { protectedProcedure } from '@server/utils/trpc';
+import { randomUUIDv7 } from '@server/utils/uuid';
 import { eq } from 'drizzle-orm';
 import z from 'zod';
 
@@ -35,7 +36,7 @@ const ensureDeletedUser = async (): Promise<number> => {
     .insert(users)
     .values({
       identity: DELETED_USER_IDENTITY_AND_NAME,
-      password: Bun.randomUUIDv7(),
+      password: randomUUIDv7(),
       name: DELETED_USER_IDENTITY_AND_NAME,
       avatarId: null,
       bannerId: null,

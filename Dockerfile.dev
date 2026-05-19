@@ -1,14 +1,19 @@
-FROM oven/bun:latest
+FROM node:24-slim
+
+# pnpm via corepack (bundled with Node 24).
+RUN corepack enable
+
+# better-sqlite3 + argon2 are native modules; building them needs a toolchain.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential python3 ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy everything
 COPY . .
 
-# Install dependencies
-RUN bun install
+RUN pnpm install --frozen-lockfile
 
 EXPOSE 4991 5173 40000
 
-# Run both Vite dev server and Bun server
-CMD ["sh", "-c", "cd apps/client && bun run dev --host 0.0.0.0 & cd apps/server && bun run dev"]
+CMD ["sh", "-c", "cd apps/client && pnpm dev --host 0.0.0.0 & cd apps/server && pnpm dev"]

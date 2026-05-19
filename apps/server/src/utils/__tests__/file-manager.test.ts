@@ -2,7 +2,7 @@ import { StorageOverflowAction } from '@caesar/shared';
 import { files, settings } from '@caesar/shared/db/schema';
 import { tdb } from '@server/__tests__/setup';
 import { PUBLIC_PATH, TMP_PATH, UPLOADS_PATH } from '@server/helpers/paths';
-import { beforeEach, describe, expect, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
@@ -241,7 +241,7 @@ describe('file manager', () => {
     expect(dbFile?.originalName).toBe(testFileName);
     expect(dbFile?.userId).toBe(1);
     expect(dbFile?.size).toBe(stats.size);
-    expect(dbFile?.mimeType).toInclude('text/plain');
+    expect(dbFile?.mimeType).toContain('text/plain');
   });
 
   test('should throw error when saving non-existent temporary file', async () => {
@@ -383,7 +383,7 @@ describe('file manager', () => {
 
     const oldSavedFile = await fileManager.saveFile(oldTempFile.id, 1);
 
-    await Bun.sleep(100); // ensure different timestamps
+    await new Promise((r) => setTimeout(r, 100)); // ensure different timestamps
 
     const totalLimit = oldSavedFile.size + 5;
 
@@ -623,7 +623,7 @@ describe('file manager', () => {
     tempFilesToCleanup.push(path.join(PUBLIC_PATH, savedFile.name));
 
     expect(savedFile.extension).toBe('.png');
-    expect(savedFile.name).toEndWith('.png');
+    expect(savedFile.name).toMatch(/\.png$/);
 
     const dbFile = await tdb
       .select()

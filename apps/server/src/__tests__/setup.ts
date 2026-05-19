@@ -1,13 +1,15 @@
-import { Database } from 'bun:sqlite';
-import { afterAll, afterEach, beforeAll, beforeEach, mock } from 'bun:test';
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { drizzle, type BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
+import { createClient, type Client } from '@libsql/client';
+import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql';
+import { migrate } from 'drizzle-orm/libsql/migrator';
 import fs from 'fs/promises';
-import { DATA_PATH } from '../helpers/paths';
+import os from 'os';
+import path from 'path';
+import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
+import { DATA_PATH, DRIZZLE_PATH } from '../helpers/paths';
 import { createHttpServer } from '../http';
 import { loadMediasoup } from '../utils/mediasoup';
 import { clearRateLimitersForTests } from '../utils/rate-limiters/rate-limiter';
-import { DRIZZLE_PATH, setTestDb } from './mock-db';
+import { setTestDb } from './mock-db';
 import { seedDatabase } from './seed';
 
 /**
@@ -23,17 +25,18 @@ import { seedDatabase } from './seed';
  */
 
 const DISABLE_CONSOLE = true;
-const CLEANUP_AFTER_FINISH = true;
+// Disable per-file cleanup of DATA_PATH. With vitest's singleFork mode the
+// same process runs every test file; deleting DATA_PATH between files races
+// with the migrations dir prepare step in the next file's setup and tended
+// to leave the worker in an unrecoverable state mid-suite.
+const CLEANUP_AFTER_FINISH = false;
 
-if (DISABLE_CONSOLE) {
+// vitest hoists vi.mock to the top of the file, so the factory cannot
+// close over outer vars (they're not yet defined when the hoisted mock
+// runs). Define the noop inline.
+vi.mock('../logger', () => {
   const noop = () => {};
-
-  global.console.log = noop;
-  global.console.info = noop;
-  global.console.warn = noop;
-  global.console.debug = noop;
-
-  mock.module('../logger', () => ({
+  return {
     logger: {
       info: noop,
       warn: noop,
@@ -42,63 +45,115 @@ if (DISABLE_CONSOLE) {
       trace: noop,
       fatal: noop
     }
-  }));
+  };
+});
+
+if (DISABLE_CONSOLE) {
+  const noop = () => {};
+
+  global.console.log = noop;
+  global.console.info = noop;
+  global.console.warn = noop;
+  global.console.debug = noop;
 }
 
-let tdb: BunSQLiteDatabase;
-let sqlite: Database | null = null;
+let tdb: LibSQLDatabase;
 let testsBaseUrl: string;
 
 beforeAll(async () => {
-  await createHttpServer(9999);
+  // One server + one libsql client per fork. Stash on globalThis since
+  // vitest re-imports setupFiles per test file (isolate: true) while the
+  // process itself persists.
+  const g = globalThis as typeof globalThis & {
+    __caesarServer?: { port: number; url: string };
+    __caesarMediasoupLoaded?: boolean;
+    __caesarSqlite?: Client;
+    __caesarUserTables?: string[];
+    __caesarTmpDbPath?: string;
+  };
 
-  // Loading mediasoup needs the native worker binary, which isn't
-  // always built locally (fresh checkouts, sandboxes without postinstall).
-  // CI runs the full suite; locally `SKIP_MEDIASOUP=1 bun test` lets
-  // every non-voice test pass without the binary present.
-  if (!process.env.SKIP_MEDIASOUP) {
+  if (!g.__caesarServer) {
+    const server = await createHttpServer(0);
+    const addr = server.address();
+    const port = typeof addr === 'object' && addr ? addr.port : 9999;
+    g.__caesarServer = { port, url: `http://localhost:${port}` };
+  }
+  if (!g.__caesarMediasoupLoaded && !process.env.SKIP_MEDIASOUP) {
     await loadMediasoup();
+    g.__caesarMediasoupLoaded = true;
   }
 
-  testsBaseUrl = 'http://localhost:9999';
+  if (!g.__caesarSqlite) {
+    // libsql `:memory:` doesn't reliably share state across internal
+    // connections that drizzle/migrate may open. A unique tempfile per
+    // fork sidesteps that, and gets cleaned up in afterAll below.
+    const tmpDbPath = path.join(
+      os.tmpdir(),
+      `caesar-test-${process.pid}-${Date.now()}.sqlite`
+    );
+    g.__caesarTmpDbPath = tmpDbPath;
+    const sqlite = createClient({ url: `file:${tmpDbPath}` });
+    await sqlite.execute('PRAGMA foreign_keys = ON;');
+    const localTdb = drizzle(sqlite);
+    await migrate(localTdb, { migrationsFolder: DRIZZLE_PATH });
+    const tablesRes = await sqlite.execute(
+      "SELECT name FROM sqlite_master WHERE type='table' " +
+        "AND name NOT LIKE 'sqlite_%' " +
+        "AND name NOT LIKE '__drizzle%' " +
+        "AND name <> 'sqlite_sequence';"
+    );
+    g.__caesarSqlite = sqlite;
+    g.__caesarUserTables = tablesRes.rows.map((r) => r.name as string);
+  }
+
+  tdb = drizzle(g.__caesarSqlite);
+  setTestDb(tdb);
+
+  testsBaseUrl = g.__caesarServer.url;
 });
 
 beforeEach(async () => {
   clearRateLimitersForTests();
 
-  if (sqlite) {
-    try {
-      sqlite.close();
-    } catch {
-      // ignore
-    }
+  const g = globalThis as typeof globalThis & {
+    __caesarSqlite?: Client;
+    __caesarUserTables?: string[];
+  };
+  const sqlite = g.__caesarSqlite!;
+  const userTables = g.__caesarUserTables ?? [];
+
+  // Wipe rows; reuse the migrated schema. FKs off during wipe so DELETE
+  // order doesn't matter. AUTOINCREMENT counters reset via sqlite_sequence
+  // so each test starts with id=1, matching the bun:sqlite semantics tests
+  // were written against.
+  await sqlite.execute('PRAGMA foreign_keys = OFF;');
+  for (const table of userTables) {
+    await sqlite.execute(`DELETE FROM "${table}";`);
   }
+  await sqlite.execute('DELETE FROM sqlite_sequence;');
+  await sqlite.execute('PRAGMA foreign_keys = ON;');
 
-  sqlite = new Database(':memory:', { create: true, strict: true });
-  sqlite.run('PRAGMA foreign_keys = ON;');
-
-  tdb = drizzle({ client: sqlite });
-
-  // updates the mocked db to use this new test database
-  setTestDb(tdb);
-
-  // apply migrations and seed data for this test
-  await migrate(tdb, { migrationsFolder: DRIZZLE_PATH });
   await seedDatabase(tdb);
 });
 
 afterEach(() => {
-  if (sqlite) {
+  // No-op. Shared client/db persists for the fork lifetime.
+});
+
+afterAll(async () => {
+  // Always remove the per-fork tempfile sqlite so /tmp doesn't accumulate
+  // hundreds of leftover .sqlite files across test runs.
+  const g = globalThis as typeof globalThis & { __caesarTmpDbPath?: string };
+  if (g.__caesarTmpDbPath) {
     try {
-      sqlite.close();
-      sqlite = null;
+      await fs.rm(g.__caesarTmpDbPath, { force: true });
+      await fs.rm(`${g.__caesarTmpDbPath}-shm`, { force: true });
+      await fs.rm(`${g.__caesarTmpDbPath}-wal`, { force: true });
     } catch {
       // ignore
     }
   }
-});
 
-afterAll(async () => {
   if (!CLEANUP_AFTER_FINISH) return;
 
   try {

@@ -7,6 +7,7 @@ import {
   type TCrashStateUpdate
 } from '@caesar/shared/games/crash';
 import { db } from '@server/db';
+import { createHash } from 'crypto';
 import { desc, eq } from 'drizzle-orm';
 import {
   BETTING_PHASE_DURATION_MS,
@@ -79,8 +80,8 @@ class CrashRuntime {
     };
   }
 
-  getHistory(limit: number = 20): TCrashRoundHistory[] {
-    return db
+  async getHistory(limit: number = 20): Promise<TCrashRoundHistory[]> {
+    const rows = await db
       .select({
         id: crashRounds.id,
         crashPoint: crashRounds.crashPoint,
@@ -90,8 +91,8 @@ class CrashRuntime {
       .where(eq(crashRounds.endedAt, crashRounds.endedAt)) // just need non-null, use IS NOT NULL via raw
       .orderBy(desc(crashRounds.id))
       .limit(limit)
-      .all()
-      .filter((r) => r.crashPoint > 0);
+      .all();
+    return rows.filter((r) => r.crashPoint > 0);
   }
 
   async placeBet(
@@ -295,9 +296,9 @@ class CrashRuntime {
   }
 
   private hashCrashPoint(point: number): string {
-    const hasher = new Bun.CryptoHasher('sha256');
-    hasher.update(String(point) + '-' + Date.now());
-    return hasher.digest('hex');
+    return createHash('sha256')
+      .update(String(point) + '-' + Date.now())
+      .digest('hex');
   }
 
   private getPublicBets(): TCrashActiveBet[] {
