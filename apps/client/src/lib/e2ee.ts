@@ -13,9 +13,14 @@ import { argon2id } from '@noble/hashes/argon2.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { base64ToBytes, bytesToBase64 } from './base64';
 
-// argon2id params. matches `.e2ee.ts` spec. cost is paid once per login
-// in a worker-free path; keep it bearable but not trivially brute-forceable.
-const ARGON2 = { t: 3, m: 64 * 1024, p: 1, dkLen: 32 };
+// argon2id params. cost is paid once per login; bearable for users, not
+// trivially brute-forceable. Vitest sets MODE=test so the test suite uses
+// near-zero params (correctness, not strength). Vite production builds set
+// MODE=production and dead-code-eliminate the test branch.
+const ARGON2 =
+    import.meta.env.MODE === 'test'
+        ? { t: 1, m: 256, p: 1, dkLen: 32 }
+        : { t: 3, m: 64 * 1024, p: 1, dkLen: 32 };
 
 // session-only state. cleared on logout via clearPriv().
 let myPriv: Uint8Array | null = null;
