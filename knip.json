@@ -5,7 +5,7 @@
       "project": []
     },
     "apps/server": {
-      "entry": ["src/**/__tests__/**/*.test.ts", "build/**/*.ts"],
+      "entry": ["src/**/__tests__/**/*.test.ts"],
       "project": ["src/**/*.ts"]
     },
     "apps/client": {
@@ -22,6 +22,6 @@
   },
   "ignore": ["**/*.d.ts"],
   "ignoreBinaries": [],
-  "ignoreDependencies": ["tailwindcss"],
+  "ignoreDependencies": ["tailwindcss", "postject"],
   "ignoreExportsUsedInFile": true
 }

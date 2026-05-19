@@ -22,9 +22,9 @@ import {
   roles,
   settings
 } from '@caesar/shared/db/schema';
-import { randomUUIDv7 } from 'bun';
 import { logger } from '../logger';
 import { IS_DEVELOPMENT } from '../utils/env';
+import { randomUUIDv7 } from '../utils/uuid';
 import { db } from './index';
 
 const seedDatabase = async () => {
@@ -42,7 +42,7 @@ const seedDatabase = async () => {
     description:
       'This is the default Caesar server description. Change me in the server settings!',
     password: '',
-    serverId: Bun.randomUUIDv7(),
+    serverId: randomUUIDv7(),
     secretToken: await sha256(originalToken),
     directMessagesEnabled: true,
     storageUploadEnabled: true,

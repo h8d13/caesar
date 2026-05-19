@@ -1,0 +1,36 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# Whitelist of native deps whose postinstall scripts we permit.
+# strictDepBuilds is true by default in pnpm 11 — unreviewed builds fail.
+# (mediasoup still requires python+pip to build the worker locally; ship a
+# prebuilt mediasoup-worker binary in deploy artifacts to skip that.)
+onlyBuiltDependencies:
+  - argon2
+  # drizzle-orm declares better-sqlite3 as a peer dep, so pnpm installs
+  # it even though we use the libsql driver. Allow its postinstall so
+  # pnpm doesn't warn; we never actually load the .node binding.
+  - better-sqlite3
+  - esbuild
+  - mediasoup
+
+# Refuse versions published less than 24h ago. Catches compromised releases
+# during the window where a malicious publish hasn't been detected yet.
+# Bump to 10080 (1 week) if same-day upgrades aren't needed.
+# Temporarily commented out while reshuffling deps; re-enable once the
+# lockfile is stable (frozen-lockfile installs bypass the check anyway).
+# minimumReleaseAge: 1440
+
+# Force a single @libsql/client version repo-wide. drizzle-orm's peer-dep
+# resolution otherwise instantiates two drizzle copies (one parametrized
+# per libsql version found in the graph), and TS sees them as different
+# types ("Type '...drizzle-orm@x/y/Column' is not assignable to ...").
+overrides:
+  '@libsql/client': '0.15.15'
+
+# pnpm 10's `deploy` command requires workspace packages to be injected
+# (hardlinked into the deploy node_modules) instead of symlinked, so the
+# deployed artifact is self-contained outside the monorepo. Without this
+# flag pnpm errors with ERR_PNPM_DEPLOY_NONINJECTED_WORKSPACE.
+injectWorkspacePackages: true

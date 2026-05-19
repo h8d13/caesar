@@ -18,12 +18,13 @@
     "lint": "eslint ./src --report-unused-disable-directives",
     "lint:fix": "eslint ./src --report-unused-disable-directives --fix",
     "check-types": "tsc --noEmit",
-    "magic": "bun --bun run lint:fix && bun --bun run format && bun --bun run check-types",
-    "test": "bun test",
-    "test:watch": "bun test --watch"
+    "magic": "pnpm lint:fix && pnpm format && pnpm check-types",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/node": "^24.0.0",
+    "vitest": "^2.1.0"
   },
   "peerDependencies": {
     "@types/react": "^19.2.14",

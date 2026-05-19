@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { stripZalgo } from '../strip-zalgo';
 
 // helper: builds a zalgo char by stacking N combining marks on a base

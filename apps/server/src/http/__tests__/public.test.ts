@@ -11,12 +11,11 @@ import { loadCrons } from '@server/crons';
 import { generateFileToken } from '@server/helpers/files-crypto';
 import { PUBLIC_PATH } from '@server/helpers/paths';
 import { fileManager } from '@server/utils/file-manager';
-import { describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
-import { beforeEach } from 'node:test';
 import path from 'path';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 const upload = async (file: File, token: string) => {
   const uploadResponse = await uploadFile(file, token);
@@ -145,14 +144,14 @@ describe('/public', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('Content-Type')).toInclude('text/plain');
+    expect(response.headers.get('Content-Type')).toContain('text/plain');
     expect(response.headers.get('Content-Length')).toBe(
       dbFile!.size.toString()
     );
     const disposition = response.headers.get('Content-Disposition');
 
-    expect(disposition).toInclude(`filename="${dbFile!.originalName}"`);
-    expect(disposition).toInclude(
+    expect(disposition).toContain(`filename="${dbFile!.originalName}"`);
+    expect(disposition).toContain(
       `filename*=UTF-8''${encodeURIComponent(dbFile!.originalName)}`
     );
 
@@ -186,8 +185,12 @@ describe('/public', () => {
 
     expect(dbFile).toBeDefined();
 
+    // /public requires auth before it reaches the orphaned-file check;
+    // without a token the route returns 401. Send the seeded user's token
+    // so the assertion targets the "orphan -> 404" path the test intends.
     const response = await fetch(
-      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`
+      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
+      { headers: { 'x-token': token } }
     );
 
     expect(response.status).toBe(404);
@@ -296,7 +299,7 @@ describe('/public', () => {
     // load crons here, it will run the file cleanup cron job
     await loadCrons();
 
-    await Bun.sleep(1000); // wait a bit for cron to finish
+    await new Promise((r) => setTimeout(r, 1000)); // wait a bit for cron to finish
 
     const afterDbFile = await tdb
       .select()
@@ -455,7 +458,7 @@ describe('/public', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('Content-Type')).toInclude('text/plain');
+    expect(response.headers.get('Content-Type')).toContain('text/plain');
 
     const responseText = await response.text();
 
@@ -628,7 +631,7 @@ describe('/public', () => {
     expect(disposition).toBeDefined();
     expect(disposition).not.toContain('\r');
     expect(disposition).not.toContain('\n');
-    expect(disposition).toInclude("filename*=UTF-8''");
+    expect(disposition).toContain("filename*=UTF-8''");
   });
 
   test('should not allow path traversal to read arbitrary files', async () => {

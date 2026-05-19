@@ -1,6 +1,6 @@
-import { describe, expect, test } from 'bun:test';
 import { EventEmitter } from 'events';
 import type http from 'http';
+import { describe, expect, test } from 'vitest';
 import {
   getJsonBody,
   getRequestPathname,

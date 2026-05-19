@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { isEmojiOnlyMessage, isEmptyMessage } from '../message-sanitizer';
 
 describe('isEmptyMessage', () => {

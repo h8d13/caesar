@@ -13,8 +13,8 @@ import {
 // @server/* alias (the agreed channel for cross-workspace server refs).
 // Top-level `import type` (not inline `import { type ... }`) is required
 // here: Rolldown resolves the module before stripping type-only specifiers,
-// so the inline form pulls the real server router tree (and its `bun`
-// import) into the client bundle.
+// so the inline form pulls the real server router tree (and its Node-only
+// imports like @libsql/client) into the client bundle.
 import type { TConnectionParams } from '@caesar/shared';
 import type { AppRouter } from '@server/routers';
 import { createTRPCProxyClient, createWSClient, wsLink } from '@trpc/client';

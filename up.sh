@@ -76,4 +76,4 @@ echo "BUILDING CAESAR VERSION HASH: $CAESAR_BUILD_VERSION"
 echo ""
 
 # convenience wrapper for prod builds
-docker system prune -f && docker compose --profile prod build --no-cache && docker compose --profile prod up -d
+docker system prune -f && docker compose --profile prod build --no-cache --progress=plain && docker compose --profile prod up -d

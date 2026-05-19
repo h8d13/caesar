@@ -3,10 +3,10 @@ import { settings } from '@caesar/shared/db/schema';
 import { login, uploadFile } from '@server/__tests__/helpers';
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
 import { TMP_PATH } from '@server/helpers/paths';
-import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
+import { afterAll, beforeEach, describe, expect, test } from 'vitest';
 import { sanitizeFileName } from '../helpers';
 
 const getMockFile = (content: string): File => {
@@ -341,7 +341,11 @@ describe('/upload', () => {
     const blob = new Blob([content], { type: 'text/plain' });
     const file = new File([blob], 'safe.txt', { type: 'text/plain' });
 
-    expect(() =>
+    // Fetch rejects synchronously inside its promise when a header value is
+    // invalid (null byte). Use rejects.toThrow rather than toThrow on the
+    // sync call site, otherwise the rejection turns into an unhandled
+    // rejection in undici that vitest reports separately.
+    await expect(
       fetch(`${testsBaseUrl}/upload`, {
         method: 'POST',
         headers: {
@@ -353,7 +357,7 @@ describe('/upload', () => {
         },
         body: file
       })
-    ).toThrow();
+    ).rejects.toThrow();
   });
 
   test('should reject dot-dot filename', async () => {

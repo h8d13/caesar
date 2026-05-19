@@ -7,6 +7,7 @@ import {
   type TCrashStateUpdate
 } from '@caesar/shared/games/crash';
 import { db } from '@server/db';
+import { createHash } from 'crypto';
 import { desc, eq } from 'drizzle-orm';
 import {
   BETTING_PHASE_DURATION_MS,
@@ -79,8 +80,8 @@ class CrashRuntime {
     };
   }
 
-  getHistory(limit: number = 20): TCrashRoundHistory[] {
-    return db
+  async getHistory(limit: number = 20): Promise<TCrashRoundHistory[]> {
+    const rows = await db
       .select({
         id: crashRounds.id,
         crashPoint: crashRounds.crashPoint,
@@ -90,8 +91,8 @@ class CrashRuntime {
       .where(eq(crashRounds.endedAt, crashRounds.endedAt)) // just need non-null, use IS NOT NULL via raw
       .orderBy(desc(crashRounds.id))
       .limit(limit)
-      .all()
-      .filter((r) => r.crashPoint > 0);
+      .all();
+    return rows.filter((r) => r.crashPoint > 0);
   }
 
   async placeBet(
@@ -122,7 +123,7 @@ class CrashRuntime {
       this.roundId
     );
 
-    const bet = db
+    const bet = await db
       .insert(crashBets)
       .values({
         roundId: this.roundId,
@@ -176,7 +177,8 @@ class CrashRuntime {
 
     await this.callbacks.updateLedgerEntry(bet.ledgerEntryId, profit);
 
-    db.update(crashBets)
+    await db
+      .update(crashBets)
       .set({ cashedOutAt: cashoutMultiplier, profit })
       .where(eq(crashBets.id, bet.betId))
       .run();
@@ -194,7 +196,7 @@ class CrashRuntime {
     this.crashPoint = this.generateCrashPoint();
     this.phaseStartedAt = Date.now();
 
-    const round = db
+    const round = await db
       .insert(crashRounds)
       .values({
         crashPoint: this.crashPoint,
@@ -209,14 +211,14 @@ class CrashRuntime {
     this.notifyStateSubscribers();
 
     setTimeout(() => {
-      this.startFlyingPhase();
+      void this.startFlyingPhase();
     }, BETTING_PHASE_DURATION_MS);
   }
 
-  private startFlyingPhase() {
+  private async startFlyingPhase() {
     if (this.activeBets.length === 0) {
       this.multiplier = this.crashPoint;
-      this.startCrashedPhase();
+      await this.startCrashedPhase();
       return;
     }
 
@@ -228,25 +230,25 @@ class CrashRuntime {
     this.notifyStateSubscribers();
 
     this.tickInterval = setInterval(() => {
-      this.tick();
+      void this.tick();
     }, MULTIPLIER_TICK_INTERVAL_MS);
   }
 
-  private tick() {
+  private async tick() {
     const elapsed = (Date.now() - this.flyingStartedAt) / 1000;
     this.multiplier =
       Math.floor(Math.exp(MULTIPLIER_GROWTH_RATE * elapsed) * 100) / 100;
 
     if (this.multiplier >= this.crashPoint) {
       this.multiplier = this.crashPoint;
-      this.crash();
+      await this.crash();
       return;
     }
 
     this.notifyStateSubscribers();
   }
 
-  private crash() {
+  private async crash() {
     if (this.tickInterval) {
       clearInterval(this.tickInterval);
       this.tickInterval = null;
@@ -261,14 +263,15 @@ class CrashRuntime {
       }
     }
 
-    this.startCrashedPhase();
+    await this.startCrashedPhase();
   }
 
-  private startCrashedPhase() {
+  private async startCrashedPhase() {
     this.phase = CrashPhase.CRASHED;
     this.phaseStartedAt = Date.now();
 
-    db.update(crashRounds)
+    await db
+      .update(crashRounds)
       .set({ endedAt: Date.now() })
       .where(eq(crashRounds.id, this.roundId))
       .run();
@@ -283,7 +286,7 @@ class CrashRuntime {
     this.notifyResultSubscribers(result);
 
     setTimeout(() => {
-      this.startBettingPhase();
+      void this.startBettingPhase();
     }, CRASHED_PHASE_DURATION_MS);
   }
 
@@ -295,9 +298,9 @@ class CrashRuntime {
   }
 
   private hashCrashPoint(point: number): string {
-    const hasher = new Bun.CryptoHasher('sha256');
-    hasher.update(String(point) + '-' + Date.now());
-    return hasher.digest('hex');
+    return createHash('sha256')
+      .update(String(point) + '-' + Date.now())
+      .digest('hex');
   }
 
   private getPublicBets(): TCrashActiveBet[] {

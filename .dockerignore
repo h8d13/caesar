@@ -12,8 +12,12 @@ data-test
 experiments
 
 apps/client/dist
+apps/client/.vite-devmaps
 apps/server/build/out
 apps/server/build/temp
+**/dist
+**/.vite
+**/coverage
 
 caddy
 docker-compose.yaml

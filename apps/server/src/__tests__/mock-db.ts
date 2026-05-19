@@ -1,13 +1,9 @@
-import { Database } from 'bun:sqlite';
-import { mock } from 'bun:test';
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { drizzle, type BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
-import { DRIZZLE_PATH } from '../helpers/paths';
-import { seedDatabase } from './seed';
+import { type LibSQLDatabase } from 'drizzle-orm/libsql';
+import { vi } from 'vitest';
 
 /**
- * This file is preloaded FIRST (via bunfig.toml) to mock the db module
- * before any other code imports it.
+ * This file is preloaded FIRST (via vitest.config.ts setupFiles) to mock
+ * the db module before any other code imports it.
  *
  * Architecture:
  * 1. mock-db.ts (this file) - Creates initial db for module imports
@@ -21,27 +17,16 @@ import { seedDatabase } from './seed';
  * the getter, so that setTestDb() properly updates the active database.
  */
 
-let tdb: BunSQLiteDatabase;
+let tdb: LibSQLDatabase;
 
-const initDb = async () => {
-  const sqlite = new Database(':memory:', { create: true, strict: true });
-
-  sqlite.run('PRAGMA foreign_keys = ON;');
-
-  tdb = drizzle({ client: sqlite });
-
-  await migrate(tdb, { migrationsFolder: DRIZZLE_PATH });
-  await seedDatabase(tdb);
-
-  return tdb;
-};
-
-await initDb();
-
-// create a Proxy that forwards all operations to the current tdb
-const dbProxy = new Proxy({} as BunSQLiteDatabase, {
+// Create the proxy BEFORE the vi.mock factory could possibly run. vitest
+// hoists vi.mock to the top, and any module-graph import of '../db/index'
+// triggers the factory; if dbProxy were still in the TDZ at that point, the
+// factory would throw and the module exports would never bind. The proxy
+// safely tolerates `tdb` being undefined until initDb() finishes.
+const dbProxy = new Proxy({} as LibSQLDatabase, {
   get(_target, prop) {
-    return (tdb as any)[prop];
+    return (tdb as any)?.[prop];
   },
   set(_target, prop, value) {
     (tdb as any)[prop] = value;
@@ -49,13 +34,17 @@ const dbProxy = new Proxy({} as BunSQLiteDatabase, {
   }
 });
 
-mock.module('../db/index', () => ({
+vi.mock('../db/index', () => ({
   db: dbProxy,
   loadDb: async () => {} // No-op in tests
 }));
 
-const setTestDb = (newDb: BunSQLiteDatabase) => {
+// setup.ts's beforeEach creates a fresh db per test and calls setTestDb
+// to point the proxy at it. The proxy tolerates a null tdb in the brief
+// window between this module's evaluation and the first beforeEach.
+
+const setTestDb = (newDb: LibSQLDatabase) => {
   tdb = newDb;
 };
 
-export { DRIZZLE_PATH, setTestDb };
+export { setTestDb };

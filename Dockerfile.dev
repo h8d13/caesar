@@ -1,14 +1,31 @@
-FROM oven/bun:latest
+# syntax=docker/dockerfile:1.7
+FROM node:24-slim
+
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+ENV MEDIASOUP_WORKER_BIN=/usr/local/bin/mediasoup-worker
+
+# pnpm via corepack (bundled with Node 24).
+RUN corepack enable
+
+# argon2 still needs node-gyp (build-essential, python3). mediasoup's
+# build is skipped via MEDIASOUP_WORKER_BIN + the script below, so we
+# don't need python3-pip here.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential python3 ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy everything
 COPY . .
 
-# Install dependencies
-RUN bun install
+# Fetch the kernel6 prebuilt before install so mediasoup's postinstall
+# sees MEDIASOUP_WORKER_BIN and short-circuits.
+RUN scripts/fetch-mediasoup-worker.sh /usr/local/bin
+
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile
 
 EXPOSE 4991 5173 40000
 
-# Run both Vite dev server and Bun server
-CMD ["sh", "-c", "cd apps/client && bun run dev --host 0.0.0.0 & cd apps/server && bun run dev"]
+CMD ["sh", "-c", "cd apps/client && pnpm dev --host 0.0.0.0 & cd apps/server && pnpm dev"]

@@ -24,7 +24,7 @@ const addSoundRoute = protectedProcedure
       const newFile = await fileManager.saveFile(data.fileId, ctx.userId);
       const uniqueSoundName = await getUniqueSoundName(data.name);
 
-      const sound = db
+      const sound = await db
         .insert(sounds)
         .values({
           name: uniqueSoundName,

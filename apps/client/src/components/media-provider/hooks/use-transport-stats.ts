@@ -464,8 +464,11 @@ const useTransportStats = () => {
     // Latest-stats ref lets printStats stay identity-stable while still
     // logging the current snapshot. Without this, the [stats] dep produced a
     // new callback every tick, re-running the window-prop effect each second.
+    // Ref write goes in an effect (not render) so react-hooks/refs is happy.
     const statsRef = useRef(stats);
-    statsRef.current = stats;
+    useEffect(() => {
+        statsRef.current = stats;
+    }, [stats]);
 
     const printStats = useCallback(() => {
         logVoice('Current Transport Stats:', { stats: statsRef.current });

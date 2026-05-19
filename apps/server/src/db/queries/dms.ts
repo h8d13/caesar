@@ -16,7 +16,7 @@ const getDirectMessageChannel = async (
 ) => {
   const [a, b] = normalizePair(userOneId, userTwoId);
 
-  return db
+  return await db
     .select()
     .from(directMessages)
     .where(

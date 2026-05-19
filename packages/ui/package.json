@@ -11,7 +11,7 @@
     "lint": "eslint ./src --report-unused-disable-directives",
     "lint:fix": "eslint ./src --report-unused-disable-directives --fix",
     "check-types": "tsc --noEmit",
-    "magic": "bun --bun run lint:fix && bun --bun run format && bun --bun run check-types"
+    "magic": "pnpm lint:fix && pnpm format && pnpm check-types"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -42,7 +42,6 @@
     "tailwindcss": "^4.3.0"
   },
   "devDependencies": {
-    "@types/bun": "latest",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "typescript": "~5.9.3",

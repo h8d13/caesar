@@ -19,7 +19,7 @@ import { logger } from './logger';
 import { enqueueActivityLog } from './queues/activity-log';
 import { initVoiceRuntimes } from './runtimes';
 import { createServers } from './utils/create-servers';
-import { loadMediasoup } from './utils/mediasoup';
+import { loadMediasoup, mediaSoupWorker } from './utils/mediasoup';
 
 await loadDb();
 await createServers();
@@ -39,6 +39,20 @@ enqueueActivityLog({
   type: ActivityLogType.SERVER_STARTED
 });
 
-// Graceful shutdown
-process.on('SIGTERM', () => process.exit(0));
-process.on('SIGINT', () => process.exit(0));
+// Graceful shutdown. tsx watch sends SIGTERM on file change; if the
+// mediasoup-worker child isn't closed first, it lingers and tsx loops
+// "Previous process hasn't exited yet. Force killing..." indefinitely.
+let shuttingDown = false;
+const shutdown = () => {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  try {
+    mediaSoupWorker?.close();
+  } catch {
+    // mediasoup may already be down; ignore.
+  }
+  // Give the worker a moment to exit cleanly, then bail.
+  setTimeout(() => process.exit(0), 200).unref();
+};
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);

@@ -29,7 +29,7 @@ const addEmojiRoute = rateLimitedProcedure(protectedProcedure, {
       const newFile = await fileManager.saveFile(data.fileId, ctx.userId);
       const uniqueEmojiName = await getUniqueEmojiName(data.name);
 
-      const emoji = db
+      const emoji = await db
         .insert(emojis)
         .values({
           name: uniqueEmojiName,

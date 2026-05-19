@@ -4,9 +4,9 @@ import {
   type TTempFile
 } from '@caesar/shared';
 import { files } from '@caesar/shared/db/schema';
-import { randomUUIDv7 } from 'bun';
 import { createHash } from 'crypto';
 import fs from 'fs/promises';
+import mime from 'mime-types';
 import path from 'path';
 import { db } from '../db';
 import { removeFile } from '../db/mutations/files';
@@ -14,6 +14,7 @@ import { getExceedingOldFiles, getUsedFileQuota } from '../db/queries/files';
 import { getSettings } from '../db/queries/server';
 import { getStorageUsageByUserId } from '../db/queries/users';
 import { PUBLIC_PATH, TMP_PATH, UPLOADS_PATH } from '../helpers/paths';
+import { randomUUIDv7 } from './uuid';
 
 /**
  * Files workflow:
@@ -74,8 +75,8 @@ class TemporaryFileManager {
     const tempPath = this.getTemporaryFile(id)?.path;
     if (!tempPath) return false;
 
-    const bunFile = Bun.file(tempPath);
-    return bunFile.type.startsWith(mimeTypePrefix);
+    const mimeType = mime.lookup(tempPath) || 'application/octet-stream';
+    return mimeType.startsWith(mimeTypePrefix);
   };
 
   public addTemporaryFile = async ({
@@ -225,9 +226,7 @@ class FileManager {
     await moveFile(tempFile.path, destinationPath);
     await this.removeTemporaryFile(tempFileId, true);
 
-    const bunFile = Bun.file(destinationPath);
-
-    return db
+    return await db
       .insert(files)
       .values({
         name: fileName,
@@ -236,7 +235,7 @@ class FileManager {
         size: tempFile.size,
         originalName: tempFile.originalName,
         userId,
-        mimeType: bunFile?.type || 'application/octet-stream',
+        mimeType: mime.lookup(destinationPath) || 'application/octet-stream',
         createdAt: Date.now()
       })
       .returning()

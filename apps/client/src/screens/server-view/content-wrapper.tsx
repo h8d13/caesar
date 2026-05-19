@@ -12,7 +12,7 @@ import { getTRPCClient } from '@/lib/trpc';
 import { ChannelType } from '@caesar/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import { useSelector } from 'react-redux';
 
 const usePing = () => {
@@ -58,10 +58,7 @@ const PingInfo = memo(() => {
 const WelcomeScreen = memo(
     ({ serverName }: { serverName: string | undefined }) => {
         const info = useSelector(infoSelector);
-        const logoSrc = useMemo(
-            () => (info?.logo ? getFileUrl(info.logo) : '/logo.png'),
-            [info?.logo]
-        );
+        const logoSrc = info?.logo ? getFileUrl(info.logo) : '/logo.png';
 
         return (
             <>

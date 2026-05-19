@@ -1,11 +1,14 @@
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import * as serverModule from '@server/db/queries/server';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { generateFileToken, verifyFileToken } from '../files-crypto';
 
-const mockGetServerTokenSync = mock(() => 'test-server-token-12345');
-
-mock.module('../../db/queries/server', () => ({
-  getServerTokenSync: mockGetServerTokenSync
-}));
+// vi.mock can't intercept this module: setupFiles transitively import
+// files-crypto (via http/public → ../helpers/files-crypto), which captures
+// getServerTokenSync before the test file's vi.mock would fire. vi.spyOn
+// patches the live ESM binding at runtime instead, so the consumer sees
+// the stub.
+const mockGetServerTokenSync = vi.spyOn(serverModule, 'getServerTokenSync');
+mockGetServerTokenSync.mockReturnValue('test-server-token-12345');
 
 describe('files-crypto', () => {
   beforeEach(() => {

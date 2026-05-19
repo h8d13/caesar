@@ -30,12 +30,13 @@ import {
   userRoles,
   users
 } from '@caesar/shared/db/schema';
-import { randomUUIDv7 } from 'bun';
-import { type BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
+import { type LibSQLDatabase } from 'drizzle-orm/libsql';
+import { hashPassword } from '../utils/password';
+import { randomUUIDv7 } from '../utils/uuid';
 
 const TEST_SECRET_TOKEN = 'test-secret-token-for-unit-tests';
 
-const hashedPassword = await Bun.password.hash('password123');
+const hashedPassword = await hashPassword('password123');
 
 /**
  * Current mocked data in the database after seeding (not complete, just a summary):
@@ -54,7 +55,7 @@ const hashedPassword = await Bun.password.hash('password123');
  * - Hello User B (2) (in DM Channel, by User A)
  */
 
-const seedDatabase = async (db: BunSQLiteDatabase) => {
+const seedDatabase = async (db: LibSQLDatabase) => {
   const firstStart = Date.now();
 
   const initialSettings: TISettings = {

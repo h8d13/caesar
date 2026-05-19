@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import http from 'http';
+import mime from 'mime-types';
 import path from 'path';
 import zlib from 'zlib';
 import { INTERFACE_PATH } from '../helpers/paths';
@@ -133,8 +134,7 @@ const interfaceRouteHandler = (
   res.setHeader('ETag', etag);
   res.setHeader('Last-Modified', lastModified);
 
-  const file = Bun.file(requestedPath);
-  const contentType = file.type;
+  const contentType = mime.lookup(requestedPath) || 'application/octet-stream';
   const baseType = contentType.split(';')[0]?.trim() || '';
   const shouldCompress = encoding && COMPRESSIBLE_TYPES.has(baseType);
 
@@ -183,7 +183,7 @@ const interfaceRouteHandler = (
     fileStream.on('open', () => {
       res.writeHead(200, {
         'Content-Type': contentType,
-        'Content-Length': file.size
+        'Content-Length': stats.size
       });
       fileStream.pipe(res);
     });
