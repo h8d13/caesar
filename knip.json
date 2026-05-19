@@ -5,7 +5,7 @@
       "project": []
     },
     "apps/server": {
-      "entry": ["src/**/__tests__/**/*.test.ts", "build/**/*.ts"],
+      "entry": ["src/**/__tests__/**/*.test.ts"],
       "project": ["src/**/*.ts"]
     },
     "apps/client": {

@@ -10,3 +10,8 @@ onlyBuiltDependencies:
   - argon2
   - esbuild
   - mediasoup
+
+# Refuse versions published less than 24h ago. Catches compromised releases
+# during the window where a malicious publish hasn't been detected yet.
+# Bump to 10080 (1 week) if same-day upgrades aren't needed.
+minimumReleaseAge: 1440
