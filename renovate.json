@@ -6,7 +6,7 @@
     ":semanticCommits",
     ":timezone(Europe/Lisbon)"
   ],
-  "enabledManagers": ["pnpm", "github-actions", "dockerfile", "docker-compose"],
+  "enabledManagers": ["npm", "github-actions", "dockerfile", "docker-compose"],
   "rangeStrategy": "bump",
   "prConcurrentLimit": 5,
   "prHourlyLimit": 2,
