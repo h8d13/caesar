@@ -16,7 +16,6 @@ apps/client/.vite-devmaps
 apps/server/build/out
 apps/server/build/temp
 **/dist
-**/build
 **/.vite
 **/coverage
 
