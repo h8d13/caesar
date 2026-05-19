@@ -16,15 +16,17 @@ export default defineConfig({
       './src/__tests__/mock-db.ts',
       './src/__tests__/setup.ts'
     ],
+    globalSetup: ['./src/__tests__/global-teardown.ts'],
     testTimeout: 30000,
     hookTimeout: 30000,
     bail: 0,
-    // Each file in its own forked process. libsql's native binding tends to
-    // segfault under accumulated load in a long-lived worker; per-file forks
-    // contain the blast radius (one bad file doesn't kill the rest of the
-    // suite). Files still run sequentially via fileParallelism: false to
-    // avoid port + db contention on the shared :9999 HTTP server.
-    pool: 'forks',
-    fileParallelism: false
+    // Single-process, shared module cache. Closest to `bun test` semantics:
+    // mediasoup/http/db init runs once across files, not per-fork. The old
+    // libsql segfault that motivated per-file forks was a Bun-runtime
+    // problem; under Node the native binding is stable enough for in-process
+    // reuse. If a libsql crash recurs, fall back to pool: 'forks'.
+    pool: 'threads',
+    fileParallelism: false,
+    isolate: false
   }
 });

@@ -85,12 +85,12 @@ beforeAll(async () => {
 
   if (!g.__caesarSqlite) {
     // libsql `:memory:` doesn't reliably share state across internal
-    // connections that drizzle/migrate may open. A unique tempfile per
-    // fork sidesteps that, and gets cleaned up in afterAll below.
-    const tmpDbPath = path.join(
-      os.tmpdir(),
-      `caesar-test-${process.pid}-${Date.now()}.sqlite`
-    );
+    // connections that drizzle/migrate may open. Tempfile path comes from
+    // globalSetup (env var) so cleanup happens once at suite end, not in
+    // each file's afterAll (which would race the next file).
+    const tmpDbPath =
+      process.env.CAESAR_TEST_DB_PATH ??
+      path.join(os.tmpdir(), `caesar-test-${process.pid}-${Date.now()}.sqlite`);
     g.__caesarTmpDbPath = tmpDbPath;
     const sqlite = createClient({ url: `file:${tmpDbPath}` });
     await sqlite.execute('PRAGMA foreign_keys = ON;');
@@ -141,19 +141,9 @@ afterEach(() => {
 });
 
 afterAll(async () => {
-  // Always remove the per-fork tempfile sqlite so /tmp doesn't accumulate
-  // hundreds of leftover .sqlite files across test runs.
-  const g = globalThis as typeof globalThis & { __caesarTmpDbPath?: string };
-  if (g.__caesarTmpDbPath) {
-    try {
-      await fs.rm(g.__caesarTmpDbPath, { force: true });
-      await fs.rm(`${g.__caesarTmpDbPath}-shm`, { force: true });
-      await fs.rm(`${g.__caesarTmpDbPath}-wal`, { force: true });
-    } catch {
-      // ignore
-    }
-  }
-
+  // Sqlite tempfile is cleaned by globalSetup teardown (once for the whole
+  // suite). Per-file afterAll would race the next file's beforeAll under
+  // isolate: false.
   if (!CLEANUP_AFTER_FINISH) return;
 
   try {
