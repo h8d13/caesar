@@ -41,7 +41,7 @@
       "groupName": "docker"
     },
     {
-      "matchPackageNames": ["node", "actions/setup-node"],
+      "matchPackageNames": ["node", "actions/setup-node", "@types/node"],
       "groupName": "node runtime"
     },
     {
@@ -54,6 +54,18 @@
       "matchPackageNames": ["mediasoup"],
       "rangeStrategy": "pin",
       "description": "native worker binary, pin exact"
+    },
+    {
+      "matchPackageNames": [
+        "uuid", "@types/uuid",
+        "mime-types", "@types/mime-types",
+        "ws", "@types/ws",
+        "ini", "@types/ini",
+        "jsonwebtoken", "@types/jsonwebtoken",
+        "sanitize-html", "@types/sanitize-html"
+      ],
+      "groupName": "types-and-packages",
+      "description": "keep each lib + its @types/lib in one PR so versions cant drift"
     }
   ],
   "vulnerabilityAlerts": {
