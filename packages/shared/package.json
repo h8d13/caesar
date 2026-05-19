@@ -28,7 +28,7 @@
   },
   "peerDependencies": {
     "@types/react": "^19.2.14",
-    "typescript": "~5.9.3",
+    "typescript": "~6.0.3",
     "@types/linkify-it": "^5.0.0",
     "@eslint/js": "^10.0.1",
     "eslint": "^10.4.0",
