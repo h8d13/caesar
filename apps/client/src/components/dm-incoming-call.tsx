@@ -1,3 +1,4 @@
+import { setDmsOpen, setSelectedDmChannelId } from '@/features/app/actions';
 import { startPeerIncomingCallRingLoop } from '@/features/server/sounds/actions';
 import { useUserById } from '@/features/server/users/hooks';
 import { joinVoice } from '@/features/server/voice/actions';
@@ -30,6 +31,11 @@ const DmIncomingCall = memo(() => {
                         return;
                     }
                     await init(caps, channelId);
+                    // Callee can be anywhere when accepting (server text
+                    // channel, a different DM). Snap them to the DM that's
+                    // now hosting the call so the panel + top-bar align.
+                    setDmsOpen(true);
+                    setSelectedDmChannelId(channelId);
                 } catch {
                     toast.error('Could not accept call');
                 }

@@ -1,3 +1,7 @@
+import {
+    dmsOpenSelector,
+    selectedDmChannelIdSelector
+} from '@/features/app/selectors';
 import type { IRootState } from '@/features/store';
 import type { TChannel } from '@caesar/shared';
 import { createSelector } from '@reduxjs/toolkit';
@@ -49,11 +53,21 @@ export const channelsByCategoryIdSelector = createCachedSelector(
             .sort((a, b) => a.position - b.position)
 )((_, categoryId: number) => categoryId);
 
+// "Selected" tracks two distinct cursors: selectedChannelId for server mode,
+// selectedDmChannelId for DM mode (toggled by dmsOpen). Both must be honored
+// or the top-bar voice controls hide whenever the active panel is a DM call.
 export const isCurrentVoiceChannelSelectedSelector = createSelector(
-    [selectedChannelIdSelector, currentVoiceChannelIdSelector],
-    (selectedChannelId, currentVoiceChannelId) =>
-        currentVoiceChannelId !== undefined &&
-        selectedChannelId === currentVoiceChannelId
+    [
+        selectedChannelIdSelector,
+        selectedDmChannelIdSelector,
+        dmsOpenSelector,
+        currentVoiceChannelIdSelector
+    ],
+    (selectedChannelId, selectedDmChannelId, dmsOpen, currentVoiceChannelId) => {
+        if (currentVoiceChannelId === undefined) return false;
+        if (dmsOpen) return selectedDmChannelId === currentVoiceChannelId;
+        return selectedChannelId === currentVoiceChannelId;
+    }
 );
 
 export const channelPermissionsByIdSelector = (

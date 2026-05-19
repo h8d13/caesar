@@ -1,3 +1,4 @@
+import { setDmsOpen, setSelectedDmChannelId } from '@/features/app/actions';
 import { startCallRingLoop } from '@/features/server/sounds/actions';
 import { joinVoice } from '@/features/server/voice/actions';
 import { useMedia } from '@/features/server/voice/hooks';
@@ -35,6 +36,11 @@ const DmCallButton = memo(({ channelId }: TProps) => {
                     // mirror the regular voice-join path so mediasoup
                     // transport + producer get set up.
                     await init(caps, channelId);
+                    // Pull the user back to the DM panel so the top-bar
+                    // voice controls (gated on the DM cursor matching the
+                    // active call) light up even if they wandered off.
+                    setDmsOpen(true);
+                    setSelectedDmChannelId(channelId);
                 } catch {
                     toast.error('Could not start voice');
                 }
