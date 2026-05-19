@@ -7,13 +7,23 @@ ENV CAESAR_BUILD_VERSION=${CAESAR_BUILD_VERSION}
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 
+# MEDIASOUP_WORKER_BIN tells mediasoup-node's postinstall to skip the
+# build (no python+pip / no toolchain needed). The binary is fetched
+# from the pinned GitHub release via scripts/fetch-mediasoup-worker.sh.
+ENV MEDIASOUP_WORKER_BIN=/usr/local/bin/mediasoup-worker
+
 RUN corepack enable
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential python3 python3-pip ca-certificates \
+    ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY . .
+
+# Fetch the kernel6 prebuilt before install so mediasoup's postinstall
+# sees MEDIASOUP_WORKER_BIN and short-circuits. Shaves minutes off the
+# install layer vs compiling from source.
+RUN scripts/fetch-mediasoup-worker.sh /usr/local/bin
 
 # pnpm store cache survives layer rebuilds; only invalidated by pnpm-lock.yaml.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
@@ -37,11 +47,13 @@ RUN apt-get update && \
 RUN corepack enable
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
+ENV MEDIASOUP_WORKER_BIN=/usr/local/bin/mediasoup-worker
 
 # node:24-slim ships a non-root `node` user at UID 1000. Reuse it instead
 # of useradd-ing another at the same UID (which collides and exits 4).
 WORKDIR /app
 COPY --from=builder --chown=node:node /deploy/server /app
+COPY --from=builder /usr/local/bin/mediasoup-worker /usr/local/bin/mediasoup-worker
 # Client built assets, referenced by the server's interface route.
 COPY --from=builder --chown=node:node /app/apps/client/dist /app/interface
 

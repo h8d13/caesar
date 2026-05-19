@@ -203,10 +203,12 @@ describe('deepMerge', () => {
 
     // maxBitrate should be preserved from default even though it wasn't in existing
     expect(result.webRtc.maxBitrate).toBe(30000000);
-    // @ts-expect-error ini.parse returns all values as strings - zod will coerce them to the correct types when we parse the merged config, but deepMerge should just merge as-is
+    // ini.parse returns all values as strings - zod coerces them to the
+    // correct types when we parse the merged config, but deepMerge should
+    // just merge as-is. (The previous @ts-expect-error directive here is
+    // no longer needed: deepMerge's signature widened after migration.)
     expect(result.server.port).toBe('5000');
     expect(result.server.debug).toBe(true);
-    // @ts-expect-error ini.parse returns all values as strings - zod will coerce them to the correct types when we parse the merged config, but deepMerge should just merge as-is
     expect(result.webRtc.port).toBe('40000');
   });
 
@@ -222,7 +224,6 @@ describe('deepMerge', () => {
     const result = deepMerge(defaultConfig, existingConfig);
 
     expect(result.webRtc.maxBitrate).toBe(30000000);
-    // @ts-expect-error ini.parse returns all values as strings - zod will coerce them to the correct types when we parse the merged config, but deepMerge should just merge as-is
     expect(result.webRtc.port).toBe('40000');
     expect(result.webRtc.announcedAddress).toBe('');
   });

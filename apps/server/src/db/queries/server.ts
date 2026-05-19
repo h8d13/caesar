@@ -8,7 +8,13 @@ import { db } from '..';
 let token: string;
 
 const getSettings = async (): Promise<TJoinedSettings> => {
-  const serverSettings = await db.select().from(settings).get()!;
+  // The `!` was previously on the awaited value; with libsql's stricter
+  // return types (T | undefined), the postfix-! pre-await did nothing.
+  // settings row is always present after seed; assert after await.
+  const serverSettings = await db.select().from(settings).get();
+  if (!serverSettings) {
+    throw new Error('Server settings row missing');
+  }
 
   const logo = serverSettings.logoId
     ? await db

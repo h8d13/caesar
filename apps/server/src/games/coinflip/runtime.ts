@@ -405,8 +405,13 @@ class CoinflipRuntime {
   }
 
   private notifyStateSubscribers() {
-    const state = this.getState();
-    for (const cb of this.stateSubscribers) cb(state);
+    // getState became async after the libsql migration (the inner
+    // getActiveChallenges runs an async db query). Fire-and-forget here
+    // since callers expect a no-return; errors are surfaced via logger
+    // inside getState's deps.
+    void this.getState().then((state) => {
+      for (const cb of this.stateSubscribers) cb(state);
+    });
   }
 
   private notifyResultSubscribers(result: TCoinflipResult) {
