@@ -57,9 +57,10 @@ export default function dumpDevMaps(opts: { outDir: string }): Plugin {
                         );
                         if (m) {
                             try {
-                                const json = Buffer.from(m[1], 'base64').toString(
-                                    'utf8'
-                                );
+                                const json = Buffer.from(
+                                    m[1],
+                                    'base64'
+                                ).toString('utf8');
                                 const cleanPath = url.split('?')[0];
                                 const segment = cleanPath.split('/').pop();
                                 if (segment) {
