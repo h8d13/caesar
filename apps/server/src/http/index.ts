@@ -13,6 +13,7 @@ import {
 import { infoRouteHandler } from './info';
 import { interfaceRouteHandler } from './interface';
 import { loginRouteHandler } from './login';
+import { logoutRouteHandler } from './logout';
 import { publicRouteHandler } from './public';
 import { uploadFileRouteHandler } from './upload';
 import { HttpValidationError } from './utils';
@@ -44,7 +45,8 @@ const routeHandlers: Partial<
   POST: {
     exact: {
       '/upload': (req, res) => uploadFileRouteHandler(req, res),
-      '/login': (req, res) => loginRouteHandler(req, res)
+      '/login': (req, res) => loginRouteHandler(req, res),
+      '/logout': (req, res) => logoutRouteHandler(req, res)
     },
     prefix: {}
   }

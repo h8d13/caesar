@@ -1,7 +1,8 @@
 import { Dialog } from '@/components/dialogs/dialogs';
 import { logDebug } from '@/helpers/browser-logger';
-import { getHostFromServer } from '@/helpers/get-file-url';
+import { getHostFromServer, getUrlFromServer } from '@/helpers/get-file-url';
 import {
+    getSessionStorageItem,
     LocalStorageKey,
     removeLocalStorageItem,
     removeSessionStorageItem,
@@ -86,8 +87,24 @@ export const disconnectFromServer = () => {
     // it survives any beforeunload race (cleanup's localStorage clear is
     // gated on isNavigatingAway to protect refresh, which can flip true
     // between click and the cleanup line otherwise).
+    const token = getSessionStorageItem(SessionStorageKey.TOKEN);
     removeLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN);
     removeSessionStorageItem(SessionStorageKey.TOKEN);
+
+    // Best-effort server revoke: bumps sessionEpoch so leaked copies of the
+    // JWT (cookie, etc) stop authenticating, and returns a clearing
+    // Set-Cookie. Fire-and-forget; local state has already been wiped, so
+    // a failed/cancelled request can't leave the user half-logged-out.
+    if (token) {
+        const url = getUrlFromServer();
+        fetch(`${url}/logout`, {
+            method: 'POST',
+            headers: { 'x-token': token },
+            credentials: 'include',
+            keepalive: true
+        }).catch(() => {});
+    }
+
     cleanup();
     unsubscribeFromServer?.();
 };

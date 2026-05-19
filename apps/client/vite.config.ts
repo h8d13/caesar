@@ -25,6 +25,7 @@ export default defineConfig({
             '/info': 'http://localhost:4991',
             '/healthz': 'http://localhost:4991',
             '/login': 'http://localhost:4991',
+            '/logout': 'http://localhost:4991',
             '/upload': 'http://localhost:4991',
             '/public': 'http://localhost:4991'
         }
