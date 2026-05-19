@@ -11,7 +11,7 @@ import { IS_PRODUCTION, SERVER_VERSION } from './utils/env';
 import { ActivityLogType } from '@caesar/shared';
 import { config, SERVER_PRIVATE_IP } from './config';
 import { loadCrons } from './crons';
-import { loadDb } from './db';
+import { closeDb, loadDb } from './db';
 import { initCoinflip } from './games/coinflip/init';
 import { initCrash } from './games/crash/init';
 import { initRoulette } from './games/roulette/init';
@@ -51,6 +51,9 @@ const shutdown = () => {
   } catch {
     // mediasoup may already be down; ignore.
   }
+  // Release the libsql writer lock immediately so the next tsx-watch
+  // instance doesn't race us on boot and hit SQLITE_BUSY.
+  closeDb();
   // Give the worker a moment to exit cleanly, then bail.
   setTimeout(() => process.exit(0), 200).unref();
 };

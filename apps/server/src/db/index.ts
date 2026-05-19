@@ -2,6 +2,7 @@ import { createClient, type Client } from '@libsql/client';
 import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql';
 import { migrate } from 'drizzle-orm/libsql/migrator';
 import { DB_PATH, DRIZZLE_PATH } from '../helpers/paths';
+import { IS_PRODUCTION } from '../utils/env';
 import { seedDatabase } from './seed';
 
 let db: LibSQLDatabase;
@@ -20,12 +21,24 @@ const loadDb = async () => {
 
   await migrate(db, { migrationsFolder: DRIZZLE_PATH });
 
-  // Rewrite the file to reclaim pages freed by DROP COLUMN / UPDATE-to-NULL.
-  // Without this, deleted bytes (e.g. old raw IPs from migration 0010)
-  // linger in the file's free list and are forensically recoverable.
-  await sqlite.execute('VACUUM;');
+  // Prod only: rewrite the file to reclaim pages freed by DROP COLUMN /
+  // UPDATE-to-NULL. Deleted bytes (old raw IPs from migration 0010) linger
+  // in the free list and are forensically recoverable otherwise. Skipped
+  // in dev because VACUUM grabs an exclusive writer lock for the full
+  // rewrite and races tsx watch restarts (SQLITE_BUSY on the new instance).
+  if (IS_PRODUCTION) {
+    await sqlite.execute('VACUUM;');
+  }
 
   await seedDatabase();
 };
 
-export { db, loadDb };
+const closeDb = () => {
+  try {
+    sqlite?.close();
+  } catch {
+    // Already closed or never opened. Best-effort on shutdown.
+  }
+};
+
+export { closeDb, db, loadDb };

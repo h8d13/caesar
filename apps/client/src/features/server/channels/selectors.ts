@@ -63,7 +63,12 @@ export const isCurrentVoiceChannelSelectedSelector = createSelector(
         dmsOpenSelector,
         currentVoiceChannelIdSelector
     ],
-    (selectedChannelId, selectedDmChannelId, dmsOpen, currentVoiceChannelId) => {
+    (
+        selectedChannelId,
+        selectedDmChannelId,
+        dmsOpen,
+        currentVoiceChannelId
+    ) => {
         if (currentVoiceChannelId === undefined) return false;
         if (dmsOpen) return selectedDmChannelId === currentVoiceChannelId;
         return selectedChannelId === currentVoiceChannelId;

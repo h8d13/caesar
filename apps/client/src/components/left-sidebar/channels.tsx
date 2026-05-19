@@ -1,7 +1,6 @@
 import { TypingDots } from '@/components/typing-dots';
 import {
     useChannelById,
-    useChannelsByCategoryId,
     useCurrentVoiceChannelId,
     useSelectedChannelId
 } from '@/features/server/channels/hooks';
@@ -16,22 +15,9 @@ import {
     useVoiceUsersByChannelId
 } from '@/features/server/hooks';
 import { useVoiceChannelExternalStreamsList } from '@/features/server/voice/hooks';
-import { getTRPCClient } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
-import {
-    ChannelPermission,
-    Permission,
-    type TChannel,
-    getTrpcError
-} from '@caesar/shared';
-import {
-    DndContext,
-    type DragEndEvent,
-    PointerSensor,
-    closestCenter,
-    useSensor,
-    useSensors
-} from '@dnd-kit/core';
+import { ChannelPermission, Permission, type TChannel } from '@caesar/shared';
+import { useDroppable } from '@dnd-kit/core';
 import {
     SortableContext,
     useSortable,
@@ -40,7 +26,6 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Hash, Volume2 } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
-import { toast } from 'sonner';
 import { ChannelContextMenu } from '../context-menus/channel';
 import { UnreadCount } from '../unread-count';
 import { CallTime } from './call-time';
@@ -226,7 +211,7 @@ const Channel = memo(({ channelId, isSelected, onSelect }: TChannelProps) => {
         transform,
         transition,
         isDragging
-    } = useSortable({ id: channelId });
+    } = useSortable({ id: `ch-${channelId}` });
 
     if (!channel) {
         return null;
@@ -275,83 +260,42 @@ const Channel = memo(({ channelId, isSelected, onSelect }: TChannelProps) => {
 
 type TChannelsProps = {
     categoryId: number;
+    // Ordered ids passed from <Categories> so cross-container drag can
+    // optimistically swap items between lists via onDragOver before commit.
+    channelIds: number[];
 };
 
-const Channels = memo(({ categoryId }: TChannelsProps) => {
-    const channels = useChannelsByCategoryId(categoryId);
+const Channels = memo(({ categoryId, channelIds }: TChannelsProps) => {
     const selectedChannelId = useSelectedChannelId();
     const can = useCan();
-    const channelIds = useMemo(
-        () => channels.map((channel) => channel.id),
-        [channels]
+    const channelSortableIds = useMemo(
+        () => channelIds.map((id) => `ch-${id}`),
+        [channelIds]
     );
 
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 8
-            }
-        })
-    );
+    // Droppable for the whole list. Catches drops in empty space (so empty
+    // categories accept channels) and end-of-list drops past the last child.
+    // min-h gives an empty list a real hit-target.
+    const { setNodeRef } = useDroppable({ id: `drop-cat-${categoryId}` });
 
     const onChannelClick = useSelectChannel();
 
-    const handleDragEnd = useCallback(
-        async (event: DragEndEvent) => {
-            const { active, over } = event;
-
-            if (!over || active.id === over.id) {
-                return;
-            }
-
-            const oldIndex = channelIds.indexOf(active.id as number);
-            const newIndex = channelIds.indexOf(over.id as number);
-
-            if (oldIndex === -1 || newIndex === -1) {
-                return;
-            }
-
-            const reorderedIds = [...channelIds];
-            const [movedId] = reorderedIds.splice(oldIndex, 1);
-
-            reorderedIds.splice(newIndex, 0, movedId);
-
-            try {
-                const trpc = getTRPCClient();
-
-                await trpc.channels.reorder.mutate({
-                    categoryId,
-                    channelIds: reorderedIds
-                });
-            } catch (error) {
-                toast.error(getTrpcError(error, 'Failed to reorder channels'));
-            }
-        },
-        [categoryId, channelIds]
-    );
-
     return (
-        <div className="space-y-0.5">
-            <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
+        <div ref={setNodeRef} className="space-y-0.5 min-h-2">
+            <SortableContext
+                items={channelSortableIds}
+                strategy={verticalListSortingStrategy}
+                disabled={!can(Permission.MANAGE_CHANNELS)}
             >
-                <SortableContext
-                    items={channelIds}
-                    strategy={verticalListSortingStrategy}
-                    disabled={!can(Permission.MANAGE_CHANNELS)}
-                >
-                    {channels.map((channel) => (
-                        <Channel
-                            key={channel.id}
-                            channelId={channel.id}
-                            isSelected={selectedChannelId === channel.id}
-                            onSelect={onChannelClick}
-                        />
-                    ))}
-                </SortableContext>
-            </DndContext>
+                {channelIds.map((id) => (
+                    <Channel
+                        key={id}
+                        channelId={id}
+                        isSelected={selectedChannelId === id}
+                        onSelect={onChannelClick}
+                    />
+                ))}
+            </SortableContext>
         </div>
     );
 });

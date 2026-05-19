@@ -22,9 +22,13 @@ const reorderChannelsRoute = protectedProcedure
         const channelId = input.channelIds[i]!;
         const newPosition = i + 1;
 
+        // Writing categoryId every call lets the same route handle both
+        // intra-category reorder and cross-category move. The client emits
+        // a second reorder for the source category to close the gap.
         await tx
           .update(channels)
           .set({
+            categoryId: input.categoryId,
             position: newPosition,
             updatedAt: Date.now()
           })
