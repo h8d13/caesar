@@ -60,6 +60,8 @@ COPY --from=builder --chown=node:node /app/apps/client/dist /app/interface
 USER node
 EXPOSE 4991 40000
 
-# tsx runs the TS source directly. If you later compile to JS via tsc, swap
-# this to `node ./dist/index.js` (and drop the tsx dep from prod).
-CMD ["pnpm", "exec", "tsx", "./src/index.ts"]
+# Run tsx directly via node (not via `pnpm exec`): pnpm's verify-deps-on-run
+# would otherwise try to self-heal at container start, downloading pnpm via
+# Corepack and writing temp files to /app — which trips EACCES under the
+# non-root user. tsx is a runtime dep (kept by pnpm deploy --prod).
+CMD ["node", "node_modules/tsx/dist/cli.mjs", "./src/index.ts"]
