@@ -29,6 +29,10 @@ const signalTypingRoute = rateLimitedProcedure(protectedProcedure, {
       })
     ]);
 
+    // appear-offline users don't leak presence via the typing channel.
+    // Permission checks above still run so this can't be used to probe.
+    if (ctx.user.appearOffline) return;
+
     ctx.pubsub.publishFor(affectedUserIds, ServerEvents.MESSAGE_TYPING, {
       channelId: input.channelId,
       userId: ctx.userId,

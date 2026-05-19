@@ -1,4 +1,9 @@
-import { ChannelPermission, OWNER_ROLE_ID, hasMention } from '@caesar/shared';
+import {
+    ChannelPermission,
+    OWNER_ROLE_ID,
+    UserStatus,
+    hasMention
+} from '@caesar/shared';
 import { createSelector } from '@reduxjs/toolkit';
 import { createCachedSelector } from 're-reselect';
 import type { IRootState } from '../store';
@@ -94,7 +99,8 @@ export const typingUsersByChannelIdSelector = createCachedSelector(
         return userIds
             .filter((id) => id !== ownUserId)
             .map((id) => users.find((u) => u.id === id))
-            .filter((u) => !!u);
+            .filter((u) => !!u)
+            .filter((u) => u.status !== UserStatus.OFFLINE);
     }
 )((_, channelId: number) => channelId);
 
@@ -111,7 +117,8 @@ export const typingUsersByThreadIdSelector = createCachedSelector(
         return userIds
             .filter((id) => id !== ownUserId)
             .map((id) => users.find((u) => u.id === id)!)
-            .filter((u) => !!u);
+            .filter((u) => !!u)
+            .filter((u) => u.status !== UserStatus.OFFLINE);
     }
 )((_, parentMessageId: number) => `thread-${parentMessageId}`);
 
