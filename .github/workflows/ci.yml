@@ -23,7 +23,7 @@ jobs:
 
       - name: Setup pnpm
         # No `version:` defer to "packageManager" in package.json
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           run_install: false
 
