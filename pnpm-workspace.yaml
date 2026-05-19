@@ -8,6 +8,10 @@ packages:
 # prebuilt mediasoup-worker binary in deploy artifacts to skip that.)
 onlyBuiltDependencies:
   - argon2
+  # drizzle-orm declares better-sqlite3 as a peer dep, so pnpm installs
+  # it even though we use the libsql driver. Allow its postinstall so
+  # pnpm doesn't warn; we never actually load the .node binding.
+  - better-sqlite3
   - esbuild
   - mediasoup
 
