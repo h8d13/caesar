@@ -24,3 +24,9 @@ onlyBuiltDependencies:
 # types ("Type '...drizzle-orm@x/y/Column' is not assignable to ...").
 overrides:
   '@libsql/client': '0.15.15'
+
+# pnpm 10's `deploy` command requires workspace packages to be injected
+# (hardlinked into the deploy node_modules) instead of symlinked, so the
+# deployed artifact is self-contained outside the monorepo. Without this
+# flag pnpm errors with ERR_PNPM_DEPLOY_NONINJECTED_WORKSPACE.
+injectWorkspacePackages: true
