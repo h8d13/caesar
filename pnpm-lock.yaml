@@ -185,7 +185,7 @@ importers:
         specifier: ^8.0.13
         version: 8.0.13(@types/node@24.12.4)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.2)(yaml@2.9.0)
       vitest:
-        specifier: ^2.1.0
+        specifier: ^2.1.9
         version: 2.1.9(@types/node@24.12.4)(lightningcss@1.32.0)
 
   apps/server:
@@ -261,7 +261,7 @@ importers:
         specifier: ^3.0.1
         version: 3.0.1
       '@types/node':
-        specifier: ^24.0.0
+        specifier: ^24.12.4
         version: 24.12.4
       '@types/sanitize-html':
         specifier: ^2.16.1
@@ -276,8 +276,8 @@ importers:
         specifier: ^0.31.10
         version: 0.31.10
       esbuild:
-        specifier: ^0.25.0
-        version: 0.25.12
+        specifier: ^0.28.0
+        version: 0.28.0
       eslint:
         specifier: ^10.4.0
         version: 10.4.0(jiti@2.7.0)
@@ -297,13 +297,13 @@ importers:
         specifier: ^4.3.0
         version: 4.3.0(prettier@3.8.3)(typescript@5.9.3)
       tsx:
-        specifier: ^4.19.0
+        specifier: ^4.22.0
         version: 4.22.2
       typescript-eslint:
         specifier: ^8.59.3
         version: 8.59.3(eslint@10.4.0(jiti@2.7.0))(typescript@5.9.3)
       vitest:
-        specifier: ^2.1.0
+        specifier: ^2.1.9
         version: 2.1.9(@types/node@24.12.4)(lightningcss@1.32.0)
 
   packages/shared:
@@ -355,10 +355,10 @@ importers:
         version: 8.59.3(eslint@10.4.0(jiti@2.7.0))(typescript@5.9.3)
     devDependencies:
       '@types/node':
-        specifier: ^24.0.0
+        specifier: ^24.12.4
         version: 24.12.4
       vitest:
-        specifier: ^2.1.0
+        specifier: ^2.1.9
         version: 2.1.9(@types/node@24.12.4)(lightningcss@1.32.0)
 
   packages/ui:
