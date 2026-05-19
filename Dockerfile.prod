@@ -24,15 +24,15 @@ RUN scripts/fetch-mediasoup-worker.sh /usr/local/bin
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile
-RUN pnpm --filter @caesar/client build
-# Bundle (esbuild) + SEA (postject) -> apps/server/dist/caesar.
-RUN pnpm --filter @caesar/server build:sea
+RUN pnpm --filter @node/client build
+# Bundle (esbuild) + SEA (postject) -> apps/server/dist/node.
+RUN pnpm --filter @node/server build:sea
 
 # Prod node_modules for the externalized deps (argon2 native bindings +
 # mediasoup JS wrapper). The SEA binary expects to find these at
 # /app/node_modules at runtime (process.cwd() == /app).
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm --filter @caesar/server deploy --prod /deploy/server
+    pnpm --filter @node/server deploy --prod /deploy/server
 
 # Static assets the server expects to find on disk on first boot.
 # loadEmbeds() copies these into DATA_PATH at startup.
@@ -47,24 +47,24 @@ FROM debian:bookworm-slim
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates libnss3-tools && \
     rm -rf /var/lib/apt/lists/* && \
-    useradd -u 1000 -m -s /sbin/nologin caesar
+    useradd -u 1000 -m -d /home/node -s /sbin/nologin node
 
 ENV CAESAR_ENV=production
 
 WORKDIR /app
-RUN chown caesar:caesar /app
+RUN chown node:node /app
 
 # SEA binary contains node + the server ESM bundle as an asset.
 # Bootstrap extracts the bundle to /app/.caesar-runtime.mjs on boot
 # and dynamic-imports it (so bare specifiers resolve to ./node_modules).
-COPY --from=builder --chown=caesar:caesar --chmod=755 \
+COPY --from=builder --chown=node:node --chmod=755 \
     /app/apps/server/dist/caesar /usr/local/bin/caesar
 
 # Sidecar node_modules for the externals (argon2 + mediasoup tree).
-COPY --from=builder --chown=caesar:caesar /deploy/server/node_modules /app/node_modules
-COPY --from=builder --chown=caesar:caesar /staging /app/static-prod-assets
+COPY --from=builder --chown=node:node /deploy/server/node_modules /app/node_modules
+COPY --from=builder --chown=node:node /staging /app/static-prod-assets
 
-USER caesar
+USER node
 EXPOSE 4991 40000
 
 CMD ["caesar"]
