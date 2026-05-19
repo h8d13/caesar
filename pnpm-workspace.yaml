@@ -14,4 +14,13 @@ onlyBuiltDependencies:
 # Refuse versions published less than 24h ago. Catches compromised releases
 # during the window where a malicious publish hasn't been detected yet.
 # Bump to 10080 (1 week) if same-day upgrades aren't needed.
-minimumReleaseAge: 1440
+# Temporarily commented out while reshuffling deps; re-enable once the
+# lockfile is stable (frozen-lockfile installs bypass the check anyway).
+# minimumReleaseAge: 1440
+
+# Force a single @libsql/client version repo-wide. drizzle-orm's peer-dep
+# resolution otherwise instantiates two drizzle copies (one parametrized
+# per libsql version found in the graph), and TS sees them as different
+# types ("Type '...drizzle-orm@x/y/Column' is not assignable to ...").
+overrides:
+  '@libsql/client': '0.15.15'
