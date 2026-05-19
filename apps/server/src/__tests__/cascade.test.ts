@@ -18,8 +18,8 @@ import {
   userRoles,
   users
 } from '@caesar/shared/db/schema';
-import { describe, expect, test } from 'vitest';
 import { eq } from 'drizzle-orm';
+import { describe, expect, test } from 'vitest';
 import { tdb } from './setup';
 
 describe('database cascades', async () => {

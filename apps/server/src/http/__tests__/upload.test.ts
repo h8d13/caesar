@@ -3,10 +3,10 @@ import { settings } from '@caesar/shared/db/schema';
 import { login, uploadFile } from '@server/__tests__/helpers';
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
 import { TMP_PATH } from '@server/helpers/paths';
-import { afterAll, beforeEach, describe, expect, test } from 'vitest';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
+import { afterAll, beforeEach, describe, expect, test } from 'vitest';
 import { sanitizeFileName } from '../helpers';
 
 const getMockFile = (content: string): File => {

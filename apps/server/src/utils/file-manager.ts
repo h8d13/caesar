@@ -5,9 +5,8 @@ import {
 } from '@caesar/shared';
 import { files } from '@caesar/shared/db/schema';
 import { createHash } from 'crypto';
-import mime from 'mime-types';
-import { randomUUIDv7 } from './uuid';
 import fs from 'fs/promises';
+import mime from 'mime-types';
 import path from 'path';
 import { db } from '../db';
 import { removeFile } from '../db/mutations/files';
@@ -15,6 +14,7 @@ import { getExceedingOldFiles, getUsedFileQuota } from '../db/queries/files';
 import { getSettings } from '../db/queries/server';
 import { getStorageUsageByUserId } from '../db/queries/users';
 import { PUBLIC_PATH, TMP_PATH, UPLOADS_PATH } from '../helpers/paths';
+import { randomUUIDv7 } from './uuid';
 
 /**
  * Files workflow:
@@ -235,8 +235,7 @@ class FileManager {
         size: tempFile.size,
         originalName: tempFile.originalName,
         userId,
-        mimeType:
-          mime.lookup(destinationPath) || 'application/octet-stream',
+        mimeType: mime.lookup(destinationPath) || 'application/octet-stream',
         createdAt: Date.now()
       })
       .returning()

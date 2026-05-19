@@ -134,8 +134,7 @@ const interfaceRouteHandler = (
   res.setHeader('ETag', etag);
   res.setHeader('Last-Modified', lastModified);
 
-  const contentType =
-    mime.lookup(requestedPath) || 'application/octet-stream';
+  const contentType = mime.lookup(requestedPath) || 'application/octet-stream';
   const baseType = contentType.split(';')[0]?.trim() || '';
   const shouldCompress = encoding && COMPRESSIBLE_TYPES.has(baseType);
 

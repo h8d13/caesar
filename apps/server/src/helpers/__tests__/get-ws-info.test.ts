@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'vitest';
 import type http from 'http';
+import { describe, expect, test } from 'vitest';
 import { getWsInfo } from '../get-ws-info';
 
 const createRequest = ({

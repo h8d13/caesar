@@ -142,7 +142,8 @@ class CoinflipRuntime {
       game.id
     );
 
-    await db.update(coinflipGames)
+    await db
+      .update(coinflipGames)
       .set({ creatorLedgerEntryId: ledgerEntryId })
       .where(eq(coinflipGames.id, game.id))
       .run();
@@ -192,7 +193,8 @@ class CoinflipRuntime {
       challengeId
     );
 
-    await db.update(coinflipGames)
+    await db
+      .update(coinflipGames)
       .set({
         opponentId: userId,
         opponentLedgerEntryId: ledgerEntryId,
@@ -243,7 +245,8 @@ class CoinflipRuntime {
       await this.callbacks.updateLedgerEntry(game.creatorLedgerEntryId, 0);
     }
 
-    await db.update(coinflipGames)
+    await db
+      .update(coinflipGames)
       .set({ status: 'cancelled', resolvedAt: Date.now() })
       .where(eq(coinflipGames.id, challengeId))
       .run();
@@ -291,7 +294,8 @@ class CoinflipRuntime {
     await this.callbacks.updateLedgerEntry(winnerLedgerEntryId, game.amount);
     await this.callbacks.updateLedgerEntry(loserLedgerEntryId, -game.amount);
 
-    await db.update(coinflipGames)
+    await db
+      .update(coinflipGames)
       .set({
         status: CoinflipStatus.RESOLVED,
         result,
@@ -337,7 +341,8 @@ class CoinflipRuntime {
       await this.callbacks.updateLedgerEntry(game.creatorLedgerEntryId, 0);
     }
 
-    await db.update(coinflipGames)
+    await db
+      .update(coinflipGames)
       .set({ status: 'expired', resolvedAt: Date.now() })
       .where(eq(coinflipGames.id, challengeId))
       .run();

@@ -20,8 +20,8 @@ import {
 import { initTest, uploadFile } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { verifyPassword } from '@server/utils/password';
-import { describe, expect, test } from 'vitest';
 import { and, eq } from 'drizzle-orm';
+import { describe, expect, test } from 'vitest';
 
 describe('users router', () => {
   test('should throw when user lacks permissions (getAll)', async () => {

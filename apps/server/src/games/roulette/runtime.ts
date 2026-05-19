@@ -261,7 +261,8 @@ class RouletteRuntime {
           bet.profit = -bet.amount;
         }
 
-        await db.update(rouletteBets)
+        await db
+          .update(rouletteBets)
           .set({ profit: bet.profit })
           .where(eq(rouletteBets.id, bet.betId))
           .run();
@@ -270,7 +271,8 @@ class RouletteRuntime {
       }
     }
 
-    await db.update(rouletteRounds)
+    await db
+      .update(rouletteRounds)
       .set({ endedAt: Date.now() })
       .where(eq(rouletteRounds.id, this.roundId))
       .run();

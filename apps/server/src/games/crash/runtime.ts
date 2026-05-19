@@ -177,7 +177,8 @@ class CrashRuntime {
 
     await this.callbacks.updateLedgerEntry(bet.ledgerEntryId, profit);
 
-    await db.update(crashBets)
+    await db
+      .update(crashBets)
       .set({ cashedOutAt: cashoutMultiplier, profit })
       .where(eq(crashBets.id, bet.betId))
       .run();
@@ -269,7 +270,8 @@ class CrashRuntime {
     this.phase = CrashPhase.CRASHED;
     this.phaseStartedAt = Date.now();
 
-    await db.update(crashRounds)
+    await db
+      .update(crashRounds)
       .set({ endedAt: Date.now() })
       .where(eq(crashRounds.id, this.roundId))
       .run();

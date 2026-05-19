@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'vitest';
 import { parse } from 'ini';
+import { describe, expect, test } from 'vitest';
 import { deepMerge } from '../deep-merge';
 
 describe('deepMerge', () => {

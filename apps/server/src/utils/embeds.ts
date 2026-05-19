@@ -33,11 +33,9 @@ const loadEmbeds = async () => {
   try {
     logger.debug('Extracting interface assets');
     await fs.rm(INTERFACE_PATH, { recursive: true, force: true });
-    await fs.cp(
-      path.join(STATIC_ASSETS_DIR, 'interface'),
-      INTERFACE_PATH,
-      { recursive: true }
-    );
+    await fs.cp(path.join(STATIC_ASSETS_DIR, 'interface'), INTERFACE_PATH, {
+      recursive: true
+    });
   } catch (error) {
     logger.error('Failed to copy interface assets:', error);
     process.exit(1);
@@ -47,11 +45,9 @@ const loadEmbeds = async () => {
   try {
     logger.debug('Extracting drizzle migrations');
     await fs.rm(DRIZZLE_PATH, { recursive: true, force: true });
-    await fs.cp(
-      path.join(STATIC_ASSETS_DIR, 'drizzle'),
-      DRIZZLE_PATH,
-      { recursive: true }
-    );
+    await fs.cp(path.join(STATIC_ASSETS_DIR, 'drizzle'), DRIZZLE_PATH, {
+      recursive: true
+    });
   } catch (error) {
     logger.error('Failed to copy drizzle migrations:', error);
     process.exit(1);

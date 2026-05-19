@@ -3,9 +3,9 @@ import { logins, users } from '@caesar/shared/db/schema';
 import { initTest, login } from '@server/__tests__/helpers';
 import { TEST_SECRET_TOKEN } from '@server/__tests__/seed';
 import { tdb } from '@server/__tests__/setup';
-import { describe, expect, test } from 'vitest';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
+import { describe, expect, test } from 'vitest';
 
 const epochFor = async (userId: number): Promise<number> => {
   const row = await tdb

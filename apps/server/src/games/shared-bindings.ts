@@ -28,7 +28,8 @@ const createGameLedgerBindings = (ledgerableType: string) => ({
     return entry.id;
   },
   updateLedgerEntry: async (entryId: number, newAmount: number) => {
-    await db.update(socialCreditLedger)
+    await db
+      .update(socialCreditLedger)
       .set({ amount: newAmount })
       .where(eq(socialCreditLedger.id, entryId))
       .run();
