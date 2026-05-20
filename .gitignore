@@ -6,3 +6,5 @@ data-test/
 .idea**
 .note**
 .vite-devmaps/
+.env
+.env.*

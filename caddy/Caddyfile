@@ -1,3 +1,3 @@
-sub.example.com {
+{$CAESAR_DOMAIN:localhost} {
 	reverse_proxy caesar:4991
 }
