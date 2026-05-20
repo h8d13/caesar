@@ -81,9 +81,8 @@ const defaultConfig: TConfig = {
     port: 40000,
     announcedAddress: '',
     maxBitrate: 30_000_000, // 30 Mbps
-    // 0 = auto (os.cpus().length, capped at 16). Each worker binds
-    // basePort + i for UDP+TCP, so opening N ports is required when N>1.
-    workers: 0
+    // each worker binds basePort + i, must match exposed port range
+    workers: 1
   },
   rateLimiters: {
     sendAndEditMessage: {

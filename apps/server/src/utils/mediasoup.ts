@@ -1,5 +1,4 @@
 import mediasoup from 'mediasoup';
-import os from 'node:os';
 import { config, SERVER_PUBLIC_IP } from '../config.js';
 import { getErrorMessage } from '../helpers/get-error-message.js';
 import { MEDIASOUP_BINARY_PATH } from '../helpers/paths.js';
@@ -19,9 +18,7 @@ let webRtcServerListenInfo: { ip: string; announcedAddress?: string } = {
 
 const resolveWorkerCount = (): number => {
   const cfg = config.webRtc.workers;
-  if (cfg && cfg > 0) return Math.min(cfg, 16);
-  const cpu = os.cpus()?.length ?? 1;
-  return Math.max(1, Math.min(cpu, 16));
+  return cfg && cfg > 0 ? cfg : 1;
 };
 
 const resolveLogLevel = (): mediasoup.types.WorkerLogLevel => {
