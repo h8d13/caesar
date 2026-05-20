@@ -141,8 +141,6 @@ class VoiceRuntime {
   private userWorkerIndex: Map<number, number> = new Map();
   // producers piped to non-owner routers: producerId -> set of dest worker idx
   private pipedProducers: Map<string, Set<number>> = new Map();
-  // external/system streams: streamId (negative key space) -> owning worker idx
-  private externalWorkerIndex: Map<number, number> = new Map();
   private rrCursor = 0;
   private consumerTransports: TTransportMap = {};
   private producerTransports: TTransportMap = {};
@@ -225,7 +223,6 @@ class VoiceRuntime {
     this.routers.clear();
     this.pipedProducers.clear();
     this.userWorkerIndex.clear();
-    this.externalWorkerIndex.clear();
 
     Object.values(this.consumerTransports).forEach((transport) => {
       transport.close();
@@ -380,16 +377,6 @@ class VoiceRuntime {
     const router = this.routers.get(idx);
     if (!router) throw new Error(`Router for worker ${idx} not initialized`);
     return router;
-  };
-
-  private getOrAssignWorkerIndexForExternal = (streamId: number): number => {
-    const existing = this.externalWorkerIndex.get(streamId);
-    if (existing !== undefined) return existing;
-    const slotCount = getAllWorkers().length;
-    const idx = this.rrCursor % slotCount;
-    this.rrCursor++;
-    this.externalWorkerIndex.set(streamId, idx);
-    return idx;
   };
 
   private createRouters = async () => {
