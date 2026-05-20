@@ -16,7 +16,6 @@ const workers: WorkerSlot[] = [];
 let webRtcServerListenInfo: { ip: string; announcedAddress?: string } = {
   ip: '127.0.0.1'
 };
-let rrCounter = 0;
 
 const resolveWorkerCount = (): number => {
   const cfg = config.webRtc.workers;
@@ -102,15 +101,6 @@ const loadMediasoup = async () => {
   }
 };
 
-const pickWorker = (): WorkerSlot => {
-  if (workers.length === 0) {
-    throw new Error('Mediasoup workers not initialized');
-  }
-  const slot = workers[rrCounter % workers.length]!;
-  rrCounter++;
-  return slot;
-};
-
 const getAllWorkers = (): readonly WorkerSlot[] => workers;
 
 const getWorkerSlot = (index: number): WorkerSlot => {
@@ -121,11 +111,5 @@ const getWorkerSlot = (index: number): WorkerSlot => {
 
 const getListenInfo = () => webRtcServerListenInfo;
 
-export {
-  getAllWorkers,
-  getListenInfo,
-  getWorkerSlot,
-  loadMediasoup,
-  pickWorker
-};
+export { getAllWorkers, getListenInfo, getWorkerSlot, loadMediasoup };
 export type { WorkerSlot };
