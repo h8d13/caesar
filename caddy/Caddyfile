@@ -1,3 +1,4 @@
-{$CAESAR_DOMAIN:localhost} {
-	reverse_proxy caesar:4991
+{$CAESAR_SITE:localhost} {
+	{$CAESAR_TLS_DIRECTIVE:}
+	reverse_proxy {$CAESAR_UPSTREAM:caesar:4991}
 }

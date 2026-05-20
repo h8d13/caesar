@@ -1,4 +1,5 @@
 #!/bin/bash
+[ "$EUID" -ne 0 ]; echo "this is meant to be run as root" && exit 1
 # one-time setup, as root
 tee /etc/sysctl.d/99-mediasoup.conf > /dev/null <<EOF
 net.core.rmem_max=16777216

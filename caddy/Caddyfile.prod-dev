@@ -1,9 +1,0 @@
-# Prod-dev front for the `prod-dev` compose profile.
-# `tls internal` makes Caddy mint a self-signed cert from its local CA on
-# first start, so https://localhost:8443 works without DNS or a public CA.
-# Browsers will warn on first visit; accept once per browser profile.
-## look out for alt-svc in devtools to say h3
-sub.example.com:8443 {
-	tls internal
-	reverse_proxy caesar-prod-dev:4991
-}

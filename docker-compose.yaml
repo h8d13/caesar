@@ -34,7 +34,9 @@ services:
       - "443:443/tcp"
       - "443:443/udp"
     environment:
-      CAESAR_DOMAIN: ${CAESAR_DOMAIN:-localhost}
+      CAESAR_SITE: ${CAESAR_SITE:-localhost}
+      CAESAR_TLS_DIRECTIVE: ""
+      CAESAR_UPSTREAM: caesar:4991
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -75,8 +77,12 @@ services:
       - caesar-prod-dev
     ports:
       - "8443:8443"
+    environment:
+      CAESAR_SITE: "localhost:8443"
+      CAESAR_TLS_DIRECTIVE: "tls internal"
+      CAESAR_UPSTREAM: "caesar-prod-dev:4991"
     volumes:
-      - ./caddy/Caddyfile.prod-dev:/etc/caddy/Caddyfile:ro
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
 
   # Dev: pnpm install + Vite + Node server
   caesar-dev:
