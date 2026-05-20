@@ -3,11 +3,8 @@ import type {
   TRouletteStateUpdate
 } from '@caesar/shared/games/roulette';
 import { RouletteBetType } from '@caesar/shared/games/roulette';
-import {
-  protectedProcedure,
-  rateLimitedProcedure,
-  t
-} from '@server/utils/trpc';
+import { gamesProcedure } from '@server/games/shared-bindings';
+import { rateLimitedProcedure, t } from '@server/utils/trpc';
 import { TRPCError } from '@trpc/server';
 import { observable } from '@trpc/server/observable';
 import { z } from 'zod';
@@ -20,17 +17,17 @@ const setRuntime = (r: RouletteRuntime) => {
   runtime = r;
 };
 
-const getStateRoute = protectedProcedure.query(() => {
+const getStateRoute = gamesProcedure.query(() => {
   return runtime.getState();
 });
 
-const getHistoryRoute = protectedProcedure
+const getHistoryRoute = gamesProcedure
   .input(z.object({ limit: z.number().min(1).max(50).default(20) }))
   .query(({ input }) => {
     return runtime.getHistory(input.limit);
   });
 
-const placeBetRoute = rateLimitedProcedure(protectedProcedure, {
+const placeBetRoute = rateLimitedProcedure(gamesProcedure, {
   maxRequests: 15,
   windowMs: 15_000,
   logLabel: 'roulette.placeBet'
@@ -59,7 +56,7 @@ const placeBetRoute = rateLimitedProcedure(protectedProcedure, {
     }
   });
 
-const placeBetsRoute = rateLimitedProcedure(protectedProcedure, {
+const placeBetsRoute = rateLimitedProcedure(gamesProcedure, {
   maxRequests: 5,
   windowMs: 15_000,
   logLabel: 'roulette.placeBets'
@@ -102,7 +99,7 @@ const placeBetsRoute = rateLimitedProcedure(protectedProcedure, {
     return { placed: input.bets.length - errors.length, errors };
   });
 
-const removeBetRoute = rateLimitedProcedure(protectedProcedure, {
+const removeBetRoute = rateLimitedProcedure(gamesProcedure, {
   maxRequests: 15,
   windowMs: 15_000,
   logLabel: 'roulette.removeBet'
@@ -119,14 +116,14 @@ const removeBetRoute = rateLimitedProcedure(protectedProcedure, {
     }
   });
 
-const onStateUpdateRoute = protectedProcedure.subscription(() => {
+const onStateUpdateRoute = gamesProcedure.subscription(() => {
   return observable<TRouletteStateUpdate>((observer) => {
     const unsub = runtime.subscribeToState((state) => observer.next(state));
     return { unsubscribe: unsub };
   });
 });
 
-const onRoundResultRoute = protectedProcedure.subscription(() => {
+const onRoundResultRoute = gamesProcedure.subscription(() => {
   return observable<TRouletteRoundResult>((observer) => {
     const unsub = runtime.subscribeToResult((result) => observer.next(result));
     return { unsubscribe: unsub };

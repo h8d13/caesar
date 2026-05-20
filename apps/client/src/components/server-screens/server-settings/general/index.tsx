@@ -76,6 +76,18 @@ const General = memo(() => {
                         }
                     />
                 </Group>
+
+                <Group
+                    label="Enable Casino Games"
+                    description="Allow users to play Crash, Roulette and Coinflip with social credit. If disabled, all game routes are blocked."
+                >
+                    <Switch
+                        checked={settings.gamesEnabled}
+                        onCheckedChange={(checked) =>
+                            onChange('gamesEnabled', checked)
+                        }
+                    />
+                </Group>
             </CardContent>
         </Card>
     );

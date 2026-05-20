@@ -1,4 +1,5 @@
 import type { TTempFile } from '@caesar/shared';
+import { settings } from '@caesar/shared/db/schema';
 import {
   getCaller,
   initTest,
@@ -6,6 +7,7 @@ import {
   uploadFile
 } from '@server/__tests__/helpers';
 import { TEST_SECRET_TOKEN } from '@server/__tests__/seed';
+import { tdb } from '@server/__tests__/setup';
 import { describe, expect, test } from 'vitest';
 
 describe('others router', () => {
@@ -65,6 +67,7 @@ describe('others router', () => {
       name: 'Updated Test Server',
       description: 'An updated description',
       directMessagesEnabled: false,
+      gamesEnabled: false,
       storageUploadEnabled: false,
       storageFileSharingInDirectMessages: false,
       storageQuota: 10 * 1024 * 1024 * 1024,
@@ -82,6 +85,7 @@ describe('others router', () => {
     expect(settings.directMessagesEnabled).toBe(
       newSettings.directMessagesEnabled
     );
+    expect(settings.gamesEnabled).toBe(newSettings.gamesEnabled);
     expect(settings.storageUploadEnabled).toBe(
       newSettings.storageUploadEnabled
     );
@@ -180,5 +184,27 @@ describe('others router', () => {
         handshakeHash: ''
       })
     ).rejects.toThrow('Too many requests. Please try again shortly.');
+  });
+
+  test('blocks game routes and bank/history when gamesEnabled is false', async () => {
+    const { caller } = await initTest(1);
+
+    await tdb.update(settings).set({ gamesEnabled: false }).execute();
+
+    await expect(caller.coinflip.getState()).rejects.toThrow(
+      'Games are disabled on this server'
+    );
+    await expect(caller.crash.getState()).rejects.toThrow(
+      'Games are disabled on this server'
+    );
+    await expect(caller.roulette.getState()).rejects.toThrow(
+      'Games are disabled on this server'
+    );
+    await expect(caller.others.getBankBalance()).rejects.toThrow(
+      'Games are disabled on this server'
+    );
+    await expect(
+      caller.others.getGameHistory({ page: 0 })
+    ).rejects.toThrow('Games are disabled on this server');
   });
 });

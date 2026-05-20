@@ -1,6 +1,6 @@
 import { openServerScreen } from '@/features/server-screens/actions';
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
-import { useChannelCan } from '@/features/server/hooks';
+import { useChannelCan, usePublicServerSettings } from '@/features/server/hooks';
 import { setAppearOffline } from '@/features/server/users/actions';
 import { useOwnPublicUser } from '@/features/server/users/hooks';
 import { useMedia } from '@/features/server/voice/hooks';
@@ -28,6 +28,8 @@ const UserControl = memo(() => {
     const currentVoiceChannelId = useCurrentVoiceChannelId();
     const { ownVoiceState, toggleMic, toggleSound } = useMedia();
     const channelCan = useChannelCan(currentVoiceChannelId);
+    const publicSettings = usePublicServerSettings();
+    const gamesEnabled = publicSettings?.gamesEnabled ?? true;
 
     const handleSettingsClick = useCallback(() => {
         openServerScreen(ServerScreen.USER_SETTINGS);
@@ -108,8 +110,8 @@ const UserControl = memo(() => {
                     onClick={toggleMic}
                     title={
                         ownVoiceState.micMuted
-                            ? 'Unmute microphone (Ctrl+Shift+M)'
-                            : 'Mute microphone (Ctrl+Shift+M)'
+                            ? 'Unmute microphone'
+                            : 'Mute microphone'
                     }
                     disabled={!channelCan(ChannelPermission.SPEAK)}
                 >
@@ -132,8 +134,8 @@ const UserControl = memo(() => {
                     onClick={toggleSound}
                     title={
                         ownVoiceState.soundMuted
-                            ? 'Undeafen (Ctrl+Shift+D)'
-                            : 'Deafen (Ctrl+Shift+D)'
+                            ? 'Undeafen'
+                            : 'Deafen'
                     }
                 >
                     {ownVoiceState.soundMuted ? (
@@ -143,15 +145,17 @@ const UserControl = memo(() => {
                     )}
                 </Button>
 
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    onClick={handleGamesClick}
-                    title="Games"
-                >
-                    <Rocket className="h-4 w-4" />
-                </Button>
+                {gamesEnabled && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        onClick={handleGamesClick}
+                        title="Games"
+                    >
+                        <Rocket className="h-4 w-4" />
+                    </Button>
+                )}
 
                 <Button
                     variant="ghost"

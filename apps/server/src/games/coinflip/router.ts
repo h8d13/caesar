@@ -3,11 +3,8 @@ import {
   type TCoinflipResult,
   type TCoinflipStateUpdate
 } from '@caesar/shared/games/coinflip';
-import {
-  protectedProcedure,
-  rateLimitedProcedure,
-  t
-} from '@server/utils/trpc';
+import { gamesProcedure } from '@server/games/shared-bindings';
+import { rateLimitedProcedure, t } from '@server/utils/trpc';
 import { TRPCError } from '@trpc/server';
 import { observable } from '@trpc/server/observable';
 import { z } from 'zod';
@@ -20,11 +17,11 @@ const setRuntime = (r: CoinflipRuntime) => {
   runtime = r;
 };
 
-const getStateRoute = protectedProcedure.query(() => {
+const getStateRoute = gamesProcedure.query(() => {
   return runtime.getState();
 });
 
-const createChallengeRoute = rateLimitedProcedure(protectedProcedure, {
+const createChallengeRoute = rateLimitedProcedure(gamesProcedure, {
   maxRequests: 5,
   windowMs: 10_000,
   logLabel: 'coinflip.createChallenge'
@@ -51,7 +48,7 @@ const createChallengeRoute = rateLimitedProcedure(protectedProcedure, {
     }
   });
 
-const acceptChallengeRoute = rateLimitedProcedure(protectedProcedure, {
+const acceptChallengeRoute = rateLimitedProcedure(gamesProcedure, {
   maxRequests: 5,
   windowMs: 10_000,
   logLabel: 'coinflip.acceptChallenge'
@@ -68,7 +65,7 @@ const acceptChallengeRoute = rateLimitedProcedure(protectedProcedure, {
     }
   });
 
-const cancelChallengeRoute = rateLimitedProcedure(protectedProcedure, {
+const cancelChallengeRoute = rateLimitedProcedure(gamesProcedure, {
   maxRequests: 5,
   windowMs: 10_000,
   logLabel: 'coinflip.cancelChallenge'
@@ -85,14 +82,14 @@ const cancelChallengeRoute = rateLimitedProcedure(protectedProcedure, {
     }
   });
 
-const onStateUpdateRoute = protectedProcedure.subscription(() => {
+const onStateUpdateRoute = gamesProcedure.subscription(() => {
   return observable<TCoinflipStateUpdate>((observer) => {
     const unsub = runtime.subscribeToState((state) => observer.next(state));
     return { unsubscribe: unsub };
   });
 });
 
-const onResultRoute = protectedProcedure.subscription(() => {
+const onResultRoute = gamesProcedure.subscription(() => {
   return observable<TCoinflipResult>((observer) => {
     const unsub = runtime.subscribeToResult((result) => observer.next(result));
     return { unsubscribe: unsub };

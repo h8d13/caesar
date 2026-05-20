@@ -39,6 +39,7 @@ const getPublicSettings: () => Promise<TPublicServerSettings> = async () => {
     serverId: settings.serverId,
     storageUploadEnabled: settings.storageUploadEnabled,
     directMessagesEnabled: settings.directMessagesEnabled,
+    gamesEnabled: settings.gamesEnabled,
     storageQuota: settings.storageQuota,
     storageUploadMaxFileSize: settings.storageUploadMaxFileSize,
     storageFileSharingInDirectMessages:

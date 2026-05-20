@@ -33,7 +33,8 @@ export const useAdminGeneral = () => {
         name: '',
         description: '',
         password: '',
-        directMessagesEnabled: true
+        directMessagesEnabled: true,
+        gamesEnabled: true
     });
 
     const {
@@ -53,7 +54,8 @@ export const useAdminGeneral = () => {
             name: data.name,
             description: data.description ?? '',
             password: data.password ?? '',
-            directMessagesEnabled: data.directMessagesEnabled ?? true
+            directMessagesEnabled: data.directMessagesEnabled ?? true,
+            gamesEnabled: data.gamesEnabled ?? true
         });
     }, [data]);
 
@@ -65,7 +67,8 @@ export const useAdminGeneral = () => {
                 name: settings.name,
                 description: settings.description,
                 password: settings.password || undefined,
-                directMessagesEnabled: settings.directMessagesEnabled
+                directMessagesEnabled: settings.directMessagesEnabled,
+                gamesEnabled: settings.gamesEnabled
             });
             toast.success('Settings updated');
         } catch (error) {

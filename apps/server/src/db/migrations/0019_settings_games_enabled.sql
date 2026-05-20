@@ -1,0 +1,1 @@
+ALTER TABLE settings ADD COLUMN games_enabled INTEGER NOT NULL DEFAULT 1;

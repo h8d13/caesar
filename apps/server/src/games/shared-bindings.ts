@@ -1,7 +1,30 @@
 import { socialCreditLedger } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
+import { getSettings } from '@server/db/queries/server';
+import { invariant } from '@server/utils/invariant';
+import { protectedProcedure, t } from '@server/utils/trpc';
 import { eq, sql } from 'drizzle-orm';
+
+const assertGamesEnabled = async (): Promise<void> => {
+  const settings = await getSettings();
+  invariant(settings.gamesEnabled, {
+    code: 'FORBIDDEN',
+    message: 'Games are disabled on this server'
+  });
+};
+
+// Games-gated equivalent of protectedProcedure. Used by every game
+// router so flipping settings.gamesEnabled off blocks every entry
+// point (queries, mutations, subscriptions) in one swap. Standalone
+// `assertGamesEnabled()` stays exported for non-game routes that touch
+// game data (bank balance, game history).
+const gamesProcedure = protectedProcedure.use(
+  t.middleware(async ({ next }) => {
+    await assertGamesEnabled();
+    return next();
+  })
+);
 
 // The 4 social-credit-ledger touchpoints every game runtime needs:
 // debit/credit a bet, amend it on a settle, broadcast the resulting
@@ -49,4 +72,4 @@ const createGameLedgerBindings = (ledgerableType: string) => ({
   }
 });
 
-export { createGameLedgerBindings };
+export { assertGamesEnabled, createGameLedgerBindings, gamesProcedure };
