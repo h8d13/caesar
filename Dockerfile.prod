@@ -65,6 +65,5 @@ COPY --from=builder --chown=node:node /deploy/server/node_modules /app/node_modu
 COPY --from=builder --chown=node:node /staging /app/static-prod-assets
 
 USER node
-EXPOSE 4991 40000
 
 CMD ["caesar"]
