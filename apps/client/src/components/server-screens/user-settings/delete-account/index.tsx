@@ -1,7 +1,7 @@
 import { requestConfirmation } from '@/features/dialogs/actions';
 import { disconnectFromServer } from '@/features/server/actions';
-import { useForm } from '@/hooks/use-form';
 import { getTRPCClient } from '@/lib/trpc';
+import { getTrpcError } from '@caesar/shared';
 import {
     Alert,
     AlertDescription,
@@ -11,8 +11,6 @@ import {
     CardDescription,
     CardHeader,
     CardTitle,
-    Group,
-    Input,
     Switch
 } from '@caesar/ui';
 import { AlertCircleIcon } from 'lucide-react';
@@ -20,9 +18,6 @@ import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
 const DeleteAccount = memo(() => {
-    const { setTrpcErrors, r, values } = useForm({
-        currentPassword: ''
-    });
     const [wipe, setWipe] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -42,17 +37,14 @@ const DeleteAccount = memo(() => {
 
         try {
             setIsDeleting(true);
-            await trpc.users.deleteSelf.mutate({
-                currentPassword: values.currentPassword,
-                wipe
-            });
+            await trpc.users.deleteSelf.mutate({ wipe });
             toast.success('Account deleted');
             disconnectFromServer();
         } catch (error) {
-            setTrpcErrors(error);
+            toast.error(getTrpcError(error, 'Failed to delete account'));
             setIsDeleting(false);
         }
-    }, [values.currentPassword, wipe, setTrpcErrors]);
+    }, [wipe]);
 
     return (
         <Card>
@@ -63,10 +55,6 @@ const DeleteAccount = memo(() => {
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <Group label="Current Password">
-                    <Input {...r('currentPassword', 'password')} />
-                </Group>
-
                 <div
                     className="flex items-center gap-3 w-fit cursor-pointer"
                     onClick={() => setWipe((v) => !v)}
@@ -98,7 +86,7 @@ const DeleteAccount = memo(() => {
                 <Button
                     variant="destructive"
                     onClick={onDelete}
-                    disabled={isDeleting || !values.currentPassword}
+                    disabled={isDeleting}
                 >
                     {isDeleting ? 'Deleting...' : 'Delete my account'}
                 </Button>
