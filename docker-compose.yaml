@@ -1,8 +1,7 @@
 name: caesar
 
 services:
-  # Production: compiled binary with embedded frontend
-  # assumes x86_64; mediasoup-worker prebuilt is fetched for linux-x64
+  # assumes x86_64 mediasoup-worker prebuilt is fetched auto for linux-x64
   caesar:
     build:
       context: .
