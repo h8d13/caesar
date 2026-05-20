@@ -14,10 +14,11 @@ services:
     stop_grace_period: 2s
     profiles: ["prod"]
     ports:
-      - "40000:40000/tcp"
-      - "40000:40000/udp"
+      - "40000-40003:40000-40003/tcp"
+      - "40000-40003:40000-40003/udp"
     environment:
       CAESAR_PORT: "4991"
+      CAESAR_WEBRTC_WORKERS: "4"
     volumes:
       - ./data:/home/node/.config/caesar
 

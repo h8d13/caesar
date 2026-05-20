@@ -53,6 +53,7 @@ export type TDeviceSettings = {
     webcamId: string | undefined;
     webcamResolution: Resolution;
     webcamFramerate: number;
+    webcamBitrate: number;
     echoCancellation: boolean;
     noiseSuppression: boolean;
     autoGainControl: boolean;

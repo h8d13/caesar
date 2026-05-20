@@ -20,9 +20,9 @@ import type {
 import { config } from '../config';
 import { logger } from '../logger';
 import {
-  mediaSoupWorker,
-  webRtcServer,
-  webRtcServerListenInfo
+  getAllWorkers,
+  getListenInfo,
+  getWorkerSlot
 } from '../utils/mediasoup';
 import { pubsub } from '../utils/pubsub';
 
@@ -135,7 +135,15 @@ class VoiceRuntime {
     externalStreams: {},
     activeSince: null
   };
-  private router?: Router<AppData>;
+  // one router per worker slot, keyed by worker index
+  private routers: Map<number, Router<AppData>> = new Map();
+  // per-user assignment to a worker (round-robin within this channel)
+  private userWorkerIndex: Map<number, number> = new Map();
+  // producers piped to non-owner routers: producerId -> set of dest worker idx
+  private pipedProducers: Map<string, Set<number>> = new Map();
+  // external/system streams: streamId (negative key space) -> owning worker idx
+  private externalWorkerIndex: Map<number, number> = new Map();
+  private rrCursor = 0;
   private consumerTransports: TTransportMap = {};
   private producerTransports: TTransportMap = {};
   private videoProducers: TProducerMap = {};
@@ -207,11 +215,17 @@ class VoiceRuntime {
   public init = async (): Promise<void> => {
     logger.debug(`Initializing voice runtime for channel ${this.id}`);
 
-    await this.createRouter();
+    await this.createRouters();
   };
 
   public destroy = async () => {
-    await this.router?.close();
+    for (const router of this.routers.values()) {
+      await router.close();
+    }
+    this.routers.clear();
+    this.pipedProducers.clear();
+    this.userWorkerIndex.clear();
+    this.externalWorkerIndex.clear();
 
     Object.values(this.consumerTransports).forEach((transport) => {
       transport.close();
@@ -343,22 +357,54 @@ class VoiceRuntime {
     user.state = { ...user.state, ...newState };
   };
 
+  // rtpCapabilities are identical across all routers in this channel (same
+  // mediaCodecs), so any router answers join.ts. Keep for backward-compat.
   public getRouter = (): Router<AppData> => {
-    if (!this.router) {
-      throw new Error('Router not initialized yet');
+    const first = this.routers.values().next().value;
+    if (!first) throw new Error('Router not initialized yet');
+    return first;
+  };
+
+  public getWorkerIndexForUser = (userId: number): number => {
+    const existing = this.userWorkerIndex.get(userId);
+    if (existing !== undefined) return existing;
+    const slotCount = getAllWorkers().length;
+    const idx = this.rrCursor % slotCount;
+    this.rrCursor++;
+    this.userWorkerIndex.set(userId, idx);
+    return idx;
+  };
+
+  public getRouterForUser = (userId: number): Router<AppData> => {
+    const idx = this.getWorkerIndexForUser(userId);
+    const router = this.routers.get(idx);
+    if (!router) throw new Error(`Router for worker ${idx} not initialized`);
+    return router;
+  };
+
+  private getOrAssignWorkerIndexForExternal = (streamId: number): number => {
+    const existing = this.externalWorkerIndex.get(streamId);
+    if (existing !== undefined) return existing;
+    const slotCount = getAllWorkers().length;
+    const idx = this.rrCursor % slotCount;
+    this.rrCursor++;
+    this.externalWorkerIndex.set(streamId, idx);
+    return idx;
+  };
+
+  private createRouters = async () => {
+    const slots = getAllWorkers();
+    for (const slot of slots) {
+      const router = await slot.worker.createRouter(defaultRouterOptions);
+      this.routers.set(slot.index, router);
     }
-
-    return this.router;
   };
 
-  private createRouter = async () => {
-    const router = await mediaSoupWorker.createRouter(defaultRouterOptions);
-
-    this.router = router;
-  };
-
-  public createTransport = async () => {
-    const router = this.getRouter();
+  public createTransport = async (userId: number) => {
+    const workerIndex = this.getWorkerIndexForUser(userId);
+    const router = this.routers.get(workerIndex);
+    if (!router) throw new Error(`Router for worker ${workerIndex} missing`);
+    const { webRtcServer } = getWorkerSlot(workerIndex);
 
     const maxBitrate = config.webRtc.maxBitrate;
 
@@ -384,8 +430,40 @@ class VoiceRuntime {
     return { transport, params };
   };
 
+  // pipe a producer from its owning router to the destination worker's router
+  // idempotent: tracks completed pipes per producer to avoid redundant calls
+  public ensureProducerOnRouter = async (
+    producer: Producer<AppData>,
+    destWorkerIndex: number
+  ): Promise<void> => {
+    const appData = producer.appData as AppData & { workerIndex?: number };
+    const ownerIndex = appData.workerIndex;
+    if (ownerIndex === undefined || ownerIndex === destWorkerIndex) return;
+
+    let piped = this.pipedProducers.get(producer.id);
+    if (!piped) {
+      piped = new Set<number>();
+      this.pipedProducers.set(producer.id, piped);
+    }
+    if (piped.has(destWorkerIndex)) return;
+
+    const srcRouter = this.routers.get(ownerIndex);
+    const destRouter = this.routers.get(destWorkerIndex);
+    if (!srcRouter || !destRouter) return;
+
+    await srcRouter.pipeToRouter({
+      producerId: producer.id,
+      router: destRouter
+    });
+    piped.add(destWorkerIndex);
+
+    producer.observer.once('close', () => {
+      this.pipedProducers.delete(producer.id);
+    });
+  };
+
   public createConsumerTransport = async (userId: number) => {
-    const { transport, params } = await this.createTransport();
+    const { transport, params } = await this.createTransport(userId);
 
     this.consumerTransports[userId] = transport;
 
@@ -423,7 +501,7 @@ class VoiceRuntime {
   };
 
   public createProducerTransport = async (userId: number) => {
-    const { params, transport } = await this.createTransport();
+    const { params, transport } = await this.createTransport(userId);
 
     this.producerTransports[userId] = transport;
 
@@ -480,6 +558,10 @@ class VoiceRuntime {
     type: StreamKind,
     producer: Producer
   ) => {
+    // stamp owning worker idx into appData so cross-router consumes can pipe
+    (producer.appData as AppData & { workerIndex?: number }).workerIndex =
+      this.getWorkerIndexForUser(userId);
+
     if (type === StreamKind.VIDEO) {
       this.videoProducers[userId] = producer;
     } else if (type === StreamKind.AUDIO) {
@@ -826,9 +908,10 @@ class VoiceRuntime {
   };
 
   public static getListenInfo = () => {
+    const info = getListenInfo();
     return {
-      ip: webRtcServerListenInfo.ip,
-      announcedAddress: webRtcServerListenInfo.announcedAddress
+      ip: info.ip,
+      announcedAddress: info.announcedAddress
     };
   };
 }

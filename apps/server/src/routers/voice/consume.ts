@@ -28,7 +28,15 @@ const consumeRoute = voiceProcedure
       message: 'Consumer transport not found'
     });
 
-    const router = ctx.voiceRuntime.getRouter();
+    const consumerWorkerIndex = ctx.voiceRuntime.getWorkerIndexForUser(
+      ctx.user.id
+    );
+    await ctx.voiceRuntime.ensureProducerOnRouter(
+      producer,
+      consumerWorkerIndex
+    );
+
+    const router = ctx.voiceRuntime.getRouterForUser(ctx.user.id);
     const routerCanConsume = router.canConsume({
       producerId: producer.id,
       rtpCapabilities: input.rtpCapabilities

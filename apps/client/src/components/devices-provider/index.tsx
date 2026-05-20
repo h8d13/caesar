@@ -10,7 +10,7 @@ import {
     VideoCodec,
     type TDeviceSettings
 } from '@/types';
-import { DEFAULT_BITRATE } from '@caesar/shared';
+import { DEFAULT_BITRATE, DEFAULT_WEBCAM_BITRATE } from '@caesar/shared';
 import {
     createContext,
     memo,
@@ -28,6 +28,7 @@ const DEFAULT_DEVICE_SETTINGS: TDeviceSettings = {
     webcamId: undefined,
     webcamResolution: Resolution['720p'],
     webcamFramerate: 30,
+    webcamBitrate: DEFAULT_WEBCAM_BITRATE,
     echoCancellation: true,
     noiseSuppression: true,
     autoGainControl: true,

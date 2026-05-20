@@ -19,7 +19,7 @@ import { logger } from './logger';
 import { enqueueActivityLog } from './queues/activity-log';
 import { initVoiceRuntimes } from './runtimes';
 import { createServers } from './utils/create-servers';
-import { loadMediasoup, mediaSoupWorker } from './utils/mediasoup';
+import { getAllWorkers, loadMediasoup } from './utils/mediasoup';
 
 await loadDb();
 await createServers();
@@ -47,7 +47,13 @@ const shutdown = () => {
   if (shuttingDown) return;
   shuttingDown = true;
   try {
-    mediaSoupWorker?.close();
+    for (const slot of getAllWorkers()) {
+      try {
+        slot.worker.close();
+      } catch {
+        // mediasoup may already be down; ignore.
+      }
+    }
   } catch {
     // mediasoup may already be down; ignore.
   }

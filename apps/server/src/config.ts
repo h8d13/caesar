@@ -23,7 +23,8 @@ const zConfig = z.object({
   webRtc: z.object({
     port: z.coerce.number().int().positive(),
     announcedAddress: z.string(),
-    maxBitrate: z.coerce.number().int().positive()
+    maxBitrate: z.coerce.number().int().positive(),
+    workers: z.coerce.number().int().nonnegative().default(0)
   }),
   rateLimiters: z.object({
     sendAndEditMessage: z.object({
@@ -79,7 +80,10 @@ const defaultConfig: TConfig = {
   webRtc: {
     port: 40000,
     announcedAddress: '',
-    maxBitrate: 30_000_000 // 30 Mbps
+    maxBitrate: 30_000_000, // 30 Mbps
+    // 0 = auto (os.cpus().length, capped at 16). Each worker binds
+    // basePort + i for UDP+TCP, so opening N ports is required when N>1.
+    workers: 0
   },
   rateLimiters: {
     sendAndEditMessage: {
@@ -164,7 +168,8 @@ config = applyEnvOverrides(config, {
   'server.debug': 'CAESAR_DEBUG',
   'webRtc.port': 'CAESAR_WEBRTC_PORT',
   'webRtc.announcedAddress': 'CAESAR_WEBRTC_ANNOUNCED_ADDRESS',
-  'webRtc.maxBitrate': 'CAESAR_WEBRTC_MAX_BITRATE'
+  'webRtc.maxBitrate': 'CAESAR_WEBRTC_MAX_BITRATE',
+  'webRtc.workers': 'CAESAR_WEBRTC_WORKERS'
 });
 
 config = Object.freeze(config);

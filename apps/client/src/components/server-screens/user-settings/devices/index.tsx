@@ -19,7 +19,7 @@ import {
 } from '@/helpers/audio-worklet/rnnoise-worklet';
 import { useForm } from '@/hooks/use-form';
 import { NoiseSuppressionMode, Resolution, VideoCodec } from '@/types';
-import { DEFAULT_BITRATE } from '@caesar/shared';
+import { DEFAULT_BITRATE, DEFAULT_WEBCAM_BITRATE } from '@caesar/shared';
 import {
     Alert,
     AlertDescription,
@@ -628,6 +628,36 @@ const Devices = memo(() => {
                                     )
                                 }
                             />
+
+                            <div className="flex flex-col gap-2">
+                                <span className="text-sm font-medium">
+                                    Max Bitrate
+                                </span>
+                                <Slider
+                                    className="max-w-96"
+                                    min={200}
+                                    max={maxBitrate}
+                                    step={100}
+                                    value={[
+                                        values.webcamBitrate ??
+                                            DEFAULT_WEBCAM_BITRATE
+                                    ]}
+                                    onValueChange={([value]) =>
+                                        onChange('webcamBitrate', value)
+                                    }
+                                    rightSlot={
+                                        <span className="text-sm text-muted-foreground w-20 text-right">
+                                            {filesize(
+                                                (values.webcamBitrate ??
+                                                    DEFAULT_WEBCAM_BITRATE) *
+                                                    125,
+                                                { bits: true }
+                                            )}
+                                            /s
+                                        </span>
+                                    }
+                                />
+                            </div>
 
                             <Group label="Mirror own video">
                                 <Switch
