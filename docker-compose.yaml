@@ -35,8 +35,6 @@ services:
       - "443:443/udp"
     environment:
       CAESAR_SITE: ${CAESAR_SITE:-localhost}
-      CAESAR_TLS_DIRECTIVE: ""
-      CAESAR_UPSTREAM: caesar:4991
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
