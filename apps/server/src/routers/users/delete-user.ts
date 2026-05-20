@@ -21,6 +21,7 @@ import { pubsub } from '@server/utils/pubsub';
 import { protectedProcedure } from '@server/utils/trpc';
 import { randomUUIDv7 } from '@server/utils/uuid';
 import { eq } from 'drizzle-orm';
+import type { WebSocket } from 'ws';
 import z from 'zod';
 
 const ensureDeletedUser = async (): Promise<number> => {
@@ -56,6 +57,94 @@ const ensureDeletedUser = async (): Promise<number> => {
   return insertedDeletedUser.id;
 };
 
+type TPerformUserDeletionArgs = {
+  targetUserId: number;
+  actorUserId: number;
+  wipe: boolean;
+  reason: string;
+  userWs: WebSocket | undefined;
+};
+
+const performUserDeletion = async ({
+  targetUserId,
+  actorUserId,
+  wipe,
+  reason,
+  userWs
+}: TPerformUserDeletionArgs) => {
+  const targetUser = await db
+    .select({
+      id: users.id,
+      identity: users.identity,
+      avatarId: users.avatarId,
+      bannerId: users.bannerId
+    })
+    .from(users)
+    .where(eq(users.id, targetUserId))
+    .get();
+
+  invariant(targetUser, {
+    code: 'NOT_FOUND',
+    message: 'User not found.'
+  });
+
+  invariant(targetUser.identity !== DELETED_USER_IDENTITY_AND_NAME, {
+    code: 'BAD_REQUEST',
+    message: 'Cannot delete the deleted user placeholder.'
+  });
+
+  if (userWs) {
+    userWs.close(DisconnectCode.KICKED, reason);
+  }
+
+  const deletedUserId = await ensureDeletedUser();
+
+  await db.transaction(async (tx) => {
+    if (!wipe) {
+      // Reassign everything to deleted user placeholder
+
+      await tx
+        .update(messages)
+        .set({ userId: deletedUserId })
+        .where(eq(messages.userId, targetUserId));
+
+      await tx
+        .update(emojis)
+        .set({ userId: deletedUserId })
+        .where(eq(emojis.userId, targetUserId));
+
+      await tx
+        .update(messageReactions)
+        .set({ userId: deletedUserId })
+        .where(eq(messageReactions.userId, targetUserId));
+
+      await tx
+        .update(files)
+        .set({ userId: deletedUserId })
+        .where(eq(files.userId, targetUserId));
+    } else {
+      // cascade will handle deleting all related data
+    }
+
+    await tx.delete(users).where(eq(users.id, targetUserId));
+  });
+
+  pubsub.publish(ServerEvents.USER_DELETE, {
+    isWipe: wipe,
+    userId: targetUserId,
+    deletedUserId
+  });
+
+  enqueueActivityLog({
+    type: ActivityLogType.USER_DELETED,
+    userId: targetUserId,
+    details: {
+      reason,
+      deletedBy: actorUserId
+    }
+  });
+};
+
 const deleteUserRoute = protectedProcedure
   .input(
     z.object({
@@ -71,79 +160,13 @@ const deleteUserRoute = protectedProcedure
       message: 'You cannot delete yourself.'
     });
 
-    const targetUser = await db
-      .select({
-        id: users.id,
-        identity: users.identity,
-        avatarId: users.avatarId,
-        bannerId: users.bannerId
-      })
-      .from(users)
-      .where(eq(users.id, input.userId))
-      .get();
-
-    invariant(targetUser, {
-      code: 'NOT_FOUND',
-      message: 'User not found.'
-    });
-
-    invariant(targetUser.identity !== DELETED_USER_IDENTITY_AND_NAME, {
-      code: 'BAD_REQUEST',
-      message: 'Cannot delete the deleted user placeholder.'
-    });
-
-    const userWs = ctx.getUserWs(input.userId);
-
-    if (userWs) {
-      userWs.close(DisconnectCode.KICKED, 'Your account has been deleted');
-    }
-
-    const deletedUserId = await ensureDeletedUser();
-
-    await db.transaction(async (tx) => {
-      if (!input.wipe) {
-        // Reassign everything to deleted user placeholder
-
-        await tx
-          .update(messages)
-          .set({ userId: deletedUserId })
-          .where(eq(messages.userId, input.userId));
-
-        await tx
-          .update(emojis)
-          .set({ userId: deletedUserId })
-          .where(eq(emojis.userId, input.userId));
-
-        await tx
-          .update(messageReactions)
-          .set({ userId: deletedUserId })
-          .where(eq(messageReactions.userId, input.userId));
-
-        await tx
-          .update(files)
-          .set({ userId: deletedUserId })
-          .where(eq(files.userId, input.userId));
-      } else {
-        // cascade will handle deleting all related data
-      }
-
-      await tx.delete(users).where(eq(users.id, input.userId));
-    });
-
-    pubsub.publish(ServerEvents.USER_DELETE, {
-      isWipe: input.wipe,
-      userId: input.userId,
-      deletedUserId
-    });
-
-    enqueueActivityLog({
-      type: ActivityLogType.USER_DELETED,
-      userId: input.userId,
-      details: {
-        reason: 'Your account has been deleted',
-        deletedBy: ctx.userId
-      }
+    await performUserDeletion({
+      targetUserId: input.userId,
+      actorUserId: ctx.userId,
+      wipe: input.wipe,
+      reason: 'Your account has been deleted',
+      userWs: ctx.getUserWs(input.userId)
     });
   });
 
-export { deleteUserRoute };
+export { deleteUserRoute, performUserDeletion };

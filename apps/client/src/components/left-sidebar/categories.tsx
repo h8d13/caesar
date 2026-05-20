@@ -158,7 +158,14 @@ const Categories = memo(() => {
 
     useEffect(() => {
         if (activeId !== null || !override) return;
-        if (JSON.stringify(override) === JSON.stringify(baseByCat)) {
+        // baseByCat omits categories with zero channels (loop skips them),
+        // override can hold `[sCat]: []` after a cross-cat drag drains the
+        // source. Strip empties before comparing so the override clears
+        // instead of lingering forever and shadowing future drags.
+        const normalized = Object.fromEntries(
+            Object.entries(override).filter(([, ids]) => ids.length > 0)
+        );
+        if (JSON.stringify(normalized) === JSON.stringify(baseByCat)) {
             setOverride(null);
         }
     }, [baseByCat, override, activeId]);
@@ -302,14 +309,19 @@ const Categories = memo(() => {
 
             // Persist the post-drop layout so the UI doesn't snap back while
             // the server confirms; the effect above clears it on redux update.
+            // Intra-category drag has sCat === oCat: writing both [oCat] and
+            // [sCat] into the same object literal collapses on the duplicate
+            // key (sourceIds wins, dragged channel vanishes from the override
+            // until refresh). Only write the source entry when categories
+            // actually differ.
             const sourceIds = (byCat[sCat] ?? baseByCat[sCat] ?? []).filter(
                 (id) => id !== chId
             );
-            setOverride((prev) => ({
-                ...(prev ?? baseByCat),
-                [oCat]: destIds,
-                [sCat!]: sourceIds
-            }));
+            setOverride((prev) => {
+                const next = { ...(prev ?? baseByCat), [oCat]: destIds };
+                if (sCat !== oCat) next[sCat] = sourceIds;
+                return next;
+            });
 
             if (sCat === oCat) {
                 const base = baseByCat[oCat] ?? [];

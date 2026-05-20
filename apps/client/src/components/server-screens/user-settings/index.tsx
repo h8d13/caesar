@@ -2,6 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@caesar/ui';
 import { memo } from 'react';
 import type { TServerScreenBaseProps } from '../screens';
 import { ServerScreenLayout } from '../server-screen-layout';
+import { DeleteAccount } from './delete-account';
 import { Devices } from './devices';
 import { MultiSessionToggle } from './multi-session-toggle';
 import { Notifications } from './notifications';
@@ -38,6 +39,7 @@ const UserSettings = memo(({ close }: TUserSettingsProps) => {
                         <MultiSessionToggle />
                         <RecentSessions />
                         <Password />
+                        <DeleteAccount />
                     </TabsContent>
                 </Tabs>
             </div>
