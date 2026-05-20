@@ -203,8 +203,8 @@ describe('others router', () => {
     await expect(caller.others.getBankBalance()).rejects.toThrow(
       'Games are disabled on this server'
     );
-    await expect(
-      caller.others.getGameHistory({ page: 0 })
-    ).rejects.toThrow('Games are disabled on this server');
+    await expect(caller.others.getGameHistory({ page: 0 })).rejects.toThrow(
+      'Games are disabled on this server'
+    );
   });
 });

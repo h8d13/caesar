@@ -1,6 +1,9 @@
 import { openServerScreen } from '@/features/server-screens/actions';
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
-import { useChannelCan, usePublicServerSettings } from '@/features/server/hooks';
+import {
+    useChannelCan,
+    usePublicServerSettings
+} from '@/features/server/hooks';
 import { setAppearOffline } from '@/features/server/users/actions';
 import { useOwnPublicUser } from '@/features/server/users/hooks';
 import { useMedia } from '@/features/server/voice/hooks';
@@ -132,11 +135,7 @@ const UserControl = memo(() => {
                             : 'text-muted-foreground hover:text-foreground'
                     )}
                     onClick={toggleSound}
-                    title={
-                        ownVoiceState.soundMuted
-                            ? 'Undeafen'
-                            : 'Deafen'
-                    }
+                    title={ownVoiceState.soundMuted ? 'Undeafen' : 'Deafen'}
                 >
                     {ownVoiceState.soundMuted ? (
                         <HeadphoneOff className="h-4 w-4" />
