@@ -32,6 +32,8 @@ const buildVersion =
     }
   })();
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 await rm(distDir, { recursive: true, force: true });
 await mkdir(distDir, { recursive: true });
 
@@ -42,7 +44,12 @@ await build({
   platform: 'node',
   target: 'node24',
   format: 'esm',
-  sourcemap: 'inline',
+  // Prod: external .map keeps the .mjs lean (the 10mb culprit was inline
+  // base64 sourcemaps embedded in the artifact). SEA still embeds the
+  // .mjs only, so prod stack traces are minified-shape; rebuild without
+  // NODE_ENV=production for symbolicated debugging.
+  sourcemap: isProduction ? 'external' : 'inline',
+  minify: isProduction,
   legalComments: 'none',
   logLevel: 'info',
   external: ['argon2', 'mediasoup', '@libsql/client', 'libsql'],
@@ -68,4 +75,4 @@ await build({
   }
 });
 
-console.log(`Bundle written to ${path.relative(serverDir, path.join(distDir, 'server.mjs'))} (build version: ${buildVersion})`);
+console.log(`Bundle written to ${path.relative(serverDir, path.join(distDir, 'server.mjs'))} (build version: ${buildVersion}, mode: ${isProduction ? 'production' : 'development'})`);
