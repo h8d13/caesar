@@ -2,6 +2,10 @@
 command -v git >/dev/null || { echo "git not found"; exit 1; }
 command -v docker >/dev/null || { echo "docker not found"; exit 1; }
 docker compose version >/dev/null 2>&1 || { echo "docker compose not found"; exit 1; }
+
+# default is 212992 on debian servers which for media soup is too low
+# especially if running multiple streams/videos see net-buffers.sh helper.
+
 # more preflight - holds current running ids
 check_running() {
     ids=$(docker ps -q)
