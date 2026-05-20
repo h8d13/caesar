@@ -3,7 +3,7 @@
 # first start, so https://localhost:8443 works without DNS or a public CA.
 # Browsers will warn on first visit; accept once per browser profile.
 ## look out for alt-svc in devtools to say h3
-your.domain.com:8443 {
+sub.example.com:8443 {
 	tls internal
 	reverse_proxy caesar-prod-dev:4991
 }
