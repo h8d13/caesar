@@ -3,47 +3,28 @@ command -v git >/dev/null || { echo "git not found"; exit 1; }
 command -v docker >/dev/null || { echo "docker not found"; exit 1; }
 docker compose version >/dev/null 2>&1 || { echo "docker compose not found"; exit 1; }
 
+export CAESAR_BUILD_VERSION=$(git rev-parse --short HEAD)
+
 # default is 212992 on debian servers which for media soup is too low
 # especially if running multiple streams/videos see net-buffers.sh helper.
 
-# more preflight - holds current running ids
-check_running() {
-    ids=$(docker ps -q)
-    [ -n "$ids" ]
-}
-
-# confirm() {
-# read -r -p "Are you sure? [y/N] " response
-# if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
-# then
-#     continue
-# else
-#     exit 0
-# fi
-# }
-
-# case "$1" in
-    # -l | --logs)
-    # docker logs -f caesar
-    # ;;
-    # -d | --down)
-    # docker compose --profile prod down
-    # ;;
-    # -r | --reset)
-    # confirm
-    # # MAGIC RESETS VOLUMES LINE (drop volumes) DESTRUCTIVE
-    # rm -rf data && docker system prune -a --volumes
-    # ;;
-# esac
+case "$1" in
+    -l | --logs)
+    docker logs -f caesar
+    ;;
+    -d | --down)
+    docker compose --profile prod down
+    ;;
+esac
 
 # Prod-dev: hermetic test of the real prod binary on https://localhost:8443
 # (self-signed). Skips git pull / system prune / container nuke so it stays
 # safe to run alongside the real prod or while iterating on local commits.
 # Wipes ./data-prod-dev each invocation so every test starts clean
 if [ "${1:-}" = "--prod-dev" ]; then
-    docker compose version >/dev/null 2>&1 || { echo "docker compose not found"; exit 1; }
-    export CAESAR_BUILD_VERSION="$(git rev-parse --short HEAD 2>/dev/null || echo local)"
-    echo "prod-dev: building version $CAESAR_BUILD_VERSION"
+	echo ""
+	echo "BUILDING CAESAR-PROD-DEV VERSION HASH: $CAESAR_BUILD_VERSION"
+	echo ""
     # Separate project name so prod-dev gets its own default network. With
     # the default `name: caesar` from compose.yaml both stacks would share
     # caesar_default, and `down` would fight the other stack's containers
@@ -64,20 +45,12 @@ fi
 REMOTE=$(git remote -v)
 git pull && echo "pulled latest from $REMOTE" || { echo "failed to pull"; exit 1; }
 
-# careful if you have other containers running
-if check_running; then
-    docker rm -f $ids
-else
-    echo "no containers running"
-fi
-
 # build version: git short hash of HEAD. up.sh pulls latest above, so the
 # tree always matches origin; no dirty marker needed. helpers.ts picks this
 # up over package.json.
-export CAESAR_BUILD_VERSION=$(git rev-parse --short HEAD)
 echo ""
-echo "BUILDING CAESAR VERSION HASH: $CAESAR_BUILD_VERSION"
+echo "BUILDING CAESAR-PROD VERSION HASH: $CAESAR_BUILD_VERSION"
 echo ""
 
 # convenience wrapper for prod builds
-docker system prune -f && docker compose --profile prod build --no-cache --progress=plain && docker compose --profile prod up -d
+docker system prune -f && docker compose --profile prod build --no-cache && docker compose --profile prod up -d
