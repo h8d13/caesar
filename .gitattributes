@@ -1,1 +1,3 @@
 Caddyfile* linguist-language=Caddyfile
+apps/client/index.html linguist-vendored
+apps/client/src/index.css linguist-vendored
