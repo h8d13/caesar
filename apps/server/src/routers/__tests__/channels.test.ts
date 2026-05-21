@@ -273,7 +273,7 @@ describe('channels router', () => {
 
     await caller.channels.updatePermissions({
       channelId: 1,
-      roleId: 1,
+      roleId: 2,
       permissions: [
         ChannelPermission.VIEW_CHANNEL,
         ChannelPermission.SEND_MESSAGES
@@ -288,7 +288,7 @@ describe('channels router', () => {
     expect(permissions.rolePermissions).toBeDefined();
     expect(permissions.rolePermissions.length).toBeGreaterThan(0);
 
-    const rolePerms = permissions.rolePermissions.filter((p) => p.roleId === 1);
+    const rolePerms = permissions.rolePermissions.filter((p) => p.roleId === 2);
 
     expect(rolePerms.length).toBeGreaterThan(0);
 
@@ -355,7 +355,7 @@ describe('channels router', () => {
 
     await caller.channels.updatePermissions({
       channelId: 1,
-      roleId: 1,
+      roleId: 2,
       permissions: [ChannelPermission.VIEW_CHANNEL]
     });
 
@@ -364,14 +364,14 @@ describe('channels router', () => {
     });
 
     const rolePermsBeforeDelete = permissions.rolePermissions.filter(
-      (p) => p.roleId === 1
+      (p) => p.roleId === 2
     );
 
     expect(rolePermsBeforeDelete.length).toBeGreaterThan(0);
 
     await caller.channels.deletePermissions({
       channelId: 1,
-      roleId: 1
+      roleId: 2
     });
 
     permissions = await caller.channels.getPermissions({
@@ -379,7 +379,7 @@ describe('channels router', () => {
     });
 
     const rolePermsAfterDelete = permissions.rolePermissions.filter(
-      (p) => p.roleId === 1
+      (p) => p.roleId === 2
     );
 
     expect(rolePermsAfterDelete.length).toBe(0);
@@ -802,7 +802,7 @@ describe('channels router', () => {
 
     await caller.channels.updatePermissions({
       channelId: 1,
-      roleId: 1,
+      roleId: 2,
       permissions: [ChannelPermission.VIEW_CHANNEL]
     });
 
@@ -825,13 +825,13 @@ describe('channels router', () => {
 
     await caller.channels.updatePermissions({
       channelId: 1,
-      roleId: 1,
+      roleId: 2,
       permissions: [ChannelPermission.VIEW_CHANNEL]
     });
 
     await caller.channels.updatePermissions({
       channelId: 1,
-      roleId: 1,
+      roleId: 2,
       permissions: [
         ChannelPermission.VIEW_CHANNEL,
         ChannelPermission.SEND_MESSAGES
@@ -842,7 +842,7 @@ describe('channels router', () => {
       channelId: 1
     });
 
-    const rolePerms = permissions.rolePermissions.filter((p) => p.roleId === 1);
+    const rolePerms = permissions.rolePermissions.filter((p) => p.roleId === 2);
 
     const sendMessagesPerm = rolePerms.find(
       (p) => p.permission === ChannelPermission.SEND_MESSAGES

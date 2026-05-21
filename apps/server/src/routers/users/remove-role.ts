@@ -54,9 +54,6 @@ const removeRoleRoute = protectedProcedure
 
     const afterChannels = await snapshotUserChannelAccess(input.userId);
 
-    // Symmetric to add-role: role removal can hide previously visible
-    // channels (channel ACL relied on that role). Push the channel diff
-    // and refresh the per-channel permission map.
     await publishUserChannelAccessDiff(
       input.userId,
       beforeChannels,

@@ -287,10 +287,6 @@ const publishCategory = async (
   pubsub.publish(targetEvent, category);
 };
 
-// Snapshot a user's visible-channel set (by id). Used to diff before/after
-// a role or ACL change so we can push CHANNEL_CREATE/DELETE for the
-// channels whose visibility flipped for this specific user without
-// re-broadcasting them to the whole server.
 const snapshotUserChannelAccess = async (
   userId: number
 ): Promise<Set<number>> => {
@@ -298,11 +294,8 @@ const snapshotUserChannelAccess = async (
   return new Set(visible.map((c) => c.id));
 };
 
-// Reconcile per-user channel visibility after a role or ACL change.
-// Compares the before/after snapshots and publishes the channel diff to
-// the affected user via publishFor. CHANNEL_DELETE only needs the id;
-// CHANNEL_CREATE needs the full channel row, so we fetch the rows we
-// added in a single query.
+// Pushes CHANNEL_CREATE/DELETE for the channels whose visibility flipped
+// for this user, after a role or ACL change.
 const publishUserChannelAccessDiff = async (
   userId: number,
   before: Set<number>,

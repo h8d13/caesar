@@ -1,5 +1,6 @@
 import { UserAvatar } from '@/components/user-avatar';
 import { useAdminRoles, useAdminUsers } from '@/features/server/admin/hooks';
+import { OWNER_ROLE_ID } from '@caesar/shared';
 import {
     Button,
     Input,
@@ -30,10 +31,12 @@ const SearchPopover = memo(
         const { users } = useAdminUsers();
         const { roles } = useAdminRoles();
 
+        // Owner bypasses channel ACLs; overrides for it are no-ops.
         const filteredRoles = useMemo(
             () =>
                 roles.filter(
                     (role) =>
+                        role.id !== OWNER_ROLE_ID &&
                         role.name
                             .toLowerCase()
                             .includes(searchQuery.toLowerCase()) &&

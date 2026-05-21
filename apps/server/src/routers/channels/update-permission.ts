@@ -1,4 +1,9 @@
-import { ActivityLogType, ChannelPermission, Permission } from '@caesar/shared';
+import {
+  ActivityLogType,
+  ChannelPermission,
+  OWNER_ROLE_ID,
+  Permission
+} from '@caesar/shared';
 import {
   channelRolePermissions,
   channelUserPermissions
@@ -40,6 +45,11 @@ const updatePermissionsRoute = protectedProcedure
     invariant(!isDmChannel, {
       code: 'FORBIDDEN',
       message: 'Cannot update DM channel permissions'
+    });
+
+    invariant(input.roleId !== OWNER_ROLE_ID, {
+      code: 'BAD_REQUEST',
+      message: 'Owner role cannot be added to channel permissions'
     });
 
     const permissions = input.isCreate ? [] : input.permissions;

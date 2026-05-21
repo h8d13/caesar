@@ -50,10 +50,6 @@ const addRoleRoute = protectedProcedure
 
     const afterChannels = await snapshotUserChannelAccess(input.userId);
 
-    // A role grant can newly expose channels the user couldn't see
-    // before (channel ACL allows that role). Push the channel diff
-    // and the refreshed per-channel permission map so the sidebar
-    // updates without a hard refresh.
     await publishUserChannelAccessDiff(
       input.userId,
       beforeChannels,
