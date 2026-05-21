@@ -169,8 +169,10 @@ const getUserByToken = async (token: string | undefined) => {
   try {
     if (!token) return undefined;
 
-    const decoded = jwt.verify(token, await getServerToken()) as TTokenPayload &
-      { type?: string };
+    const decoded = jwt.verify(
+      token,
+      await getServerToken()
+    ) as TTokenPayload & { type?: string };
 
     // Reject pre-2FA tokens. They share the JWT secret but must never grant
     // a session: their only valid use is exchange via /login/2fa.

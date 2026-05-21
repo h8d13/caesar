@@ -6,7 +6,7 @@
     ":semanticCommits",
     ":timezone(Europe/Lisbon)"
   ],
-  "enabledManagers": ["npm", "github-actions", "dockerfile", "docker-compose"],
+  "enabledManagers": ["npm", "github-actions", "dockerfile", "docker-compose", "pre-commit"],
   "rangeStrategy": "bump",
   "minimumReleaseAge": "3 days",
   "prConcurrentLimit": 5,
@@ -39,6 +39,14 @@
     {
       "matchManagers": ["dockerfile", "docker-compose"],
       "groupName": "docker"
+    },
+    {
+      "matchManagers": ["pre-commit"],
+      "groupName": "pre-commit"
+    },
+    {
+      "matchPackageNames": ["prettier", "prettier-plugin-organize-imports"],
+      "groupName": "prettier"
     },
     {
       "matchPackageNames": ["node", "actions/setup-node", "@types/node"],

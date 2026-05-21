@@ -1,0 +1,20 @@
+default_stages: ['pre-commit']
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+    - id: check-added-large-files
+      args: ['--maxkb=1000']
+    - id: check-merge-conflict
+    - id: check-symlinks
+    - id: check-yaml
+    - id: check-json
+      exclude: ^.*tsconfig.*\.json$  # tsconfigs allow comments, not strict JSON
+    - id: destroyed-symlinks
+  - repo: local
+    hooks:
+    - id: prettier
+      name: prettier
+      entry: pnpm exec prettier --write
+      language: system
+      types_or: [ts, tsx]

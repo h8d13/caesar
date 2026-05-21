@@ -96,8 +96,8 @@ const SecurityKeys = memo(() => {
                 <CardDescription>
                     Register a hardware security key as a second factor on
                     login. Once at least one key is registered, you will be
-                    prompted for it after entering your password.
-                    Please register a back-up, no recovery mechanism is in place.
+                    prompted for it after entering your password. Please
+                    register a back-up, no recovery mechanism is in place.
                 </CardDescription>
                 <CardAction>
                     <Button onClick={addKey} disabled={loading}>
