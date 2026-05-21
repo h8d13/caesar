@@ -22,3 +22,11 @@ Review will be **within 24h.**
 - Depending on scope: Add tests for new behavior.
 
 By contributing, you agree to abide by our [Code of Conduct](./CODE_OF_CONDUCT.md).
+
+## AI usage
+
+- Low effort PRs will be closed without explenation.
+- If using an agent to help you code, please give proper context and question assumptions.
+- Last: construct a small AGENTS.md file with actual architecture patterns YOU observe.
+
+---
