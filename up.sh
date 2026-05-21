@@ -21,12 +21,7 @@ if [ "${1:-}" = "--prod-dev" ]; then
     # over network removal. for easier debug we pass progress plain
     COMPOSE="docker compose -p caesar-prod-dev --profile --progress=plain prod-dev"
     $COMPOSE down
-    rm -rf ./data-prod-dev
-    # pre-create the bind-mount target so it's owned by the host user
-    # (typically uid 1000, matching the `caesar` user inside the image).
-    # if docker creates it lazily, it would be root-owned and the in-
-    # container caesar would EACCES on mkdir uploads/.
-    mkdir -p ./data-prod-dev
+    rm -rf ./data-prod-dev && mkdir -p ./data-prod-dev
     $COMPOSE build && $COMPOSE up
     exit $?
 fi
