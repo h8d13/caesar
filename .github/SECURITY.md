@@ -12,7 +12,7 @@ Or use GitHub's [private vulnerability reporting](https://github.com/h8d13/caesa
 
 > Expect an initial response **within 24 hours**.
 
-## Auditabilty
+## Auditability
 
 - Main server setup: [index](apps/server/src/http/index.ts)
 
@@ -32,6 +32,7 @@ HTTPS enforcement: behind Caddy, server 301s any `x-forwarded-proto: http`
 
 - Deps are validated in [Renovate](https://github.com/h8d13/caesar/blob/master/renovate.json)
 - With vulnerabilty alerts enabled and frozen to 3 days minimum release.
+- If a vuln is external please report to appropriate repo and channel. We may also downgrade/take minor patch.
 
 ## Threat-model
 
