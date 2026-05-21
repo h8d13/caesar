@@ -169,7 +169,12 @@ const getUserByToken = async (token: string | undefined) => {
   try {
     if (!token) return undefined;
 
-    const decoded = jwt.verify(token, await getServerToken()) as TTokenPayload;
+    const decoded = jwt.verify(token, await getServerToken()) as TTokenPayload &
+      { type?: string };
+
+    // Reject pre-2FA tokens. They share the JWT secret but must never grant
+    // a session: their only valid use is exchange via /login/2fa.
+    if (decoded.type === 'pre-2fa') return undefined;
 
     // reject tokens minted before the user's current session superseded
     // by a newer login on another device. Backwards-compat: tokens issued
