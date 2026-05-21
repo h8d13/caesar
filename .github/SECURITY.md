@@ -26,10 +26,15 @@ HTTPS enforcement: behind Caddy, server 301s any `x-forwarded-proto: http`
 - AuthZ: tRPC `protectedProcedure` + permission middleware (`apps/server/src/utils/trpc.ts`).
 - Rate limiting: per-IP token bucket on tRPC procedures and login (`apps/server/src/utils/rate-limiters/`).
 - Zod escaping and normalization.
-- Invite only model, opaque by design.
-- Operator vs Admin model: An 'admin' never gets IP or GEO. Only hashes. Operator still has full logs.
 
 ## 3rd party
 
 - Deps are validated in [Renovate](https://github.com/h8d13/caesar/blob/master/renovate.json)
 - With vulnerabilty alerts enabled and frozen to 3 days minimum release.
+
+## Threat-model
+
+- Invite only model (24 chars crypto), opaque by design on endpoints.
+- Operator vs Admin: An 'admin'(or equivalent role) never gets IP or GEO. Only hashes.
+- Operator still has full logs. (Aside from 1:1 DMs where he only sees blobs in DB)
+- Made for smaller trusted communities, not for public exposure.
