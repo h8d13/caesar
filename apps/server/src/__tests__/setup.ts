@@ -85,12 +85,15 @@ beforeAll(async () => {
 
   if (!g.__caesarSqlite) {
     // libsql `:memory:` doesn't reliably share state across internal
-    // connections that drizzle/migrate may open. Tempfile path comes from
-    // globalSetup (env var) so cleanup happens once at suite end, not in
-    // each file's afterAll (which would race the next file).
-    const tmpDbPath =
-      process.env.CAESAR_TEST_DB_PATH ??
-      path.join(os.tmpdir(), `caesar-test-${process.pid}-${Date.now()}.sqlite`);
+    // connections that drizzle/migrate may open. Each fork mints its own
+    // tempfile under the run-id prefix so globalSetup's teardown can
+    // sweep the whole run in one pass.
+    const runId =
+      process.env.CAESAR_TEST_RUN_ID ?? `${process.pid}-${Date.now()}`;
+    const tmpDbPath = path.join(
+      os.tmpdir(),
+      `caesar-test-${runId}-${process.pid}.sqlite`
+    );
     g.__caesarTmpDbPath = tmpDbPath;
     const sqlite = createClient({ url: `file:${tmpDbPath}` });
     await sqlite.execute('PRAGMA foreign_keys = ON;');

@@ -11,22 +11,18 @@ export default defineConfig({
     // Order matches the original preload chain: dirs/migrations first, then
     // mock the db module, then the global lifecycle hooks. setupFiles run
     // in declaration order before each test file's imports resolve.
-    setupFiles: [
-      './src/__tests__/prepare.ts',
-      './src/__tests__/mock-db.ts',
-      './src/__tests__/setup.ts'
-    ],
+    setupFiles: ['./src/__tests__/mock-db.ts', './src/__tests__/setup.ts'],
     globalSetup: ['./src/__tests__/global-teardown.ts'],
     testTimeout: 30000,
     hookTimeout: 30000,
     bail: 0,
-    // Single-process, shared module cache. Closest to `bun test` semantics:
-    // mediasoup/http/db init runs once across files, not per-fork. The old
-    // libsql segfault that motivated per-file forks was a Bun-runtime
-    // problem; under Node the native binding is stable enough for in-process
-    // reuse. If a libsql crash recurs, fall back to pool: 'forks'.
-    pool: 'threads',
-    fileParallelism: false,
+    // Parallel forks. Each fork mints its own tempfile sqlite + HTTP server
+    // via PID-keyed globalThis caches in setup.ts, so files within a fork
+    // share that state while forks remain isolated from each other.
+    // `isolate: false` keeps the module graph + globalThis warm across
+    // files in the same fork (one migrate per fork, not per file).
+    pool: 'forks',
+    fileParallelism: true,
     isolate: false
   }
 });
