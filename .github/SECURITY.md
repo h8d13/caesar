@@ -1,14 +1,16 @@
 # Security
 
-## Security Policy
+## Policy
   
 ### Supported Versions
 Only the latest `master` is supported. Older tags receive no patches.
   
 ### Reporting a Vulnerability
 Please **do not** open a public issue. hadean-eon-dev@proton.me
+
 Or use GitHub's [private vulnerability reporting](https://github.com/h8d13/caesar/security/advisories/new).
-Expect an initial response within 24 hours.
+
+Expect an initial response **within 24 hours**.
 
 ## Auditabilty
 
@@ -26,3 +28,8 @@ HTTPS enforcement: behind Caddy, server 301s any `x-forwarded-proto: http`
 - Zod escaping and normalization.
 - Invite only model, opaque by design.
 - Operator vs Admin model: An 'admin' never gets IP or GEO. Only hashes. Operator still has full logs.
+
+## 3rd party
+
+- Deps are validated in [Renovate](https://github.com/h8d13/caesar/blob/master/renovate.json)
+- With vulnerabilty alerts enabled and frowen to 3 days minimum release.
