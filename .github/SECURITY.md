@@ -10,13 +10,13 @@ Please **do not** open a public issue. hadean-eon-dev@proton.me
 
 Or use GitHub's [private vulnerability reporting](https://github.com/h8d13/caesar/security/advisories/new).
 
-Expect an initial response **within 24 hours**.
+> Expect an initial response **within 24 hours**.
 
 ## Auditabilty
 
 - Main server setup: [index](apps/server/src/http/index.ts)
 
-> Sec headers here contain many "hardening" ideas. CSP, CORS, COOP/CORP.
+> Sec headers here contain many "hardening" ideas: CSP/nonces, CORS, COOP/CORP.
 > Same-origin, X-frame, explicit permissions.
 > Referrer policy, HSTS w/ includeSubDomains
 
