@@ -24,6 +24,7 @@ import { getDefaultRole } from '../db/queries/roles';
 import { getServerToken } from '../db/queries/server';
 import { getUserByIdentity } from '../db/queries/users';
 import { getWsInfo } from '../helpers/get-ws-info';
+import { isAtUserCap } from '../helpers/user-cap';
 import { logger } from '../logger';
 import { enqueueActivityLog } from '../queues/activity-log';
 import { invariant } from '../utils/invariant';
@@ -185,6 +186,19 @@ const loginRouteHandler = async (
     const isBootstrap = userCount === 0;
 
     if (!isBootstrap) {
+      // Enforce cap before invite consumption so a valid invite isn't
+      // "spent" on a rejected signup. Bootstrap path above already
+      // bypasses, so cap=1 still lets the first admin in.
+      if (await isAtUserCap()) {
+        logger.info(
+          `[Auth] Signup blocked for "${data.identity}": user cap reached (IP: ${connectionInfo?.ip || 'unknown'})`
+        );
+        throw new HttpValidationError(
+          'invite',
+          'This instance has reached its user limit.'
+        );
+      }
+
       const result = await isInviteValid(data.invite);
 
       if (result.error) {

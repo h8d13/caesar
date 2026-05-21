@@ -67,6 +67,11 @@ const zConfig = z.object({
       maxRequests: z.coerce.number().int().positive(),
       windowMs: z.coerce.number().int().positive()
     })
+  }),
+  limits: z.object({
+    // 0 = unlimited. Counts active (non-deleted) users; banned still count.
+    // Bootstrap (count==0) always bypasses so the first admin can register.
+    maxUsers: z.coerce.number().int().nonnegative().default(0)
   })
 });
 
@@ -125,6 +130,9 @@ const defaultConfig: TConfig = {
       maxRequests: 10,
       windowMs: 60_000
     }
+  },
+  limits: {
+    maxUsers: 0
   }
 };
 
@@ -168,7 +176,8 @@ config = applyEnvOverrides(config, {
   'webRtc.port': 'CAESAR_WEBRTC_PORT',
   'webRtc.announcedAddress': 'CAESAR_WEBRTC_ANNOUNCED_ADDRESS',
   'webRtc.maxBitrate': 'CAESAR_WEBRTC_MAX_BITRATE',
-  'webRtc.workers': 'CAESAR_WEBRTC_WORKERS'
+  'webRtc.workers': 'CAESAR_WEBRTC_WORKERS',
+  'limits.maxUsers': 'CAESAR_MAX_USERS'
 });
 
 config = Object.freeze(config);

@@ -449,9 +449,19 @@ export const useAdminInvites = () => {
         queryFn: () => getTRPCClient().invites.getAll.query()
     });
 
+    const { data: limits, refetch: refetchLimits } = useQuery({
+        queryKey: ['admin', 'invites', 'limits'],
+        queryFn: () => getTRPCClient().invites.getLimits.query()
+    });
+
+    const refetchAll = useCallback(async () => {
+        await Promise.all([refetch(), refetchLimits()]);
+    }, [refetch, refetchLimits]);
+
     return {
         invites,
-        refetch: toVoid(refetch),
+        limits,
+        refetch: refetchAll,
         loading
     };
 };

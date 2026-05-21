@@ -1,6 +1,7 @@
 import { ActivityLogType, getRandomString, Permission } from '@caesar/shared';
 import { invites, roles } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
+import { isAtUserCap } from '@server/helpers/user-cap';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
@@ -17,6 +18,11 @@ const addInviteRoute = protectedProcedure
   )
   .mutation(async ({ input, ctx }) => {
     await ctx.needsPermission(Permission.MANAGE_INVITES);
+
+    invariant(!(await isAtUserCap()), {
+      code: 'PRECONDITION_FAILED',
+      message: 'Instance has reached its user limit. Cannot create new invites.'
+    });
 
     if (input.roleId) {
       const role = await db
