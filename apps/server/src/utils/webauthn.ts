@@ -34,7 +34,9 @@ const SITE_HOST = CAESAR_SITE.split(':')[0] ?? 'localhost';
 // internal` on :8443). Anything else is assumed served over HTTPS on its
 // declared port (default 443).
 const SITE_SCHEME =
-  SITE_HOST === 'localhost' && !CAESAR_SITE.includes(':8443') ? 'http' : 'https';
+  SITE_HOST === 'localhost' && !CAESAR_SITE.includes(':8443')
+    ? 'http'
+    : 'https';
 
 const RP_ID = SITE_HOST;
 const RP_NAME = process.env.CAESAR_WEBAUTHN_RPNAME ?? 'Caesar';
