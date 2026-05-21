@@ -15,6 +15,8 @@ import {
 import { useForm } from '@/hooks/use-form';
 import { derivePrivAsync, setPriv } from '@/lib/e2ee';
 import { TestId } from '@caesar/shared';
+import type { PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser';
+import { startAuthentication } from '@simplewebauthn/browser';
 import {
     Alert,
     AlertDescription,
@@ -28,7 +30,7 @@ import {
     Input,
     Switch
 } from '@caesar/ui';
-import { ShieldCheck } from 'lucide-react';
+import { KeyRound, ShieldCheck } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -50,6 +52,10 @@ const Connect = memo(() => {
     });
 
     const [loading, setLoading] = useState(false);
+    const [pending2fa, setPending2fa] = useState<{
+        preAuthToken: string;
+        options: PublicKeyCredentialRequestOptionsJSON;
+    } | null>(null);
     const info = useInfo();
 
     const inviteCode = useMemo(() => {
@@ -63,6 +69,44 @@ const Connect = memo(() => {
     const isSignup = !!inviteCode;
     const passwordMismatch =
         isSignup && values.confirmPassword !== values.password;
+
+    // Common tail of the login flow: derive E2EE key, stash token, connect.
+    // Called once we have a final session token, regardless of whether 2FA
+    // was needed.
+    const completeLogin = useCallback(
+        async (token: string) => {
+            // E2EE: argon2id runs in a Web Worker so the main thread
+            // stays responsive. <E2eeKeyRegister /> picks up the pub via
+            // the priv subscriber and registers once joinServer has set
+            // authenticated=true.
+            derivePrivAsync(values.password, values.identity)
+                .then(setPriv)
+                .catch(() => {
+                    // derivation failed; user can retry via the e2ee
+                    // password dialog if they need ephemeral DMs.
+                });
+
+            // Toggle gates cross-tab session sharing. When ON, the token is
+            // written to localStorage so other tabs of this browser silently
+            // resume the session via AutoLoginController. When OFF, only
+            // sessionStorage is used (per-tab) and other tabs hit /login,
+            // which bumps sessionEpoch and supersedes this tab.
+            setSessionStorageItem(SessionStorageKey.TOKEN, token);
+            setLocalStorageItemBool(
+                LocalStorageKey.AUTO_LOGIN,
+                values.autoLogin
+            );
+
+            if (values.autoLogin) {
+                setLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN, token);
+            } else {
+                removeLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN);
+            }
+
+            await connect();
+        },
+        [values.password, values.identity, values.autoLogin]
+    );
 
     const onConnectClick = useCallback(async () => {
         // Pre-warm the AudioContext inside this gesture stack so
@@ -101,43 +145,23 @@ const Connect = memo(() => {
                 return;
             }
 
-            const data = (await response.json()) as { token: string };
+            const data = (await response.json()) as
+                | { token: string }
+                | {
+                      needs2fa: true;
+                      preAuthToken: string;
+                      options: PublicKeyCredentialRequestOptionsJSON;
+                  };
 
-            // E2EE: argon2id runs in a Web Worker so the main thread
-            // stays responsive (login spinner keeps animating). The
-            // <E2eeKeyRegister /> controller picks up the pub via the
-            // priv subscriber and registers once joinServer has set
-            // authenticated=true.
-            const password = values.password;
-            const identity = values.identity;
-            derivePrivAsync(password, identity)
-                .then(setPriv)
-                .catch(() => {
-                    // derivation failed; user can retry via the e2ee
-                    // password dialog if they need ephemeral DMs.
+            if ('needs2fa' in data) {
+                setPending2fa({
+                    preAuthToken: data.preAuthToken,
+                    options: data.options
                 });
-
-            // Toggle gates cross-tab session sharing. When ON, the token is
-            // written to localStorage so other tabs of this browser silently
-            // resume the session via AutoLoginController. When OFF, only
-            // sessionStorage is used (per-tab) and other tabs hit /login,
-            // which bumps sessionEpoch and supersedes this tab.
-            setSessionStorageItem(SessionStorageKey.TOKEN, data.token);
-            setLocalStorageItemBool(
-                LocalStorageKey.AUTO_LOGIN,
-                values.autoLogin
-            );
-
-            if (values.autoLogin) {
-                setLocalStorageItem(
-                    LocalStorageKey.AUTO_LOGIN_TOKEN,
-                    data.token
-                );
-            } else {
-                removeLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN);
+                return;
             }
 
-            await connect();
+            await completeLogin(data.token);
         } catch (error) {
             const errorMessage =
                 error instanceof Error ? error.message : String(error);
@@ -153,8 +177,54 @@ const Connect = memo(() => {
         values.autoLogin,
         isSignup,
         setErrors,
-        inviteCode
+        inviteCode,
+        completeLogin
     ]);
+
+    const onTapKeyClick = useCallback(async () => {
+        if (!pending2fa) return;
+
+        setLoading(true);
+
+        try {
+            const assertion = await startAuthentication({
+                optionsJSON: pending2fa.options
+            });
+
+            const url = getUrlFromServer();
+            const response = await fetch(`${url}/login/2fa`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    preAuthToken: pending2fa.preAuthToken,
+                    response: assertion
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                const message =
+                    errData.errors?.preAuthToken ||
+                    errData.errors?.response ||
+                    errData.error ||
+                    'Two-factor authentication failed.';
+                toast.error(message);
+                // Token may be expired or burned. Force the user back to
+                // password entry rather than silently retrying.
+                setPending2fa(null);
+                return;
+            }
+
+            const data = (await response.json()) as { token: string };
+            await completeLogin(data.token);
+        } catch (error) {
+            const message =
+                error instanceof Error ? error.message : String(error);
+            toast.error(`Key auth failed: ${message}`);
+        } finally {
+            setLoading(false);
+        }
+    }, [pending2fa, completeLogin]);
 
     const logoSrc = useMemo(() => {
         if (info?.logo) {
@@ -192,6 +262,36 @@ const Connect = memo(() => {
                         </span>
                     )}
 
+                    {pending2fa ? (
+                        <div className="flex flex-col gap-4">
+                            <div className="flex flex-col items-center gap-3 py-4">
+                                <KeyRound
+                                    size={48}
+                                    className="text-muted-foreground"
+                                />
+                                <p className="text-sm text-center">
+                                    Touch your security key to complete
+                                    sign-in.
+                                </p>
+                            </div>
+                            <Button
+                                className="w-full"
+                                onClick={onTapKeyClick}
+                                disabled={loading}
+                            >
+                                {loading ? 'Waiting for key…' : 'Tap your key'}
+                            </Button>
+                            <Button
+                                className="w-full"
+                                variant="ghost"
+                                onClick={() => setPending2fa(null)}
+                                disabled={loading}
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+                    ) : (
+                        <>
                     <form
                         className="flex flex-col gap-2"
                         onSubmit={(e) => {
@@ -310,6 +410,8 @@ const Connect = memo(() => {
                             </Alert>
                         )}
                     </div>
+                        </>
+                    )}
                 </CardContent>
             </Card>
         </div>

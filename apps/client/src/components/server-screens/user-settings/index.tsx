@@ -9,6 +9,7 @@ import { Notifications } from './notifications';
 import { Password } from './password';
 import { Profile } from './profile';
 import { RecentSessions } from './recent-sessions';
+import { SecurityKeys } from './security-keys';
 
 type TUserSettingsProps = TServerScreenBaseProps;
 
@@ -39,6 +40,7 @@ const UserSettings = memo(({ close }: TUserSettingsProps) => {
                         <MultiSessionToggle />
                         <RecentSessions />
                         <Password />
+                        <SecurityKeys />
                         <DeleteAccount />
                     </TabsContent>
                 </Tabs>
