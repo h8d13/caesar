@@ -3,6 +3,7 @@ import {
   type TMessageMetadata
 } from '@caesar/shared';
 import {
+  blob,
   index,
   integer,
   primaryKey,
@@ -182,6 +183,36 @@ const users = sqliteTable(
     index('users_last_login_idx').on(t.lastLoginAt)
   ]
 );
+
+// WebAuthn (FIDO2 / U2F) credentials per user. Stores the public half of
+// each enrolled authenticator; the private key never leaves the device.
+// `counter` is the signature counter reported by the authenticator on each
+// assertion. Strictly increasing per credential. A non-increase signals a
+// cloned credential.
+type WebauthnTransport =
+  | 'ble'
+  | 'cable'
+  | 'hybrid'
+  | 'internal'
+  | 'nfc'
+  | 'smart-card'
+  | 'usb';
+
+const userWebauthnCredentials = sqliteTable('user_webauthn_credentials', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  credentialId: text('credential_id').notNull().unique(),
+  publicKey: blob('public_key', { mode: 'buffer' }).$type<Buffer>().notNull(),
+  counter: integer('counter').notNull().default(0),
+  transports: text('transports', { mode: 'json' }).$type<WebauthnTransport[]>(),
+  deviceType: text('device_type'),
+  backedUp: integer('backed_up', { mode: 'boolean' }).notNull().default(false),
+  name: text('name'),
+  createdAt: integer('created_at').notNull(),
+  lastUsedAt: integer('last_used_at')
+});
 
 // E2EE keypair registration for ephemeral DMs. Holds only the public half;
 // the private key is deterministically re-derived in the browser from the
@@ -702,5 +733,6 @@ export {
   sounds,
   userKeys,
   userRoles,
-  users
+  users,
+  userWebauthnCredentials
 };

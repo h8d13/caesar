@@ -15,6 +15,7 @@ import { rolesRouter } from './roles';
 import { soundsRouter } from './sounds';
 import { usersRouter } from './users';
 import { voiceRouter } from './voice';
+import { webauthnRouter } from './webauthn';
 import { whiteboardRouter } from './whiteboard';
 
 const appRouter = t.router({
@@ -34,7 +35,8 @@ const appRouter = t.router({
   whiteboard: whiteboardRouter,
   crash: crashRouter,
   roulette: rouletteRouter,
-  coinflip: coinflipRouter
+  coinflip: coinflipRouter,
+  webauthn: webauthnRouter
 });
 
 type AppRouter = typeof appRouter;

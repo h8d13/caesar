@@ -12,6 +12,7 @@ import {
 } from './helpers';
 import { infoRouteHandler } from './info';
 import { interfaceRouteHandler } from './interface';
+import { login2faRouteHandler } from './login-2fa';
 import { loginRouteHandler } from './login';
 import { logoutRouteHandler } from './logout';
 import { publicRouteHandler } from './public';
@@ -46,6 +47,7 @@ const routeHandlers: Partial<
     exact: {
       '/upload': (req, res) => uploadFileRouteHandler(req, res),
       '/login': (req, res) => loginRouteHandler(req, res),
+      '/login/2fa': (req, res) => login2faRouteHandler(req, res),
       '/logout': (req, res) => logoutRouteHandler(req, res)
     },
     prefix: {}

@@ -2,7 +2,6 @@ import {
   ActivityLogType,
   canonicalIdentity,
   DELETED_USER_IDENTITY_AND_NAME,
-  DisconnectCode,
   IDENTITY_REGEX,
   type TJoinedUser
 } from '@caesar/shared';
@@ -34,8 +33,12 @@ import {
   getClientRateLimitKey,
   getRateLimitRetrySeconds
 } from '../utils/rate-limiters/rate-limiter';
-import { closeUserSessions } from '../utils/wss';
+import {
+  generateLoginOptions,
+  hasWebauthnCredentials
+} from '../utils/webauthn';
 import { getJsonBody } from './helpers';
+import { issueSession } from './session';
 import { HttpValidationError } from './utils';
 
 const zBody = z.object({
@@ -265,52 +268,32 @@ const loginRouteHandler = async (
     );
   }
 
-  // single-session by default: each /login bumps sessionEpoch so prior
-  // tokens fail the equality check in getUserByToken and prior WS
-  // connections get kicked below. Users opted in to multi-session keep the
-  // current epoch, so their existing tokens remain valid alongside the new
-  // one.
-  let sessionEpoch: number;
+  // If the user has any registered WebAuthn credentials, defer session
+  // issuance until they prove possession of a key. Return a short-lived
+  // preAuthToken that /login/2fa exchanges for a real session. sessionEpoch
+  // is intentionally NOT bumped here: a failed 2FA must not log the user
+  // out of their existing sessions.
+  if (await hasWebauthnCredentials(existingUser.id)) {
+    const options = await generateLoginOptions(existingUser.id);
 
-  if (existingUser.allowMultipleSessions) {
-    sessionEpoch = existingUser.sessionEpoch ?? 0;
-  } else {
-    const updated = await db
-      .update(users)
-      .set({ sessionEpoch: sql`${users.sessionEpoch} + 1` })
-      .where(eq(users.id, existingUser.id))
-      .returning({ sessionEpoch: users.sessionEpoch })
-      .get();
+    invariant(options, {
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Failed to build authentication options.'
+    });
 
-    sessionEpoch = updated?.sessionEpoch ?? 0;
-  }
-
-  const token = jwt.sign(
-    { userId: existingUser.id, sessionEpoch },
-    await getServerToken(),
-    { expiresIn: '604800s' /* 7 days */ }
-  );
-
-  if (!existingUser.allowMultipleSessions) {
-    // boot any WS connections still attached under the previous epoch's
-    // token. The newly minted `token` is not yet on any client, so passing
-    // it as the exception is a no-op safety net.
-    closeUserSessions(
-      existingUser.id,
-      'Another device connected.',
-      DisconnectCode.SESSION_SUPERSEDED,
-      token
+    const preAuthToken = jwt.sign(
+      { userId: existingUser.id, type: 'pre-2fa' },
+      await getServerToken(),
+      { expiresIn: '300s' /* 5 minutes */ }
     );
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ needs2fa: true, preAuthToken, options }));
+
+    return res;
   }
 
-  res.setHeader(
-    'Set-Cookie',
-    `caesar-token=${token}; HttpOnly; Secure; SameSite=Strict; Path=/public; Max-Age=604800`
-  );
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ success: true, token }));
-
-  return res;
+  return issueSession(existingUser, res);
 };
 
 export { loginRouteHandler };
