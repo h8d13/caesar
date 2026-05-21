@@ -278,7 +278,7 @@ const Connect = memo(() => {
                                 onClick={onTapKeyClick}
                                 disabled={loading}
                             >
-                                {loading ? 'Waiting for key…' : 'Tap your key'}
+                                {loading ? 'Waiting for key…' : 'Start →'}
                             </Button>
                             <Button
                                 className="w-full"
