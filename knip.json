@@ -22,6 +22,6 @@
   },
   "ignore": ["**/*.d.ts"],
   "ignoreBinaries": [],
-  "ignoreDependencies": ["tailwindcss", "postject"],
+  "ignoreDependencies": ["tailwindcss", "postject", "prettier", "prettier-plugin-organize-imports"],
   "ignoreExportsUsedInFile": true
 }
