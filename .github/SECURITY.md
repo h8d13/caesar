@@ -32,4 +32,4 @@ HTTPS enforcement: behind Caddy, server 301s any `x-forwarded-proto: http`
 ## 3rd party
 
 - Deps are validated in [Renovate](https://github.com/h8d13/caesar/blob/master/renovate.json)
-- With vulnerabilty alerts enabled and frowen to 3 days minimum release.
+- With vulnerabilty alerts enabled and frozen to 3 days minimum release.
