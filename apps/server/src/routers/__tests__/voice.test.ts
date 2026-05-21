@@ -1,11 +1,18 @@
 import { initTest } from '@server/__tests__/helpers';
-import { describe, expect, test } from 'vitest';
+import { loadMediasoup } from '@server/utils/mediasoup';
+import { beforeAll, describe, expect, test } from 'vitest';
 
 // Voice runtime requires the mediasoup native worker. `pnpm test:fast`
 // (SKIP_MEDIASOUP=1) leaves it unloaded, so the suite skips entirely.
+// We load mediasoup here (not the global setup) so that only this fork
+// binds the WebRTC port and other parallel forks don't collide on it.
 const d = process.env.SKIP_MEDIASOUP ? describe.skip : describe;
 
 d('voice router', () => {
+  beforeAll(async () => {
+    await loadMediasoup();
+  });
+
   test('should rate limit excessive voice join attempts', async () => {
     const { caller } = await initTest(1);
 

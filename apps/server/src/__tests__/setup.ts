@@ -7,7 +7,6 @@ import path from 'path';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
 import { DATA_PATH, DRIZZLE_PATH } from '../helpers/paths';
 import { createHttpServer } from '../http';
-import { loadMediasoup } from '../utils/mediasoup';
 import { clearRateLimitersForTests } from '../utils/rate-limiters/rate-limiter';
 import { setTestDb } from './mock-db';
 import { seedDatabase } from './seed';
@@ -66,7 +65,6 @@ beforeAll(async () => {
   // process itself persists.
   const g = globalThis as typeof globalThis & {
     __caesarServer?: { port: number; url: string };
-    __caesarMediasoupLoaded?: boolean;
     __caesarSqlite?: Client;
     __caesarUserTables?: string[];
     __caesarTmpDbPath?: string;
@@ -77,10 +75,6 @@ beforeAll(async () => {
     const addr = server.address();
     const port = typeof addr === 'object' && addr ? addr.port : 9999;
     g.__caesarServer = { port, url: `http://localhost:${port}` };
-  }
-  if (!g.__caesarMediasoupLoaded && !process.env.SKIP_MEDIASOUP) {
-    await loadMediasoup();
-    g.__caesarMediasoupLoaded = true;
   }
 
   if (!g.__caesarSqlite) {
