@@ -1,4 +1,8 @@
-import { ServerEvents, type StreamKind } from '@caesar/shared';
+import {
+  ChannelPermission,
+  ServerEvents,
+  type StreamKind
+} from '@caesar/shared';
 import { type Context, protectedProcedure } from '@server/utils/trpc';
 import { observable } from '@trpc/server/observable';
 
@@ -8,12 +12,17 @@ type TVoiceProducerEvent = {
   kind: StreamKind;
 };
 
-// Subscribe across all channels and filter by ctx.currentVoiceChannelId
-// per event. The ctx is the per-WS shared object that `join.ts` mutates,
-// so reading it inside the listener picks up the channelId set after
-// this subscription was opened, avoiding the race where a subscription
-// requested concurrently with the join mutation captures an undefined
-// channelId at handler-time and gets stuck with a dead observable.
+// Subscribe across all channels and filter per event. The ctx is the
+// per-WS shared object that `join.ts` mutates, so reading
+// currentVoiceChannelId inside the listener picks up the channelId set
+// after this subscription was opened, closing the race where a sub
+// requested concurrently with the join mutation would otherwise capture
+// undefined at handler-time and stay dead.
+//
+// Access is re-verified per event against the live channel ACLs (not
+// just trusted from the join-time check): permissions can be revoked
+// while a user is still in voice, and the equality with
+// currentVoiceChannelId alone wouldn't reflect that.
 const subscribeVoiceProducerEvent = (
   topic:
     | typeof ServerEvents.VOICE_NEW_PRODUCER
@@ -22,10 +31,14 @@ const subscribeVoiceProducerEvent = (
 ) =>
   observable<TVoiceProducerEvent>((observer) => {
     const sub = ctx.pubsub.subscribeAcrossChannels(topic).subscribe({
-      next: (data) => {
-        if (data.channelId === ctx.currentVoiceChannelId) {
-          observer.next(data);
-        }
+      next: async (data) => {
+        if (data.channelId !== ctx.currentVoiceChannelId) return;
+        const allowed = await ctx.hasChannelPermission(
+          data.channelId,
+          ChannelPermission.JOIN
+        );
+        if (!allowed) return;
+        observer.next(data);
       }
     });
     return () => sub.unsubscribe();
