@@ -92,11 +92,12 @@ const SecurityKeys = memo(() => {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Security Keys</CardTitle>
+                <CardTitle>U2F Keys</CardTitle>
                 <CardDescription>
                     Register a hardware security key as a second factor on
                     login. Once at least one key is registered, you will be
                     prompted for it after entering your password.
+                    Please register a back-up, no recovery mechanism is in place.
                 </CardDescription>
                 <CardAction>
                     <Button onClick={addKey} disabled={loading}>
@@ -108,12 +109,12 @@ const SecurityKeys = memo(() => {
             <CardContent className="space-y-4">
                 <Group
                     label="Label (optional)"
-                    help="A name to help you identify this key in the list (e.g. 'YubiKey 5C')."
+                    help="A name to help you identify this key in the list (e.g. 'Backup key')."
                 >
                     <Input
                         value={newKeyName}
                         onChange={(e) => setNewKeyName(e.target.value)}
-                        placeholder="YubiKey 5C"
+                        placeholder="Backup key"
                         maxLength={64}
                     />
                 </Group>
