@@ -29,11 +29,6 @@ export default defineConfig({
     pool: 'forks',
     fileParallelism: true,
     isolate: false,
-    poolOptions: {
-      forks: {
-        maxForks: 4,
-        minForks: 1
-      }
-    }
+    maxWorkers: 4
   }
 });
