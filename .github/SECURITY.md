@@ -24,6 +24,7 @@ HTTPS enforcement: behind Caddy, server 301s any `x-forwarded-proto: http`
 
 - AuthN: argon2 password hashing (`apps/server/src/utils/password.ts`).
 - AuthZ: tRPC `protectedProcedure` + permission middleware (`apps/server/src/utils/trpc.ts`).
+- 2FA: Only through hardware backed keys (`apps/server/src/utils/webauthn.ts`)
 - Rate limiting: per-IP token bucket on tRPC procedures and login (`apps/server/src/utils/rate-limiters/`).
 - Zod escaping and normalization.
 

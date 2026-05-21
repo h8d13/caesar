@@ -141,6 +141,13 @@
       "when": 1779875422853,
       "tag": "0019_settings_games_enabled",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1779961822853,
+      "tag": "0020_user_webauthn",
+      "breakpoints": true
     }
   ]
 }

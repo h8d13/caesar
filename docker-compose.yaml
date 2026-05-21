@@ -18,6 +18,7 @@ services:
     environment:
       CAESAR_PORT: "4991"
       CAESAR_WEBRTC_WORKERS: "4"
+      CAESAR_SITE: ${CAESAR_SITE:-localhost}
     volumes:
       - ./data:/home/node/.config/caesar
 
@@ -63,6 +64,7 @@ services:
     environment:
       CAESAR_PORT: "4991"
       CAESAR_WEBRTC_ANNOUNCED_ADDRESS: ${CAESAR_WEBRTC_ANNOUNCED_ADDRESS:-}
+      CAESAR_SITE: "localhost:8443"
     volumes:
       - ./data-prod-dev:/home/node/.config/caesar
 
