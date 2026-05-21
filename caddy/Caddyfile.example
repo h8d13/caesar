@@ -1,0 +1,22 @@
+{
+	on_demand_tls {
+		ask http://localhost:9000/check
+	}
+}
+
+:9000 {
+	@ok expression `{query.domain}.endsWith("example.com")`
+	respond @ok 200
+	respond 403
+}
+
+example.com {
+	reverse_proxy caesar:4991
+}
+
+*.example.com {
+	tls {
+		on_demand
+	}
+	redir https://example.com{uri} 301
+}
