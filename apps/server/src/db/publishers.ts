@@ -9,13 +9,14 @@ import {
   messages,
   users
 } from '@caesar/shared/db/schema';
-import { count, eq } from 'drizzle-orm';
+import { count, eq, inArray } from 'drizzle-orm';
 import { db } from '.';
 import { extractMentionUserIds } from '../helpers/extract-mention-user-ids';
 import { pubsub } from '../utils/pubsub';
 import {
   getAffectedOnlineUserIdsForChannel,
-  getAllChannelUserPermissions
+  getAllChannelUserPermissions,
+  getChannelsForUser
 } from './queries/channels';
 import { getEmojiById } from './queries/emojis';
 import { getMessage } from './queries/messages';
@@ -286,6 +287,49 @@ const publishCategory = async (
   pubsub.publish(targetEvent, category);
 };
 
+// Snapshot a user's visible-channel set (by id). Used to diff before/after
+// a role or ACL change so we can push CHANNEL_CREATE/DELETE for the
+// channels whose visibility flipped for this specific user without
+// re-broadcasting them to the whole server.
+const snapshotUserChannelAccess = async (
+  userId: number
+): Promise<Set<number>> => {
+  const visible = await getChannelsForUser(userId);
+  return new Set(visible.map((c) => c.id));
+};
+
+// Reconcile per-user channel visibility after a role or ACL change.
+// Compares the before/after snapshots and publishes the channel diff to
+// the affected user via publishFor. CHANNEL_DELETE only needs the id;
+// CHANNEL_CREATE needs the full channel row, so we fetch the rows we
+// added in a single query.
+const publishUserChannelAccessDiff = async (
+  userId: number,
+  before: Set<number>,
+  after: Set<number>
+) => {
+  const added: number[] = [];
+  for (const id of after) if (!before.has(id)) added.push(id);
+
+  const removed: number[] = [];
+  for (const id of before) if (!after.has(id)) removed.push(id);
+
+  for (const channelId of removed) {
+    pubsub.publishFor(userId, ServerEvents.CHANNEL_DELETE, channelId);
+  }
+
+  if (added.length === 0) return;
+
+  const addedRows = await db
+    .select()
+    .from(channels)
+    .where(inArray(channels.id, added));
+
+  for (const row of addedRows) {
+    pubsub.publishFor(userId, ServerEvents.CHANNEL_CREATE, row);
+  }
+};
+
 const publishChannelPermissions = async (affectedUserIds: number[]) => {
   const permissionsMap = new Map<number, TChannelUserPermissionsMap>();
   const promises = affectedUserIds.map(async (userId) => {
@@ -340,5 +384,7 @@ export {
   publishRole,
   publishSettings,
   publishSound,
-  publishUser
+  publishUser,
+  publishUserChannelAccessDiff,
+  snapshotUserChannelAccess
 };

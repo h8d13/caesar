@@ -1,7 +1,12 @@
 import { Permission } from '@caesar/shared';
 import { userRoles } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import { publishUser } from '@server/db/publishers';
+import {
+  publishChannelPermissions,
+  publishUser,
+  publishUserChannelAccessDiff,
+  snapshotUserChannelAccess
+} from '@server/db/publishers';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { and, eq } from 'drizzle-orm';
@@ -35,11 +40,26 @@ const addRoleRoute = protectedProcedure
 
     await assertCanModifyOwnerRole(ctx.userId, input.roleId, 'assign');
 
+    const beforeChannels = await snapshotUserChannelAccess(input.userId);
+
     await db.insert(userRoles).values({
       userId: input.userId,
       roleId: input.roleId,
       createdAt: Date.now()
     });
+
+    const afterChannels = await snapshotUserChannelAccess(input.userId);
+
+    // A role grant can newly expose channels the user couldn't see
+    // before (channel ACL allows that role). Push the channel diff
+    // and the refreshed per-channel permission map so the sidebar
+    // updates without a hard refresh.
+    await publishUserChannelAccessDiff(
+      input.userId,
+      beforeChannels,
+      afterChannels
+    );
+    await publishChannelPermissions([input.userId]);
 
     publishUser(input.userId, 'update');
   });

@@ -1,7 +1,12 @@
 import { Permission } from '@caesar/shared';
 import { userRoles } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import { publishUser } from '@server/db/publishers';
+import {
+  publishChannelPermissions,
+  publishUser,
+  publishUserChannelAccessDiff,
+  snapshotUserChannelAccess
+} from '@server/db/publishers';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { and, eq } from 'drizzle-orm';
@@ -36,6 +41,8 @@ const removeRoleRoute = protectedProcedure
       message: 'User does not have this role'
     });
 
+    const beforeChannels = await snapshotUserChannelAccess(input.userId);
+
     await db
       .delete(userRoles)
       .where(
@@ -44,6 +51,18 @@ const removeRoleRoute = protectedProcedure
           eq(userRoles.roleId, input.roleId)
         )
       );
+
+    const afterChannels = await snapshotUserChannelAccess(input.userId);
+
+    // Symmetric to add-role: role removal can hide previously visible
+    // channels (channel ACL relied on that role). Push the channel diff
+    // and refresh the per-channel permission map.
+    await publishUserChannelAccessDiff(
+      input.userId,
+      beforeChannels,
+      afterChannels
+    );
+    await publishChannelPermissions([input.userId]);
 
     publishUser(input.userId, 'update');
   });
