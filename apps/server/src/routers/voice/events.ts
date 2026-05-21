@@ -1,5 +1,5 @@
 import { ServerEvents, type StreamKind } from '@caesar/shared';
-import { protectedProcedure } from '@server/utils/trpc';
+import { type Context, protectedProcedure } from '@server/utils/trpc';
 import { observable } from '@trpc/server/observable';
 
 type TVoiceProducerEvent = {
@@ -7,6 +7,29 @@ type TVoiceProducerEvent = {
   remoteId: number;
   kind: StreamKind;
 };
+
+// Subscribe across all channels and filter by ctx.currentVoiceChannelId
+// per event. The ctx is the per-WS shared object that `join.ts` mutates,
+// so reading it inside the listener picks up the channelId set after
+// this subscription was opened, avoiding the race where a subscription
+// requested concurrently with the join mutation captures an undefined
+// channelId at handler-time and gets stuck with a dead observable.
+const subscribeVoiceProducerEvent = (
+  topic:
+    | typeof ServerEvents.VOICE_NEW_PRODUCER
+    | typeof ServerEvents.VOICE_PRODUCER_CLOSED,
+  ctx: Context
+) =>
+  observable<TVoiceProducerEvent>((observer) => {
+    const sub = ctx.pubsub.subscribeAcrossChannels(topic).subscribe({
+      next: (data) => {
+        if (data.channelId === ctx.currentVoiceChannelId) {
+          observer.next(data);
+        }
+      }
+    });
+    return () => sub.unsubscribe();
+  });
 
 // these events are broadcast to ALL users (for UI population in the sidebar)
 const onUserJoinVoiceRoute = protectedProcedure.subscription(
@@ -55,16 +78,8 @@ const onVoiceRemoveExternalStreamRoute = protectedProcedure.subscription(
 // these events are channel-scoped (only sent to users in the same voice channel)
 // they relate to actual media streaming, not UI state
 const onVoiceNewProducerRoute = protectedProcedure.subscription(
-  async ({ ctx }) => {
-    if (!ctx.currentVoiceChannelId) {
-      return observable<TVoiceProducerEvent>(() => () => {});
-    }
-
-    return ctx.pubsub.subscribeForChannel(
-      ctx.currentVoiceChannelId,
-      ServerEvents.VOICE_NEW_PRODUCER
-    );
-  }
+  async ({ ctx }) =>
+    subscribeVoiceProducerEvent(ServerEvents.VOICE_NEW_PRODUCER, ctx)
 );
 
 const onSoundboardPlayRoute = protectedProcedure.subscription(
@@ -74,16 +89,8 @@ const onSoundboardPlayRoute = protectedProcedure.subscription(
 );
 
 const onVoiceProducerClosedRoute = protectedProcedure.subscription(
-  async ({ ctx }) => {
-    if (!ctx.currentVoiceChannelId) {
-      return observable<TVoiceProducerEvent>(() => () => {});
-    }
-
-    return ctx.pubsub.subscribeForChannel(
-      ctx.currentVoiceChannelId,
-      ServerEvents.VOICE_PRODUCER_CLOSED
-    );
-  }
+  async ({ ctx }) =>
+    subscribeVoiceProducerEvent(ServerEvents.VOICE_PRODUCER_CLOSED, ctx)
 );
 
 export {

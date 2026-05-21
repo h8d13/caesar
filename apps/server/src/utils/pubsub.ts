@@ -181,6 +181,14 @@ class PubSub {
     number,
     Map<string, Set<(data: Events[keyof Events]) => void>>
   > = new Map();
+  // Topic-keyed listeners that receive every publishForChannel emission
+  // regardless of channel. Used by subscribers that need to filter the
+  // channel id dynamically per event (e.g. voice subscriptions that
+  // outlive a single channelId snapshot).
+  private anyChannelListeners: Map<
+    string,
+    Set<(data: Events[keyof Events]) => void>
+  > = new Map();
 
   constructor() {
     this.ee = new EventEmitter();
@@ -295,15 +303,61 @@ class PubSub {
   ): void {
     const channelTopics = this.channelListeners.get(channelId);
 
-    if (!channelTopics) return;
+    if (channelTopics) {
+      const listeners = channelTopics.get(topic);
 
-    const listeners = channelTopics.get(topic);
-
-    if (!listeners) return;
-
-    for (const listener of listeners) {
-      listener(payload);
+      if (listeners) {
+        for (const listener of listeners) {
+          listener(payload);
+        }
+      }
     }
+
+    const anyListeners = this.anyChannelListeners.get(topic);
+
+    if (anyListeners) {
+      for (const listener of anyListeners) {
+        listener(payload);
+      }
+    }
+  }
+
+  // Subscribe to every publishForChannel emission for a topic across all
+  // channels. Used when the consumer needs to filter the channel id per
+  // event (e.g. ctx-driven voice subscriptions where ctx.currentVoiceChannelId
+  // is set after the subscription itself was opened).
+  public subscribeAcrossChannels<TTopic extends keyof Events>(
+    topic: TTopic
+  ): Observable<Events[TTopic], unknown> {
+    return observable((observer) => {
+      const listener = (data: Events[TTopic]) => {
+        observer.next(data);
+      };
+
+      if (!this.anyChannelListeners.has(topic)) {
+        this.anyChannelListeners.set(topic, new Set());
+      }
+
+      this.anyChannelListeners
+        .get(topic)!
+        .add(listener as (data: Events[keyof Events]) => void);
+
+      const unsubscribable: Unsubscribable = {
+        unsubscribe: () => {
+          const listeners = this.anyChannelListeners.get(topic);
+
+          if (!listeners) return;
+
+          listeners.delete(listener as (data: Events[keyof Events]) => void);
+
+          if (listeners.size === 0) {
+            this.anyChannelListeners.delete(topic);
+          }
+        }
+      };
+
+      return unsubscribable;
+    });
   }
 
   public subscribeForChannel<TTopic extends keyof Events>(
