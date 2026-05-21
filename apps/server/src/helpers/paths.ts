@@ -2,8 +2,14 @@ import path from 'path';
 import { IS_DEVELOPMENT, IS_TEST, SERVER_VERSION } from '../utils/env';
 import { getAppDataPath } from './fs';
 
+// In test mode, each vitest fork gets its own data dir so parallel forks
+// don't race on tmp/public/uploads. VITEST_POOL_ID is set per worker
+// (1-indexed); falls back to plain `data-test` for non-vitest test runs.
+const TEST_DATA_SUFFIX = process.env.VITEST_POOL_ID
+  ? `-${process.env.VITEST_POOL_ID}`
+  : '';
 const DATA_PATH = IS_TEST
-  ? path.resolve(process.cwd(), './data-test')
+  ? path.resolve(process.cwd(), `./data-test${TEST_DATA_SUFFIX}`)
   : IS_DEVELOPMENT
     ? path.resolve(process.cwd(), './data')
     : path.join(getAppDataPath(), 'caesar');
