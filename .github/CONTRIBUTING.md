@@ -4,7 +4,7 @@ Thanks for your interest in contributing!
 
 ## Reporting bugs
 
-Open a PR (or an [issue](https://github.com/h8d13/caesar/issues)) with a clear title, steps to reproduce bug/fix, and what you expected vs. what happened.
+Open a [PR](https://github.com/h8d13/caesar/pulls) (or an [issue](https://github.com/h8d13/caesar/issues)) with a clear title, steps to reproduce bug/fix, and what you expected vs. what happened.
 
 Or describe what you are trying to improve. Screenshots also welcome.
 
