@@ -19,4 +19,4 @@ repos:
       language: system
       types_or: [ts, tsx]
 
-# `pre-commit clean && pre-commit install` from repo root
+# `pre-commit clean && pre-commit install`
