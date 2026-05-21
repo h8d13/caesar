@@ -96,9 +96,7 @@ const login2faRouteHandler = async (
   }
 
   if (user.banned) {
-    logger.info(
-      `[Auth] /login/2fa rejected: user ${claims.userId} now banned`
-    );
+    logger.info(`[Auth] /login/2fa rejected: user ${claims.userId} now banned`);
     throw new HttpValidationError(
       'preAuthToken',
       `Identity banned: ${user.banReason || 'No reason provided'}`

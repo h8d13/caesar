@@ -5,34 +5,45 @@
 // EXPECTED_ORIGIN is the full origin including scheme + port and is what
 // the authenticator signed clientDataJSON against.
 //
+// Both are derived from the CAESAR_SITE the rest of the stack already uses
+// (the Caddy site directive). `localhost` is treated as plain HTTP because
+// LetsEncrypt won't issue for it; everything else is assumed HTTPS.
+//
 // Challenges for register / authenticate live in an in-memory Map with a
 // short TTL. Acceptable for a single-process PoC; for multi-instance
 // deploys, move to Redis or a DB row.
 
 import { userWebauthnCredentials } from '@caesar/shared/db/schema';
-import {
-  generateAuthenticationOptions,
-  verifyAuthenticationResponse
-} from '@simplewebauthn/server';
 import type {
   AuthenticationResponseJSON,
   PublicKeyCredentialRequestOptionsJSON
+} from '@simplewebauthn/server';
+import {
+  generateAuthenticationOptions,
+  verifyAuthenticationResponse
 } from '@simplewebauthn/server';
 import crypto from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { getServerTokenSync } from '../db/queries/server';
+import { IS_DEVELOPMENT } from './env';
 
-const RP_ID = process.env.CAESAR_WEBAUTHN_RPID ?? 'localhost';
+const CAESAR_SITE = process.env.CAESAR_SITE ?? 'localhost';
+const SITE_HOST = CAESAR_SITE.split(':')[0];
+// Plain localhost (with or without port) is dev / prod-dev (Caddy `tls
+// internal` on :8443). Anything else is assumed served over HTTPS on its
+// declared port (default 443).
+const SITE_SCHEME =
+  SITE_HOST === 'localhost' && !CAESAR_SITE.includes(':8443') ? 'http' : 'https';
+
+const RP_ID = SITE_HOST;
 const RP_NAME = process.env.CAESAR_WEBAUTHN_RPNAME ?? 'Caesar';
-// Comma-separated list. Lets a single instance accept both vite dev
-// (http://localhost:5173) and the prod origin without re-deploying.
-const EXPECTED_ORIGIN = (
-  process.env.CAESAR_WEBAUTHN_ORIGIN ?? 'http://localhost:5173'
-)
-  .split(',')
-  .map((s) => s.trim())
-  .filter(Boolean);
+// In dev, also accept the vite origin so registrations done on :5173 still
+// verify when the same server is reached via the prod-dev :8443 surface or
+// vice versa.
+const EXPECTED_ORIGIN = IS_DEVELOPMENT
+  ? [`${SITE_SCHEME}://${CAESAR_SITE}`, 'http://localhost:5173']
+  : [`${SITE_SCHEME}://${CAESAR_SITE}`];
 
 const CHALLENGE_TTL_MS = 5 * 60 * 1000;
 
@@ -187,13 +198,13 @@ const hasWebauthnCredentials = async (userId: number): Promise<boolean> => {
 
 export {
   CHALLENGE_TTL_MS,
-  EXPECTED_ORIGIN,
-  RP_ID,
-  RP_NAME,
   consumeChallenge,
+  EXPECTED_ORIGIN,
   generateLoginOptions,
   hashUserId,
   hasWebauthnCredentials,
+  RP_ID,
+  RP_NAME,
   storeChallenge,
   verifyLoginAssertion
 };

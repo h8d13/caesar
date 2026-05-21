@@ -12,8 +12,8 @@ import {
 } from './helpers';
 import { infoRouteHandler } from './info';
 import { interfaceRouteHandler } from './interface';
-import { login2faRouteHandler } from './login-2fa';
 import { loginRouteHandler } from './login';
+import { login2faRouteHandler } from './login-2fa';
 import { logoutRouteHandler } from './logout';
 import { publicRouteHandler } from './public';
 import { uploadFileRouteHandler } from './upload';

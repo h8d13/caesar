@@ -15,8 +15,6 @@ import {
 import { useForm } from '@/hooks/use-form';
 import { derivePrivAsync, setPriv } from '@/lib/e2ee';
 import { TestId } from '@caesar/shared';
-import type { PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser';
-import { startAuthentication } from '@simplewebauthn/browser';
 import {
     Alert,
     AlertDescription,
@@ -30,6 +28,8 @@ import {
     Input,
     Switch
 } from '@caesar/ui';
+import type { PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser';
+import { startAuthentication } from '@simplewebauthn/browser';
 import { KeyRound, ShieldCheck } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -270,8 +270,7 @@ const Connect = memo(() => {
                                     className="text-muted-foreground"
                                 />
                                 <p className="text-sm text-center">
-                                    Touch your security key to complete
-                                    sign-in.
+                                    Touch your security key to complete sign-in.
                                 </p>
                             </div>
                             <Button
@@ -292,124 +291,132 @@ const Connect = memo(() => {
                         </div>
                     ) : (
                         <>
-                    <form
-                        className="flex flex-col gap-2"
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            onConnectClick();
-                        }}
-                    >
-                        <Group
-                            label="Identity"
-                            help="A username you would like to login with. You can edit your display name later."
-                        >
-                            <Input
-                                {...r('identity')}
-                                autoComplete="username"
-                                onEnter={onConnectClick}
-                                data-testid={TestId.CONNECT_IDENTITY_INPUT}
-                            />
-                        </Group>
-                        <Group label="Password">
-                            <Input
-                                {...r('password')}
-                                type="password"
-                                autoComplete={
-                                    isSignup
-                                        ? 'new-password'
-                                        : 'current-password'
-                                }
-                                onEnter={onConnectClick}
-                                data-testid={TestId.CONNECT_PASSWORD_INPUT}
-                            />
-                        </Group>
-                        {isSignup && (
-                            <Group
-                                label="Confirm password"
-                                help="Type your password again so you don't lock yourself out."
+                            <form
+                                className="flex flex-col gap-2"
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    onConnectClick();
+                                }}
                             >
-                                <Input
-                                    {...r('confirmPassword')}
-                                    type="password"
-                                    autoComplete="new-password"
-                                    onEnter={onConnectClick}
-                                />
-                            </Group>
-                        )}
-                    </form>
+                                <Group
+                                    label="Identity"
+                                    help="A username you would like to login with. You can edit your display name later."
+                                >
+                                    <Input
+                                        {...r('identity')}
+                                        autoComplete="username"
+                                        onEnter={onConnectClick}
+                                        data-testid={
+                                            TestId.CONNECT_IDENTITY_INPUT
+                                        }
+                                    />
+                                </Group>
+                                <Group label="Password">
+                                    <Input
+                                        {...r('password')}
+                                        type="password"
+                                        autoComplete={
+                                            isSignup
+                                                ? 'new-password'
+                                                : 'current-password'
+                                        }
+                                        onEnter={onConnectClick}
+                                        data-testid={
+                                            TestId.CONNECT_PASSWORD_INPUT
+                                        }
+                                    />
+                                </Group>
+                                {isSignup && (
+                                    <Group
+                                        label="Confirm password"
+                                        help="Type your password again so you don't lock yourself out."
+                                    >
+                                        <Input
+                                            {...r('confirmPassword')}
+                                            type="password"
+                                            autoComplete="new-password"
+                                            onEnter={onConnectClick}
+                                        />
+                                    </Group>
+                                )}
+                            </form>
 
-                    <div
-                        className="flex items-center gap-2 w-fit cursor-pointer"
-                        data-testid={TestId.CONNECT_AUTO_LOGIN_SWITCH}
-                        onClick={() => {
-                            onChange('autoLogin', !values.autoLogin);
-                        }}
-                    >
-                        <Switch checked={values.autoLogin} />
-                        <span className="text-sm font-medium cursor-pointer">
-                            Stay signed in across tabs?
-                        </span>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                        {!window.isSecureContext ? (
-                            <Alert variant="destructive">
-                                <AlertTitle>Insecure Connection</AlertTitle>
-                                <AlertDescription>
-                                    You are accessing the server over an
-                                    insecure connection (HTTP). By default,
-                                    browsers block access to media devices such
-                                    as your camera and microphone on insecure
-                                    origins. This means that you won't be able
-                                    to use video or voice chat features while
-                                    connected to the server over HTTP. If you
-                                    are the server administrator, you can set up
-                                    HTTPS by following the instructions in the
-                                    documentation.
-                                </AlertDescription>
-                            </Alert>
-                        ) : (
-                            <div className="flex items-center gap-2 text-sm text-green-500">
-                                <ShieldCheck size={16} />
-                                <span>Secure connection</span>
+                            <div
+                                className="flex items-center gap-2 w-fit cursor-pointer"
+                                data-testid={TestId.CONNECT_AUTO_LOGIN_SWITCH}
+                                onClick={() => {
+                                    onChange('autoLogin', !values.autoLogin);
+                                }}
+                            >
+                                <Switch checked={values.autoLogin} />
+                                <span className="text-sm font-medium cursor-pointer">
+                                    Stay signed in across tabs?
+                                </span>
                             </div>
-                        )}
 
-                        <Button
-                            className="w-full"
-                            variant="outline"
-                            onClick={onConnectClick}
-                            disabled={
-                                loading ||
-                                !values.identity ||
-                                !values.password ||
-                                passwordMismatch
-                            }
-                            data-testid={TestId.CONNECT_BUTTON}
-                        >
-                            {isSignup ? 'Create account' : 'Connect'}
-                        </Button>
+                            <div className="flex flex-col gap-2">
+                                {!window.isSecureContext ? (
+                                    <Alert variant="destructive">
+                                        <AlertTitle>
+                                            Insecure Connection
+                                        </AlertTitle>
+                                        <AlertDescription>
+                                            You are accessing the server over an
+                                            insecure connection (HTTP). By
+                                            default, browsers block access to
+                                            media devices such as your camera
+                                            and microphone on insecure origins.
+                                            This means that you won't be able to
+                                            use video or voice chat features
+                                            while connected to the server over
+                                            HTTP. If you are the server
+                                            administrator, you can set up HTTPS
+                                            by following the instructions in the
+                                            documentation.
+                                        </AlertDescription>
+                                    </Alert>
+                                ) : (
+                                    <div className="flex items-center gap-2 text-sm text-green-500">
+                                        <ShieldCheck size={16} />
+                                        <span>Secure connection</span>
+                                    </div>
+                                )}
 
-                        {!isSignup && (
-                            <span className="text-xs text-muted-foreground text-center">
-                                Sign in with an existing account. Or ask for an
-                                invite.
-                            </span>
-                        )}
+                                <Button
+                                    className="w-full"
+                                    variant="outline"
+                                    onClick={onConnectClick}
+                                    disabled={
+                                        loading ||
+                                        !values.identity ||
+                                        !values.password ||
+                                        passwordMismatch
+                                    }
+                                    data-testid={TestId.CONNECT_BUTTON}
+                                >
+                                    {isSignup ? 'Create account' : 'Connect'}
+                                </Button>
 
-                        {isSignup && (
-                            <Alert variant="info">
-                                <AlertTitle>
-                                    You were invited to join this server
-                                </AlertTitle>
-                                <AlertDescription>
-                                    <span className="font-mono text-xs">
-                                        Invite code: {inviteCode}
+                                {!isSignup && (
+                                    <span className="text-xs text-muted-foreground text-center">
+                                        Sign in with an existing account. Or ask
+                                        for an invite.
                                     </span>
-                                </AlertDescription>
-                            </Alert>
-                        )}
-                    </div>
+                                )}
+
+                                {isSignup && (
+                                    <Alert variant="info">
+                                        <AlertTitle>
+                                            You were invited to join this server
+                                        </AlertTitle>
+                                        <AlertDescription>
+                                            <span className="font-mono text-xs">
+                                                Invite code: {inviteCode}
+                                            </span>
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+                            </div>
                         </>
                     )}
                 </CardContent>
