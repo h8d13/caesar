@@ -217,11 +217,13 @@ const OverridesList = memo(
                         isCreate: true
                     });
 
-                    toast.success('Permission override added');
-
-                    setSelectedOverrideId(`${type}-${targetId}`);
-
+                    // refetch must finish before we select the new
+                    // override, otherwise Override mounts with empty
+                    // permissions and its useState locks it in.
                     await refetch();
+
+                    toast.success('Permission override added');
+                    setSelectedOverrideId(`${type}-${targetId}`);
                 } catch (error) {
                     toast.error(
                         getTrpcError(error, 'Failed to add permission override')
