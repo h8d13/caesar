@@ -8,7 +8,6 @@ const DATA_PATH = IS_TEST
     ? path.resolve(process.cwd(), './data')
     : path.join(getAppDataPath(), 'caesar');
 const DB_PATH = path.join(DATA_PATH, 'db.sqlite');
-const LOGS_PATH = path.join(DATA_PATH, 'logs');
 const PUBLIC_PATH = path.join(DATA_PATH, 'public');
 const TMP_PATH = path.join(DATA_PATH, 'tmp');
 const UPLOADS_PATH = path.join(DATA_PATH, 'uploads');
@@ -21,13 +20,14 @@ const MEDIASOUP_BINARY_PATH = IS_DEVELOPMENT
   : path.join(MEDIASOUP_PATH, 'mediasoup-worker');
 const SRC_MIGRATIONS_PATH = path.join(process.cwd(), 'src', 'db', 'migrations');
 
+// logs live with docker / operator, not persisted on disk.
+
 export {
   CONFIG_INI_PATH,
   DATA_PATH,
   DB_PATH,
   DRIZZLE_PATH,
   INTERFACE_PATH,
-  LOGS_PATH,
   MEDIASOUP_BINARY_PATH,
   MEDIASOUP_PATH,
   PUBLIC_PATH,
