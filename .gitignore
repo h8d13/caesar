@@ -4,8 +4,9 @@
 data/
 data-prod-dev/
 data-test/
+.vite-devmaps/
+*.wiki/
 .idea**
 .note**
-.vite-devmaps/
 .env
 .env.*
