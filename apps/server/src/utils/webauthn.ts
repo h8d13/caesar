@@ -1,17 +1,5 @@
-// WebAuthn (FIDO2 / U2F) relying party config and helpers.
-//
-// RP_ID is the registrable domain (no protocol, no port). Browsers bind
-// credentials to this string, so it must stay stable across deploys.
-// EXPECTED_ORIGIN is the full origin including scheme + port and is what
-// the authenticator signed clientDataJSON against.
-//
-// Both are derived from the CAESAR_SITE the rest of the stack already uses
-// (the Caddy site directive). `localhost` is treated as plain HTTP because
-// LetsEncrypt won't issue for it; everything else is assumed HTTPS.
-//
-// Challenges for register / authenticate live in an in-memory Map with a
-// short TTL. Acceptable for a single-process PoC; for multi-instance
-// deploys, move to Redis or a DB row.
+// RP config derived from CAESAR_SITE. Challenges live in an in-memory Map
+// with short TTL.
 
 import { userWebauthnCredentials } from '@caesar/shared/db/schema';
 import type {
@@ -30,9 +18,8 @@ import { IS_DEVELOPMENT } from './env';
 
 const CAESAR_SITE = process.env.CAESAR_SITE ?? 'localhost';
 const SITE_HOST = CAESAR_SITE.split(':')[0] ?? 'localhost';
-// Plain localhost (with or without port) is dev / prod-dev (Caddy `tls
-// internal` on :8443). Anything else is assumed served over HTTPS on its
-// declared port (default 443).
+// :8443 is the prod-dev surface (Caddy `tls internal`); plain localhost is
+// the vite dev server. Everything else assumes HTTPS.
 const SITE_SCHEME =
   SITE_HOST === 'localhost' && !CAESAR_SITE.includes(':8443')
     ? 'http'
@@ -40,9 +27,7 @@ const SITE_SCHEME =
 
 const RP_ID = SITE_HOST;
 const RP_NAME = process.env.CAESAR_WEBAUTHN_RPNAME ?? 'Caesar';
-// In dev, also accept the vite origin so registrations done on :5173 still
-// verify when the same server is reached via the prod-dev :8443 surface or
-// vice versa.
+// Dev also accepts the vite origin so :5173 and :8443 are interchangeable.
 const EXPECTED_ORIGIN = IS_DEVELOPMENT
   ? [`${SITE_SCHEME}://${CAESAR_SITE}`, 'http://localhost:5173']
   : [`${SITE_SCHEME}://${CAESAR_SITE}`];
@@ -83,11 +68,8 @@ const consumeChallenge = (
   return entry.challenge;
 };
 
-// Opaque, stable per-user handle for the WebAuthn `userHandle` field. HMAC
-// of the internal user ID under the server secret so a stolen credential
-// blob doesn't leak the integer ID, but the same user always gets the same
-// handle across sessions (required for the authenticator to recognize
-// them). Mirrors the `hashIp` pattern.
+// HMAC of the internal user ID under the server secret. Stable per user,
+// opaque to the outside. Mirrors `hashIp`.
 const hashUserId = (userId: number): Uint8Array<ArrayBuffer> => {
   const buf = crypto
     .createHmac('sha256', getServerTokenSync())
@@ -98,8 +80,6 @@ const hashUserId = (userId: number): Uint8Array<ArrayBuffer> => {
   return out;
 };
 
-// Build the authentication options for a user and stash the challenge.
-// Returns `null` if the user has no registered credentials.
 const generateLoginOptions = async (
   userId: number
 ): Promise<PublicKeyCredentialRequestOptionsJSON | null> => {
@@ -127,9 +107,6 @@ const generateLoginOptions = async (
   return options;
 };
 
-// Consume the stored challenge, verify the assertion, bump the credential's
-// counter + lastUsedAt. Returns a verdict plus an opaque `reason` for
-// server-side logging. Caller decides what to surface to the client.
 const verifyLoginAssertion = async (
   userId: number,
   response: AuthenticationResponseJSON

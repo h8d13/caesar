@@ -70,9 +70,7 @@ const Connect = memo(() => {
     const passwordMismatch =
         isSignup && values.confirmPassword !== values.password;
 
-    // Common tail of the login flow: derive E2EE key, stash token, connect.
-    // Called once we have a final session token, regardless of whether 2FA
-    // was needed.
+    // Runs once we hold the final session token (password-only OR 2FA).
     const completeLogin = useCallback(
         async (token: string) => {
             // E2EE: argon2id runs in a Web Worker so the main thread
@@ -209,8 +207,7 @@ const Connect = memo(() => {
                     errData.error ||
                     'Two-factor authentication failed.';
                 toast.error(message);
-                // Token may be expired or burned. Force the user back to
-                // password entry rather than silently retrying.
+                // Burn the preAuthToken; user must re-enter password.
                 setPending2fa(null);
                 return;
             }

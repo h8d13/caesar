@@ -16,7 +16,6 @@ import { getJsonBody } from './helpers';
 import { issueSession } from './session';
 import { HttpValidationError } from './utils';
 
-// Reuse the joinServer bucket since this is part of the same login attempt.
 const login2faRateLimiter = createRateLimiter({
   maxRequests: 30,
   windowMs: 60_000
@@ -84,8 +83,7 @@ const login2faRouteHandler = async (
     throw new HttpValidationError('preAuthToken', GENERIC_2FA_ERROR);
   }
 
-  // Re-fetch the user. They may have been banned (or deleted) between the
-  // password step and now.
+  // Re-check ban/delete state between password and 2FA.
   const user = await getUserById(claims.userId);
 
   if (!user) {

@@ -134,9 +134,8 @@ const remove = protectedProcedure
     return { removed: true };
   });
 
-// Step-up auth: re-prove possession of a key for sensitive actions while
-// already logged in. Login-time 2FA lives in http/login-2fa.ts and shares
-// the same verify helpers.
+// Step-up auth for already-logged-in users. Login-time 2FA is in
+// http/login-2fa.ts.
 const authenticateStart = protectedProcedure.mutation(async ({ ctx }) => {
   const options = await generateLoginOptions(ctx.userId);
 

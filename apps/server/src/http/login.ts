@@ -268,11 +268,8 @@ const loginRouteHandler = async (
     );
   }
 
-  // If the user has any registered WebAuthn credentials, defer session
-  // issuance until they prove possession of a key. Return a short-lived
-  // preAuthToken that /login/2fa exchanges for a real session. sessionEpoch
-  // is intentionally NOT bumped here: a failed 2FA must not log the user
-  // out of their existing sessions.
+  // Defer session issuance to /login/2fa. sessionEpoch is intentionally
+  // not bumped here: a failed 2FA must not kick existing sessions.
   if (await hasWebauthnCredentials(existingUser.id)) {
     const options = await generateLoginOptions(existingUser.id);
 

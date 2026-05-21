@@ -184,11 +184,8 @@ const users = sqliteTable(
   ]
 );
 
-// WebAuthn (FIDO2 / U2F) credentials per user. Stores the public half of
-// each enrolled authenticator; the private key never leaves the device.
-// `counter` is the signature counter reported by the authenticator on each
-// assertion. Strictly increasing per credential. A non-increase signals a
-// cloned credential.
+// WebAuthn credentials per user. `counter` must strictly increase per
+// assertion; a regress signals a cloned authenticator.
 type WebauthnTransport =
   | 'ble'
   | 'cable'

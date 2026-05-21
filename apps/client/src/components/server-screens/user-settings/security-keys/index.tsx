@@ -94,7 +94,7 @@ const SecurityKeys = memo(() => {
             <CardHeader>
                 <CardTitle>Security Keys</CardTitle>
                 <CardDescription>
-                    Register a hardware security key (e.g. YubiKey, Touch ID) as
+                    Register a hardware security key as
                     a second factor on login. Once at least one key is
                     registered, you will be prompted for it after entering your
                     password.
