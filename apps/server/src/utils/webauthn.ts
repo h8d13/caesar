@@ -29,7 +29,7 @@ import { getServerTokenSync } from '../db/queries/server';
 import { IS_DEVELOPMENT } from './env';
 
 const CAESAR_SITE = process.env.CAESAR_SITE ?? 'localhost';
-const SITE_HOST = CAESAR_SITE.split(':')[0];
+const SITE_HOST = CAESAR_SITE.split(':')[0] ?? 'localhost';
 // Plain localhost (with or without port) is dev / prod-dev (Caddy `tls
 // internal` on :8443). Anything else is assumed served over HTTPS on its
 // declared port (default 443).
