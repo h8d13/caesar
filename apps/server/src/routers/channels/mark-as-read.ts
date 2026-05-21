@@ -2,7 +2,7 @@ import { type TMessage } from '@caesar/shared';
 import { channelReadStates, messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
-import { assertDmChannel } from '@server/db/queries/dms';
+import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import { z } from 'zod';
@@ -18,7 +18,7 @@ const markAsReadRoute = rateLimitedProcedure(protectedProcedure, {
     })
   )
   .mutation(async ({ ctx, input }) => {
-    await assertDmChannel(input.channelId, ctx.userId);
+    await assertChannelAccess(ctx, input.channelId);
 
     const { channelId } = input;
 

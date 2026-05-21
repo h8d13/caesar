@@ -3,7 +3,7 @@ import { messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishMessage } from '@server/db/publishers';
-import { assertDmChannel } from '@server/db/queries/dms';
+import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { sanitizeMessageHtml } from '@server/helpers/sanitize-html';
 import { enqueueProcessMetadata } from '@server/queues/message-metadata';
 import { invariant } from '@server/utils/invariant';
@@ -43,7 +43,7 @@ const editMessageRoute = rateLimitedProcedure(protectedProcedure, {
       message: 'Message not found'
     });
 
-    await assertDmChannel(message.channelId, ctx.userId);
+    await assertChannelAccess(ctx, message.channelId);
 
     invariant(message.editable, {
       code: 'FORBIDDEN',

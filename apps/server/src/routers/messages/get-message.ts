@@ -1,6 +1,5 @@
-import { ChannelPermission } from '@caesar/shared';
-import { assertDmChannel } from '@server/db/queries/dms';
 import { getMessage } from '@server/db/queries/messages';
+import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { z } from 'zod';
@@ -19,12 +18,7 @@ const getMessageRoute = protectedProcedure
       message: 'Message not found'
     });
 
-    await assertDmChannel(message.channelId, ctx.userId);
-
-    await ctx.needsChannelPermission(
-      message.channelId,
-      ChannelPermission.VIEW_CHANNEL
-    );
+    await assertChannelAccess(ctx, message.channelId);
 
     return message;
   });

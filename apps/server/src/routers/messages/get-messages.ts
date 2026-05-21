@@ -1,5 +1,4 @@
 import {
-  ChannelPermission,
   DEFAULT_MESSAGES_LIMIT,
   ServerEvents,
   type TMessage
@@ -12,8 +11,8 @@ import {
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { getChannelsReadStatesForUser } from '@server/db/queries/channels';
-import { assertDmChannel } from '@server/db/queries/dms';
 import { joinMessagesWithRelations } from '@server/db/queries/messages';
+import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { pubsub } from '@server/utils/pubsub';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
@@ -36,13 +35,7 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
   )
   .meta({ infinite: true })
   .query(async ({ ctx, input }) => {
-    await Promise.all([
-      assertDmChannel(input.channelId, ctx.userId),
-      ctx.needsChannelPermission(
-        input.channelId,
-        ChannelPermission.VIEW_CHANNEL
-      )
-    ]);
+    await assertChannelAccess(ctx, input.channelId);
 
     const { channelId, cursor, limit, targetMessageId } = input;
 

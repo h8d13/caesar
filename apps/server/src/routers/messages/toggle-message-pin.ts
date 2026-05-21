@@ -2,7 +2,7 @@ import { ActivityLogType, Permission } from '@caesar/shared';
 import { messages } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishMessage } from '@server/db/publishers';
-import { assertDmChannel } from '@server/db/queries/dms';
+import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
@@ -29,7 +29,7 @@ const toggleMessagePinRoute = protectedProcedure
       message: 'Message not found'
     });
 
-    await assertDmChannel(message.channelId, ctx.userId);
+    await assertChannelAccess(ctx, message.channelId);
 
     invariant(!message.parentMessageId, {
       code: 'BAD_REQUEST',

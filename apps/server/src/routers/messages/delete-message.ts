@@ -3,8 +3,8 @@ import { messages } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { removeFile } from '@server/db/mutations/files';
 import { publishMessage, publishReplyCount } from '@server/db/publishers';
-import { assertDmChannel } from '@server/db/queries/dms';
 import { getFilesByMessageId } from '@server/db/queries/files';
+import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';
@@ -29,7 +29,7 @@ const deleteMessageRoute = protectedProcedure
       message: 'Message not found'
     });
 
-    await assertDmChannel(targetMessage.channelId, ctx.userId);
+    await assertChannelAccess(ctx, targetMessage.channelId);
 
     invariant(
       targetMessage.userId === ctx.user.id ||

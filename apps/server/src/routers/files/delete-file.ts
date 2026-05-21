@@ -5,6 +5,7 @@ import { removeFile } from '@server/db/mutations/files';
 import { publishMessage } from '@server/db/publishers';
 import { getFilesByMessageId } from '@server/db/queries/files';
 import { getMessageByFileId } from '@server/db/queries/messages';
+import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';
@@ -19,6 +20,8 @@ const deleteFileRoute = protectedProcedure
       code: 'NOT_FOUND',
       message: 'Message not found'
     });
+
+    await assertChannelAccess(ctx, message.channelId);
 
     invariant(
       message.userId === ctx.user.id ||

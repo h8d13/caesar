@@ -1,12 +1,8 @@
-import {
-  ChannelPermission,
-  DEFAULT_MESSAGES_LIMIT,
-  type TMessage
-} from '@caesar/shared';
+import { DEFAULT_MESSAGES_LIMIT, type TMessage } from '@caesar/shared';
 import { channels, messages } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import { assertDmChannel } from '@server/db/queries/dms';
 import { joinMessagesWithRelations } from '@server/db/queries/messages';
+import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { and, asc, eq, gt } from 'drizzle-orm';
@@ -41,13 +37,7 @@ const getThreadMessagesRoute = protectedProcedure
       message: 'Cannot get thread for a reply message'
     });
 
-    await Promise.all([
-      assertDmChannel(parentMessage.channelId, ctx.userId),
-      ctx.needsChannelPermission(
-        parentMessage.channelId,
-        ChannelPermission.VIEW_CHANNEL
-      )
-    ]);
+    await assertChannelAccess(ctx, parentMessage.channelId);
 
     const channel = await db
       .select({

@@ -3,9 +3,9 @@ import { messageReactions, messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishMessage } from '@server/db/publishers';
-import { assertDmChannel } from '@server/db/queries/dms';
 import { getEmojiFileIdByEmojiName } from '@server/db/queries/emojis';
 import { getReaction } from '@server/db/queries/messages';
+import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { and, eq } from 'drizzle-orm';
@@ -36,7 +36,7 @@ const toggleMessageReactionRoute = rateLimitedProcedure(protectedProcedure, {
       message: 'Message not found'
     });
 
-    await assertDmChannel(message.channelId, ctx.userId);
+    await assertChannelAccess(ctx, message.channelId);
 
     const reaction = await getReaction(
       input.messageId,
