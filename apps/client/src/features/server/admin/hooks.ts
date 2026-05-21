@@ -434,6 +434,7 @@ export const useAdminUserInfo = (userId: number) => {
         logins: data?.logins ?? [],
         files: data?.files ?? [],
         messages: data?.messages ?? [],
+        storage: data?.storage ?? { userId, fileCount: 0, usedStorage: 0, quota: 0 },
         refetch: toVoid(refetch),
         loading
     };

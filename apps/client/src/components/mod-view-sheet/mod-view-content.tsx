@@ -8,6 +8,7 @@ import { ServerActivity } from './server-activity';
 import { Files } from './server-activity/files';
 import { Links } from './server-activity/links';
 import { Messages } from './server-activity/messages';
+import { Storage } from './storage';
 
 type TWrapperProps = {
     children: React.ReactNode;
@@ -68,6 +69,7 @@ const Routing = memo(({ view }: TRoutingProps) => {
     return (
         <>
             <ServerActivity />
+            <Storage />
             <Details />
         </>
     );

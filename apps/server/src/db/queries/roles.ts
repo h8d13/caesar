@@ -1,6 +1,6 @@
 import type { Permission, TJoinedRole, TRole } from '@caesar/shared';
 import { rolePermissions, roles, userRoles } from '@caesar/shared/db/schema';
-import { eq, getTableColumns, sql } from 'drizzle-orm';
+import { and, eq, getTableColumns, sql } from 'drizzle-orm';
 import { db } from '..';
 type TQueryResult = TRole & {
   permissions: string | null;
@@ -80,9 +80,36 @@ const getAllUserRoleIdsMap = async (): Promise<Record<number, number[]>> => {
   );
 };
 
+const getEffectiveStorageSpaceQuotaByUserId = async (
+  userId: number,
+  fallbackQuota: number
+): Promise<number> => {
+  const overrideRoles = await db
+    .select({ storageSpaceQuota: roles.storageSpaceQuota })
+    .from(userRoles)
+    .innerJoin(roles, eq(userRoles.roleId, roles.id))
+    .where(
+      and(
+        eq(userRoles.userId, userId),
+        eq(roles.storageQuotaOverrideEnabled, true)
+      )
+    );
+
+  if (overrideRoles.length === 0) {
+    return fallbackQuota;
+  }
+
+  if (overrideRoles.some((role) => role.storageSpaceQuota === 0)) {
+    return 0;
+  }
+
+  return Math.max(...overrideRoles.map((role) => role.storageSpaceQuota));
+};
+
 export {
   getAllUserRoleIdsMap,
   getDefaultRole,
+  getEffectiveStorageSpaceQuotaByUserId,
   getRole,
   getRoles,
   getUserRoleIds
