@@ -5,7 +5,7 @@
 }
 
 :9000 {
-	@ok expression `{query.domain}.endsWith("example.com")`
+	@ok expression `{query.domain} == "example.com" || {query.domain}.endsWith(".example.com")`
 	respond @ok 200
 	respond 403
 }
