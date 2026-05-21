@@ -233,7 +233,7 @@ const Connect = memo(() => {
 
     return (
         <div className="flex flex-col gap-2 justify-center items-center h-full">
-            <Card className="w-full max-w-sm">
+            <Card className="w-full max-w-sm gap-2">
                 <CardHeader>
                     <CardTitle className="flex flex-col items-center gap-2 text-center">
                         <img
@@ -254,7 +254,7 @@ const Connect = memo(() => {
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
                     {info?.description && (
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-sm text-muted-foreground text-center">
                             {info?.description}
                         </span>
                     )}
