@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
-# this expects you to have mediasoup binary installed in correct location
 set -e
-(cd apps/client && pnpm dev) &
+
+# Auto-fetch prebuilt mediasoup-worker if missing. Linux-only; on other
+# OSes mediasoup's own native build runs at pnpm install time.
+DEST="$PWD/vendor/mediasoup"
+if [ ! -x "$DEST/mediasoup-worker" ]; then
+	./scripts/fetch-mediasoup-worker.sh "$DEST"
+fi
+export MEDIASOUP_WORKER_BIN="$DEST/mediasoup-worker"
+
+# Direct binary invocation. Skipping the `pnpm dev` wrapper avoids pnpm's
+# ELIFECYCLE message when tsx exits non-zero on Ctrl+C.
+(cd apps/client && exec ./node_modules/.bin/vite --host) &
 CLIENT_PID=$!
-(cd apps/server && pnpm dev) &
+(cd apps/server && exec ./node_modules/.bin/tsx watch ./src/index.ts) &
 SERVER_PID=$!
 
 # Clean up children on INT/TERM. Reset the trap immediately inside the

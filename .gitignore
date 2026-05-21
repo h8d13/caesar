@@ -1,4 +1,5 @@
 /node_modules
+/vendor
 .direnv/
 data/
 data-prod-dev/

@@ -63,5 +63,19 @@ const shutdown = () => {
   // Give the worker a moment to exit cleanly, then bail.
   setTimeout(() => process.exit(0), 200).unref();
 };
+// SIGTERM: tsx watch reload. Graceful so libsql / mediasoup release
+// cleanly before the next instance starts.
 process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+// SIGINT: user Ctrl+C. The signal reaches every member of the foreground
+// process group, so mediasoup-worker children get it directly and clean
+// themselves up. Exit immediately; tsx watch is intolerant of any grace
+// period here and prints "Previous process hasn't exited yet. Force
+// killing..." otherwise.
+process.on('SIGINT', () => {
+  try {
+    closeDb();
+  } catch {
+    // db may already be closed
+  }
+  process.exit(0);
+});
