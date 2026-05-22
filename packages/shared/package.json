@@ -27,7 +27,7 @@
     "vitest": "^4.1.6"
   },
   "peerDependencies": {
-    "@types/react": "^19.2.14",
+    "@types/react": "^19.2.15",
     "typescript": "~6.0.3",
     "@types/linkify-it": "^5.0.0",
     "@eslint/js": "^10.0.1",
