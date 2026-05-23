@@ -58,6 +58,7 @@ const setPriv = (priv: Uint8Array) => {
 const clearPriv = () => {
     myPriv = null;
     myPubB64 = null;
+    terminateWorker();
     notifyPrivChange();
 };
 
@@ -99,6 +100,15 @@ const _workerPending = new Map<
     }
 >();
 
+const terminateWorker = () => {
+    if (!_worker) return;
+    _worker.terminate();
+    _worker = null;
+    for (const p of _workerPending.values())
+        p.reject(new Error('worker terminated'));
+    _workerPending.clear();
+};
+
 const getWorker = (): Worker => {
     if (_worker) return _worker;
 
@@ -113,11 +123,14 @@ const getWorker = (): Worker => {
         _workerPending.delete(e.data.id);
         if (e.data.error) pending.reject(new Error(e.data.error));
         else if (e.data.priv) pending.resolve(e.data.priv);
+        // Release worker once the queue drains. Respawn is cheap; the
+        // bundle is small and derive runs rarely (login + re-prompt).
+        if (_workerPending.size === 0) terminateWorker();
     };
     _worker.onerror = (e) => {
-        // Fail every outstanding job; subsequent calls re-init via getWorker.
         for (const p of _workerPending.values()) p.reject(new Error(e.message));
         _workerPending.clear();
+        _worker?.terminate();
         _worker = null;
     };
 
