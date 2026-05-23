@@ -69,25 +69,34 @@ import { useVoiceControls } from './hooks/use-voice-controls';
 import { useVoiceEvents } from './hooks/use-voice-events';
 import { MediaControlProvider } from './media-control-context';
 
-// Encoding strategy mirrors mediasoup-demo (RoomClient.js):
-// VP9 -> K-SVC single encoding (webcam L3T3_KEY, screen L3T3 + dtx).
-// VP8/H264 -> 3-layer spatial simulcast (scaleResolutionDownBy 4/2/1).
-// SFU picks layers per consumer with no re-encode.
-const hasVp9 = (caps: RtpCapabilities | null | undefined): boolean =>
-    !!caps?.codecs?.some((c) => c.mimeType.toLowerCase() === 'video/vp9');
+// Encoding strategy:
+// VP9 / AV1 -> single encoding, L1T3 temporal-only scalability. K-SVC
+// (L3T3_KEY) and full SVC (L3T3) have spotty decoder support across
+// browsers/hardware; temporal-only works everywhere and still gives the
+// SFU layer adaptation for bandwidth. Spatial adaptation is sacrificed.
+// VP8 / H264 -> 3-layer spatial simulcast (scaleResolutionDownBy 4/2/1)
+// with L1T3 each. SFU picks the right spatial layer per consumer with
+// no re-encode.
+const isSingleEncodingCodec = (
+    caps: RtpCapabilities | null | undefined
+): boolean =>
+    !!caps?.codecs?.some((c) => {
+        const mime = c.mimeType.toLowerCase();
+        return mime === 'video/vp9' || mime === 'video/av1';
+    });
 
 const buildVideoEncodings = (opts: {
     maxBitrateBps: number;
-    isVp9: boolean;
+    isSingleEncoding: boolean;
     isScreenShare: boolean;
 }) => {
-    const { maxBitrateBps, isVp9, isScreenShare } = opts;
-    if (isVp9) {
+    const { maxBitrateBps, isSingleEncoding, isScreenShare } = opts;
+    if (isSingleEncoding) {
         return [
             {
                 scaleResolutionDownBy: 1,
                 maxBitrate: maxBitrateBps,
-                scalabilityMode: isScreenShare ? 'L3T3' : 'L3T3_KEY',
+                scalabilityMode: 'L1T3',
                 ...(isScreenShare ? { dtx: true } : {})
             }
         ];
@@ -697,11 +706,14 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             if (videoTrack) {
                 logVoice('Obtained video track', { videoTrack });
 
-                const webcamUseVp9 = hasVp9(routerRtpCapabilities.current);
-                const webcamPreferredCodec = webcamUseVp9
-                    ? routerRtpCapabilities.current?.codecs?.find(
-                          (c) => c.mimeType.toLowerCase() === 'video/vp9'
-                      )
+                const webcamSingleEncoding = isSingleEncodingCodec(
+                    routerRtpCapabilities.current
+                );
+                const webcamPreferredCodec = webcamSingleEncoding
+                    ? routerRtpCapabilities.current?.codecs?.find((c) => {
+                          const mime = c.mimeType.toLowerCase();
+                          return mime === 'video/vp9' || mime === 'video/av1';
+                      })
                     : undefined;
                 const webcamMaxBitrateKbps =
                     devices.webcamBitrate ?? DEFAULT_WEBCAM_BITRATE;
@@ -712,7 +724,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                         codec: webcamPreferredCodec,
                         encodings: buildVideoEncodings({
                             maxBitrateBps: webcamMaxBitrateKbps * 1000,
-                            isVp9: webcamUseVp9,
+                            isSingleEncoding: webcamSingleEncoding,
                             isScreenShare: false
                         }),
                         codecOptions: {
@@ -859,17 +871,18 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                 const ssCodecMime =
                     preferredCodec?.mimeType.toLowerCase() ??
                     (devices.screenCodec === VideoCodec.AUTO &&
-                    hasVp9(routerRtpCapabilities.current)
+                    isSingleEncodingCodec(routerRtpCapabilities.current)
                         ? 'video/vp9'
                         : undefined);
-                const ssUseVp9 = ssCodecMime === 'video/vp9';
+                const ssSingleEncoding =
+                    ssCodecMime === 'video/vp9' || ssCodecMime === 'video/av1';
                 if (
-                    ssUseVp9 &&
+                    ssSingleEncoding &&
                     !preferredCodec &&
                     routerRtpCapabilities.current?.codecs
                 ) {
                     preferredCodec = routerRtpCapabilities.current.codecs.find(
-                        (c) => c.mimeType.toLowerCase() === 'video/vp9'
+                        (c) => c.mimeType.toLowerCase() === ssCodecMime
                     );
                 }
 
@@ -879,7 +892,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                         codec: preferredCodec,
                         encodings: buildVideoEncodings({
                             maxBitrateBps: maxBitrateKbps * 1000,
-                            isVp9: ssUseVp9,
+                            isSingleEncoding: ssSingleEncoding,
                             isScreenShare: true
                         }),
                         codecOptions: {
