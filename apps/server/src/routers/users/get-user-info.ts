@@ -2,7 +2,9 @@ import { Permission, type TLogin } from '@caesar/shared';
 import { getFilesByUserId } from '@server/db/queries/files';
 import { getLastLogins } from '@server/db/queries/logins';
 import { getNonDirectMessagesFromUserId } from '@server/db/queries/messages';
-import { getUserById } from '@server/db/queries/users';
+import { getEffectiveStorageSpaceQuotaByUserId } from '@server/db/queries/roles';
+import { getSettings } from '@server/db/queries/server';
+import { getStorageUsageByUserId, getUserById } from '@server/db/queries/users';
 import { clearFields } from '@server/helpers/clear-fields';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
@@ -24,11 +26,20 @@ const getUserInfoRoute = protectedProcedure
       message: 'User not found'
     });
 
-    const [logins, files, messages] = await Promise.all([
-      getLastLogins(user.id, 6),
-      getFilesByUserId(user.id),
-      getNonDirectMessagesFromUserId(user.id)
-    ]);
+    const [logins, files, messages, storageUsage, settings] = await Promise.all(
+      [
+        getLastLogins(user.id, 6),
+        getFilesByUserId(user.id),
+        getNonDirectMessagesFromUserId(user.id),
+        getStorageUsageByUserId(user.id),
+        getSettings()
+      ]
+    );
+
+    const storageQuota = await getEffectiveStorageSpaceQuotaByUserId(
+      user.id,
+      settings.storageSpaceQuotaByUser
+    );
 
     let cleanUser = clearFields(user, ['password']);
     let cleanLogins: TLogin[] = [...logins];
@@ -42,7 +53,16 @@ const getUserInfoRoute = protectedProcedure
       }));
     }
 
-    return { user: cleanUser, logins: cleanLogins, files, messages };
+    return {
+      user: cleanUser,
+      logins: cleanLogins,
+      files,
+      messages,
+      storage: {
+        ...storageUsage,
+        quota: storageQuota
+      }
+    };
   });
 
 export { getUserInfoRoute };

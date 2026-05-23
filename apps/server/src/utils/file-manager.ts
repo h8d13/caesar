@@ -11,6 +11,7 @@ import path from 'path';
 import { db } from '../db';
 import { removeFile } from '../db/mutations/files';
 import { getExceedingOldFiles, getUsedFileQuota } from '../db/queries/files';
+import { getEffectiveStorageSpaceQuotaByUserId } from '../db/queries/roles';
 import { getSettings } from '../db/queries/server';
 import { getStorageUsageByUserId } from '../db/queries/users';
 import { PUBLIC_PATH, TMP_PATH, UPLOADS_PATH } from '../helpers/paths';
@@ -169,12 +170,14 @@ class FileManager {
       getUsedFileQuota()
     ]);
 
+    const userStorageQuota = await getEffectiveStorageSpaceQuotaByUserId(
+      tempFile.userId,
+      settings.storageSpaceQuotaByUser
+    );
+
     const newTotalStorage = userStorage.usedStorage + tempFile.size;
 
-    if (
-      settings.storageSpaceQuotaByUser > 0 &&
-      newTotalStorage > settings.storageSpaceQuotaByUser
-    ) {
+    if (userStorageQuota > 0 && newTotalStorage > userStorageQuota) {
       throw new Error('User storage limit exceeded');
     }
 
