@@ -523,7 +523,9 @@ describe('users router', () => {
       roleId: newRoleId,
       name: 'Test Role',
       color: '#123456',
-      permissions: [Permission.MANAGE_USERS]
+      permissions: [Permission.MANAGE_USERS],
+      storageQuotaOverrideEnabled: false,
+      storageSpaceQuota: 0
     });
 
     await caller.users.addRole({
@@ -566,7 +568,9 @@ describe('users router', () => {
       roleId: newRoleId,
       name: 'Test Role',
       color: '#123456',
-      permissions: [Permission.MANAGE_USERS]
+      permissions: [Permission.MANAGE_USERS],
+      storageQuotaOverrideEnabled: false,
+      storageSpaceQuota: 0
     });
 
     await caller.users.addRole({
