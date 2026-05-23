@@ -47,10 +47,15 @@ const consumeRoute = voiceProcedure
       message: 'Cannot consume this producer with the given RTP capabilities'
     });
 
+    // Create paused so the SFU doesn't forward RTP before the client has
+    // wired its receive consumer onto the transport. Client calls
+    // resumeConsumer (+ requestKeyFrame for SVC/simulcast) once ready;
+    // otherwise mid-GOP packets arrive without a keyframe and the
+    // decoder shows black until the producer's next scheduled keyframe.
     const consumer = await userConsumerTransport.consume({
       producerId: producer.id,
       rtpCapabilities: input.rtpCapabilities,
-      paused: false
+      paused: true
     });
 
     ctx.voiceRuntime.addConsumer(

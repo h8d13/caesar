@@ -414,6 +414,19 @@ const useTransports = ({
                 } else {
                     addRemoteUserStream(remoteId, stream, kind);
                 }
+
+                // Server creates consumers paused so RTP doesn't arrive
+                // before the receive consumer is wired. Resume here, then
+                // force a keyframe for SVC/simulcast video so decoders
+                // dont sit black waiting for the next scheduled keyframe.
+                await trpc.voice.resumeConsumer.mutate({ remoteId, kind });
+
+                if (getMediasoupKind(consumerKind) === 'video') {
+                    await trpc.voice.requestKeyFrame.mutate({
+                        remoteId,
+                        kind
+                    });
+                }
             } catch (error) {
                 logVoice('Error consuming remote producer', { error });
             } finally {
