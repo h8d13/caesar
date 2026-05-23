@@ -141,7 +141,12 @@ const useUploadFiles = (
         }
 
         return true;
-    }, [disabled, settings?.storageUploadEnabled, canShareFilesInDirectMessages, can]);
+    }, [
+        disabled,
+        settings?.storageUploadEnabled,
+        canShareFilesInDirectMessages,
+        can
+    ]);
 
     const openFileDialog = useCallback(() => {
         if (!checkUploadPermissions()) return;
@@ -164,7 +169,9 @@ const useUploadFiles = (
 
             for (const file of allowed) {
                 if (file.size > maxFileSize) {
-                    toast.error(`"${file.name}" exceeds the maximum file size limit.`);
+                    toast.error(
+                        `"${file.name}" exceeds the maximum file size limit.`
+                    );
                 } else {
                     withinLimit.push(file);
                 }
@@ -183,21 +190,23 @@ const useUploadFiles = (
 
             setUploadingSize((size) => size + total);
 
-            const pendingEntries: TDisplayItem[] = withinLimit.map((file, i) => {
-                const parts = file.name.split('.');
-                const ext = parts.length > 1 ? `.${parts.pop()}` : '';
+            const pendingEntries: TDisplayItem[] = withinLimit.map(
+                (file, i) => {
+                    const parts = file.name.split('.');
+                    const ext = parts.length > 1 ? `.${parts.pop()}` : '';
 
-                return {
-                    id: `pending-${Date.now()}-${i}`,
-                    name: file.name,
-                    size: file.size,
-                    extension: ext,
-                    previewUrl: isPreviewable(file)
-                        ? URL.createObjectURL(file)
-                        : undefined,
-                    progress: 0
-                };
-            });
+                    return {
+                        id: `pending-${Date.now()}-${i}`,
+                        name: file.name,
+                        size: file.size,
+                        extension: ext,
+                        previewUrl: isPreviewable(file)
+                            ? URL.createObjectURL(file)
+                            : undefined,
+                        progress: 0
+                    };
+                }
+            );
 
             setPendingUploads((prev) => [...prev, ...pendingEntries]);
             setDisplayOrder((prev) => [
@@ -228,7 +237,8 @@ const useUploadFiles = (
 
                     if (elapsed >= 500) {
                         const bytesPerSec =
-                            ((totalLoadedRef.current - sample.loaded) / elapsed) *
+                            ((totalLoadedRef.current - sample.loaded) /
+                                elapsed) *
                             1000;
 
                         setUploadSpeed(bytesPerSec);
@@ -263,7 +273,10 @@ const useUploadFiles = (
                 const previewUrl = pendingEntries[i].previewUrl;
 
                 if (previewUrl) {
-                    setPreviewUrls((prev) => ({ ...prev, [result.id]: previewUrl }));
+                    setPreviewUrls((prev) => ({
+                        ...prev,
+                        [result.id]: previewUrl
+                    }));
                 }
 
                 setDisplayOrder((prev) =>
@@ -302,7 +315,9 @@ const useUploadFiles = (
 
         const handlePaste = async (event: ClipboardEvent) => {
             const items = event.clipboardData?.items ?? [];
-            const hasFiles = Array.from(items).some((item) => item.kind === 'file');
+            const hasFiles = Array.from(items).some(
+                (item) => item.kind === 'file'
+            );
 
             if (hasFiles && !checkUploadPermissions()) return;
 

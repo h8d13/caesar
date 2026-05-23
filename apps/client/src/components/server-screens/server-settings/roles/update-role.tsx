@@ -42,15 +42,19 @@ const UpdateRole = memo(
             name: selectedRole.name,
             color: selectedRole.color,
             permissions: selectedRole.permissions,
-            storageQuotaOverrideEnabled: selectedRole.storageQuotaOverrideEnabled,
+            storageQuotaOverrideEnabled:
+                selectedRole.storageQuotaOverrideEnabled,
             storageSpaceQuota: selectedRole.storageSpaceQuota
         });
 
         const isOwnerRole = selectedRole.id === OWNER_ROLE_ID;
-        const storageQuotaLabel = filesize(Number(values.storageSpaceQuota ?? 0), {
-            output: 'object',
-            standard: 'jedec'
-        });
+        const storageQuotaLabel = filesize(
+            Number(values.storageSpaceQuota ?? 0),
+            {
+                output: 'object',
+                standard: 'jedec'
+            }
+        );
 
         const onDeleteRole = useCallback(async () => {
             const choice = await requestConfirmation({
@@ -198,14 +202,18 @@ const UpdateRole = memo(
                                     Storage quota override
                                 </Label>
                                 <p className="text-sm text-muted-foreground">
-                                    Override the global storage quota for members with this role.
+                                    Override the global storage quota for
+                                    members with this role.
                                 </p>
                             </div>
                             <Switch
                                 id="role-storage-override"
                                 checked={!!values.storageQuotaOverrideEnabled}
                                 onCheckedChange={(checked) =>
-                                    onChange('storageQuotaOverrideEnabled', checked)
+                                    onChange(
+                                        'storageQuotaOverrideEnabled',
+                                        checked
+                                    )
                                 }
                             />
                         </div>
@@ -217,13 +225,16 @@ const UpdateRole = memo(
                                 max={STORAGE_MAX_QUOTA_PER_USER}
                                 min={STORAGE_MIN_QUOTA_PER_USER}
                                 disabled={!values.storageQuotaOverrideEnabled}
-                                onChange={(value) => onChange('storageSpaceQuota', value)}
+                                onChange={(value) =>
+                                    onChange('storageSpaceQuota', value)
+                                }
                                 preview={
                                     Number(values.storageSpaceQuota) === 0 ? (
                                         'Unlimited'
                                     ) : (
                                         <>
-                                            {storageQuotaLabel.value} {storageQuotaLabel.unit}
+                                            {storageQuotaLabel.value}{' '}
+                                            {storageQuotaLabel.unit}
                                         </>
                                     )
                                 }
