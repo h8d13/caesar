@@ -53,8 +53,13 @@ const useUploadFiles = (
 
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-    filesRef.current = files;
-    previewUrlsRef.current = previewUrls;
+    useEffect(() => {
+        filesRef.current = files;
+    }, [files]);
+
+    useEffect(() => {
+        previewUrlsRef.current = previewUrls;
+    }, [previewUrls]);
 
     const takeAllowedFiles = useCallback(
         (filesToUpload: File[]) => {

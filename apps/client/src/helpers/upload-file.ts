@@ -4,7 +4,7 @@ import { getUrlFromServer } from './get-file-url';
 import { getSessionStorageItem, SessionStorageKey } from './storage';
 
 const getSafeFileName = (name: string) =>
-    encodeURIComponent(name.replace(/[^\w.\-]/g, '_'));
+    encodeURIComponent(name.replace(/[^\w.-]/g, '_'));
 
 type TUploadProgress = {
     loaded: number;
