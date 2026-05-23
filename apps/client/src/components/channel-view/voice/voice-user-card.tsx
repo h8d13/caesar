@@ -4,11 +4,13 @@ import { UserAvatar } from '@/components/user-avatar';
 import type { TVoiceUser } from '@/features/server/types';
 import { useOwnUserId } from '@/features/server/users/hooks';
 import {
+    useMedia,
     useShowUserBannersInVoice,
     useSpeakingIntensity
 } from '@/features/server/voice/hooks';
 import { getFileUrl } from '@/helpers/get-file-url';
 import { cn } from '@/lib/utils';
+import { StreamKind } from '@caesar/shared';
 import { HeadphoneOff, MicOff, Monitor, Video } from 'lucide-react';
 import { memo, useCallback, useRef } from 'react';
 import { voiceCardBaseClasses } from './card-base';
@@ -16,6 +18,7 @@ import { CardControls } from './card-controls';
 import { CardGradient } from './card-gradient';
 import { CardTailControls } from './card-tail-controls';
 import { useMediaRefs } from './hooks/use-media-refs';
+import { QualityButton } from './quality-button';
 import { VolumeButton } from './volume-button';
 
 type TVoiceUserCardProps = {
@@ -46,6 +49,11 @@ const VoiceUserCard = memo(
         const ownUserId = useOwnUserId();
         const isOwnUser = userId === ownUserId;
         const showUserBanners = useShowUserBannersInVoice();
+        const { isSimulcastConsumer } = useMedia();
+        const showQualityControl =
+            !isOwnUser &&
+            hasVideoStream &&
+            isSimulcastConsumer(userId, StreamKind.VIDEO);
 
         const handlePinToggle = useCallback(() => {
             if (isPinned) {
@@ -87,6 +95,12 @@ const VoiceUserCard = memo(
                 <CardControls>
                     {!isOwnUser && (
                         <VolumeButton volumeKey={getUserVolumeKey(userId)} />
+                    )}
+                    {showQualityControl && (
+                        <QualityButton
+                            remoteId={userId}
+                            kind={StreamKind.VIDEO}
+                        />
                     )}
                     <CardTailControls
                         containerRef={containerRef}

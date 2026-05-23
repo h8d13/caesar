@@ -186,7 +186,7 @@ const Storage = memo(() => {
 
                 <Group
                     label="Quota per user"
-                    description="The maximum amount of storage space each user can use on the server. You can also configure quotas on a per-role basis in the Roles settings, which will override this global setting for users with that specific role. Use 0 for unlimited"
+                    description="The maximum amount of storage space each user can use on the server. Use 0 for unlimited."
                 >
                     <StorageSizeControl
                         value={Number(values.storageSpaceQuotaByUser)}

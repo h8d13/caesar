@@ -1,6 +1,7 @@
 import { useMediaControl } from '@/components/media-provider/media-control-context';
+import { useMedia } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
-import type { TExternalStream } from '@caesar/shared';
+import { StreamKind, type TExternalStream } from '@caesar/shared';
 import { Avatar, AvatarFallback, AvatarImage, IconButton } from '@caesar/ui';
 import { Headphones, Router, Video, ZoomIn, ZoomOut } from 'lucide-react';
 import { memo, useCallback, type RefObject } from 'react';
@@ -10,6 +11,7 @@ import { CardGradient } from './card-gradient';
 import { CardTailControls } from './card-tail-controls';
 import { useMediaRefs } from './hooks/use-media-refs';
 import { useScreenShareZoom } from './hooks/use-screen-share-zoom';
+import { QualityButton } from './quality-button';
 import { StreamSettingsPopover } from './stream-settings-popover';
 
 type TExternalStreamControlsProps = {
@@ -20,6 +22,8 @@ type TExternalStreamControlsProps = {
     showPinControls: boolean;
     hasVideo: boolean;
     hasAudio: boolean;
+    showQualityControl: boolean;
+    streamId: number;
     volume: number;
     isMuted: boolean;
     onVolumeChange: (volume: number) => void;
@@ -36,6 +40,8 @@ const ExternalStreamControls = memo(
         showPinControls,
         hasVideo,
         hasAudio,
+        showQualityControl,
+        streamId,
         volume,
         isMuted,
         onVolumeChange,
@@ -50,6 +56,12 @@ const ExternalStreamControls = memo(
                         isMuted={isMuted}
                         onVolumeChange={onVolumeChange}
                         onMuteToggle={onMuteToggle}
+                    />
+                )}
+                {showQualityControl && (
+                    <QualityButton
+                        remoteId={streamId}
+                        kind={StreamKind.EXTERNAL_VIDEO}
                     />
                 )}
                 {showPinControls && hasVideo && isPinned && (
@@ -142,6 +154,11 @@ const ExternalStreamCard = memo(
         const hasVideo = stream.tracks?.video && hasExternalVideoStream;
         const hasAudio = stream.tracks?.audio && hasExternalAudioStream;
 
+        const { isSimulcastConsumer } = useMedia();
+        const showQualityControl =
+            !!hasVideo &&
+            isSimulcastConsumer(streamId, StreamKind.EXTERNAL_VIDEO);
+
         return (
             <div
                 ref={containerRef}
@@ -164,6 +181,8 @@ const ExternalStreamCard = memo(
                     showPinControls={showPinControls}
                     hasVideo={!!hasVideo}
                     hasAudio={!!hasAudio}
+                    showQualityControl={showQualityControl}
+                    streamId={streamId}
                     volume={volume}
                     isMuted={isMuted}
                     onVolumeChange={handleVolumeChange}

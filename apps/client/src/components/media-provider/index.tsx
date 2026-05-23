@@ -35,6 +35,8 @@ import {
     DEFAULT_BITRATE,
     DEFAULT_WEBCAM_BITRATE,
     StreamKind,
+    type TStreamQuality,
+    type TStreamQualityLayer,
     type TVoiceUserState
 } from '@caesar/shared';
 import { Device } from 'mediasoup-client';
@@ -77,13 +79,51 @@ import { MediaControlProvider } from './media-control-context';
 // VP8 / H264 -> 3-layer spatial simulcast (scaleResolutionDownBy 4/2/1)
 // with L1T3 each. SFU picks the right spatial layer per consumer with
 // no re-encode.
-const isSingleEncodingCodec = (
-    caps: RtpCapabilities | null | undefined
-): boolean =>
-    !!caps?.codecs?.some((c) => {
-        const mime = c.mimeType.toLowerCase();
-        return mime === 'video/vp9' || mime === 'video/av1';
+
+// Returns the codec the browser will actually use: intersection of
+// router caps and browser encoder support, in router preference order.
+// Prevents force-pinning VP9/AV1 when the browser lacks an encoder
+// (AV1 absent on Safari/Firefox; spotty in Chrome until libaom is
+// available; VP9 absent on Safari).
+const getEffectiveVideoCodec = (
+    routerCaps: RtpCapabilities | null | undefined
+): RtpCodecCapability | undefined => {
+    if (!routerCaps?.codecs) return undefined;
+    const senderCaps =
+        typeof RTCRtpSender !== 'undefined' &&
+        typeof RTCRtpSender.getCapabilities === 'function'
+            ? RTCRtpSender.getCapabilities('video')
+            : null;
+    const browserMimes = new Set(
+        (senderCaps?.codecs ?? []).map((c) => c.mimeType.toLowerCase())
+    );
+    // when getCapabilities is unavailable, fall back to first router codec
+    if (browserMimes.size === 0) {
+        return routerCaps.codecs.find((c) => c.kind === 'video');
+    }
+    return routerCaps.codecs.find(
+        (c) =>
+            c.kind === 'video' &&
+            browserMimes.has(c.mimeType.toLowerCase())
+    );
+};
+
+const isSingleEncodingMime = (mime: string | undefined): boolean =>
+    mime === 'video/vp9' || mime === 'video/av1';
+
+// Map producer encodings into the {spatialLayer,label} tuples the SFU and
+// viewer-side picker need. Spatial-layer index matches encoding index, so
+// passing the array preserves order and acts as the source of truth.
+const buildSpatialQualityLayers = (
+    encodings: ReturnType<typeof buildVideoEncodings>,
+    opts: { baseHeight: number }
+) =>
+    encodings.map((enc, idx) => {
+        const scale = enc.scaleResolutionDownBy ?? 1;
+        const h = Math.max(1, Math.round(opts.baseHeight / scale));
+        return { spatialLayer: idx, label: `${h}p` };
     });
+
 
 const buildVideoEncodings = (opts: {
     maxBitrateBps: number;
@@ -152,6 +192,20 @@ export type TMediaProvider = {
         remoteId: number,
         kind: StreamKind
     ) => string | undefined;
+    isSimulcastConsumer: (remoteId: number, kind: StreamKind) => boolean;
+    getStreamQualityLayers: (
+        remoteId: number,
+        kind: StreamKind
+    ) => TStreamQualityLayer[];
+    getStreamQuality: (
+        remoteId: number,
+        kind: StreamKind
+    ) => TStreamQuality;
+    setStreamQuality: (
+        remoteId: number,
+        kind: StreamKind,
+        quality: TStreamQuality
+    ) => void;
     pauseConsumer: (remoteId: number, kind: TRemoteUserStreamKinds) => void;
     resumeConsumer: (remoteId: number, kind: TRemoteUserStreamKinds) => void;
     init: (
@@ -201,6 +255,10 @@ const MediaProviderContext = createContext<TMediaProvider>({
         externalVideoRef: { current: null }
     }),
     getConsumerCodec: () => undefined,
+    isSimulcastConsumer: () => false,
+    getStreamQualityLayers: () => [],
+    getStreamQuality: () => ({ mode: 'auto' }),
+    setStreamQuality: () => {},
     pauseConsumer: () => {},
     resumeConsumer: () => {},
     init: () => Promise.resolve(),
@@ -290,6 +348,8 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         consumeExistingProducers,
         cleanupTransports,
         getConsumerCodec,
+        isSimulcastConsumer,
+        getStreamQualityLayers,
         pauseConsumer,
         resumeConsumer
     } = useTransports({
@@ -298,6 +358,51 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         addRemoteUserStream,
         removeRemoteUserStream
     });
+
+    // Per-stream viewer-side quality picker state, keyed by remoteId-kind.
+    // Auto = SFU default per-consumer bandwidth adaptation. Layer = pin a
+    // specific spatial layer. Server enforces validity against the
+    // producer's published layers; bogus values 400 from set-consumer-quality.
+    const [streamQualities, setStreamQualities] = useState<
+        Record<string, TStreamQuality>
+    >({});
+
+    const qualityKey = useCallback(
+        (remoteId: number, kind: StreamKind) => `${remoteId}-${kind}`,
+        []
+    );
+
+    const getStreamQuality = useCallback(
+        (remoteId: number, kind: StreamKind): TStreamQuality =>
+            streamQualities[qualityKey(remoteId, kind)] ?? { mode: 'auto' },
+        [streamQualities, qualityKey]
+    );
+
+    const setStreamQuality = useCallback(
+        (remoteId: number, kind: StreamKind, quality: TStreamQuality) => {
+            const key = qualityKey(remoteId, kind);
+            setStreamQualities((prev) => ({ ...prev, [key]: quality }));
+            // Only video-kind consumers support setPreferredLayers; the
+            // server route enforces this too, but skip the round-trip.
+            if (
+                kind !== StreamKind.VIDEO &&
+                kind !== StreamKind.SCREEN &&
+                kind !== StreamKind.EXTERNAL_VIDEO
+            ) {
+                return;
+            }
+            getTRPCClient()
+                .voice.setConsumerQuality.mutate({
+                    remoteId,
+                    kind,
+                    quality
+                })
+                .catch((error) => {
+                    logVoice('Error setting consumer quality', { error });
+                });
+        },
+        [qualityKey]
+    );
 
     const {
         stats: transportStats,
@@ -706,34 +811,50 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             if (videoTrack) {
                 logVoice('Obtained video track', { videoTrack });
 
-                const webcamSingleEncoding = isSingleEncodingCodec(
+                // Don't force a codec. Let mediasoup-client pick the first
+                // router codec the browser can actually encode.
+                const effectiveCodec = getEffectiveVideoCodec(
                     routerRtpCapabilities.current
                 );
-                const webcamPreferredCodec = webcamSingleEncoding
-                    ? routerRtpCapabilities.current?.codecs?.find((c) => {
-                          const mime = c.mimeType.toLowerCase();
-                          return mime === 'video/vp9' || mime === 'video/av1';
-                      })
-                    : undefined;
+                const effectiveMime =
+                    effectiveCodec?.mimeType.toLowerCase();
+                const webcamSingleEncoding =
+                    isSingleEncodingMime(effectiveMime);
                 const webcamMaxBitrateKbps =
                     devices.webcamBitrate ?? DEFAULT_WEBCAM_BITRATE;
+
+                logVoice('Webcam codec resolved', {
+                    effectiveMime,
+                    webcamSingleEncoding
+                });
+
+                const webcamEncodings = buildVideoEncodings({
+                    maxBitrateBps: webcamMaxBitrateKbps * 1000,
+                    isSingleEncoding: webcamSingleEncoding,
+                    isScreenShare: false
+                });
+                const webcamQualityLayers = webcamSingleEncoding
+                    ? undefined
+                    : buildSpatialQualityLayers(webcamEncodings, {
+                          baseHeight: getResWidthHeight(
+                              devices?.webcamResolution
+                          ).height
+                      });
 
                 localVideoProducer.current =
                     await producerTransport.current?.produce({
                         track: videoTrack,
-                        codec: webcamPreferredCodec,
-                        encodings: buildVideoEncodings({
-                            maxBitrateBps: webcamMaxBitrateKbps * 1000,
-                            isSingleEncoding: webcamSingleEncoding,
-                            isScreenShare: false
-                        }),
+                        encodings: webcamEncodings,
                         codecOptions: {
                             videoGoogleStartBitrate: Math.min(
                                 1000,
                                 webcamMaxBitrateKbps
                             )
                         },
-                        appData: { kind: StreamKind.VIDEO }
+                        appData: {
+                            kind: StreamKind.VIDEO,
+                            qualityLayers: webcamQualityLayers
+                        }
                     });
 
                 logVoice('Webcam video producer created', {
@@ -846,23 +967,46 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             if (videoTrack) {
                 logVoice('Obtained video track', { videoTrack });
 
-                let preferredCodec: RtpCodecCapability | undefined;
-
-                if (
+                // Resolve effective codec: user-preferred (if browser can
+                // encode it) → browser/router intersection → undefined.
+                const userPreferredMime =
                     devices.screenCodec &&
-                    devices.screenCodec !== VideoCodec.AUTO &&
-                    routerRtpCapabilities.current?.codecs
-                ) {
-                    preferredCodec = routerRtpCapabilities.current.codecs.find(
-                        (c) =>
-                            c.mimeType.toLowerCase() ===
-                            devices.screenCodec.toLowerCase()
-                    );
-
-                    if (preferredCodec) {
-                        logVoice('Using preferred screen share codec', {
-                            codec: preferredCodec.mimeType
-                        });
+                    devices.screenCodec !== VideoCodec.AUTO
+                        ? devices.screenCodec.toLowerCase()
+                        : undefined;
+                const browserSupportedCodec = getEffectiveVideoCodec(
+                    routerRtpCapabilities.current
+                );
+                let preferredCodec: RtpCodecCapability | undefined;
+                if (userPreferredMime && routerRtpCapabilities.current?.codecs) {
+                    const senderCaps =
+                        typeof RTCRtpSender !== 'undefined' &&
+                        typeof RTCRtpSender.getCapabilities === 'function'
+                            ? RTCRtpSender.getCapabilities('video')
+                            : null;
+                    const browserCanEncode =
+                        !senderCaps ||
+                        senderCaps.codecs.some(
+                            (c) =>
+                                c.mimeType.toLowerCase() === userPreferredMime
+                        );
+                    if (browserCanEncode) {
+                        preferredCodec =
+                            routerRtpCapabilities.current.codecs.find(
+                                (c) =>
+                                    c.mimeType.toLowerCase() ===
+                                    userPreferredMime
+                            );
+                        if (preferredCodec) {
+                            logVoice('Using preferred screen share codec', {
+                                codec: preferredCodec.mimeType
+                            });
+                        }
+                    } else {
+                        logVoice(
+                            'Browser cannot encode preferred screen codec, falling back',
+                            { userPreferredMime }
+                        );
                     }
                 }
 
@@ -870,31 +1014,27 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
 
                 const ssCodecMime =
                     preferredCodec?.mimeType.toLowerCase() ??
-                    (devices.screenCodec === VideoCodec.AUTO &&
-                    isSingleEncodingCodec(routerRtpCapabilities.current)
-                        ? 'video/vp9'
-                        : undefined);
-                const ssSingleEncoding =
-                    ssCodecMime === 'video/vp9' || ssCodecMime === 'video/av1';
-                if (
-                    ssSingleEncoding &&
-                    !preferredCodec &&
-                    routerRtpCapabilities.current?.codecs
-                ) {
-                    preferredCodec = routerRtpCapabilities.current.codecs.find(
-                        (c) => c.mimeType.toLowerCase() === ssCodecMime
-                    );
-                }
+                    browserSupportedCodec?.mimeType.toLowerCase();
+                const ssSingleEncoding = isSingleEncodingMime(ssCodecMime);
+
+                const ssEncodings = buildVideoEncodings({
+                    maxBitrateBps: maxBitrateKbps * 1000,
+                    isSingleEncoding: ssSingleEncoding,
+                    isScreenShare: true
+                });
+                const ssQualityLayers = ssSingleEncoding
+                    ? undefined
+                    : buildSpatialQualityLayers(ssEncodings, {
+                          baseHeight: getResWidthHeight(
+                              devices?.screenResolution
+                          ).height
+                      });
 
                 localScreenShareProducer.current =
                     await producerTransport.current?.produce({
                         track: videoTrack,
                         codec: preferredCodec,
-                        encodings: buildVideoEncodings({
-                            maxBitrateBps: maxBitrateKbps * 1000,
-                            isSingleEncoding: ssSingleEncoding,
-                            isScreenShare: true
-                        }),
+                        encodings: ssEncodings,
                         codecOptions: {
                             videoGoogleStartBitrate: Math.min(
                                 2000,
@@ -903,7 +1043,10 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                             videoGoogleMaxBitrate: maxBitrateKbps,
                             videoGoogleMinBitrate: Math.min(200, maxBitrateKbps)
                         },
-                        appData: { kind: StreamKind.SCREEN }
+                        appData: {
+                            kind: StreamKind.SCREEN,
+                            qualityLayers: ssQualityLayers
+                        }
                     });
 
                 setScreenShareProducer(localScreenShareProducer.current);
@@ -1134,6 +1277,10 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             audioVideoRefsMap: audioVideoRefsMap.current,
             getOrCreateRefs,
             getConsumerCodec,
+            isSimulcastConsumer,
+            getStreamQualityLayers,
+            getStreamQuality,
+            setStreamQuality,
             pauseConsumer,
             resumeConsumer,
             init,
@@ -1157,6 +1304,10 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             connectionStatus,
             getOrCreateRefs,
             getConsumerCodec,
+            isSimulcastConsumer,
+            getStreamQualityLayers,
+            getStreamQuality,
+            setStreamQuality,
             pauseConsumer,
             resumeConsumer,
             init,

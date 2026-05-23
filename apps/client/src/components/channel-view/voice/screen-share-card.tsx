@@ -16,6 +16,7 @@ import { CardTailControls } from './card-tail-controls';
 import { useMediaRefs } from './hooks/use-media-refs';
 import { useScreenShareZoom } from './hooks/use-screen-share-zoom';
 import { useVideoStats } from './hooks/use-video-stats';
+import { QualityButton } from './quality-button';
 import { VolumeButton } from './volume-button';
 
 type tScreenShareControlsProps = {
@@ -25,6 +26,8 @@ type tScreenShareControlsProps = {
     handleToggleZoom: () => void;
     showPinControls: boolean;
     showAudioControl: boolean;
+    showQualityControl: boolean;
+    userId: number;
     volumeKey: TVolumeKey;
     containerRef: RefObject<HTMLDivElement | null>;
 };
@@ -37,12 +40,20 @@ const ScreenShareControls = memo(
         handleToggleZoom,
         showPinControls,
         showAudioControl,
+        showQualityControl,
+        userId,
         volumeKey,
         containerRef
     }: tScreenShareControlsProps) => {
         return (
             <CardControls>
                 {showAudioControl && <VolumeButton volumeKey={volumeKey} />}
+                {showQualityControl && (
+                    <QualityButton
+                        remoteId={userId}
+                        kind={StreamKind.SCREEN}
+                    />
+                )}
                 {showPinControls && isPinned && (
                     <IconButton
                         variant={isZoomEnabled ? 'default' : 'ghost'}
@@ -92,7 +103,9 @@ const ScreenShareCard = memo(
             hasScreenShareStream,
             hasScreenShareAudioStream
         } = useMediaRefs(userId);
-        const { getConsumerCodec } = useMedia();
+        const { getConsumerCodec, isSimulcastConsumer } = useMedia();
+        const showQualityControl =
+            !isOwnUser && isSimulcastConsumer(userId, StreamKind.SCREEN);
         const transportStats = useMediaStats();
         const videoStats = useVideoStats(screenShareRef, hasScreenShareStream);
 
@@ -163,6 +176,8 @@ const ScreenShareCard = memo(
                     handleToggleZoom={handleToggleZoom}
                     showPinControls={showPinControls}
                     showAudioControl={!isOwnUser && hasScreenShareAudioStream}
+                    showQualityControl={showQualityControl}
+                    userId={userId}
                     volumeKey={volumeKey}
                     containerRef={containerRef}
                 />

@@ -79,12 +79,18 @@ const consumeRoute = voiceProcedure
       );
     });
 
+    const qualityLayers =
+      consumer.type === 'simulcast'
+        ? ctx.voiceRuntime.getProducerQualityLayers(input.remoteId, input.kind)
+        : [];
+
     return {
       producerId: producer.id,
       consumerId: consumer.id,
       consumerKind: input.kind,
       consumerRtpParameters: consumer.rtpParameters,
-      consumerType: consumer.type
+      consumerType: consumer.type,
+      qualityLayers
     };
   });
 

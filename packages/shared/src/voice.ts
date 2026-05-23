@@ -54,3 +54,14 @@ export type TExternalStreamsMap = {
     [streamId: number]: TExternalStream;
   };
 };
+
+export type TStreamQualityLayer = {
+  spatialLayer: number;
+  label: string;
+};
+
+export type TStreamQuality =
+  | { mode: 'auto' }
+  | { mode: 'layer'; spatialLayer: number };
+
+export type TConsumerType = 'simple' | 'simulcast' | 'svc' | 'pipe';

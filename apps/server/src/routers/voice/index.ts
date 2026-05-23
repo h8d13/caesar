@@ -25,6 +25,7 @@ import { playSoundboardRoute } from './play-soundboard';
 import { produceRoute } from './produce';
 import { requestKeyFrameRoute } from './request-keyframe';
 import { resumeConsumerRoute } from './resume-consumer';
+import { setConsumerQualityRoute } from './set-consumer-quality';
 import { updateVoiceStateRoute } from './update-state';
 
 export const voiceRouter = t.router({
@@ -50,6 +51,7 @@ export const voiceRouter = t.router({
   onRemoveExternalStream: onVoiceRemoveExternalStreamRoute,
   pauseConsumer: pauseConsumerRoute,
   resumeConsumer: resumeConsumerRoute,
+  setConsumerQuality: setConsumerQualityRoute,
   requestKeyFrame: requestKeyFrameRoute,
   playSoundboard: playSoundboardRoute,
   onSoundboardPlay: onSoundboardPlayRoute

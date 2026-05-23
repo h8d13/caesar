@@ -5,6 +5,7 @@ import {
   type TExternalStreamsMap,
   type TPublicVoiceChannelState,
   type TRemoteProducerIds,
+  type TStreamQualityLayer,
   type TTransportParams,
   type TVoiceMap,
   type TVoiceUserState
@@ -35,7 +36,6 @@ const defaultRouterOptions: RouterOptions<AppData> = {
       mimeType: 'video/VP9',
       clockRate: 90000,
       parameters: {
-        'profile-id': 0,
         'x-google-start-bitrate': 2000
       }
     },
@@ -149,6 +149,8 @@ class VoiceRuntime {
   private screenProducers: TProducerMap = {};
   private screenAudioProducers: TProducerMap = {};
   private consumers: TConsumerMap = {};
+  // producerId -> simulcast quality layers metadata (labels match producer encodings)
+  private producerQualityLayers: Map<string, TStreamQualityLayer[]> = new Map();
 
   private externalCounter = 0;
   private externalStreamsInternal: {
@@ -543,7 +545,8 @@ class VoiceRuntime {
   public addProducer = (
     userId: number,
     type: StreamKind,
-    producer: Producer
+    producer: Producer,
+    qualityLayers?: TStreamQualityLayer[]
   ) => {
     // stamp owning worker idx into appData so cross-router consumes can pipe
     (producer.appData as AppData & { workerIndex?: number }).workerIndex =
@@ -559,7 +562,16 @@ class VoiceRuntime {
       this.screenAudioProducers[userId] = producer;
     }
 
+    if (qualityLayers?.length && producer.type === 'simulcast') {
+      // only meaningful for spatial simulcast; SVC/simple ignored
+      const expected = producer.rtpParameters.encodings?.length ?? 0;
+      if (qualityLayers.length === expected) {
+        this.producerQualityLayers.set(producer.id, qualityLayers);
+      }
+    }
+
     producer.observer.on('close', () => {
+      this.producerQualityLayers.delete(producer.id);
       if (type === StreamKind.VIDEO) {
         delete this.videoProducers[userId];
       } else if (type === StreamKind.AUDIO) {
@@ -570,6 +582,15 @@ class VoiceRuntime {
         delete this.screenAudioProducers[userId];
       }
     });
+  };
+
+  public getProducerQualityLayers = (
+    remoteId: number,
+    kind: StreamKind
+  ): TStreamQualityLayer[] => {
+    const producer = this.getProducer(kind, remoteId);
+    if (!producer) return [];
+    return this.producerQualityLayers.get(producer.id) ?? [];
   };
 
   public removeProducer(userId: number, type: StreamKind) {

@@ -98,7 +98,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 export enum UploadHeaders {
   ORIGINAL_NAME = 'x-file-name',
   TYPE = 'x-file-type',
-  CONTENT_LENGTH = 'content-length',
+  CONTENT_LENGTH = 'x-file-size',
   TOKEN = 'x-token'
 }
 

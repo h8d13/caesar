@@ -1,7 +1,11 @@
 import { logVoice } from '@/helpers/browser-logger';
 import { getTRPCClient } from '@/lib/trpc';
 import type { TRemoteUserStreamKinds } from '@/types';
-import { getMediasoupKind, StreamKind } from '@caesar/shared';
+import {
+    getMediasoupKind,
+    StreamKind,
+    type TStreamQualityLayer
+} from '@caesar/shared';
 import { TRPCClientError } from '@trpc/client';
 import {
     type AppData,
@@ -56,6 +60,10 @@ const useTransports = ({
         };
     }>({});
     const consumerCodecs = useRef<Map<string, string>>(new Map());
+    const consumerTypes = useRef<Map<string, string>>(new Map());
+    const streamQualityLayers = useRef<Map<string, TStreamQualityLayer[]>>(
+        new Map()
+    );
     const consumeOperationsInProgress = useRef<Set<string>>(new Set());
     const packetLossMonitors = useRef<
         Map<string, ReturnType<typeof setInterval>>
@@ -180,7 +188,13 @@ const useTransports = ({
                 async ({ rtpParameters, appData }, callback, errback) => {
                     logVoice('Producing new track', { rtpParameters, appData });
 
-                    const { kind } = appData as { kind: StreamKind };
+                    const { kind, qualityLayers } = appData as {
+                        kind: StreamKind;
+                        qualityLayers?: {
+                            spatialLayer: number;
+                            label: string;
+                        }[];
+                    };
 
                     if (!producerTransport.current) return;
 
@@ -188,7 +202,8 @@ const useTransports = ({
                         const producerId = await trpc.voice.produce.mutate({
                             transportId: producerTransport.current.id,
                             kind,
-                            rtpParameters
+                            rtpParameters,
+                            qualityLayers
                         });
 
                         callback({ id: producerId });
@@ -315,7 +330,9 @@ const useTransports = ({
                     producerId,
                     consumerId,
                     consumerKind,
-                    consumerRtpParameters
+                    consumerRtpParameters,
+                    consumerType,
+                    qualityLayers
                 } = await trpc.voice.consume.mutate({
                     kind,
                     remoteId,
@@ -386,6 +403,10 @@ const useTransports = ({
                         }
 
                         consumerCodecs.current.delete(`${remoteId}-${kind}`);
+                        consumerTypes.current.delete(`${remoteId}-${kind}`);
+                        streamQualityLayers.current.delete(
+                            `${remoteId}-${kind}`
+                        );
                         stopPacketLossMonitor(remoteId, kind);
                     });
                 });
@@ -400,6 +421,16 @@ const useTransports = ({
 
                 if (negotiatedCodec) {
                     consumerCodecs.current.set(codecKey, negotiatedCodec);
+                }
+
+                if (consumerType) {
+                    consumerTypes.current.set(codecKey, consumerType);
+                }
+
+                if (qualityLayers && qualityLayers.length > 0) {
+                    streamQualityLayers.current.set(codecKey, qualityLayers);
+                } else {
+                    streamQualityLayers.current.delete(codecKey);
                 }
 
                 const stream = new MediaStream();
@@ -522,6 +553,24 @@ const useTransports = ({
         []
     );
 
+    const isSimulcastConsumer = useCallback(
+        (remoteId: number, kind: StreamKind): boolean => {
+            return (
+                consumerTypes.current.get(`${remoteId}-${kind}`) === 'simulcast'
+            );
+        },
+        []
+    );
+
+    const getStreamQualityLayers = useCallback(
+        (remoteId: number, kind: StreamKind): TStreamQualityLayer[] => {
+            return (
+                streamQualityLayers.current.get(`${remoteId}-${kind}`) ?? []
+            );
+        },
+        []
+    );
+
     const pauseConsumer = useCallback(
         async (remoteId: number, kind: TRemoteUserStreamKinds) => {
             const consumer = consumers.current[remoteId]?.[kind];
@@ -573,6 +622,8 @@ const useTransports = ({
 
         consumers.current = {};
         consumerCodecs.current.clear();
+        consumerTypes.current.clear();
+        streamQualityLayers.current.clear();
 
         packetLossMonitors.current.forEach((interval) =>
             clearInterval(interval)
@@ -612,6 +663,8 @@ const useTransports = ({
             consumeExistingProducers,
             cleanupTransports,
             getConsumerCodec,
+            isSimulcastConsumer,
+            getStreamQualityLayers,
             pauseConsumer,
             resumeConsumer
         }),
@@ -622,6 +675,8 @@ const useTransports = ({
             consumeExistingProducers,
             cleanupTransports,
             getConsumerCodec,
+            isSimulcastConsumer,
+            getStreamQualityLayers,
             pauseConsumer,
             resumeConsumer
         ]
