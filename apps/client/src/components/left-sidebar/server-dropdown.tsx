@@ -7,9 +7,7 @@ import { LogOut, Settings } from 'lucide-react';
 import { memo, useMemo } from 'react';
 import { ServerScreen } from '../server-screens/screens';
 
-// One header action per role: admins get a cog to the server settings,
-// everyone else gets a destructive log-out icon. Previously this was a
-// menu mixing both responsibilities; splitting cuts the menu indirection.
+// Header actions: logout is always visible, cog is admin-only.
 const ServerDropdownMenu = memo(() => {
     const can = useCan();
 
@@ -26,29 +24,30 @@ const ServerDropdownMenu = memo(() => {
         [can]
     );
 
-    if (isAdmin) {
-        return (
+    return (
+        <div className="flex items-center gap-1">
+            {isAdmin && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Server settings"
+                    onClick={() =>
+                        openServerScreen(ServerScreen.SERVER_SETTINGS)
+                    }
+                >
+                    <Settings className="h-5 w-5 text-muted-foreground" />
+                </Button>
+            )}
             <Button
                 variant="ghost"
                 size="icon"
-                title="Server settings"
-                onClick={() => openServerScreen(ServerScreen.SERVER_SETTINGS)}
+                title="Log out"
+                onClick={disconnectFromServer}
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
             >
-                <Settings className="h-5 w-5 text-muted-foreground" />
+                <LogOut className="h-5 w-5" />
             </Button>
-        );
-    }
-
-    return (
-        <Button
-            variant="ghost"
-            size="icon"
-            title="Log out"
-            onClick={disconnectFromServer}
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-        >
-            <LogOut className="h-5 w-5" />
-        </Button>
+        </div>
     );
 });
 
