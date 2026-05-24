@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { addMessages, addThreadMessages, clearThreadMessages } from './actions';
 import {
+    latestOwnRootMessageIdSelector,
     messagesByChannelIdSelector,
     parentMessageByIdSelector,
     threadMessagesByParentIdSelector
@@ -13,6 +14,11 @@ import {
 export const useMessagesByChannelId = (channelId: number) =>
     useSelector((state: IRootState) =>
         messagesByChannelIdSelector(state, channelId)
+    );
+
+export const useLatestOwnRootMessageId = (channelId: number) =>
+    useSelector((state: IRootState) =>
+        latestOwnRootMessageIdSelector(state, channelId)
     );
 
 const useGroupedMessages = (messages: TJoinedMessage[]) =>

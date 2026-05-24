@@ -30,3 +30,23 @@ export const parentMessageByIdSelector = createCachedSelector(
     ],
     (messages, messageId) => messages.find((m) => m.id === messageId)
 )((_, messageId: number) => messageId);
+
+// highest-id root message authored by the own user in the channel. used by
+// the DM read indicator so the "Read HH:mm" mark only appears on the
+// latest own message and slides forward as new own messages are sent.
+export const latestOwnRootMessageIdSelector = createCachedSelector(
+    [
+        messagesByChannelIdSelector,
+        (state: IRootState, _channelId: number) => state.server.ownUserId
+    ],
+    (messages, ownUserId) => {
+        if (!ownUserId) return undefined;
+        let latest: number | undefined;
+        for (const m of messages) {
+            if (m.userId === ownUserId && !m.parentMessageId) {
+                if (latest === undefined || m.id > latest) latest = m.id;
+            }
+        }
+        return latest;
+    }
+)((_, channelId: number) => channelId);

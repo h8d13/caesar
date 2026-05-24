@@ -5,6 +5,7 @@ import {
     useDmReadByPeer
 } from '@/features/server/channels/hooks';
 import { useCan } from '@/features/server/hooks';
+import { useLatestOwnRootMessageId } from '@/features/server/messages/hooks';
 import {
     useIsOwnUser,
     useOwnUserId,
@@ -53,13 +54,17 @@ const Message = memo(
             useThreadSidebar();
         const channel = useChannelById(message.channelId);
         const dmReadByPeer = useDmReadByPeer(message.channelId);
-        // show on the single own DM message that matches the peer's last
-        // read pointer. peer reads further -> indicator moves with them.
+        const latestOwnId = useLatestOwnRootMessageId(message.channelId);
+        // pinned to the latest own root message in the channel, and only
+        // when the peer has read at least up to it. sliding forward as
+        // new own messages are sent avoids stranding the mark mid-group.
         const showDmReadIndicator =
             !!channel?.isDm &&
             isFromOwnUser &&
             !!dmReadByPeer &&
-            dmReadByPeer.lastReadMessageId === message.id;
+            latestOwnId !== undefined &&
+            message.id === latestOwnId &&
+            dmReadByPeer.lastReadMessageId >= message.id;
         const decrypted = useDecryptedMessage(message, channel?.isDm);
 
         const displayMessage = useMemo<TJoinedMessage>(() => {
