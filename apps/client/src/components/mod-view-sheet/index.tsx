@@ -2,7 +2,7 @@ import { setModViewOpen } from '@/features/app/actions';
 import { useModViewOpen } from '@/features/app/hooks';
 import { useAdminUserInfo } from '@/features/server/admin/hooks';
 import { extractUrls } from '@caesar/shared';
-import { Sheet, SheetContent, SheetTitle } from '@caesar/ui';
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@caesar/ui';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { ModViewContext, ModViewScreen, type TModViewContext } from './context';
 import { ModViewContent } from './mod-view-content';
@@ -79,6 +79,9 @@ const ModViewSheet = memo(() => {
                 <SheetTitle className="sr-only">
                     User Moderation Panel
                 </SheetTitle>
+                <SheetDescription className="sr-only">
+                    Moderation actions and details for the selected user
+                </SheetDescription>
                 {userId && <ContentWrapper userId={userId} />}
             </SheetContent>
         </Sheet>
