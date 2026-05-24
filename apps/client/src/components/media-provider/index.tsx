@@ -102,9 +102,7 @@ const getEffectiveVideoCodec = (
         return routerCaps.codecs.find((c) => c.kind === 'video');
     }
     return routerCaps.codecs.find(
-        (c) =>
-            c.kind === 'video' &&
-            browserMimes.has(c.mimeType.toLowerCase())
+        (c) => c.kind === 'video' && browserMimes.has(c.mimeType.toLowerCase())
     );
 };
 
@@ -123,7 +121,6 @@ const buildSpatialQualityLayers = (
         const h = Math.max(1, Math.round(opts.baseHeight / scale));
         return { spatialLayer: idx, label: `${h}p` };
     });
-
 
 const buildVideoEncodings = (opts: {
     maxBitrateBps: number;
@@ -197,10 +194,7 @@ export type TMediaProvider = {
         remoteId: number,
         kind: StreamKind
     ) => TStreamQualityLayer[];
-    getStreamQuality: (
-        remoteId: number,
-        kind: StreamKind
-    ) => TStreamQuality;
+    getStreamQuality: (remoteId: number, kind: StreamKind) => TStreamQuality;
     setStreamQuality: (
         remoteId: number,
         kind: StreamKind,
@@ -816,8 +810,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                 const effectiveCodec = getEffectiveVideoCodec(
                     routerRtpCapabilities.current
                 );
-                const effectiveMime =
-                    effectiveCodec?.mimeType.toLowerCase();
+                const effectiveMime = effectiveCodec?.mimeType.toLowerCase();
                 const webcamSingleEncoding =
                     isSingleEncodingMime(effectiveMime);
                 const webcamMaxBitrateKbps =
@@ -978,7 +971,10 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                     routerRtpCapabilities.current
                 );
                 let preferredCodec: RtpCodecCapability | undefined;
-                if (userPreferredMime && routerRtpCapabilities.current?.codecs) {
+                if (
+                    userPreferredMime &&
+                    routerRtpCapabilities.current?.codecs
+                ) {
                     const senderCaps =
                         typeof RTCRtpSender !== 'undefined' &&
                         typeof RTCRtpSender.getCapabilities === 'function'

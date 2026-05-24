@@ -564,9 +564,7 @@ const useTransports = ({
 
     const getStreamQualityLayers = useCallback(
         (remoteId: number, kind: StreamKind): TStreamQualityLayer[] => {
-            return (
-                streamQualityLayers.current.get(`${remoteId}-${kind}`) ?? []
-            );
+            return streamQualityLayers.current.get(`${remoteId}-${kind}`) ?? [];
         },
         []
     );

@@ -76,8 +76,7 @@ const QualityButton = memo(({ remoteId, kind }: TQualityButtonProps) => {
                             }
                             className={cn(
                                 'text-left px-2 py-1.5 rounded text-sm hover:bg-accent',
-                                activeKey === opt.key &&
-                                    'bg-accent font-medium'
+                                activeKey === opt.key && 'bg-accent font-medium'
                             )}
                         >
                             {opt.label}
