@@ -73,7 +73,7 @@ const Notifications = memo(() => {
                 </Group>
                 <Group
                     label="Mark read DMs to sender"
-                    description="Let the other participant see when you have read their direct messages. This setting is ignored if 'Offline' status is set by user and only shows reads in DMs."
+                    description="Let the other participant see when you have read their direct messages. This setting is ignored if 'Offline' status is enabled."
                 >
                     <Switch
                         checked={sendDmReadReceipts}
