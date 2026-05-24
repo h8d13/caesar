@@ -1,6 +1,6 @@
 import { UploadHeaders, type TTempFile } from '@caesar/shared';
 import { toast } from 'sonner';
-import { sealBytes } from '../lib/e2ee';
+import { sealStreamed } from '../lib/e2ee';
 import { getUrlFromServer } from './get-file-url';
 import { getSessionStorageItem, SessionStorageKey } from './storage';
 
@@ -32,11 +32,11 @@ const uploadFile = async (
 
     if (options?.encryptKey) {
         try {
-            const plaintext = new Uint8Array(await file.arrayBuffer());
-            const sealed = await sealBytes(options.encryptKey, plaintext);
-            const blob = new Blob([sealed as BlobPart]);
-            body = blob;
-            contentLength = blob.size;
+            // streamed: only ~1 MB of plaintext in memory at a time, no
+            // 256 MB AES-GCM single-call limit, multi-GB files supported.
+            const sealed = await sealStreamed(options.encryptKey, file);
+            body = sealed;
+            contentLength = sealed.size;
         } catch (e) {
             console.error('e2ee file seal failed', e);
             toast.error('Could not encrypt file.');

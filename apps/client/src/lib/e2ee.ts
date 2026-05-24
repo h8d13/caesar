@@ -257,6 +257,120 @@ const openBytes = async (
     return new Uint8Array(pt);
 };
 
+// chunked variants for files. AES-GCM has a 256 MB single-call hard
+// limit (NIST SP 800-38D) plus the obvious memory-pressure problem of
+// holding multi-GB plaintext + ciphertext + Blob in heap; chunking
+// fixes both. layout:
+//   header  : "CESE"(4) || ver(1) || chunkSize(4 LE) || plainSize(8 LE)
+//   chunks  : [ nonce(12) || ct(plainBytes + 16-byte tag) ] *
+// each chunk carries its index as AAD so reordering fails auth.
+const CHUNK_SIZE = 1 << 20; // 1 MB
+const HEADER_MAGIC = new Uint8Array([0x43, 0x45, 0x53, 0x45]); // "CESE"
+const HEADER_VERSION = 1;
+const HEADER_SIZE = 4 + 1 + 4 + 8;
+const NONCE_SIZE = 12;
+const TAG_SIZE = 16;
+
+const chunkAad = (index: number): Uint8Array => {
+    const aad = new Uint8Array(4);
+    new DataView(aad.buffer).setUint32(0, index, true);
+    return aad;
+};
+
+const sealStreamed = async (key: CryptoKey, source: Blob): Promise<Blob> => {
+    const total = source.size;
+    const header = new Uint8Array(HEADER_SIZE);
+    const view = new DataView(header.buffer);
+    header.set(HEADER_MAGIC, 0);
+    view.setUint8(4, HEADER_VERSION);
+    view.setUint32(5, CHUNK_SIZE, true);
+    view.setBigUint64(9, BigInt(total), true);
+
+    const parts: BlobPart[] = [header as BlobPart];
+    let offset = 0;
+    let chunkIndex = 0;
+    while (offset < total) {
+        const end = Math.min(offset + CHUNK_SIZE, total);
+        const slice = source.slice(offset, end);
+        const buf = new Uint8Array(await slice.arrayBuffer());
+        const nonce = crypto.getRandomValues(new Uint8Array(NONCE_SIZE));
+        const aad = chunkAad(chunkIndex);
+        const ct = await crypto.subtle.encrypt(
+            {
+                name: 'AES-GCM',
+                iv: nonce as BufferSource,
+                additionalData: aad as BufferSource
+            },
+            key,
+            buf as BufferSource
+        );
+        parts.push(nonce as BlobPart, new Uint8Array(ct) as BlobPart);
+        offset = end;
+        chunkIndex++;
+    }
+    return new Blob(parts);
+};
+
+const openStreamed = async (key: CryptoKey, source: Blob): Promise<Blob> => {
+    if (source.size < HEADER_SIZE) {
+        throw new Error('e2ee: ciphertext too short');
+    }
+    const headerBytes = new Uint8Array(
+        await source.slice(0, HEADER_SIZE).arrayBuffer()
+    );
+    for (let i = 0; i < HEADER_MAGIC.length; i++) {
+        if (headerBytes[i] !== HEADER_MAGIC[i]) {
+            throw new Error('e2ee: bad magic');
+        }
+    }
+    const view = new DataView(headerBytes.buffer);
+    if (view.getUint8(4) !== HEADER_VERSION) {
+        throw new Error('e2ee: unsupported version');
+    }
+    const chunkSize = view.getUint32(5, true);
+    const plainSize = Number(view.getBigUint64(9, true));
+
+    const parts: BlobPart[] = [];
+    let offset = HEADER_SIZE;
+    let chunkIndex = 0;
+    let plainProduced = 0;
+    while (offset < source.size && plainProduced < plainSize) {
+        const nonceEnd = offset + NONCE_SIZE;
+        if (nonceEnd > source.size) {
+            throw new Error('e2ee: truncated nonce');
+        }
+        const nonce = new Uint8Array(
+            await source.slice(offset, nonceEnd).arrayBuffer()
+        );
+        const expectedPlain = Math.min(chunkSize, plainSize - plainProduced);
+        const ctEnd = nonceEnd + expectedPlain + TAG_SIZE;
+        if (ctEnd > source.size) {
+            throw new Error('e2ee: truncated chunk');
+        }
+        const ct = new Uint8Array(
+            await source.slice(nonceEnd, ctEnd).arrayBuffer()
+        );
+        const aad = chunkAad(chunkIndex);
+        const pt = await crypto.subtle.decrypt(
+            {
+                name: 'AES-GCM',
+                iv: nonce as BufferSource,
+                additionalData: aad as BufferSource
+            },
+            key,
+            ct as BufferSource
+        );
+        parts.push(new Uint8Array(pt) as BlobPart);
+        plainProduced += pt.byteLength;
+        offset = ctEnd;
+        chunkIndex++;
+    }
+    if (plainProduced !== plainSize) {
+        throw new Error('e2ee: size mismatch');
+    }
+    return new Blob(parts);
+};
+
 export {
     clearPriv,
     derivePriv,
@@ -268,8 +382,10 @@ export {
     hasPriv,
     open,
     openBytes,
+    openStreamed,
     seal,
     sealBytes,
+    sealStreamed,
     setPriv,
     subscribePriv,
     tryDeriveAndSetAsync

@@ -4,7 +4,7 @@ import { useChannelById } from '@/features/server/channels/hooks';
 import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
 import { getFileUrl } from '@/helpers/get-file-url';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
-import { dmKey, hasPriv, openBytes } from '@/lib/e2ee';
+import { dmKey, hasPriv, openStreamed } from '@/lib/e2ee';
 import { getTRPCClient } from '@/lib/trpc';
 import { useDmE2eeContext } from '@/lib/use-dm-e2ee';
 import { cn } from '@/lib/utils';
@@ -83,9 +83,12 @@ const MessageRenderer = memo(
                     );
                     const res = await fetch(getFileUrl(file));
                     if (!res.ok) throw new Error(`fetch ${res.status}`);
-                    const cipher = new Uint8Array(await res.arrayBuffer());
-                    const plain = await openBytes(key, cipher);
-                    const blob = new Blob([plain as BlobPart], {
+                    const cipher = await res.blob();
+                    const plain = await openStreamed(key, cipher);
+                    // re-tag with octet-stream so the browser triggers a
+                    // download rather than guessing from any MIME the
+                    // server happened to attach.
+                    const blob = new Blob([plain], {
                         type: 'application/octet-stream'
                     });
                     const url = URL.createObjectURL(blob);
