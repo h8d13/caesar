@@ -195,4 +195,16 @@ describe('invites router', () => {
     expect(inviteWithoutRole).toBeDefined();
     expect(inviteWithoutRole!.role).toBeNull();
   });
+
+  test('should rate limit excessive add invite attempts', async () => {
+    const { caller } = await initTest(1);
+
+    for (let i = 0; i < 10; i++) {
+      await caller.invites.add({});
+    }
+
+    await expect(caller.invites.add({})).rejects.toThrow(
+      'Too many requests. Please try again shortly.'
+    );
+  });
 });

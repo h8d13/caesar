@@ -1,11 +1,16 @@
 import { ChannelPermission, ChannelType } from '@caesar/shared';
 import { channels, messages } from '@caesar/shared/db/schema';
+import { config } from '@server/config';
 import { db } from '@server/db';
-import { protectedProcedure } from '@server/utils/trpc';
+import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { and, desc, eq, inArray, isNull, like, or } from 'drizzle-orm';
 import { z } from 'zod';
 
-const searchMessagesRoute = protectedProcedure
+const searchMessagesRoute = rateLimitedProcedure(protectedProcedure, {
+  maxRequests: config.rateLimiters.searchMessages.maxRequests,
+  windowMs: config.rateLimiters.searchMessages.windowMs,
+  logLabel: 'searchMessages'
+})
   .input(
     z.object({
       query: z.string().min(1).max(200),

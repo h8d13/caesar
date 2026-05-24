@@ -1,8 +1,9 @@
 import { messages, socialCreditLedger } from '@caesar/shared/db/schema';
+import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishMessage, publishUser } from '@server/db/publishers';
 import { invariant } from '@server/utils/invariant';
-import { protectedProcedure } from '@server/utils/trpc';
+import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { and, count, eq, gte } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -14,7 +15,11 @@ const getStartOfDay = () => {
   return now.getTime();
 };
 
-const toggleMessageScVoteRoute = protectedProcedure
+const toggleMessageScVoteRoute = rateLimitedProcedure(protectedProcedure, {
+  maxRequests: config.rateLimiters.toggleMessageScVote.maxRequests,
+  windowMs: config.rateLimiters.toggleMessageScVote.windowMs,
+  logLabel: 'toggleMessageScVote'
+})
   .input(
     z.object({
       messageId: z.number(),

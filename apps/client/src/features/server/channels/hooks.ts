@@ -7,6 +7,7 @@ import {
     channelsSelector,
     currentVoiceChannelIdSelector,
     directMessagesUnreadCountSelector,
+    dmReadByPeerSelector,
     isCurrentVoiceChannelSelectedSelector,
     selectedChannelIdSelector,
     selectedChannelTypeSelector
@@ -39,3 +40,6 @@ export const useChannelsMap = () => useSelector(channelsMapSelector);
 
 export const useDirectMessagesUnreadCount = () =>
     useSelector(directMessagesUnreadCountSelector);
+
+export const useDmReadByPeer = (channelId: number) =>
+    useSelector((state: IRootState) => dmReadByPeerSelector(state, channelId));

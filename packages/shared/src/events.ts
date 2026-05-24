@@ -64,6 +64,7 @@ export enum ServerEvents {
   DM_CALL_RING = 'dmCallRing',
   DM_CALL_ACCEPTED = 'dmCallAccepted',
   DM_CALL_ENDED = 'dmCallEnded',
+  DM_READ = 'dmRead',
 
   SOUNDBOARD_PLAY = 'soundboardPlay'
 }

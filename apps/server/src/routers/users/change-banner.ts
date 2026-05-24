@@ -1,4 +1,5 @@
 import { users } from '@caesar/shared/db/schema';
+import { config } from '@server/config';
 import { db } from '@server/db';
 import { removeFile } from '@server/db/mutations/files';
 import { publishUser } from '@server/db/publishers';
@@ -6,11 +7,15 @@ import { getSettings } from '@server/db/queries/server';
 import { getUserById } from '@server/db/queries/users';
 import { fileManager } from '@server/utils/file-manager';
 import { invariant } from '@server/utils/invariant';
-import { protectedProcedure } from '@server/utils/trpc';
+import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';
 import z from 'zod';
 
-const changeBannerRoute = protectedProcedure
+const changeBannerRoute = rateLimitedProcedure(protectedProcedure, {
+  maxRequests: config.rateLimiters.changeBanner.maxRequests,
+  windowMs: config.rateLimiters.changeBanner.windowMs,
+  logLabel: 'changeBanner'
+})
   .input(
     z.object({
       fileId: z.string().optional()

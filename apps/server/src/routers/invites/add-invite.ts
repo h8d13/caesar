@@ -1,14 +1,19 @@
 import { ActivityLogType, getRandomString, Permission } from '@caesar/shared';
 import { invites, roles } from '@caesar/shared/db/schema';
+import { config } from '@server/config';
 import { db } from '@server/db';
 import { isAtUserCap } from '@server/helpers/user-cap';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
-import { protectedProcedure } from '@server/utils/trpc';
+import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-const addInviteRoute = protectedProcedure
+const addInviteRoute = rateLimitedProcedure(protectedProcedure, {
+  maxRequests: config.rateLimiters.addInvite.maxRequests,
+  windowMs: config.rateLimiters.addInvite.windowMs,
+  logLabel: 'addInvite'
+})
   .input(
     z.object({
       maxUses: z.number().min(0).max(100).optional().default(0),

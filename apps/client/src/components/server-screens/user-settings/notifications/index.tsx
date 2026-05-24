@@ -8,6 +8,8 @@ import {
     useBrowserNotificationsForDms,
     useBrowserNotificationsForMentions
 } from '@/features/app/hooks';
+import { setSendDmReadReceipts } from '@/features/server/users/actions';
+import { useOwnPublicUser } from '@/features/server/users/hooks';
 import {
     Card,
     CardContent,
@@ -24,6 +26,8 @@ const Notifications = memo(() => {
     const browserNotificationsForMentions =
         useBrowserNotificationsForMentions();
     const browserNotificationsForDms = useBrowserNotificationsForDms();
+    const ownPublicUser = useOwnPublicUser();
+    const sendDmReadReceipts = ownPublicUser?.sendDmReadReceipts ?? false;
 
     return (
         <Card>
@@ -65,6 +69,17 @@ const Notifications = memo(() => {
                         onCheckedChange={(value) =>
                             setBrowserNotificationsForDms(value)
                         }
+                    />
+                </Group>
+                <Group
+                    label="Mark read DMs to sender"
+                    description="Let the other participant see when you have read their direct messages. This setting is ignored if 'Offline' status is set by user and only shows reads in DMs."
+                >
+                    <Switch
+                        checked={sendDmReadReceipts}
+                        onCheckedChange={(value) => {
+                            void setSendDmReadReceipts(value);
+                        }}
                     />
                 </Group>
             </CardContent>

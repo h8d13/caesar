@@ -57,6 +57,19 @@ export interface IServerState {
     readStatesMap: {
         [channelId: number]: number | undefined;
     };
+    // per-DM-channel: the OTHER participant's last read receipt. used by
+    // the sender's UI to render a "Read" indicator on sent messages whose
+    // id is <= lastReadMessageId. populated only when the reader opted
+    // into receipts via sendDmReadReceipts.
+    dmReadByPeerMap: {
+        [channelId: number]:
+            | {
+                  readerId: number;
+                  lastReadMessageId: number;
+                  readAt: number;
+              }
+            | undefined;
+    };
     channelsWithUnreadMention: number[];
     hideNonVideoParticipants: boolean;
     showUserBannersInVoice: boolean;
@@ -96,6 +109,7 @@ const initialState: IServerState = {
     pinnedCard: undefined,
     channelPermissions: {},
     readStatesMap: {},
+    dmReadByPeerMap: {},
     channelsWithUnreadMention: [],
     hideNonVideoParticipants: getLocalStorageItemBool(
         LocalStorageKey.HIDE_NON_VIDEO_PARTICIPANTS,
@@ -656,6 +670,30 @@ export const serverSlice = createSlice({
             if (!state.channelsWithUnreadMention.includes(channelId)) {
                 state.channelsWithUnreadMention.push(channelId);
             }
+        },
+        setDmReadByPeer: (
+            state,
+            action: PayloadAction<{
+                channelId: number;
+                readerId: number;
+                lastReadMessageId: number;
+                readAt: number;
+            }>
+        ) => {
+            const { channelId, readerId, lastReadMessageId, readAt } =
+                action.payload;
+            const existing = state.dmReadByPeerMap[channelId];
+
+            // only advance, never regress (out-of-order events)
+            if (existing && existing.lastReadMessageId >= lastReadMessageId) {
+                return;
+            }
+
+            state.dmReadByPeerMap[channelId] = {
+                readerId,
+                lastReadMessageId,
+                readAt
+            };
         },
 
         // EMOJIS ------------------------------------------------------------

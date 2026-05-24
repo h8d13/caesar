@@ -172,6 +172,12 @@ const users = sqliteTable(
     })
       .notNull()
       .default(false),
+    // when true, marking a DM channel as read emits a DM_READ event to the
+    // other participant so they can render a "Read" indicator on their
+    // sent messages. opt-in; default false preserves privacy.
+    sendDmReadReceipts: integer('send_dm_read_receipts', { mode: 'boolean' })
+      .notNull()
+      .default(false),
     lastLoginAt: integer('last_login_at')
       .notNull()
       .$defaultFn(() => Date.now()),

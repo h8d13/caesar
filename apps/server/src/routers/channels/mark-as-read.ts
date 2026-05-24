@@ -1,7 +1,11 @@
-import { type TMessage } from '@caesar/shared';
+import { ServerEvents, type TMessage } from '@caesar/shared';
 import { channelReadStates, messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
+import {
+  getDirectMessageChannelParticipantIds,
+  isDirectMessageChannel
+} from '@server/db/queries/dms';
 import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { and, desc, eq, isNull } from 'drizzle-orm';
@@ -50,12 +54,14 @@ const markAsReadRoute = rateLimitedProcedure(protectedProcedure, {
       )
       .get();
 
+    const readAt = Date.now();
+
     if (existingState) {
       await db
         .update(channelReadStates)
         .set({
           lastReadMessageId: newestId,
-          lastReadAt: Date.now()
+          lastReadAt: readAt
         })
         .where(
           and(
@@ -68,8 +74,31 @@ const markAsReadRoute = rateLimitedProcedure(protectedProcedure, {
         channelId,
         userId: ctx.userId,
         lastReadMessageId: newestId,
-        lastReadAt: Date.now()
+        lastReadAt: readAt
       });
+    }
+
+    // DM read receipts: opt-in. when on, push a DM_READ event to the
+    // other participant so their UI can mark sent messages as read.
+    // suppressed while appearOffline is on: presence is masked to peers,
+    // so leaking read activity would defeat the offline mask.
+    if (ctx.user.sendDmReadReceipts && !ctx.user.appearOffline) {
+      const isDm = await isDirectMessageChannel(channelId);
+
+      if (isDm) {
+        const participants =
+          await getDirectMessageChannelParticipantIds(channelId);
+        const others = participants.filter((id) => id !== ctx.userId);
+
+        if (others.length > 0) {
+          ctx.pubsub.publishFor(others, ServerEvents.DM_READ, {
+            channelId,
+            readerId: ctx.userId,
+            lastReadMessageId: newestId,
+            readAt
+          });
+        }
+      }
     }
   });
 

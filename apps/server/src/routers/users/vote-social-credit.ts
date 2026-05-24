@@ -3,10 +3,11 @@ import {
   socialCreditVotes,
   users
 } from '@caesar/shared/db/schema';
+import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
 import { invariant } from '@server/utils/invariant';
-import { protectedProcedure } from '@server/utils/trpc';
+import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { and, eq, gte } from 'drizzle-orm';
 import z from 'zod';
 
@@ -19,7 +20,11 @@ const getStartOfDay = () => {
   return now.getTime();
 };
 
-const voteSocialCreditRoute = protectedProcedure
+const voteSocialCreditRoute = rateLimitedProcedure(protectedProcedure, {
+  maxRequests: config.rateLimiters.voteSocialCredit.maxRequests,
+  windowMs: config.rateLimiters.voteSocialCredit.windowMs,
+  logLabel: 'voteSocialCredit'
+})
   .input(
     z.object({
       targetUserId: z.number(),

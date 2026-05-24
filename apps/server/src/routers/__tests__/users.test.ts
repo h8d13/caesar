@@ -1113,4 +1113,88 @@ describe('users router', () => {
     expect(userInfo.messages.length).toBe(0);
     expect(dbMessages.length).toBeGreaterThan(0);
   });
+
+  test('should rate limit excessive update password attempts', async () => {
+    const { caller } = await initTest();
+
+    for (let i = 0; i < 5; i++) {
+      await expect(
+        caller.users.updatePassword({
+          currentPassword: 'wrongpassword',
+          newPassword: 'newpassword',
+          confirmNewPassword: 'newpassword'
+        })
+      ).rejects.toThrow('Current password is incorrect');
+    }
+
+    await expect(
+      caller.users.updatePassword({
+        currentPassword: 'wrongpassword',
+        newPassword: 'newpassword',
+        confirmNewPassword: 'newpassword'
+      })
+    ).rejects.toThrow('Too many requests. Please try again shortly.');
+  });
+
+  test('should rate limit excessive rename identity attempts', async () => {
+    const { caller } = await initTest(1);
+
+    for (let i = 0; i < 5; i++) {
+      await expect(
+        caller.users.renameIdentity({ userId: 999999, identity: 'nonexistent' })
+      ).rejects.toThrow();
+    }
+
+    await expect(
+      caller.users.renameIdentity({ userId: 999999, identity: 'nonexistent' })
+    ).rejects.toThrow('Too many requests. Please try again shortly.');
+  });
+
+  test('should rate limit excessive social credit vote attempts', async () => {
+    const { caller } = await initTest(1);
+
+    for (let i = 0; i < 20; i++) {
+      await expect(
+        caller.users.voteSocialCredit({
+          targetUserId: 999999,
+          type: 'upvote'
+        })
+      ).rejects.toThrow('User not found.');
+    }
+
+    await expect(
+      caller.users.voteSocialCredit({
+        targetUserId: 999999,
+        type: 'upvote'
+      })
+    ).rejects.toThrow('Too many requests. Please try again shortly.');
+  });
+
+  test('should rate limit excessive change avatar attempts', async () => {
+    const { caller } = await initTest(1);
+
+    for (let i = 0; i < 10; i++) {
+      await expect(
+        caller.users.changeAvatar({ fileId: 'nonexistent-file-id' })
+      ).rejects.toThrow();
+    }
+
+    await expect(
+      caller.users.changeAvatar({ fileId: 'nonexistent-file-id' })
+    ).rejects.toThrow('Too many requests. Please try again shortly.');
+  });
+
+  test('should rate limit excessive change banner attempts', async () => {
+    const { caller } = await initTest(1);
+
+    for (let i = 0; i < 10; i++) {
+      await expect(
+        caller.users.changeBanner({ fileId: 'nonexistent-file-id' })
+      ).rejects.toThrow();
+    }
+
+    await expect(
+      caller.users.changeBanner({ fileId: 'nonexistent-file-id' })
+    ).rejects.toThrow('Too many requests. Please try again shortly.');
+  });
 });

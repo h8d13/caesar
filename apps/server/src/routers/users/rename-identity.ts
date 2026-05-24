@@ -5,16 +5,21 @@ import {
   Permission
 } from '@caesar/shared';
 import { users } from '@caesar/shared/db/schema';
+import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
 import { getUserById } from '@server/db/queries/users';
 import { invariant } from '@server/utils/invariant';
-import { protectedProcedure } from '@server/utils/trpc';
+import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { closeUserSessions } from '@server/utils/wss';
 import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
-const renameIdentityRoute = protectedProcedure
+const renameIdentityRoute = rateLimitedProcedure(protectedProcedure, {
+  maxRequests: config.rateLimiters.renameIdentity.maxRequests,
+  windowMs: config.rateLimiters.renameIdentity.windowMs,
+  logLabel: 'renameIdentity'
+})
   .input(
     z.object({
       userId: z.number(),

@@ -2,10 +2,17 @@ import { UploadHeaders } from '@caesar/shared';
 import fs from 'fs';
 import http from 'http';
 import z from 'zod';
+import { config } from '../config';
 import { getSettings } from '../db/queries/server';
 import { getUserByToken } from '../db/queries/users';
+import { getWsInfo } from '../helpers/get-ws-info';
 import { logger } from '../logger';
 import { fileManager } from '../utils/file-manager';
+import {
+  createRateLimiter,
+  getClientRateLimitKey,
+  getRateLimitRetrySeconds
+} from '../utils/rate-limiters/rate-limiter';
 import { sanitizeFileName } from './helpers';
 
 const zHeaders = z.object({
@@ -14,10 +21,40 @@ const zHeaders = z.object({
   [UploadHeaders.CONTENT_LENGTH]: z.string().transform((val) => Number(val))
 });
 
+const uploadFileRateLimiter = createRateLimiter({
+  maxRequests: config.rateLimiters.uploadFile.maxRequests,
+  windowMs: config.rateLimiters.uploadFile.windowMs
+});
+
 const uploadFileRouteHandler = async (
   req: http.IncomingMessage,
   res: http.ServerResponse
 ) => {
+  // rate-limit by client IP before any DB / disk work
+  const connectionInfo = getWsInfo(undefined, req);
+
+  if (connectionInfo?.ip) {
+    const key = getClientRateLimitKey(connectionInfo.ip);
+    const rateLimit = uploadFileRateLimiter.consume(key);
+
+    if (!rateLimit.allowed) {
+      req.resume();
+      logger.debug(`[Rate Limiter HTTP] /upload rate limited for key "${key}"`);
+
+      res.setHeader(
+        'Retry-After',
+        getRateLimitRetrySeconds(rateLimit.retryAfterMs)
+      );
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Too many requests' }));
+      return;
+    }
+  } else {
+    logger.warn(
+      '[Rate Limiter HTTP] Missing IP address in request info, skipping rate limiting for /upload route.'
+    );
+  }
+
   const parsedHeaders = zHeaders.parse(req.headers);
 
   const [token, rawOriginalName, contentLength] = [

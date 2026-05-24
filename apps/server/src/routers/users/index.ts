@@ -23,6 +23,7 @@ import { removeRoleRoute } from './remove-role';
 import { renameIdentityRoute } from './rename-identity';
 import { setAllowMultipleSessionsRoute } from './set-allow-multiple-sessions';
 import { setAppearOfflineRoute } from './set-appear-offline';
+import { setSendDmReadReceiptsRoute } from './set-send-dm-read-receipts';
 import { signOutOtherSessionsRoute } from './sign-out-other-sessions';
 import { unbanRoute } from './unban';
 import { updatePasswordRoute } from './update-password';
@@ -38,6 +39,7 @@ export const usersRouter = t.router({
   renameIdentity: renameIdentityRoute,
   setAppearOffline: setAppearOfflineRoute,
   setAllowMultipleSessions: setAllowMultipleSessionsRoute,
+  setSendDmReadReceipts: setSendDmReadReceiptsRoute,
   signOutOtherSessions: signOutOtherSessionsRoute,
   updatePassword: updatePasswordRoute,
   getInfo: getUserInfoRoute,

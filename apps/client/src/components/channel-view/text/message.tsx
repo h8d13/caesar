@@ -1,6 +1,9 @@
 import { openThreadSidebar } from '@/features/app/actions';
 import { useThreadSidebar } from '@/features/app/hooks';
-import { useChannelById } from '@/features/server/channels/hooks';
+import {
+    useChannelById,
+    useDmReadByPeer
+} from '@/features/server/channels/hooks';
 import { useCan } from '@/features/server/hooks';
 import {
     useIsOwnUser,
@@ -10,7 +13,8 @@ import {
 import { useDecryptedMessage } from '@/lib/use-decrypted-message';
 import { cn } from '@/lib/utils';
 import { hasMention, Permission, type TJoinedMessage } from '@caesar/shared';
-import { CornerUpRight, MessageSquareText } from 'lucide-react';
+import { format } from 'date-fns';
+import { Check, CornerUpRight, MessageSquareText } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { ExpiresBadge } from './expires-badge';
 import { MessageActions } from './message-actions';
@@ -48,6 +52,14 @@ const Message = memo(
         const { isOpen: isThreadOpen, parentMessageId: threadParentId } =
             useThreadSidebar();
         const channel = useChannelById(message.channelId);
+        const dmReadByPeer = useDmReadByPeer(message.channelId);
+        // show on the single own DM message that matches the peer's last
+        // read pointer. peer reads further -> indicator moves with them.
+        const showDmReadIndicator =
+            !!channel?.isDm &&
+            isFromOwnUser &&
+            !!dmReadByPeer &&
+            dmReadByPeer.lastReadMessageId === message.id;
         const decrypted = useDecryptedMessage(message, channel?.isDm);
 
         const displayMessage = useMemo<TJoinedMessage>(() => {
@@ -132,6 +144,14 @@ const Message = memo(
                         )}
                         {message.expiresAt != null && !hideExpiresBadge && (
                             <ExpiresBadge expiresAt={message.expiresAt} />
+                        )}
+                        {showDmReadIndicator && (
+                            <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground mt-0.5">
+                                <Check className="h-3 w-3" />
+                                <span>
+                                    Read {format(dmReadByPeer.readAt, 'HH:mm')}
+                                </span>
+                            </div>
                         )}
                         {!isThreadReply && !channel?.isDm && replyCount > 0 && (
                             <button

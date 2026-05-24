@@ -789,4 +789,25 @@ describe('/public', () => {
 
     expect(data).toHaveProperty('error', 'File not found');
   });
+
+  test('should rate limit excessive /public attempts', async () => {
+    // hits the limiter before any DB / auth work; 404 path is fine because
+    // the consume runs at the top of the handler.
+    for (let i = 0; i < 120; i++) {
+      const response = await fetch(
+        `${testsBaseUrl}/public/nonexistent-file.txt`
+      );
+
+      expect(response.status).toBe(404);
+    }
+
+    const limited = await fetch(`${testsBaseUrl}/public/nonexistent-file.txt`);
+
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get('retry-after')).toBeTruthy();
+
+    const data = (await limited.json()) as { error: string };
+
+    expect(data).toHaveProperty('error', 'Too many requests');
+  });
 });

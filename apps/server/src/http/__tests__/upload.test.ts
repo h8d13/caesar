@@ -447,6 +447,25 @@ describe('/upload', () => {
       expect(data.originalName).not.toContain('/');
     }
   });
+
+  test('should rate limit excessive upload attempts', async () => {
+    for (let i = 0; i < 20; i++) {
+      const file = getMockFile(`spam-${i}`);
+      const response = await uploadFile(file, token);
+
+      expect(response.status).toBe(200);
+    }
+
+    const file = getMockFile('one-too-many');
+    const limited = await uploadFile(file, token);
+
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get('retry-after')).toBeTruthy();
+
+    const data = (await limited.json()) as { error: string };
+
+    expect(data).toHaveProperty('error', 'Too many requests');
+  });
 });
 
 describe('sanitizeFileName', () => {

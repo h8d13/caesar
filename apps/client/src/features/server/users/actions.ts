@@ -77,6 +77,20 @@ export const setAllowMultipleSessions = async (value: boolean) => {
     return result.allowMultipleSessions;
 };
 
+export const setSendDmReadReceipts = async (value: boolean) => {
+    const trpc = getTRPCClient();
+    const result = await trpc.users.setSendDmReadReceipts.mutate({ value });
+    const ownUserId = store.getState().server.ownUserId;
+
+    if (ownUserId) {
+        updateUser(ownUserId, {
+            sendDmReadReceipts: result.sendDmReadReceipts
+        });
+    }
+
+    return result.sendDmReadReceipts;
+};
+
 export const setAppearOffline = async (value: boolean) => {
     const trpc = getTRPCClient();
     const result = await trpc.users.setAppearOffline.mutate({ value });

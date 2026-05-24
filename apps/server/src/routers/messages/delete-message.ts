@@ -1,16 +1,21 @@
 import { Permission } from '@caesar/shared';
 import { messages } from '@caesar/shared/db/schema';
+import { config } from '@server/config';
 import { db } from '@server/db';
 import { removeFile } from '@server/db/mutations/files';
 import { publishMessage, publishReplyCount } from '@server/db/publishers';
 import { getFilesByMessageId } from '@server/db/queries/files';
 import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
-import { protectedProcedure } from '@server/utils/trpc';
+import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-const deleteMessageRoute = protectedProcedure
+const deleteMessageRoute = rateLimitedProcedure(protectedProcedure, {
+  maxRequests: config.rateLimiters.deleteMessage.maxRequests,
+  windowMs: config.rateLimiters.deleteMessage.windowMs,
+  logLabel: 'deleteMessage'
+})
   .input(z.object({ messageId: z.number() }))
   .mutation(async ({ input, ctx }) => {
     const targetMessage = await db

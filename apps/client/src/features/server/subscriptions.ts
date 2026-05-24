@@ -4,6 +4,7 @@ import { type TPublicServerSettings } from '@caesar/shared';
 import { setPublicServerSettings } from './actions';
 import { subscribeToCategories } from './categories/subscriptions';
 import { subscribeToChannels } from './channels/subscriptions';
+import { subscribeToDms } from './dms/subscriptions';
 import { subscribeToEmojis } from './emojis/subscriptions';
 import { subscribeToMessages } from './messages/subscriptions';
 import { subscribeToRoles } from './roles/subscriptions';
@@ -43,7 +44,8 @@ const initSubscriptions = () => {
         subscribeToUsers,
         subscribeToMessages,
         subscribeToVoice,
-        subscribeToCategories
+        subscribeToCategories,
+        subscribeToDms
     ];
 
     const unsubscribes = subscriptors.map((subscriptor) => subscriptor());

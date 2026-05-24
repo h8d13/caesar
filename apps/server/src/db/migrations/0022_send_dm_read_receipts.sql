@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN send_dm_read_receipts INTEGER NOT NULL DEFAULT 0;

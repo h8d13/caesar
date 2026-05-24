@@ -1609,4 +1609,58 @@ describe('messages router', () => {
       })
     ).rejects.toThrow('File uploads are disabled on this server');
   });
+
+  test('should rate limit excessive search attempts', async () => {
+    const { caller } = await initTest(1);
+
+    for (let i = 0; i < 20; i++) {
+      await caller.messages.search({ query: 'hello', limit: 1 });
+    }
+
+    await expect(
+      caller.messages.search({ query: 'hello', limit: 1 })
+    ).rejects.toThrow('Too many requests. Please try again shortly.');
+  });
+
+  test('should rate limit excessive delete message attempts', async () => {
+    const { caller } = await initTest(1);
+
+    for (let i = 0; i < 30; i++) {
+      await expect(
+        caller.messages.delete({ messageId: 999999 })
+      ).rejects.toThrow('Message not found');
+    }
+
+    await expect(caller.messages.delete({ messageId: 999999 })).rejects.toThrow(
+      'Too many requests. Please try again shortly.'
+    );
+  });
+
+  test('should rate limit excessive toggle pin attempts', async () => {
+    const { caller } = await initTest(1);
+
+    for (let i = 0; i < 30; i++) {
+      await expect(
+        caller.messages.togglePin({ messageId: 999999 })
+      ).rejects.toThrow('Message not found');
+    }
+
+    await expect(
+      caller.messages.togglePin({ messageId: 999999 })
+    ).rejects.toThrow('Too many requests. Please try again shortly.');
+  });
+
+  test('should rate limit excessive social credit vote attempts', async () => {
+    const { caller } = await initTest(1);
+
+    for (let i = 0; i < 30; i++) {
+      await expect(
+        caller.messages.toggleScVote({ messageId: 999999, type: 'upvote' })
+      ).rejects.toThrow('Message not found');
+    }
+
+    await expect(
+      caller.messages.toggleScVote({ messageId: 999999, type: 'upvote' })
+    ).rejects.toThrow('Too many requests. Please try again shortly.');
+  });
 });

@@ -177,9 +177,15 @@ const publishUser = async (
   // strip self-only flags at the broadcast boundary: these are per-user
   // settings and must never reach peers. self-targeted updates use the
   // respective mutation return values to refresh local own-user state.
-  const { appearOffline, allowMultipleSessions, ...broadcastUser } = user;
+  const {
+    appearOffline,
+    allowMultipleSessions,
+    sendDmReadReceipts,
+    ...broadcastUser
+  } = user;
   void appearOffline;
   void allowMultipleSessions;
+  void sendDmReadReceipts;
 
   pubsub.publish(targetEvent, broadcastUser);
 };

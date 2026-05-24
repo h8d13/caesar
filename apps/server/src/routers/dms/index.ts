@@ -44,6 +44,10 @@ const onCallEndedRoute = protectedProcedure.subscription(async ({ ctx }) => {
   return ctx.pubsub.subscribeFor(ctx.userId, ServerEvents.DM_CALL_ENDED);
 });
 
+const onDmReadRoute = protectedProcedure.subscription(async ({ ctx }) => {
+  return ctx.pubsub.subscribeFor(ctx.userId, ServerEvents.DM_READ);
+});
+
 export const dmsRouter = t.router({
   get: getDirectMessagesRoute,
   open: openDirectMessageRoute,
@@ -59,5 +63,6 @@ export const dmsRouter = t.router({
   onWiped: onDmWipedRoute,
   onCallRing: onCallRingRoute,
   onCallAccepted: onCallAcceptedRoute,
-  onCallEnded: onCallEndedRoute
+  onCallEnded: onCallEndedRoute,
+  onRead: onDmReadRoute
 });

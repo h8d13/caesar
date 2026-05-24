@@ -20,7 +20,8 @@ const publicUserBaseFields = {
   // selected for redaction at the boundary: callers only forward this for
   // the requester's own row (see join handler), never to peers.
   appearOffline: users.appearOffline,
-  allowMultipleSessions: users.allowMultipleSessions
+  allowMultipleSessions: users.allowMultipleSessions,
+  sendDmReadReceipts: users.sendDmReadReceipts
 };
 
 // Superset for TJoinedUser-shaped queries: every public field plus the

@@ -119,6 +119,10 @@ type TPublicUser = Pick<
   // self-only. opt-in to concurrent sessions across devices; default false
   // preserves the single-session-supersedes behavior.
   allowMultipleSessions?: boolean;
+  // self-only. opt-in to emit a DM_READ event when this user marks a DM
+  // channel as read, letting the other participant render a "Read"
+  // indicator on their sent messages.
+  sendDmReadReceipts?: boolean;
 };
 
 export type TJoinedRole = TRole & {

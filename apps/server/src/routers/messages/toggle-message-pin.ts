@@ -1,15 +1,20 @@
 import { ActivityLogType, Permission } from '@caesar/shared';
 import { messages } from '@caesar/shared/db/schema';
+import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishMessage } from '@server/db/publishers';
 import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
-import { protectedProcedure } from '@server/utils/trpc';
+import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-const toggleMessagePinRoute = protectedProcedure
+const toggleMessagePinRoute = rateLimitedProcedure(protectedProcedure, {
+  maxRequests: config.rateLimiters.toggleMessagePin.maxRequests,
+  windowMs: config.rateLimiters.toggleMessagePin.windowMs,
+  logLabel: 'toggleMessagePin'
+})
   .input(
     z.object({
       messageId: z.number()

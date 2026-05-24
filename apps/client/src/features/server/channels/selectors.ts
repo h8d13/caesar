@@ -39,6 +39,9 @@ export const hasUnreadMentionSelector = (
     channelId: number
 ) => state.server.channelsWithUnreadMention.includes(channelId);
 
+export const dmReadByPeerSelector = (state: IRootState, channelId: number) =>
+    state.server.dmReadByPeerMap[channelId];
+
 export const channelByIdSelector = createCachedSelector(
     [channelsSelector, (_: IRootState, channelId: number) => channelId],
     (channels, channelId) =>

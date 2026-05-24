@@ -70,6 +70,54 @@ const zConfig = z.object({
     publicFile: z.object({
       maxRequests: z.coerce.number().int().positive(),
       windowMs: z.coerce.number().int().positive()
+    }),
+    updatePassword: z.object({
+      maxRequests: z.coerce.number().int().positive(),
+      windowMs: z.coerce.number().int().positive()
+    }),
+    uploadFile: z.object({
+      maxRequests: z.coerce.number().int().positive(),
+      windowMs: z.coerce.number().int().positive()
+    }),
+    searchMessages: z.object({
+      maxRequests: z.coerce.number().int().positive(),
+      windowMs: z.coerce.number().int().positive()
+    }),
+    deleteMessage: z.object({
+      maxRequests: z.coerce.number().int().positive(),
+      windowMs: z.coerce.number().int().positive()
+    }),
+    toggleMessagePin: z.object({
+      maxRequests: z.coerce.number().int().positive(),
+      windowMs: z.coerce.number().int().positive()
+    }),
+    toggleMessageScVote: z.object({
+      maxRequests: z.coerce.number().int().positive(),
+      windowMs: z.coerce.number().int().positive()
+    }),
+    voteSocialCredit: z.object({
+      maxRequests: z.coerce.number().int().positive(),
+      windowMs: z.coerce.number().int().positive()
+    }),
+    renameIdentity: z.object({
+      maxRequests: z.coerce.number().int().positive(),
+      windowMs: z.coerce.number().int().positive()
+    }),
+    addInvite: z.object({
+      maxRequests: z.coerce.number().int().positive(),
+      windowMs: z.coerce.number().int().positive()
+    }),
+    changeAvatar: z.object({
+      maxRequests: z.coerce.number().int().positive(),
+      windowMs: z.coerce.number().int().positive()
+    }),
+    changeBanner: z.object({
+      maxRequests: z.coerce.number().int().positive(),
+      windowMs: z.coerce.number().int().positive()
+    }),
+    playSoundboard: z.object({
+      maxRequests: z.coerce.number().int().positive(),
+      windowMs: z.coerce.number().int().positive()
     })
   }),
   limits: z.object({
@@ -136,6 +184,54 @@ const defaultConfig: TConfig = {
     },
     publicFile: {
       maxRequests: 120,
+      windowMs: 60_000
+    },
+    updatePassword: {
+      maxRequests: 5,
+      windowMs: 60_000
+    },
+    uploadFile: {
+      maxRequests: 20,
+      windowMs: 60_000
+    },
+    searchMessages: {
+      maxRequests: 20,
+      windowMs: 60_000
+    },
+    deleteMessage: {
+      maxRequests: 30,
+      windowMs: 60_000
+    },
+    toggleMessagePin: {
+      maxRequests: 30,
+      windowMs: 60_000
+    },
+    toggleMessageScVote: {
+      maxRequests: 30,
+      windowMs: 60_000
+    },
+    voteSocialCredit: {
+      maxRequests: 20,
+      windowMs: 60_000
+    },
+    renameIdentity: {
+      maxRequests: 5,
+      windowMs: 60_000
+    },
+    addInvite: {
+      maxRequests: 10,
+      windowMs: 60_000
+    },
+    changeAvatar: {
+      maxRequests: 10,
+      windowMs: 60_000
+    },
+    changeBanner: {
+      maxRequests: 10,
+      windowMs: 60_000
+    },
+    playSoundboard: {
+      maxRequests: 30,
       windowMs: 60_000
     }
   },

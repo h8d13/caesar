@@ -1,14 +1,19 @@
 import { ActivityLogType } from '@caesar/shared';
 import { users } from '@caesar/shared/db/schema';
+import { config } from '@server/config';
 import { db } from '@server/db';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { hashPassword, verifyPassword } from '@server/utils/password';
-import { protectedProcedure } from '@server/utils/trpc';
+import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-const updatePasswordRoute = protectedProcedure
+const updatePasswordRoute = rateLimitedProcedure(protectedProcedure, {
+  maxRequests: config.rateLimiters.updatePassword.maxRequests,
+  windowMs: config.rateLimiters.updatePassword.windowMs,
+  logLabel: 'updatePassword'
+})
   .input(
     z.object({
       currentPassword: z.string().min(4).max(128),

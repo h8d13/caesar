@@ -164,6 +164,12 @@ type Events = {
   };
   [ServerEvents.DM_CALL_ACCEPTED]: { channelId: number };
   [ServerEvents.DM_CALL_ENDED]: { channelId: number };
+  [ServerEvents.DM_READ]: {
+    channelId: number;
+    readerId: number;
+    lastReadMessageId: number;
+    readAt: number;
+  };
 
   [ServerEvents.SOUNDBOARD_PLAY]: {
     channelId: number;
