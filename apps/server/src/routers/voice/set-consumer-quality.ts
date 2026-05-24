@@ -49,9 +49,7 @@ const setConsumerQualityRoute = voiceProcedure
 
     const topLayer = qualityLayers[qualityLayers.length - 1]!.spatialLayer;
     const spatialLayer =
-      input.quality.mode === 'auto'
-        ? topLayer
-        : input.quality.spatialLayer;
+      input.quality.mode === 'auto' ? topLayer : input.quality.spatialLayer;
 
     invariant(
       qualityLayers.some((l) => l.spatialLayer === spatialLayer),
