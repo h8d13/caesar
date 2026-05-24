@@ -3,6 +3,7 @@ import {
     selectedDmChannelIdSelector
 } from '@/features/app/selectors';
 import { store } from '@/features/store';
+import { getTRPCClient } from '@/lib/trpc';
 import type { TChannel, TChannelUserPermissionsMap } from '@caesar/shared';
 import { serverSliceActions } from '../slice';
 import {
@@ -11,12 +12,25 @@ import {
     selectedChannelIdSelector
 } from './selectors';
 
+// fire-and-forget receipt sync. covers the "open an already-populated
+// channel" case that the per-message arrival path misses, so DM_READ
+// fires even when the reader navigates back without new traffic.
+const notifyServerRead = (channelId: number) => {
+    getTRPCClient()
+        .channels.markAsRead.mutate({ channelId })
+        .catch((e) => console.error('markAsRead on select failed', e));
+};
+
 export const addChannelUnreadMention = (channelId: number) => {
     store.dispatch(serverSliceActions.addChannelUnreadMention(channelId));
 };
 
 export const setSelectedChannelId = (channelId: number | undefined) => {
     store.dispatch(serverSliceActions.setSelectedChannelId(channelId));
+
+    if (channelId !== undefined) {
+        notifyServerRead(channelId);
+    }
 };
 
 export const setCurrentVoiceChannelId = (channelId: number | undefined) =>

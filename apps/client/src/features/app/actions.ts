@@ -1,5 +1,6 @@
 import { getUrlFromServer } from '@/helpers/get-file-url';
 import { LocalStorageKey, setLocalStorageItemBool } from '@/helpers/storage';
+import { getTRPCClient } from '@/lib/trpc';
 import type { TServerInfo } from '@caesar/shared';
 import { toast } from 'sonner';
 import { setInfo } from '../server/actions';
@@ -87,8 +88,18 @@ export const resetApp = () => {
 export const setDmsOpen = (open: boolean) =>
     store.dispatch(appSliceActions.setDmsOpen(open));
 
-export const setSelectedDmChannelId = (channelId: number | undefined) =>
+export const setSelectedDmChannelId = (channelId: number | undefined) => {
     store.dispatch(appSliceActions.setSelectedDmChannelId(channelId));
+
+    // covers re-entering a DM that received messages while away. per-msg
+    // arrival path only fires when a new message lands; selecting an
+    // already-populated channel needs its own poke for receipts to ride.
+    if (channelId !== undefined) {
+        getTRPCClient()
+            .channels.markAsRead.mutate({ channelId })
+            .catch((e) => console.error('markAsRead on dm select failed', e));
+    }
+};
 
 export const setBrowserNotifications = async (enabled: boolean) => {
     if (enabled && 'Notification' in window) {

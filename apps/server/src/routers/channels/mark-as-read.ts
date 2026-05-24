@@ -1,5 +1,5 @@
 import { ServerEvents, type TMessage } from '@caesar/shared';
-import { channelReadStates, messages } from '@caesar/shared/db/schema';
+import { channelReadStates, messages, users } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import {
@@ -81,8 +81,20 @@ const markAsReadRoute = rateLimitedProcedure(protectedProcedure, {
     // DM read receipts: opt-in. when on, push a DM_READ event to the
     // other participant so their UI can mark sent messages as read.
     // suppressed while appearOffline is on: presence is masked to peers,
-    // so leaking read activity would defeat the offline mask.
-    if (ctx.user.sendDmReadReceipts && !ctx.user.appearOffline) {
+    // so leaking read activity would defeat the offline mask. flags are
+    // re-read from the DB here because ctx.user is snapshotted at WS
+    // handshake and stays stale if the user toggles either preference
+    // mid-session.
+    const flags = await db
+      .select({
+        sendDmReadReceipts: users.sendDmReadReceipts,
+        appearOffline: users.appearOffline
+      })
+      .from(users)
+      .where(eq(users.id, ctx.userId))
+      .get();
+
+    if (flags?.sendDmReadReceipts && !flags.appearOffline) {
       const isDm = await isDirectMessageChannel(channelId);
 
       if (isDm) {
