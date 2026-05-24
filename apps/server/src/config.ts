@@ -66,6 +66,10 @@ const zConfig = z.object({
     handshake: z.object({
       maxRequests: z.coerce.number().int().positive(),
       windowMs: z.coerce.number().int().positive()
+    }),
+    publicFile: z.object({
+      maxRequests: z.coerce.number().int().positive(),
+      windowMs: z.coerce.number().int().positive()
     })
   }),
   limits: z.object({
@@ -128,6 +132,10 @@ const defaultConfig: TConfig = {
     },
     handshake: {
       maxRequests: 10,
+      windowMs: 60_000
+    },
+    publicFile: {
+      maxRequests: 120,
       windowMs: 60_000
     }
   },
