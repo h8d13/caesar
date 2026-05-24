@@ -151,12 +151,10 @@ const Message = memo(
                             <ExpiresBadge expiresAt={message.expiresAt} />
                         )}
                         {showDmReadIndicator && (
-                            <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground mt-0.5">
+                            <span className="inline-flex items-center gap-0.5 text-xs text-muted-foreground/80 whitespace-nowrap">
                                 <Check className="h-3 w-3" />
-                                <span>
-                                    Read {format(dmReadByPeer.readAt, 'HH:mm')}
-                                </span>
-                            </div>
+                                Read {format(dmReadByPeer.readAt, 'HH:mm')}
+                            </span>
                         )}
                         {!isThreadReply && !channel?.isDm && replyCount > 0 && (
                             <button
