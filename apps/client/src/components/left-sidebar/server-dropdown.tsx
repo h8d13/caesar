@@ -1,70 +1,54 @@
-import { openDialog } from '@/features/dialogs/actions';
 import { openServerScreen } from '@/features/server-screens/actions';
 import { disconnectFromServer } from '@/features/server/actions';
+import { useCan } from '@/features/server/hooks';
 import { Permission } from '@caesar/shared';
-import {
-    Button,
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger
-} from '@caesar/ui';
-import { Menu } from 'lucide-react';
+import { Button } from '@caesar/ui';
+import { LogOut, Settings } from 'lucide-react';
 import { memo, useMemo } from 'react';
-import { Dialog } from '../dialogs/dialogs';
-import { Protect } from '../protect';
 import { ServerScreen } from '../server-screens/screens';
 
+// One header action per role: admins get a cog to the server settings,
+// everyone else gets a destructive log-out icon. Previously this was a
+// menu mixing both responsibilities; splitting cuts the menu indirection.
 const ServerDropdownMenu = memo(() => {
-    const serverSettingsPermissions = useMemo(
-        () => [
-            Permission.MANAGE_SETTINGS,
-            Permission.MANAGE_ROLES,
-            Permission.MANAGE_EMOJIS,
-            Permission.MANAGE_STORAGE,
-            Permission.MANAGE_USERS,
-            Permission.MANAGE_INVITES
-        ],
-        []
+    const can = useCan();
+
+    const isAdmin = useMemo(
+        () =>
+            can([
+                Permission.MANAGE_SETTINGS,
+                Permission.MANAGE_ROLES,
+                Permission.MANAGE_EMOJIS,
+                Permission.MANAGE_STORAGE,
+                Permission.MANAGE_USERS,
+                Permission.MANAGE_INVITES
+            ]),
+        [can]
     );
 
+    if (isAdmin) {
+        return (
+            <Button
+                variant="ghost"
+                size="icon"
+                title="Server settings"
+                onClick={() => openServerScreen(ServerScreen.SERVER_SETTINGS)}
+            >
+                <Settings className="h-5 w-5 text-muted-foreground" />
+            </Button>
+        );
+    }
+
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                    <Menu className="h-4 w-4 text-muted-foreground" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-                <DropdownMenuLabel>Server</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <Protect permission={Permission.MANAGE_CATEGORIES}>
-                    <DropdownMenuItem
-                        onClick={() => openDialog(Dialog.CREATE_CATEGORY)}
-                    >
-                        Add Category
-                    </DropdownMenuItem>
-                </Protect>
-                <Protect permission={serverSettingsPermissions}>
-                    <DropdownMenuItem
-                        onClick={() =>
-                            openServerScreen(ServerScreen.SERVER_SETTINGS)
-                        }
-                    >
-                        Server Settings
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                </Protect>
-                <DropdownMenuItem
-                    onClick={disconnectFromServer}
-                    className="text-destructive focus:text-destructive"
-                >
-                    Log-out
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+        <Button
+            variant="ghost"
+            size="icon"
+            title="Log out"
+            onClick={disconnectFromServer}
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+        >
+            <LogOut className="h-5 w-5" />
+        </Button>
     );
 });
 

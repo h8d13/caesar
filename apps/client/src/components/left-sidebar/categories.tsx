@@ -388,6 +388,16 @@ const Categories = memo(() => {
                     {activeId ? <DragGhost id={activeId} /> : null}
                 </DragOverlay>
             </DndContext>
+            <Protect permission={Permission.MANAGE_CATEGORIES}>
+                <button
+                    type="button"
+                    onClick={() => openDialog(Dialog.CREATE_CATEGORY)}
+                    className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                >
+                    <Plus className="h-4 w-4" />
+                    Add Category
+                </button>
+            </Protect>
         </div>
     );
 });
