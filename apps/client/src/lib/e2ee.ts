@@ -222,6 +222,41 @@ const open = async (key: CryptoKey, payloadB64: string): Promise<string> => {
     return new TextDecoder().decode(pt);
 };
 
+// binary variants of seal/open. same nonce(12)||ciphertext framing as
+// the text helpers, just over raw bytes. used by the encrypted-attachment
+// path: payload stays opaque on disk + over the wire. casts via
+// BufferSource are needed because Uint8Array's generic buffer type can
+// be ArrayBufferLike (incl. SharedArrayBuffer) which WebCrypto rejects.
+const sealBytes = async (
+    key: CryptoKey,
+    plaintext: Uint8Array
+): Promise<Uint8Array> => {
+    const nonce = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv: nonce as BufferSource },
+        key,
+        plaintext as BufferSource
+    );
+    const out = new Uint8Array(nonce.length + ct.byteLength);
+    out.set(nonce, 0);
+    out.set(new Uint8Array(ct), nonce.length);
+    return out;
+};
+
+const openBytes = async (
+    key: CryptoKey,
+    payload: Uint8Array
+): Promise<Uint8Array> => {
+    const nonce = payload.slice(0, 12);
+    const ct = payload.slice(12);
+    const pt = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: nonce as BufferSource },
+        key,
+        ct as BufferSource
+    );
+    return new Uint8Array(pt);
+};
+
 export {
     clearPriv,
     derivePriv,
@@ -232,7 +267,9 @@ export {
     getPrivVersion,
     hasPriv,
     open,
+    openBytes,
     seal,
+    sealBytes,
     setPriv,
     subscribePriv,
     tryDeriveAndSetAsync

@@ -38,6 +38,7 @@ type TFileCardProps = {
     size: number;
     extension: string;
     href?: string;
+    onClick?: (e: React.MouseEvent) => void;
     onRemove?: () => void;
 };
 
@@ -46,6 +47,7 @@ const FileCard = ({
     size,
     extension,
     href,
+    onClick,
     onRemove
 }: TFileCardProps) => {
     const onRemoveClick = useCallback(
@@ -60,9 +62,10 @@ const FileCard = ({
 
     return (
         <a
-            className="flex max-w-sm items-center gap-3 rounded-lg border border-border bg-background p-2 select-none transition-all duration-200 hover:border-primary/50 hover:bg-accent hover:shadow-md"
+            className="flex max-w-sm items-center gap-3 rounded-lg border border-border bg-background p-2 select-none transition-all duration-200 hover:border-primary/50 hover:bg-accent hover:shadow-md cursor-pointer"
             href={href}
             target="_blank"
+            onClick={onClick}
         >
             <div className="flex shrink-0 items-center justify-center rounded-md bg-muted p-2 transition-colors duration-200">
                 <FileIcon extension={extension} />

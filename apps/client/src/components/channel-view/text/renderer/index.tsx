@@ -1,15 +1,19 @@
 import { RelativeTime } from '@/components/relative-time';
 import { requestConfirmation } from '@/features/dialogs/actions';
+import { useChannelById } from '@/features/server/channels/hooks';
 import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
 import { getFileUrl } from '@/helpers/get-file-url';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
+import { dmKey, hasPriv, openBytes } from '@/lib/e2ee';
 import { getTRPCClient } from '@/lib/trpc';
+import { useDmE2eeContext } from '@/lib/use-dm-e2ee';
 import { cn } from '@/lib/utils';
 import {
     audioExtensions,
     imageExtensions,
     isEmojiOnlyMessage,
     videoExtensions,
+    type TFile,
     type TJoinedMessage,
     type TMessageMetadata
 } from '@caesar/shared';
@@ -47,6 +51,57 @@ const MessageRenderer = memo(
         const isOwnMessage = useMemo(
             () => message.userId === ownUserId,
             [message.userId, ownUserId]
+        );
+        const channel = useChannelById(message.channelId);
+        // ephemeral DM messages carry an expiresAt; the matching file
+        // bytes were sealed with the same dmKey at upload time. inline
+        // media previews are skipped for these (MVP: download-only) and
+        // the file card click hijacks the link to decrypt + blob-URL.
+        const isEphemeralEncrypted =
+            !!channel?.isDm && message.expiresAt != null;
+        const e2eeCtx = useDmE2eeContext(message.channelId, channel?.isDm);
+        const canDecryptFiles =
+            isEphemeralEncrypted &&
+            hasPriv() &&
+            !!e2eeCtx?.peerPublicKey &&
+            e2eeCtx.peerUserId !== null &&
+            ownUserId !== undefined;
+
+        const downloadEncryptedFile = useCallback(
+            async (file: TFile) => {
+                if (!canDecryptFiles) {
+                    toast.error(
+                        'Cannot decrypt: session locked. Refresh and re-enter your password.'
+                    );
+                    return;
+                }
+                try {
+                    const key = await dmKey(
+                        e2eeCtx!.peerPublicKey!,
+                        ownUserId!,
+                        e2eeCtx!.peerUserId!
+                    );
+                    const res = await fetch(getFileUrl(file));
+                    if (!res.ok) throw new Error(`fetch ${res.status}`);
+                    const cipher = new Uint8Array(await res.arrayBuffer());
+                    const plain = await openBytes(key, cipher);
+                    const blob = new Blob([plain as BlobPart], {
+                        type: 'application/octet-stream'
+                    });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = file.originalName;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                } catch (err) {
+                    console.error('encrypted file open failed', err);
+                    toast.error('Failed to decrypt file.');
+                }
+            },
+            [canDecryptFiles, e2eeCtx, ownUserId]
         );
 
         const emojiOnly = useMemo(
@@ -95,6 +150,11 @@ const MessageRenderer = memo(
         }, []);
 
         const allMedia = useMemo(() => {
+            // MVP: ephemeral encrypted files have ciphertext at /public,
+            // so <img>/<video> direct loads would render garbage. fall
+            // back to download-only via the file card.
+            if (isEphemeralEncrypted) return [...foundMedia];
+
             const mediaFromFiles: TFoundMedia[] = message.files
                 .filter((file) => {
                     const ext = file.extension.toLowerCase();
@@ -115,7 +175,7 @@ const MessageRenderer = memo(
                 });
 
             return [...foundMedia, ...mediaFromFiles];
-        }, [foundMedia, message.files]);
+        }, [foundMedia, message.files, isEphemeralEncrypted]);
 
         // Drop opengraph entries whose URL is already shown inline as a
         // direct media (image/video/audio in the message body). Hash is
@@ -237,20 +297,38 @@ const MessageRenderer = memo(
 
                 {message.files.length > 0 && !disableFiles && (
                     <div className="flex gap-1 flex-wrap">
-                        {message.files.map((file) => (
-                            <FileCard
-                                key={file.id}
-                                name={file.originalName}
-                                extension={file.extension}
-                                size={file.size}
-                                onRemove={
-                                    isOwnMessage
-                                        ? () => onRemoveFileClick(file.id)
-                                        : undefined
-                                }
-                                href={getFileUrl(file)}
-                            />
-                        ))}
+                        {message.files.map((file) =>
+                            isEphemeralEncrypted ? (
+                                <FileCard
+                                    key={file.id}
+                                    name={file.originalName}
+                                    extension={file.extension}
+                                    size={file.size}
+                                    onRemove={
+                                        isOwnMessage
+                                            ? () => onRemoveFileClick(file.id)
+                                            : undefined
+                                    }
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        void downloadEncryptedFile(file);
+                                    }}
+                                />
+                            ) : (
+                                <FileCard
+                                    key={file.id}
+                                    name={file.originalName}
+                                    extension={file.extension}
+                                    size={file.size}
+                                    onRemove={
+                                        isOwnMessage
+                                            ? () => onRemoveFileClick(file.id)
+                                            : undefined
+                                    }
+                                    href={getFileUrl(file)}
+                                />
+                            )
+                        )}
                     </div>
                 )}
             </div>

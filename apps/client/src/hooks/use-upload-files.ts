@@ -1,6 +1,9 @@
 import { useChannelById } from '@/features/server/channels/hooks';
 import { useCan, usePublicServerSettings } from '@/features/server/hooks';
+import { useOwnUserId } from '@/features/server/users/hooks';
 import { uploadFile, type TUploadProgress } from '@/helpers/upload-file';
+import { dmKey, hasPriv } from '@/lib/e2ee';
+import { useDmE2eeContext } from '@/lib/use-dm-e2ee';
 import { isPreviewable, Permission, type TTempFile } from '@caesar/shared';
 import {
     useCallback,
@@ -50,6 +53,38 @@ const useUploadFiles = (
 
     const canShareFilesInDirectMessages =
         !isDmChannel || !!settings?.storageFileSharingInDirectMessages;
+
+    // ephemeral DM attachments piggyback on the same E2EE context as
+    // message content. resolve a per-upload key lazily so the dialog
+    // can sit idle without paying argon2 / ECDH costs.
+    const e2eeCtx = useDmE2eeContext(channelId, isDmChannel);
+    const ownUserId = useOwnUserId();
+
+    const getAttachmentEncryptKey = useCallback(async (): Promise<
+        CryptoKey | undefined
+    > => {
+        if (
+            !isDmChannel ||
+            !e2eeCtx ||
+            e2eeCtx.ephemeralMs == null ||
+            !hasPriv() ||
+            !e2eeCtx.peerPublicKey ||
+            e2eeCtx.peerUserId === null ||
+            ownUserId === undefined
+        ) {
+            return undefined;
+        }
+        try {
+            return await dmKey(
+                e2eeCtx.peerPublicKey,
+                ownUserId,
+                e2eeCtx.peerUserId
+            );
+        } catch (err) {
+            console.error('e2ee dmKey derivation failed for upload', err);
+            return undefined;
+        }
+    }, [isDmChannel, e2eeCtx, ownUserId]);
 
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -219,6 +254,10 @@ const useUploadFiles = (
                 ...pendingEntries.map((p) => p.id)
             ]);
 
+            // resolve once per batch so each parallel upload shares the
+            // same dmKey instead of paying ECDH N times.
+            const encryptKey = await getAttachmentEncryptKey();
+
             const uploadPromises = withinLimit.map(async (file, i) => {
                 const pendingId = pendingEntries[i].id;
 
@@ -255,7 +294,10 @@ const useUploadFiles = (
                     }
                 };
 
-                const result = await uploadFile(file, { onProgress });
+                const result = await uploadFile(file, {
+                    onProgress,
+                    encryptKey
+                });
 
                 setPendingUploads((prev) =>
                     prev.filter((p) => p.id !== pendingId)
@@ -299,7 +341,11 @@ const useUploadFiles = (
             loadedPerFileRef.current = {};
             totalLoadedRef.current = 0;
         },
-        [takeAllowedFiles, settings?.storageUploadMaxFileSize]
+        [
+            takeAllowedFiles,
+            settings?.storageUploadMaxFileSize,
+            getAttachmentEncryptKey
+        ]
     );
 
     const onFileDialogChange = useCallback(

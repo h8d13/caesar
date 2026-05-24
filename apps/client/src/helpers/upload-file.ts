@@ -1,5 +1,6 @@
 import { UploadHeaders, type TTempFile } from '@caesar/shared';
 import { toast } from 'sonner';
+import { sealBytes } from '../lib/e2ee';
 import { getUrlFromServer } from './get-file-url';
 import { getSessionStorageItem, SessionStorageKey } from './storage';
 
@@ -14,6 +15,10 @@ type TUploadProgress = {
 
 type TUploadFileOptions = {
     onProgress?: (progress: TUploadProgress) => void;
+    // when set, encrypt the file bytes with AES-GCM under this key before
+    // upload. server stores ciphertext opaquely; the matching openBytes
+    // call on the renderer side restores the original payload.
+    encryptKey?: CryptoKey;
 };
 
 const uploadFile = async (
@@ -21,6 +26,23 @@ const uploadFile = async (
     options?: TUploadFileOptions
 ): Promise<TTempFile | undefined> => {
     const url = getUrlFromServer();
+
+    let body: BodyInit = file;
+    let contentLength = file.size;
+
+    if (options?.encryptKey) {
+        try {
+            const plaintext = new Uint8Array(await file.arrayBuffer());
+            const sealed = await sealBytes(options.encryptKey, plaintext);
+            const blob = new Blob([sealed as BlobPart]);
+            body = blob;
+            contentLength = blob.size;
+        } catch (e) {
+            console.error('e2ee file seal failed', e);
+            toast.error('Could not encrypt file.');
+            return undefined;
+        }
+    }
 
     return new Promise((resolve) => {
         const xhr = new XMLHttpRequest();
@@ -31,7 +53,7 @@ const uploadFile = async (
         xhr.setRequestHeader(UploadHeaders.TYPE, file.type);
         xhr.setRequestHeader(
             UploadHeaders.CONTENT_LENGTH,
-            file.size.toString()
+            contentLength.toString()
         );
         xhr.setRequestHeader(
             UploadHeaders.ORIGINAL_NAME,
@@ -75,7 +97,7 @@ const uploadFile = async (
             resolve(undefined);
         });
 
-        xhr.send(file);
+        xhr.send(body);
     });
 };
 
