@@ -43,7 +43,14 @@ const sanitizeMessageHtml = (html: string): string => {
     ],
     allowedAttributes: {
       a: ['href', 'target', 'rel'],
-      span: ['data-type', 'data-name', 'data-user-id', 'class'],
+      span: [
+        'data-type',
+        'data-name',
+        'data-user-id',
+        'data-channel-id',
+        'data-channel-type',
+        'class'
+      ],
       img: ['src', 'alt', 'draggable', 'loading', 'align', 'class'],
       code: ['class'],
       pre: ['class'],

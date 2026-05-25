@@ -6,6 +6,7 @@ import {
 } from '@caesar/shared';
 import hljs from 'highlight.js/lib/common';
 import { Element, type DOMNode } from 'html-react-parser';
+import { ChannelMentionOverride } from '../overrides/channel-mention';
 import { LinkOverride } from '../overrides/link';
 import { MentionOverride } from '../overrides/mention';
 import type { TFoundMedia } from './types';
@@ -113,6 +114,23 @@ const serializer = (
             const userId = parseInt(domNode.attribs['data-user-id'], 10);
             if (!Number.isNaN(userId)) {
                 return <MentionOverride userId={userId} />;
+            }
+        } else if (
+            domNode instanceof Element &&
+            domNode.name === 'span' &&
+            domNode.attribs['data-type'] === 'channel-mention' &&
+            domNode.attribs['data-channel-id']
+        ) {
+            const channelId = parseInt(domNode.attribs['data-channel-id'], 10);
+            if (!Number.isNaN(channelId)) {
+                const label = getTextContent(domNode).replace(/^#/, '');
+                return (
+                    <ChannelMentionOverride
+                        channelId={channelId}
+                        channelType={domNode.attribs['data-channel-type']}
+                        label={label || undefined}
+                    />
+                );
             }
         }
     } catch (error) {

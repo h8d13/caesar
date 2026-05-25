@@ -1,7 +1,8 @@
 import { EmojiPicker } from '@/components/emoji-picker';
 import { useCustomEmojis } from '@/features/server/emojis/hooks';
+import { useAccessibleChannels } from '@/features/server/hooks';
 import { BUILT_IN_COMMANDS } from '@/helpers/built-in-commands';
-import type { TJoinedPublicUser } from '@caesar/shared';
+import type { TChannel, TJoinedPublicUser } from '@caesar/shared';
 import { Button } from '@caesar/ui';
 import type { Extension } from '@tiptap/core';
 import Emoji, { gitHubEmojis } from '@tiptap/extension-emoji';
@@ -16,6 +17,12 @@ import {
     useRef,
     useState
 } from 'react';
+import { ChannelMention } from './commands/channel-mention-extension';
+import { ChannelMentionNode } from './commands/channel-mention-node';
+import {
+    CHANNEL_MENTION_STORAGE_KEY,
+    ChannelMentionSuggestion
+} from './commands/channel-mention-suggestion';
 import { CommandSuggestion } from './commands/command-suggestion';
 import { Mention } from './commands/mention-extension';
 import { MentionNode } from './commands/mention-node';
@@ -60,6 +67,7 @@ const TiptapInput = memo(
         const editorWrapperRef = useRef<HTMLDivElement>(null);
 
         const customEmojis = useCustomEmojis();
+        const channels = useAccessibleChannels();
 
         const extensions = useMemo((): Extension[] => {
             const exts = [
@@ -94,8 +102,18 @@ const TiptapInput = memo(
                 );
             }
 
+            if (channels.length > 0) {
+                exts.push(ChannelMentionNode as Extension);
+                exts.push(
+                    ChannelMention.configure({
+                        channels,
+                        suggestion: ChannelMentionSuggestion
+                    }) as Extension
+                );
+            }
+
             return exts;
-        }, [customEmojis, users]);
+        }, [customEmojis, users, channels]);
 
         const editor = useEditor({
             extensions,
@@ -233,6 +251,19 @@ const TiptapInput = memo(
                 if (slot) slot.users = users;
             }
         }, [editor, users]);
+
+        // keep channel-mention storage in sync with accessible channels
+        useEffect(() => {
+            if (editor) {
+                const slot = (
+                    editor.storage as unknown as Record<
+                        string,
+                        { channels?: TChannel[] }
+                    >
+                )[CHANNEL_MENTION_STORAGE_KEY];
+                if (slot) slot.channels = channels;
+            }
+        }, [editor, channels]);
 
         useEffect(() => {
             if (editor && value !== undefined) {

@@ -1,10 +1,12 @@
 import { ChannelPermission, Permission } from '@caesar/shared';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import type { IRootState } from '../store';
 import { useChannelById, useChannelPermissionsById } from './channels/hooks';
 import {
+    channelPermissionsSelector,
     channelReadStateByIdSelector,
+    channelsSelector,
     hasUnreadMentionSelector
 } from './channels/selectors';
 import {
@@ -91,6 +93,29 @@ export const useChannelCan = (channelId: number | undefined) => {
     );
 
     return can;
+};
+
+// Channels the user is allowed to VIEW. Mirrors useChannelCan's VIEW_CHANNEL
+// logic across the whole list. Used to scope channel-link autocomplete so a
+// user can never reference (or be suggested) a channel they can't access.
+export const useAccessibleChannels = () => {
+    const channels = useSelector(channelsSelector);
+    const channelPermissions = useSelector(channelPermissionsSelector);
+    const isOwner = useIsOwnUserOwner();
+
+    return useMemo(
+        () =>
+            channels.filter((channel) => {
+                if (isOwner || !channel.private) return true;
+
+                return (
+                    channelPermissions[channel.id]?.permissions[
+                        ChannelPermission.VIEW_CHANNEL
+                    ] === true
+                );
+            }),
+        [channels, channelPermissions, isOwner]
+    );
 };
 
 // Returns true if the user can view at least one of the channels in the category
