@@ -12,7 +12,6 @@ const ChannelMentionNodeView = memo(({ node }: NodeViewProps) => (
         <ChannelChip
             channelId={Number(node.attrs.channelId)}
             channelType={node.attrs.channelType}
-            label={node.attrs.label}
         />
     </NodeViewWrapper>
 ));
@@ -46,12 +45,6 @@ const ChannelMentionNode = Node.create({
                     attrs.channelType
                         ? { 'data-channel-type': String(attrs.channelType) }
                         : {}
-            },
-            label: {
-                default: '',
-                parseHTML: (el) =>
-                    (el as HTMLElement).textContent?.replace(/^#/, '') ?? '',
-                renderHTML: () => ({})
             }
         };
     },
@@ -68,16 +61,18 @@ const ChannelMentionNode = Node.create({
                     const channelType = el
                         .getAttribute('data-channel-type')
                         ?.trim();
-                    const label = el.textContent?.replace(/^#/, '') ?? '';
-                    return channelId
-                        ? { channelId, channelType, label }
-                        : false;
+                    return channelId ? { channelId, channelType } : false;
                 }
             }
         ];
     },
 
     renderHTML({ node }) {
+        // Content is a bare "#", never the channel name: the name is NOT
+        // serialized into the message, so it can't leak to users who lack
+        // access. Each viewer resolves the name from their own channel list at
+        // render time. The "#" only keeps the node non-empty (the chip view
+        // replaces it entirely, so it's never shown).
         return [
             'span',
             {
@@ -88,7 +83,7 @@ const ChannelMentionNode = Node.create({
                     : {}),
                 class: 'mention'
             },
-            `#${node.attrs.label ?? ''}`
+            '#'
         ];
     }
 });

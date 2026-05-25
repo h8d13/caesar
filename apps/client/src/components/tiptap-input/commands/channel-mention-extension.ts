@@ -46,8 +46,7 @@ const ChannelMention = Extension.create<TChannelMentionOptions>({
                             type: 'channelMention',
                             attrs: {
                                 channelId: props.id,
-                                channelType: props.type,
-                                label: props.name
+                                channelType: props.type
                             }
                         })
                         .run();

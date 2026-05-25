@@ -123,12 +123,10 @@ const serializer = (
         ) {
             const channelId = parseInt(domNode.attribs['data-channel-id'], 10);
             if (!Number.isNaN(channelId)) {
-                const label = getTextContent(domNode).replace(/^#/, '');
                 return (
                     <ChannelMentionOverride
                         channelId={channelId}
                         channelType={domNode.attribs['data-channel-type']}
-                        label={label || undefined}
                     />
                 );
             }
