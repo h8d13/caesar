@@ -214,7 +214,7 @@ const Storage = memo(() => {
                     label="Max files per message"
                     description="Maximum number of attachments allowed on a single message. Extra files are ignored."
                 >
-                    <div className="flex items-center max-w-150 justify-between">
+                    <div className="flex flex-col gap-2 max-w-150 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-2">
                             <Input
                                 type="number"
@@ -246,7 +246,7 @@ const Storage = memo(() => {
                             </span>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                             {MAX_FILES_PER_MESSAGE_PRESETS.map((preset) => (
                                 <Button
                                     key={preset.value}
@@ -281,7 +281,7 @@ const Storage = memo(() => {
                         value={values.storageOverflowAction}
                         disabled={!values.storageUploadEnabled}
                     >
-                        <SelectTrigger className="w-[230px]">
+                        <SelectTrigger className="w-full sm:w-[230px]">
                             <SelectValue placeholder="Select the polling interval" />
                         </SelectTrigger>
                         <SelectContent>

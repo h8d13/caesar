@@ -26,7 +26,7 @@ const Invites = memo(() => {
 
     return (
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <CardTitle>Server Invites</CardTitle>
                     <CardDescription>

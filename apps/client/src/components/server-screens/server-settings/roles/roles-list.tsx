@@ -35,7 +35,7 @@ const RolesList = memo(
         }, [refetch, setSelectedRoleId]);
 
         return (
-            <Card className="w-64 flex-shrink-0">
+            <Card className="w-full sm:w-64 sm:flex-shrink-0">
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle className="text-base">Roles</CardTitle>

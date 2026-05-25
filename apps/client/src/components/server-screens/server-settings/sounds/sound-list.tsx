@@ -40,7 +40,7 @@ const SoundList = memo(
         }, [sounds, search]);
 
         return (
-            <Card className="w-80 flex-shrink-0">
+            <Card className="w-full sm:w-80 sm:flex-shrink-0">
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle className="text-base">Sounds</CardTitle>

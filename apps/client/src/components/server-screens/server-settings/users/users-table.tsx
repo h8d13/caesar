@@ -39,7 +39,7 @@ const UsersTable = memo(({ users, refetch }: TUsersTableProps) => {
             }
             gridCols="grid-cols-[60px_1fr_120px_120px_120px_80px_50px]"
             itemsPerPage={8}
-            searchPlaceholder="Search users by name or identity..."
+            searchPlaceholder="Search users..."
             emptyMessage="No users found"
         />
     );

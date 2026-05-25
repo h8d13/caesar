@@ -1,5 +1,5 @@
 import { useDevices } from '@/components/devices-provider/hooks/use-devices';
-import { closeServerScreens } from '@/features/server-screens/actions';
+import { SettingsFooterActions } from '@/components/server-screens/settings-footer-actions';
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
 import { usePublicServerSettings } from '@/features/server/hooks';
 import { leaveVoice } from '@/features/server/voice/actions';
@@ -24,7 +24,6 @@ import {
     AlertDescription,
     Button,
     Card,
-    CardAction,
     CardContent,
     CardDescription,
     CardHeader,
@@ -185,16 +184,10 @@ const Devices = memo(() => {
                 <CardDescription>
                     Manage your peripheral devices and their settings.
                 </CardDescription>
-                <CardAction>
-                    <div className="flex gap-2">
-                        <Button variant="outline" onClick={closeServerScreens}>
-                            Cancel
-                        </Button>
-                        <Button onClick={saveDeviceSettings}>
-                            Save Changes
-                        </Button>
-                    </div>
-                </CardAction>
+                <SettingsFooterActions
+                    onSave={saveDeviceSettings}
+                    loading={false}
+                />
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="space-y-6">
@@ -206,7 +199,7 @@ const Devices = memo(() => {
                             value={values.playbackId}
                             disabled={playbackDevices.length === 0}
                         >
-                            <SelectTrigger className="w-92">
+                            <SelectTrigger className="w-full sm:w-92">
                                 <SelectValue placeholder="Select the output device" />
                             </SelectTrigger>
                             <SelectContent>
@@ -236,7 +229,7 @@ const Devices = memo(() => {
                                 value={values.microphoneId}
                                 disabled={inputDevices.length === 0}
                             >
-                                <SelectTrigger className="w-92">
+                                <SelectTrigger className="w-full sm:w-92">
                                     <SelectValue placeholder="Select the input device" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -257,7 +250,7 @@ const Devices = memo(() => {
                                 </SelectContent>
                             </Select>
 
-                            <div className="flex items-center gap-4">
+                            <div className="grid grid-cols-2 gap-4 sm:flex sm:items-center">
                                 <Group label="Echo cancellation">
                                     <Switch
                                         checked={!!values.echoCancellation}
@@ -286,7 +279,7 @@ const Devices = memo(() => {
                                     />
                                 </Group>
 
-                                <Group label="Automatic gain control">
+                                <Group label="Gain control">
                                     <Switch
                                         checked={!!values.autoGainControl}
                                         onCheckedChange={(checked) =>
@@ -319,7 +312,7 @@ const Devices = memo(() => {
                                         )
                                     }
                                 >
-                                    <SelectTrigger className="w-56">
+                                    <SelectTrigger className="w-full sm:w-56">
                                         <SelectValue placeholder="Select mode" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -387,7 +380,7 @@ const Devices = memo(() => {
                     </Group>
 
                     <Group label="Microphone Test">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                             {permissionState !== 'granted' && (
                                 <Button
                                     variant="outline"
@@ -604,7 +597,7 @@ const Devices = memo(() => {
                             </Group>
 
                             <Group label="Screen Sharing">
-                                <div className="flex">
+                                <div className="flex flex-col gap-2 sm:flex-row sm:gap-0">
                                     <ResolutionFpsControl
                                         framerate={values.screenFramerate}
                                         resolution={values.screenResolution}
@@ -619,7 +612,7 @@ const Devices = memo(() => {
                                         }
                                     />
 
-                                    <div className="ml-2 flex flex-col gap-1">
+                                    <div className="flex flex-col gap-1 sm:ml-2">
                                         <span className="text-sm font-medium">
                                             Codec
                                         </span>
@@ -635,7 +628,7 @@ const Devices = memo(() => {
                                                 )
                                             }
                                         >
-                                            <SelectTrigger className="w-40">
+                                            <SelectTrigger className="w-full sm:w-40">
                                                 <SelectValue placeholder="Select codec" />
                                             </SelectTrigger>
                                             <SelectContent>

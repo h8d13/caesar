@@ -1,12 +1,10 @@
 import { DatePicker } from '@/components/date-picker';
-import { closeServerScreens } from '@/features/server-screens/actions';
+import { SettingsFooterActions } from '@/components/server-screens/settings-footer-actions';
 import { useOwnPublicUser } from '@/features/server/users/hooks';
 import { useForm } from '@/hooks/use-form';
 import { getTRPCClient } from '@/lib/trpc';
 import {
-    Button,
     Card,
-    CardAction,
     CardContent,
     CardDescription,
     CardHeader,
@@ -72,14 +70,7 @@ const Profile = memo(() => {
                 <CardDescription>
                     Update your personal information and settings here.
                 </CardDescription>
-                <CardAction>
-                    <div className="flex gap-2">
-                        <Button variant="outline" onClick={closeServerScreens}>
-                            Cancel
-                        </Button>
-                        <Button onClick={onUpdateUser}>Save Changes</Button>
-                    </div>
-                </CardAction>
+                <SettingsFooterActions onSave={onUpdateUser} loading={false} />
             </CardHeader>
             <CardContent className="space-y-4">
                 <AvatarManager user={ownPublicUser} />

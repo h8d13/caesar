@@ -58,7 +58,7 @@ const Sounds = memo(() => {
     }
 
     return (
-        <div className="flex gap-6">
+        <div className="flex flex-col gap-6 sm:flex-row">
             <SoundList
                 sounds={sounds}
                 setSelectedSoundId={(id) => setSelectedSoundId(id)}

@@ -12,12 +12,20 @@ type Props = {
 // (closeServerScreens, submit, loading). Granularity preserved: the only
 // site-specific bits (the submit handler + loading flag) are props.
 const SettingsFooterActions = memo(({ onSave, loading }: Props) => (
-    <CardAction>
-        <div className="flex gap-2">
-            <Button variant="outline" onClick={closeServerScreens}>
+    <CardAction className="max-sm:w-full">
+        <div className="flex gap-2 max-sm:w-full">
+            <Button
+                variant="outline"
+                className="max-sm:flex-1"
+                onClick={closeServerScreens}
+            >
                 Cancel
             </Button>
-            <Button onClick={onSave} disabled={loading}>
+            <Button
+                className="max-sm:flex-1"
+                onClick={onSave}
+                disabled={loading}
+            >
                 Save Changes
             </Button>
         </div>

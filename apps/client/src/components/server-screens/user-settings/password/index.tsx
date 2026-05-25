@@ -1,10 +1,8 @@
-import { closeServerScreens } from '@/features/server-screens/actions';
+import { SettingsFooterActions } from '@/components/server-screens/settings-footer-actions';
 import { useForm } from '@/hooks/use-form';
 import { getTRPCClient } from '@/lib/trpc';
 import {
-    Button,
     Card,
-    CardAction,
     CardContent,
     CardDescription,
     CardHeader,
@@ -40,14 +38,10 @@ const Password = memo(() => {
                 <CardDescription>
                     In this section, you can update your password.
                 </CardDescription>
-                <CardAction>
-                    <div className="flex gap-2">
-                        <Button variant="outline" onClick={closeServerScreens}>
-                            Cancel
-                        </Button>
-                        <Button onClick={updatePassword}>Save Changes</Button>
-                    </div>
-                </CardAction>
+                <SettingsFooterActions
+                    onSave={updatePassword}
+                    loading={false}
+                />
             </CardHeader>
             <CardContent className="space-y-4">
                 <Group label="Current Password">

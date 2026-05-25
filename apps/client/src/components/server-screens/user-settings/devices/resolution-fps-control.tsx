@@ -25,7 +25,7 @@ const ResolutionFpsControl = memo(
         disabled
     }: TResolutionFpsControlProps) => {
         return (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="flex flex-col gap-1">
                     <span className="text-sm font-medium">Resolution</span>
                     <Select
@@ -33,7 +33,7 @@ const ResolutionFpsControl = memo(
                         onValueChange={onResolutionChange}
                         disabled={disabled}
                     >
-                        <SelectTrigger className="w-40">
+                        <SelectTrigger className="w-full sm:w-40">
                             <SelectValue placeholder="Select the input device" />
                         </SelectTrigger>
                         <SelectContent>
@@ -57,7 +57,7 @@ const ResolutionFpsControl = memo(
                         onValueChange={(value) => onFramerateChange(+value)}
                         disabled={disabled}
                     >
-                        <SelectTrigger className="w-[160px]">
+                        <SelectTrigger className="w-full sm:w-[160px]">
                             <SelectValue placeholder="Select the input device" />
                         </SelectTrigger>
                         <SelectContent>
