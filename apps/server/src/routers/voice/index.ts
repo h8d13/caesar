@@ -6,6 +6,7 @@ import { consumeRoute } from './consume';
 import { createConsumerTransportRoute } from './create-consumer-transport';
 import { createProducerTransportRoute } from './create-producer-transport';
 import {
+  onForceMoveRoute,
   onSoundboardPlayRoute,
   onUserJoinVoiceRoute,
   onUserLeaveVoiceRoute,
@@ -20,6 +21,7 @@ import {
 import { getProducersRoute } from './get-producers';
 import { joinVoiceRoute } from './join';
 import { leaveVoiceRoute } from './leave';
+import { moveUserRoute } from './move-user';
 import { pauseConsumerRoute } from './pause-consumer';
 import { playSoundboardRoute } from './play-soundboard';
 import { produceRoute } from './produce';
@@ -31,6 +33,7 @@ import { updateVoiceStateRoute } from './update-state';
 export const voiceRouter = t.router({
   join: joinVoiceRoute,
   leave: leaveVoiceRoute,
+  moveUser: moveUserRoute,
   updateState: updateVoiceStateRoute,
   createProducerTransport: createProducerTransportRoute,
   connectProducerTransport: connectProducerTransportRoute,
@@ -43,6 +46,7 @@ export const voiceRouter = t.router({
   onJoin: onUserJoinVoiceRoute,
   onLeave: onUserLeaveVoiceRoute,
   onUpdateState: onUserUpdateVoiceStateRoute,
+  onForceMove: onForceMoveRoute,
   onChannelState: onVoiceChannelStateUpdateRoute,
   onNewProducer: onVoiceNewProducerRoute,
   onProducerClosed: onVoiceProducerClosedRoute,

@@ -77,6 +77,9 @@ type Events = {
     channelId: number;
     activeSince: number | null;
   };
+  [ServerEvents.VOICE_FORCE_MOVE]: {
+    channelId: number;
+  };
   [ServerEvents.USER_VOICE_STATE_UPDATE]: {
     channelId: number;
     userId: number;

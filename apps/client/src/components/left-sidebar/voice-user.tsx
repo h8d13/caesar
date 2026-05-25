@@ -1,9 +1,12 @@
 import { UserAvatar } from '@/components/user-avatar';
+import { useCan } from '@/features/server/hooks';
 import type { TVoiceUser } from '@/features/server/types';
 import { useSpeakingIntensity } from '@/features/server/voice/hooks';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
 import { getSocialCreditColor } from '@/helpers/get-social-credit-color';
 import { cn } from '@/lib/utils';
+import { Permission } from '@caesar/shared';
+import { useDraggable } from '@dnd-kit/core';
 import {
     HeadphoneOff,
     Headphones,
@@ -18,10 +21,22 @@ import { UserPopover } from '../user-popover';
 type TVoiceUserProps = {
     userId: number;
     user: TVoiceUser;
+    channelId: number;
 };
 
-const VoiceUser = memo(({ user }: TVoiceUserProps) => {
+const VoiceUser = memo(({ user, channelId }: TVoiceUserProps) => {
     const speakingIntensity = useSpeakingIntensity(user.id);
+    const can = useCan();
+    const canMove = can(Permission.MOVE_MEMBERS);
+
+    // Drag a member onto another voice channel to move them (server-enforced
+    // via MOVE_MEMBERS; disabled entirely when the viewer lacks the perm).
+    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+        id: `vu-${user.id}`,
+        data: { type: 'voice-user', userId: user.id, channelId },
+        disabled: !canMove
+    });
+
     const speakingClass =
         !user.state.micMuted && speakingIntensity > 0
             ? speakingIntensity === 1
@@ -33,7 +48,16 @@ const VoiceUser = memo(({ user }: TVoiceUserProps) => {
 
     return (
         <UserPopover userId={user.id}>
-            <div className="flex items-center gap-2 px-2 py-1 rounded hover:bg-accent/30 text-sm">
+            <div
+                ref={setNodeRef}
+                {...(canMove ? listeners : {})}
+                {...(canMove ? attributes : {})}
+                className={cn(
+                    'flex items-center gap-2 px-2 py-1 rounded hover:bg-accent/30 text-sm',
+                    canMove && 'cursor-grab',
+                    isDragging && 'opacity-50'
+                )}
+            >
                 <UserAvatar
                     userId={user.id}
                     className={cn('h-5 w-5 rounded-full', speakingClass)}

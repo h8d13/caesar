@@ -1,6 +1,7 @@
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
 import { playSound } from '@/features/server/sounds/actions';
 import { SoundType } from '@/features/server/types';
+import { joinVoice } from '@/features/server/voice/actions';
 import { useOwnVoiceState } from '@/features/server/voice/hooks';
 import {
     MICROPHONE_GATE_CLOSE_HOLD_MS,
@@ -1200,6 +1201,26 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             consumerTransport
         ]
     );
+
+    // A moderator dragged us into another voice channel. Re-run the join flow
+    // for the destination; joinVoice() leaves the current channel first. Only
+    // active while in voice (the server only moves users already connected).
+    useEffect(() => {
+        if (!currentVoiceChannelId) return;
+
+        const sub = getTRPCClient().voice.onForceMove.subscribe(undefined, {
+            onData: async ({ channelId }) => {
+                try {
+                    const response = await joinVoice(channelId);
+                    if (response) await init(response, channelId);
+                } catch (error) {
+                    logVoice('Error handling forced voice move', { error });
+                }
+            }
+        });
+
+        return () => sub.unsubscribe();
+    }, [currentVoiceChannelId, init]);
 
     const { toggleMic, toggleSound, toggleWebcam, toggleScreenShare } =
         useVoiceControls({

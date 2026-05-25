@@ -20,7 +20,8 @@ export enum Permission {
   MANAGE_MESSAGES = 'MANAGE_MESSAGES',
   MANAGE_STORAGE = 'MANAGE_STORAGE',
   MANAGE_INVITES = 'MANAGE_INVITES',
-  VIEW_USER_SENSITIVE_DATA = 'VIEW_USER_SENSITIVE_DATA'
+  VIEW_USER_SENSITIVE_DATA = 'VIEW_USER_SENSITIVE_DATA',
+  MOVE_MEMBERS = 'MOVE_MEMBERS'
 }
 
 export const permissionLabels: Record<Permission, string> = {
@@ -44,7 +45,8 @@ export const permissionLabels: Record<Permission, string> = {
   [Permission.MANAGE_MESSAGES]: 'Manage messages',
   [Permission.MANAGE_STORAGE]: 'Manage storage',
   [Permission.MANAGE_INVITES]: 'Manage invites',
-  [Permission.VIEW_USER_SENSITIVE_DATA]: 'View user sensitive data'
+  [Permission.VIEW_USER_SENSITIVE_DATA]: 'View user sensitive data',
+  [Permission.MOVE_MEMBERS]: 'Move voice members'
 };
 
 export const permissionDescriptions: Record<Permission, string> = {
@@ -82,7 +84,9 @@ export const permissionDescriptions: Record<Permission, string> = {
   [Permission.MANAGE_INVITES]:
     'Grants the ability to create, edit, and delete server invites.',
   [Permission.VIEW_USER_SENSITIVE_DATA]:
-    'Grants the ability to view user server interactions.'
+    'Grants the ability to view user server interactions.',
+  [Permission.MOVE_MEMBERS]:
+    'Grants the ability to drag members between voice channels.'
 };
 
 export const DEFAULT_ROLE_PERMISSIONS = [

@@ -1,3 +1,4 @@
+import { UserAvatar } from '@/components/user-avatar';
 import { openDialog } from '@/features/dialogs/actions';
 import {
     useCategories,
@@ -8,8 +9,10 @@ import {
     useCan,
     useHasVisibleChannelsInCategory
 } from '@/features/server/hooks';
+import { useUserById } from '@/features/server/users/hooks';
+import { getRenderedUsername } from '@/helpers/get-rendered-username';
 import { getTRPCClient } from '@/lib/trpc';
-import { Permission, getTrpcError } from '@caesar/shared';
+import { ChannelType, Permission, getTrpcError } from '@caesar/shared';
 import { IconButton } from '@caesar/ui';
 import {
     DndContext,
@@ -240,6 +243,37 @@ const Categories = memo(() => {
             const oId = String(over.id);
             const trpc = getTRPCClient();
 
+            // Voice-member drag: drop onto a different voice channel to move
+            // them. `over` resolves to the channel's sortable (ch-) since voice
+            // users aren't droppable. ACL is enforced server-side.
+            if (aId.startsWith('vu-')) {
+                setOverride(null);
+                if (!oId.startsWith('ch-')) return;
+
+                const userId = Number(
+                    active.data.current?.userId ?? aId.slice(3)
+                );
+                const sourceChannelId = active.data.current?.channelId as
+                    | number
+                    | undefined;
+                const destChannelId = Number(oId.slice(3));
+
+                if (destChannelId === sourceChannelId) return;
+
+                const dest = channels.find((c) => c.id === destChannelId);
+                if (dest?.type !== ChannelType.VOICE || dest.isDm) return;
+
+                try {
+                    await trpc.voice.moveUser.mutate({
+                        userId,
+                        channelId: destChannelId
+                    });
+                } catch (e) {
+                    toast.error(getTrpcError(e, 'Failed to move member'));
+                }
+                return;
+            }
+
             if (aId.startsWith('cat-')) {
                 setOverride(null);
                 // closestCorners can resolve `over` to any droppable inside
@@ -359,7 +393,7 @@ const Categories = memo(() => {
                 setOverride(null);
             }
         },
-        [byCat, baseByCat, categorySortableIds, findCat]
+        [byCat, baseByCat, categorySortableIds, findCat, channels]
     );
 
     return (
@@ -408,7 +442,24 @@ const Categories = memo(() => {
 const DragGhost = memo(({ id }: { id: string }) => {
     if (id.startsWith('cat-')) return <CatGhost id={Number(id.slice(4))} />;
     if (id.startsWith('ch-')) return <ChGhost id={Number(id.slice(3))} />;
+    if (id.startsWith('vu-')) return <VuGhost id={Number(id.slice(3))} />;
     return null;
+});
+
+const VuGhost = memo(({ id }: { id: number }) => {
+    const user = useUserById(id);
+    if (!user) return null;
+    return (
+        <div className="flex items-center gap-2 rounded px-2 py-1 text-xs text-muted-foreground bg-card border border-border shadow">
+            <UserAvatar
+                userId={id}
+                className="h-5 w-5 rounded-full"
+                showUserPopover={false}
+                showStatusBadge={false}
+            />
+            <span>{getRenderedUsername(user, id)}</span>
+        </div>
+    );
 });
 
 const CatGhost = memo(({ id }: { id: number }) => {

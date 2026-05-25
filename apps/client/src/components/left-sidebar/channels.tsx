@@ -80,7 +80,12 @@ const Voice = memo(({ channel, ...props }: TVoiceProps) => {
             {channel.type === 'VOICE' && (
                 <div className="ml-6 space-y-1 mt-1">
                     {users.map((user) => (
-                        <VoiceUser key={user.id} userId={user.id} user={user} />
+                        <VoiceUser
+                            key={user.id}
+                            userId={user.id}
+                            user={user}
+                            channelId={channel.id}
+                        />
                     ))}
                     {externalStreams.map((stream) => (
                         <ExternalStream

@@ -63,6 +63,11 @@ const onUserUpdateVoiceStateRoute = protectedProcedure.subscription(
   }
 );
 
+// Targeted: only the moved user receives this (publishFor).
+const onForceMoveRoute = protectedProcedure.subscription(async ({ ctx }) => {
+  return ctx.pubsub.subscribeFor(ctx.userId, ServerEvents.VOICE_FORCE_MOVE);
+});
+
 const onVoiceChannelStateUpdateRoute = protectedProcedure.subscription(
   async ({ ctx }) => {
     return ctx.pubsub.subscribe(ServerEvents.VOICE_CHANNEL_STATE_UPDATE);
@@ -107,6 +112,7 @@ const onVoiceProducerClosedRoute = protectedProcedure.subscription(
 );
 
 export {
+  onForceMoveRoute,
   onSoundboardPlayRoute,
   onUserJoinVoiceRoute,
   onUserLeaveVoiceRoute,
