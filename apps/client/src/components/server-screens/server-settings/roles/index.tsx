@@ -1,4 +1,5 @@
 import { useAdminRoles } from '@/features/server/admin/hooks';
+import { OWNER_ROLE_ID } from '@caesar/shared';
 import { Card, CardContent, LoadingCard } from '@caesar/ui';
 import { memo, useMemo, useState } from 'react';
 import { RolesList } from './roles-list';
@@ -9,9 +10,16 @@ const Roles = memo(() => {
 
     const [selectedRoleId, setSelectedRoleId] = useState<number | undefined>();
 
+    // The owner role implicitly has every permission and isn't editable, so
+    // it's excluded from role management entirely (not listed, not selectable).
+    const manageableRoles = useMemo(
+        () => roles.filter((role) => role.id !== OWNER_ROLE_ID),
+        [roles]
+    );
+
     const selectedRole = useMemo(() => {
-        return roles.find((r) => r.id === selectedRoleId) || null;
-    }, [roles, selectedRoleId]);
+        return manageableRoles.find((r) => r.id === selectedRoleId) || null;
+    }, [manageableRoles, selectedRoleId]);
 
     if (loading) {
         return <LoadingCard className="h-[600px]" />;
@@ -20,7 +28,7 @@ const Roles = memo(() => {
     return (
         <div className="flex flex-col gap-6 sm:flex-row">
             <RolesList
-                roles={roles}
+                roles={manageableRoles}
                 selectedRoleId={selectedRoleId}
                 setSelectedRoleId={setSelectedRoleId}
                 refetch={refetch}
