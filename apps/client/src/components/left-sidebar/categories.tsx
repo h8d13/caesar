@@ -19,8 +19,10 @@ import {
     DragOverlay,
     PointerSensor,
     closestCorners,
+    pointerWithin,
     useSensor,
     useSensors,
+    type CollisionDetection,
     type DragEndEvent,
     type DragOverEvent,
     type DragStartEvent
@@ -193,6 +195,21 @@ const Categories = memo(() => {
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
     );
+
+    // Member drags target the channel the pointer is literally inside (its
+    // sortable node spans the whole channel incl. its user list). closestCorners
+    // is corner-distance based and gets ambiguous between adjacent channels, so
+    // restrict to pointerWithin on channel droppables; no nearest-fallback means
+    // a drop in the gap simply no-ops instead of snapping to the wrong channel.
+    // Channel/category reorder keeps closestCorners.
+    const collisionDetection = useCallback<CollisionDetection>((args) => {
+        if (String(args.active.id).startsWith('vu-')) {
+            return pointerWithin(args).filter((c) =>
+                String(c.id).startsWith('ch-')
+            );
+        }
+        return closestCorners(args);
+    }, []);
 
     const handleDragStart = useCallback((event: DragStartEvent) => {
         setActiveId(String(event.active.id));
@@ -400,7 +417,7 @@ const Categories = memo(() => {
         <div className="flex-1 overflow-y-auto p-2">
             <DndContext
                 sensors={sensors}
-                collisionDetection={closestCorners}
+                collisionDetection={collisionDetection}
                 onDragStart={handleDragStart}
                 onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
