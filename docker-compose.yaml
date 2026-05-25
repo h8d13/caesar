@@ -19,6 +19,9 @@ services:
       CAESAR_PORT: "4991"
       CAESAR_WEBRTC_WORKERS: "4"
       CAESAR_SITE: ${CAESAR_SITE:-localhost}
+      # One Caddy hop in front of the app: trust exactly one proxy for client-IP
+      # derivation (rate limiting / lockout / audit). See wiki Configuration.
+      CAESAR_TRUSTED_PROXY_HOPS: "1"
     volumes:
       - ./data:/home/node/.config/caesar
 
