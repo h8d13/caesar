@@ -1,10 +1,8 @@
 import { useDevices } from '@/components/devices-provider/hooks/use-devices';
-import { getVoiceControlsBridge } from '@/components/media-provider/controls-bridge';
 import { closeServerScreens } from '@/features/server-screens/actions';
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
 import { usePublicServerSettings } from '@/features/server/hooks';
 import { leaveVoice } from '@/features/server/voice/actions';
-import { useOwnVoiceState } from '@/features/server/voice/hooks';
 import { MICROPHONE_GATE_DEFAULT_THRESHOLD_DB } from '@/helpers/audio-gate';
 import {
     getDTLNWorkletAvailabilitySnapshot,
@@ -65,7 +63,6 @@ const DEFAULT_NAME = 'default';
 const Devices = memo(() => {
     const currentVoiceChannelId = useCurrentVoiceChannelId();
     const settings = usePublicServerSettings();
-    const ownVoiceState = useOwnVoiceState();
     const {
         inputDevices,
         playbackDevices,
@@ -144,76 +141,6 @@ const Devices = memo(() => {
         }
     }, [currentVoiceChannelId]);
     const didPrimeDevicesOnGrantedRef = useRef(false);
-    const mutedByTestRef = useRef<{
-        previousMicMuted: boolean;
-        previousSoundMuted: boolean;
-    } | null>(null);
-    const restoreVoiceStateAfterTestRef = useRef<() => Promise<void>>(
-        async () => {}
-    );
-
-    const restoreVoiceStateAfterTest = useCallback(async () => {
-        if (!currentVoiceChannelId) {
-            mutedByTestRef.current = null;
-            return;
-        }
-
-        const mutedByTest = mutedByTestRef.current;
-        if (!mutedByTest) return;
-
-        mutedByTestRef.current = null;
-
-        const voiceControlsBridge = getVoiceControlsBridge();
-        if (!voiceControlsBridge) {
-            toast.error('Voice controls are unavailable right now.');
-            return;
-        }
-
-        await voiceControlsBridge.setMicMuted(mutedByTest.previousMicMuted);
-        await voiceControlsBridge.setSoundMuted(mutedByTest.previousSoundMuted);
-    }, [currentVoiceChannelId]);
-
-    useEffect(() => {
-        restoreVoiceStateAfterTestRef.current = restoreVoiceStateAfterTest;
-    }, [restoreVoiceStateAfterTest]);
-
-    const startMicrophoneTest = useCallback(async () => {
-        if (currentVoiceChannelId) {
-            const voiceControlsBridge = getVoiceControlsBridge();
-            if (!voiceControlsBridge) {
-                toast.error('Voice controls are unavailable right now.');
-                return;
-            }
-
-            mutedByTestRef.current = {
-                previousMicMuted: ownVoiceState.micMuted,
-                previousSoundMuted: ownVoiceState.soundMuted
-            };
-
-            await voiceControlsBridge.setMicMuted(true);
-            await voiceControlsBridge.setSoundMuted(true);
-        } else {
-            mutedByTestRef.current = null;
-        }
-
-        const didStart = await startTest();
-
-        if (!didStart) {
-            await restoreVoiceStateAfterTest();
-            return;
-        }
-    }, [
-        currentVoiceChannelId,
-        ownVoiceState.micMuted,
-        ownVoiceState.soundMuted,
-        startTest,
-        restoreVoiceStateAfterTest
-    ]);
-
-    const stopMicrophoneTest = useCallback(async () => {
-        stopTest();
-        await restoreVoiceStateAfterTest();
-    }, [stopTest, restoreVoiceStateAfterTest]);
 
     const requestMicrophonePermission = useCallback(async () => {
         await requestPermission();
@@ -238,12 +165,6 @@ const Devices = memo(() => {
 
         void loadDevices();
     }, [permissionState, requestPermission, loadDevices]);
-
-    useEffect(() => {
-        return () => {
-            void restoreVoiceStateAfterTestRef.current();
-        };
-    }, []);
 
     const hasMicrophones = inputDevices.length > 0;
 
@@ -479,7 +400,7 @@ const Devices = memo(() => {
                             {!isTesting ? (
                                 <Button
                                     variant="secondary"
-                                    onClick={() => void startMicrophoneTest()}
+                                    onClick={() => void startTest()}
                                     disabled={
                                         permissionState === 'denied' ||
                                         !hasMicrophones
@@ -490,7 +411,7 @@ const Devices = memo(() => {
                             ) : (
                                 <Button
                                     variant="secondary"
-                                    onClick={() => void stopMicrophoneTest()}
+                                    onClick={() => void stopTest()}
                                 >
                                     Stop Test
                                 </Button>
