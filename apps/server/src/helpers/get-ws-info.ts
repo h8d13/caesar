@@ -2,6 +2,7 @@ import type http from 'http';
 import ipaddr from 'ipaddr.js';
 import { UAParser } from 'ua-parser-js';
 import type { TConnectionInfo } from '../types';
+import { TRUSTED_CLIENT_IP_HEADER, TRUSTED_PROXY_HOPS } from '../utils/env';
 
 /** Minimal shape we need from a WebSocket internal properties not in the ws type defs */
 interface WsLike {
@@ -9,21 +10,19 @@ interface WsLike {
   socket?: { remoteAddress?: string };
 }
 
-// have no fucking idea what's going on in this file
-// 100% trusting AI on this one
+// Client IP resolution. The client IP keys login rate limiting, the failed
+// login lockout and audit logs, so it must be derived only from sources we
+// trust. Forwarding headers (X-Forwarded-For, X-Real-IP, CF-Connecting-IP,
+// ...) are trivially spoofable by any client: trusting them blindly lets an
+// attacker rotate the rate-limit key per request and bypass every per-IP
+// control. We therefore trust ONLY:
+//   - the raw socket peer (always; it is the OS-observed connection source),
+//   - a fixed number of reverse-proxy hops in X-Forwarded-For (TRUSTED_PROXY_HOPS),
+//   - one explicit single-value header for CDN setups (TRUSTED_CLIENT_IP_HEADER).
+// See utils/env.ts for the trust knobs.
 
-const MAX_IP_CANDIDATES = 20;
+const MAX_IP_CANDIDATES = 50;
 const MAX_HEADER_LENGTH = 2048;
-const DIRECT_HEADERS = [
-  'cf-connecting-ip',
-  'true-client-ip',
-  'cf-real-ip',
-  'x-real-ip',
-  'x-client-ip',
-  'x-cluster-client-ip',
-  'fly-client-ip',
-  'fastly-client-ip'
-];
 
 const getHeaderValue = (
   headers: http.IncomingHttpHeaders,
@@ -49,13 +48,6 @@ const getHeaderValue = (
   return result;
 };
 
-const splitCommaSeparated = (value: string): string[] =>
-  value
-    .split(',')
-    .map((v) => v.trim())
-    .filter(Boolean)
-    .slice(0, MAX_IP_CANDIDATES);
-
 const toCanonical = (
   parsed: ipaddr.IPv4 | ipaddr.IPv6
 ): ipaddr.IPv4 | ipaddr.IPv6 => {
@@ -72,16 +64,13 @@ const normalizeIp = (value: string): string | undefined => {
 
     if (!candidate) return undefined;
 
-    if (candidate.toLowerCase().startsWith('for=')) {
-      candidate = candidate.slice(4).trim();
-    }
-
     candidate = candidate.replace(/^["']|["']$/g, '');
 
     if (candidate.startsWith('[') && candidate.includes(']')) {
       candidate = candidate.slice(1, candidate.indexOf(']'));
     }
 
+    // bare "ipv4:port" -> strip the port (a lone colon plus a dotted quad).
     const colonCount = candidate.split(':').length - 1;
 
     if (colonCount === 1 && candidate.includes('.')) {
@@ -99,75 +88,97 @@ const normalizeIp = (value: string): string | undefined => {
   }
 };
 
-const isPublicIp = (ip: string): boolean => {
-  try {
-    return toCanonical(ipaddr.parse(ip)).range() === 'unicast';
-  } catch {
-    return false;
+// First syntactically valid IP among raw candidates, in order. Used for the
+// socket peer chain (ws._socket / ws.socket / req.socket) which is not
+// attacker-controlled, so "first valid" is the right pick.
+const firstValidIp = (
+  candidates: (string | undefined)[]
+): string | undefined => {
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const ip = normalizeIp(candidate);
+    if (ip) return ip;
   }
+  return undefined;
 };
 
-const pickBestIp = (candidates: string[]): string | undefined => {
-  const normalized = candidates
-    .slice(0, MAX_IP_CANDIDATES)
-    .map(normalizeIp)
-    .filter((ip): ip is string => Boolean(ip));
-
-  if (!normalized.length) return undefined;
-
-  return normalized.find(isPublicIp) ?? normalized[0];
-};
-
-const extractForwardedCandidates = (value: string): string[] =>
+// Split X-Forwarded-For into an ordered (left -> right) list. The list is
+// capped from the RIGHT so an attacker who prepends thousands of bogus
+// entries can never push the trusted suffix (added by our own proxies) out
+// of range.
+const splitForwardedChain = (value: string): string[] =>
   value
     .split(',')
-    .flatMap((entry) =>
-      entry
-        .split(';')
-        .map((p) => p.trim())
-        .filter((p) => p.toLowerCase().startsWith('for='))
-        .map((p) => p.slice(4))
-    )
-    .slice(0, MAX_IP_CANDIDATES);
+    .map((v) => v.trim())
+    .filter(Boolean)
+    .slice(-MAX_IP_CANDIDATES);
+
+type TProxyTrust = {
+  trustedProxyHops: number;
+  trustedClientIpHeader: string;
+};
+
+// Pure, dependency-free resolver so the trust matrix is unit-testable without
+// booting the server config module.
+const resolveClientIp = (
+  headers: http.IncomingHttpHeaders,
+  socketCandidates: (string | undefined)[],
+  trust: TProxyTrust
+): string | undefined => {
+  const socketIp = firstValidIp(socketCandidates);
+
+  // 1. CDN single-value header (only when explicitly configured).
+  if (trust.trustedClientIpHeader) {
+    const raw = getHeaderValue(headers, trust.trustedClientIpHeader);
+    if (raw) {
+      const ip = normalizeIp(raw.split(',')[0] ?? raw);
+      if (ip) return ip;
+    }
+    // Configured but missing/garbage: do NOT fall through to spoofable XFF.
+    return socketIp;
+  }
+
+  // 2. Trusted reverse-proxy hops via X-Forwarded-For.
+  if (trust.trustedProxyHops > 0) {
+    const xff = getHeaderValue(headers, 'x-forwarded-for');
+    if (xff) {
+      const chain = splitForwardedChain(xff);
+      // Each trusted proxy appends the peer it saw to the right end. With N
+      // trusted hops the real client is the Nth entry from the right; entries
+      // further left are client-supplied and untrusted. If the chain is
+      // shorter than expected the request did not traverse all proxies, so we
+      // fall back to the socket peer rather than trust a spoofable leftmost.
+      const index = chain.length - trust.trustedProxyHops;
+      if (index >= 0) {
+        const ip = normalizeIp(chain[index]!);
+        if (ip) return ip;
+      }
+    }
+    return socketIp;
+  }
+
+  // 3. No trusted proxy: app is directly exposed. Only the socket peer is
+  // trustworthy; ignore all forwarding headers.
+  return socketIp;
+};
 
 const getWsIp = (
   ws: unknown,
   req: http.IncomingMessage | undefined
 ): string | undefined => {
   const headers = req?.headers ?? {};
-
-  // 1. high-trust CDN / proxy headers (single-value, most trustworthy)
-  for (const header of DIRECT_HEADERS) {
-    const value = getHeaderValue(headers, header);
-    if (!value) continue;
-
-    const ip = pickBestIp(splitCommaSeparated(value));
-    if (ip) return ip;
-  }
-
-  // 2. standard multi-hop proxy header
-  const xForwardedFor = getHeaderValue(headers, 'x-forwarded-for');
-  if (xForwardedFor) {
-    const ip = pickBestIp(splitCommaSeparated(xForwardedFor));
-    if (ip) return ip;
-  }
-
-  // 3. RFC 7239 Forwarded header
-  const forwarded = getHeaderValue(headers, 'forwarded');
-  if (forwarded) {
-    const ip = pickBestIp(extractForwardedCandidates(forwarded));
-    if (ip) return ip;
-  }
-
-  // 4. fallback to raw socket remote address
   const wsObj = ws as WsLike | undefined;
+
   const socketCandidates = [
     wsObj?._socket?.remoteAddress,
     wsObj?.socket?.remoteAddress,
     req?.socket?.remoteAddress
-  ].filter((v): v is string => typeof v === 'string' && v.length > 0);
+  ];
 
-  return pickBestIp(socketCandidates);
+  return resolveClientIp(headers, socketCandidates, {
+    trustedProxyHops: TRUSTED_PROXY_HOPS,
+    trustedClientIpHeader: TRUSTED_CLIENT_IP_HEADER
+  });
 };
 
 const getWsInfo = (
@@ -206,4 +217,4 @@ const getWsInfo = (
   return { ip, os, device, userAgent };
 };
 
-export { getWsInfo };
+export { getWsInfo, resolveClientIp };

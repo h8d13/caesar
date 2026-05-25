@@ -19,6 +19,13 @@ services:
       CAESAR_PORT: "4991"
       CAESAR_WEBRTC_WORKERS: "4"
       CAESAR_SITE: ${CAESAR_SITE:-localhost}
+      # Client-IP trust for login rate limiting / lockout / audit logs. This
+      # stack puts Caddy in front of the app (one hop), so the default of 1 is
+      # correct: the real client IP is taken from the rightmost X-Forwarded-For
+      # entry. Spoofable headers (CF-Connecting-IP, X-Real-IP, ...) are ignored.
+      #   - exposing the app WITHOUT a reverse proxy: set 0 (trust socket peer).
+      #   - behind Cloudflare: set CAESAR_TRUSTED_CLIENT_IP_HEADER=cf-connecting-ip
+      # CAESAR_TRUSTED_PROXY_HOPS: "1"
     volumes:
       - ./data:/home/node/.config/caesar
 

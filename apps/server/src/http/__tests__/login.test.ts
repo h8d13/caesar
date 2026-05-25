@@ -3,9 +3,10 @@ import { invites, roles, userRoles, users } from '@caesar/shared/db/schema';
 import { login } from '@server/__tests__/helpers';
 import { TEST_SECRET_TOKEN } from '@server/__tests__/seed';
 import { tdb } from '@server/__tests__/setup';
+import { setRateLimitingDisabled } from '@server/utils/rate-limiters';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
-import { describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vitest';
 
 describe('/login', () => {
   test('should successfully login with valid credentials', async () => {
@@ -382,5 +383,65 @@ describe('/login', () => {
 
     expect(decoded2).toHaveProperty('userId');
     expect(decoded2.userId).toBe(firstUser?.id);
+  });
+});
+
+describe('/login failed-attempt lockout (#371)', () => {
+  // Disable the per-IP burst limiter so failures can accumulate past its
+  // 5/60s window and reach the lockout threshold (default 10). The lockout
+  // itself is independent of this flag, so it still engages.
+  afterEach(() => {
+    setRateLimitingDisabled(false);
+  });
+
+  test('locks the IP out after sustained failed attempts', async () => {
+    setRateLimitingDisabled(true);
+
+    for (let i = 0; i < 10; i++) {
+      const response = await login('testowner', 'wrongpassword');
+      expect(response.status).toBe(400);
+    }
+
+    const locked = await login('testowner', 'wrongpassword');
+
+    expect(locked.status).toBe(429);
+    expect(locked.headers.get('retry-after')).toBeTruthy();
+
+    const data = await locked.json();
+
+    expect(data).toHaveProperty(
+      'error',
+      'Too many failed login attempts. Please try again later.'
+    );
+  });
+
+  test('a successful login resets the failure count', async () => {
+    setRateLimitingDisabled(true);
+
+    for (let i = 0; i < 9; i++) {
+      const response = await login('testowner', 'wrongpassword');
+      expect(response.status).toBe(400);
+    }
+
+    // Correct password clears the IP's accumulated failures.
+    const success = await login('testowner', 'password123');
+    expect(success.status).toBe(200);
+
+    // Without the reset these two would be failures #10 and #11 -> the second
+    // would be locked out (429). With the reset they are #1 and #2.
+    const first = await login('testowner', 'wrongpassword');
+    expect(first.status).toBe(400);
+
+    const second = await login('testowner', 'wrongpassword');
+    expect(second.status).toBe(400);
+  });
+
+  test('does not lock out when the IP stays under the threshold', async () => {
+    setRateLimitingDisabled(true);
+
+    for (let i = 0; i < 9; i++) {
+      const response = await login('testowner', 'wrongpassword');
+      expect(response.status).toBe(400);
+    }
   });
 });

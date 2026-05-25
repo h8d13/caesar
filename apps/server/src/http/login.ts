@@ -27,8 +27,15 @@ import { getWsInfo } from '../helpers/get-ws-info';
 import { isAtUserCap } from '../helpers/user-cap';
 import { logger } from '../logger';
 import { enqueueActivityLog } from '../queues/activity-log';
+import {
+  LOGIN_LOCKOUT_BASE_LOCK_MS,
+  LOGIN_LOCKOUT_MAX_FAILURES,
+  LOGIN_LOCKOUT_MAX_LOCK_MS,
+  LOGIN_LOCKOUT_WINDOW_MS
+} from '../utils/env';
 import { invariant } from '../utils/invariant';
 import { hashPassword, verifyPassword } from '../utils/password';
+import { createLoginLockout } from '../utils/rate-limiters/login-lockout';
 import {
   createRateLimiter,
   getClientRateLimitKey,
@@ -57,6 +64,16 @@ const zBody = z.object({
 const loginRateLimiter = createRateLimiter({
   maxRequests: config.rateLimiters.joinServer.maxRequests,
   windowMs: config.rateLimiters.joinServer.windowMs
+});
+
+// Sustained-brute-force lockout (#371), layered behind the burst limiter
+// above. Counts only failed credential attempts and escalates the lock per
+// failure. IP-keyed; see login-lockout.ts for the design rationale.
+const loginLockout = createLoginLockout({
+  maxFailures: LOGIN_LOCKOUT_MAX_FAILURES,
+  windowMs: LOGIN_LOCKOUT_WINDOW_MS,
+  baseLockMs: LOGIN_LOCKOUT_BASE_LOCK_MS,
+  maxLockMs: LOGIN_LOCKOUT_MAX_LOCK_MS
 });
 
 // Single opaque response for every auth-style failure (unknown identity,
@@ -171,12 +188,30 @@ const loginRouteHandler = async (
   let existingUser = await getUserByIdentity(data.identity);
   const connectionInfo = getWsInfo(undefined, req);
 
-  if (connectionInfo?.ip) {
-    const key = getClientRateLimitKey(connectionInfo.ip);
-    const rateLimit = loginRateLimiter.consume(key);
+  // Stable key for both the burst limiter and the failed-login lockout.
+  // Lifted to handler scope so the lockout can be updated after the
+  // credential check below.
+  const lockoutKey = connectionInfo?.ip
+    ? getClientRateLimitKey(connectionInfo.ip)
+    : undefined;
+
+  const recordLoginFailure = () => {
+    if (lockoutKey) loginLockout.recordFailure(lockoutKey);
+  };
+
+  const recordLoginSuccess = () => {
+    if (lockoutKey) loginLockout.recordSuccess(lockoutKey);
+  };
+
+  if (lockoutKey) {
+    // Burst limiter first (short window, all requests). Kept ahead of the
+    // lockout so the well-known "too many attempts" response is unchanged.
+    const rateLimit = loginRateLimiter.consume(lockoutKey);
 
     if (!rateLimit.allowed) {
-      logger.debug(`[Rate Limiter HTTP] /login rate limited for key "${key}"`);
+      logger.debug(
+        `[Rate Limiter HTTP] /login rate limited for key "${lockoutKey}"`
+      );
 
       res.setHeader(
         'Retry-After',
@@ -186,6 +221,26 @@ const loginRouteHandler = async (
       res.end(
         JSON.stringify({
           error: 'Too many login attempts. Please try again shortly.'
+        })
+      );
+
+      return;
+    }
+
+    // Failed-login lockout (#371): sustained brute force from this IP.
+    const lockout = loginLockout.check(lockoutKey);
+
+    if (lockout.locked) {
+      logger.info(`[Auth] /login locked out for key "${lockoutKey}"`);
+
+      res.setHeader(
+        'Retry-After',
+        getRateLimitRetrySeconds(lockout.retryAfterMs)
+      );
+      res.writeHead(429, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          error: 'Too many failed login attempts. Please try again later.'
         })
       );
 
@@ -224,6 +279,8 @@ const loginRouteHandler = async (
 
       if (result.error) {
         await burnTimingBudget();
+
+        recordLoginFailure();
 
         logger.info(
           `[Auth] Signup failed for "${data.identity}": ${result.error} (IP: ${connectionInfo?.ip || 'unknown'})`
@@ -283,12 +340,19 @@ const loginRouteHandler = async (
   );
 
   if (!passwordMatches) {
+    recordLoginFailure();
+
     logger.info(
       `[Auth] Failed login for "${existingUser.identity}" (IP: ${connectionInfo?.ip || 'unknown'})`
     );
 
     throw new HttpValidationError('identity', GENERIC_AUTH_ERROR);
   }
+
+  // Correct credentials: clear any accumulated failures for this IP so a
+  // legitimate user who mistyped earlier is not penalised. Runs even for a
+  // banned user (they proved knowledge of the password, not brute force).
+  recordLoginSuccess();
 
   // Banned state is checked AFTER password verification so an attacker
   // can't enumerate "which accounts are banned" without already knowing

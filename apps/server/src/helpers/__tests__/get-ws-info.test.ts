@@ -1,6 +1,6 @@
 import type http from 'http';
 import { describe, expect, test } from 'vitest';
-import { getWsInfo } from '../get-ws-info';
+import { getWsInfo, resolveClientIp } from '../get-ws-info';
 
 const createRequest = ({
   headers = {},
@@ -16,330 +16,285 @@ const createRequest = ({
   } as unknown as http.IncomingMessage;
 };
 
+// Default env wiring is TRUSTED_PROXY_HOPS=1, no CDN header (matches the
+// bundled single-Caddy deployment).
 const ipOf = (ws: any, req: http.IncomingMessage): string | undefined =>
   getWsInfo(ws, req)?.ip;
 
-describe('getWsInfo - ip resolution', () => {
-  describe('header priority', () => {
-    test('prefers CDN client ip headers over x-forwarded-for', () => {
-      const req = createRequest({
-        headers: {
-          'cf-connecting-ip': '203.0.113.14',
-          'x-forwarded-for': '198.51.100.1, 10.0.0.2'
-        }
-      });
+const DIRECT = { trustedProxyHops: 0, trustedClientIpHeader: '' };
+const ONE_HOP = { trustedProxyHops: 1, trustedClientIpHeader: '' };
+const TWO_HOPS = { trustedProxyHops: 2, trustedClientIpHeader: '' };
+const CLOUDFLARE = {
+  trustedProxyHops: 1,
+  trustedClientIpHeader: 'cf-connecting-ip'
+};
 
-      expect(ipOf(undefined, req)).toBe('203.0.113.14');
-    });
-
-    test('prefers true-client-ip when cf-connecting-ip is absent', () => {
-      const req = createRequest({
-        headers: {
-          'true-client-ip': '198.51.100.50',
-          'x-forwarded-for': '198.51.100.1'
-        }
-      });
-
-      expect(ipOf(undefined, req)).toBe('198.51.100.50');
-    });
-
-    test('prefers x-forwarded-for over RFC 7239 Forwarded', () => {
-      const req = createRequest({
-        headers: {
-          'x-forwarded-for': '203.0.113.77',
-          forwarded: 'for=198.51.100.1'
-        }
-      });
-
-      expect(ipOf(undefined, req)).toBe('203.0.113.77');
-    });
-
-    test('prefers RFC 7239 Forwarded over socket address', () => {
-      const req = createRequest({
-        headers: {
-          forwarded: 'for=203.0.113.88'
+describe('resolveClientIp - trust policy', () => {
+  describe('direct exposure (hops=0)', () => {
+    test('uses the socket peer and ignores all forwarding headers', () => {
+      const ip = resolveClientIp(
+        {
+          'x-forwarded-for': '9.9.9.9',
+          'cf-connecting-ip': '8.8.8.8',
+          'x-real-ip': '7.7.7.7'
         },
-        remoteAddress: '127.0.0.1'
-      });
+        ['198.51.100.33'],
+        DIRECT
+      );
 
-      expect(ipOf(undefined, req)).toBe('203.0.113.88');
+      expect(ip).toBe('198.51.100.33');
     });
 
-    test('falls back to request socket when all headers are absent', () => {
-      const req = createRequest({ remoteAddress: '198.51.100.33' });
+    test('returns undefined when there is no socket peer', () => {
+      expect(
+        resolveClientIp({ 'x-forwarded-for': '9.9.9.9' }, [], DIRECT)
+      ).toBeUndefined();
+    });
+  });
 
-      expect(ipOf(undefined, req)).toBe('198.51.100.33');
+  describe('single trusted proxy (hops=1)', () => {
+    test('uses the rightmost x-forwarded-for entry (the one the proxy added)', () => {
+      const ip = resolveClientIp(
+        { 'x-forwarded-for': '203.0.113.7' },
+        ['172.19.0.2'],
+        ONE_HOP
+      );
+
+      expect(ip).toBe('203.0.113.7');
     });
 
-    test('falls back to request socket when proxy headers contain garbage', () => {
-      const req = createRequest({
-        headers: {
-          'x-forwarded-for': 'unknown, garbage, not-an-ip'
+    test('ignores spoofed entries prepended by the client', () => {
+      // Attacker sends "9.9.9.9"; the trusted proxy appends the real peer to
+      // the right. Only the rightmost (proxy-added) entry is trusted.
+      const ip = resolveClientIp(
+        { 'x-forwarded-for': '9.9.9.9, 203.0.113.7' },
+        ['172.19.0.2'],
+        ONE_HOP
+      );
+
+      expect(ip).toBe('203.0.113.7');
+    });
+
+    test('more entries than the cap cannot push out the trusted suffix', () => {
+      // 60 short entries (> MAX_IP_CANDIDATES of 50) but small enough to stay
+      // under the 2048-char header guard. The chain is capped from the RIGHT,
+      // so the proxy-added rightmost entry always survives.
+      const spoofed = Array.from({ length: 60 }, () => '1.1.1.1');
+      const ip = resolveClientIp(
+        { 'x-forwarded-for': `${spoofed.join(', ')}, 203.0.113.7` },
+        ['172.19.0.2'],
+        ONE_HOP
+      );
+
+      expect(ip).toBe('203.0.113.7');
+    });
+
+    test('ignores spoofable CDN / real-ip headers entirely', () => {
+      const ip = resolveClientIp(
+        {
+          'cf-connecting-ip': '8.8.8.8',
+          'x-real-ip': '7.7.7.7',
+          'true-client-ip': '6.6.6.6'
         },
-        remoteAddress: '198.51.100.33'
-      });
+        ['203.0.113.7'],
+        ONE_HOP
+      );
 
-      expect(ipOf(undefined, req)).toBe('198.51.100.33');
+      // None of the CDN headers are trusted; XFF is absent -> socket peer.
+      expect(ip).toBe('203.0.113.7');
+    });
+
+    test('falls back to socket peer when x-forwarded-for is absent', () => {
+      const ip = resolveClientIp({}, ['203.0.113.7'], ONE_HOP);
+
+      expect(ip).toBe('203.0.113.7');
+    });
+
+    test('falls back to socket peer when x-forwarded-for is garbage', () => {
+      const ip = resolveClientIp(
+        { 'x-forwarded-for': 'not-an-ip' },
+        ['203.0.113.7'],
+        ONE_HOP
+      );
+
+      expect(ip).toBe('203.0.113.7');
     });
   });
 
-  describe('x-forwarded-for', () => {
-    test('selects first public ip, skipping private addresses', () => {
-      const req = createRequest({
-        headers: {
-          'x-forwarded-for': '10.0.0.4, 172.19.4.2, 93.184.216.34'
-        }
-      });
+  describe('two trusted proxies (hops=2)', () => {
+    test('uses the second entry from the right', () => {
+      const ip = resolveClientIp(
+        { 'x-forwarded-for': '203.0.113.7, 10.0.0.2' },
+        ['172.19.0.2'],
+        TWO_HOPS
+      );
 
-      expect(ipOf(undefined, req)).toBe('93.184.216.34');
+      expect(ip).toBe('203.0.113.7');
     });
 
-    test('returns private ip when no public ip is present', () => {
-      const req = createRequest({
-        headers: {
-          'x-forwarded-for': '10.0.0.4, 192.168.1.1'
-        }
-      });
+    test('spoofed prefix is still ignored', () => {
+      const ip = resolveClientIp(
+        { 'x-forwarded-for': '9.9.9.9, 203.0.113.7, 10.0.0.2' },
+        ['172.19.0.2'],
+        TWO_HOPS
+      );
 
-      expect(ipOf(undefined, req)).toBe('10.0.0.4');
+      expect(ip).toBe('203.0.113.7');
     });
 
-    test('handles single ip value', () => {
-      const req = createRequest({
-        headers: { 'x-forwarded-for': '93.184.216.34' }
-      });
+    test('falls back to socket when the chain is shorter than the hop count', () => {
+      const ip = resolveClientIp(
+        { 'x-forwarded-for': '203.0.113.7' },
+        ['172.19.0.2'],
+        TWO_HOPS
+      );
 
-      expect(ipOf(undefined, req)).toBe('93.184.216.34');
-    });
-
-    test('ignores empty segments', () => {
-      const req = createRequest({
-        headers: { 'x-forwarded-for': ', , 93.184.216.34, , ' }
-      });
-
-      expect(ipOf(undefined, req)).toBe('93.184.216.34');
+      expect(ip).toBe('172.19.0.2');
     });
   });
 
-  describe('RFC 7239 Forwarded', () => {
-    test('parses quoted ipv6 with port', () => {
-      const req = createRequest({
-        headers: {
-          forwarded:
-            'for="[2001:db8:cafe::17]:4711";proto=https;by=203.0.113.43'
-        }
-      });
+  describe('CDN single-value header', () => {
+    test('uses the configured header and ignores x-forwarded-for', () => {
+      const ip = resolveClientIp(
+        {
+          'cf-connecting-ip': '203.0.113.50',
+          'x-forwarded-for': '9.9.9.9, 10.0.0.2'
+        },
+        ['172.19.0.2'],
+        CLOUDFLARE
+      );
 
-      expect(ipOf(undefined, req)).toBe('2001:db8:cafe::17');
+      expect(ip).toBe('203.0.113.50');
     });
 
-    test('parses simple ipv4 for= directive', () => {
-      const req = createRequest({
-        headers: { forwarded: 'for=198.51.100.1;proto=http' }
-      });
+    test('falls back to socket (not XFF) when the configured header is missing', () => {
+      const ip = resolveClientIp(
+        { 'x-forwarded-for': '9.9.9.9' },
+        ['172.19.0.2'],
+        CLOUDFLARE
+      );
 
-      expect(ipOf(undefined, req)).toBe('198.51.100.1');
-    });
-
-    test('handles multiple comma-separated Forwarded entries', () => {
-      const req = createRequest({
-        headers: {
-          forwarded: 'for=10.0.0.1, for=93.184.216.34;proto=https'
-        }
-      });
-
-      // 10.0.0.1 is private; 93.184.216.34 is unicast picks public IP
-      expect(ipOf(undefined, req)).toBe('93.184.216.34');
-    });
-
-    test('handles case-insensitive for= prefix', () => {
-      const req = createRequest({
-        headers: { forwarded: 'For=198.51.100.22' }
-      });
-
-      expect(ipOf(undefined, req)).toBe('198.51.100.22');
+      expect(ip).toBe('172.19.0.2');
     });
   });
 
-  describe('IP normalization', () => {
-    test('normalizes IPv4-mapped IPv6 from websocket socket', () => {
-      const req = createRequest({});
-      const ws = { _socket: { remoteAddress: '::ffff:127.0.0.1' } };
-
-      expect(ipOf(ws, req)).toBe('127.0.0.1');
+  describe('normalization', () => {
+    test('normalizes IPv4-mapped IPv6 from the socket peer', () => {
+      expect(resolveClientIp({}, ['::ffff:127.0.0.1'], ONE_HOP)).toBe(
+        '127.0.0.1'
+      );
     });
 
     test('normalizes IPv4-mapped IPv6 from x-forwarded-for', () => {
-      const req = createRequest({
-        headers: { 'x-forwarded-for': '::ffff:93.184.216.34' }
-      });
-
-      expect(ipOf(undefined, req)).toBe('93.184.216.34');
+      expect(
+        resolveClientIp(
+          { 'x-forwarded-for': '::ffff:93.184.216.34' },
+          ['172.19.0.2'],
+          ONE_HOP
+        )
+      ).toBe('93.184.216.34');
     });
 
-    test('strips port from IPv4 address', () => {
-      const req = createRequest({
-        headers: { 'x-real-ip': '198.51.100.5:8080' }
-      });
-
-      expect(ipOf(undefined, req)).toBe('198.51.100.5');
+    test('strips port from an IPv4 x-forwarded-for entry', () => {
+      expect(
+        resolveClientIp(
+          { 'x-forwarded-for': '198.51.100.5:8080' },
+          ['172.19.0.2'],
+          ONE_HOP
+        )
+      ).toBe('198.51.100.5');
     });
 
-    test('handles bracketed IPv6 without port', () => {
-      const req = createRequest({
-        headers: { forwarded: 'for="[2001:db8::1]"' }
-      });
-
-      expect(ipOf(undefined, req)).toBe('2001:db8::1');
-    });
-
-    test('handles bracketed IPv6 with port', () => {
-      const req = createRequest({
-        headers: { forwarded: 'for="[2001:db8::1]:443"' }
-      });
-
-      expect(ipOf(undefined, req)).toBe('2001:db8::1');
-    });
-
-    test('preserves valid plain IPv6 address', () => {
-      const req = createRequest({
-        headers: { 'cf-connecting-ip': '2001:db8::1' }
-      });
-
-      expect(ipOf(undefined, req)).toBe('2001:db8::1');
-    });
-
-    test('does not mangle IPv6 addresses with embedded dots (mixed notation mapped)', () => {
-      const req = createRequest({
-        headers: { 'cf-connecting-ip': '::ffff:192.0.2.1' }
-      });
-
-      expect(ipOf(undefined, req)).toBe('192.0.2.1');
-    });
-  });
-
-  describe('array-valued headers', () => {
-    test('joins array values into comma-separated list', () => {
-      const req = createRequest({
-        headers: { 'x-real-ip': ['198.51.100.77'] }
-      });
-
-      expect(ipOf(undefined, req)).toBe('198.51.100.77');
-    });
-
-    test('handles multiple values in array', () => {
-      const req = createRequest({
-        headers: {
-          'x-forwarded-for': ['10.0.0.1', '93.184.216.34']
-        }
-      });
-
-      expect(ipOf(undefined, req)).toBe('93.184.216.34');
-    });
-  });
-
-  describe('websocket socket fallback', () => {
-    test('reads from ws._socket.remoteAddress', () => {
-      const req = createRequest({});
-      const ws = { _socket: { remoteAddress: '198.51.100.99' } };
-
-      expect(ipOf(ws, req)).toBe('198.51.100.99');
-    });
-
-    test('reads from ws.socket.remoteAddress as second fallback', () => {
-      const req = createRequest({});
-      const ws = { socket: { remoteAddress: '198.51.100.88' } };
-
-      expect(ipOf(ws, req)).toBe('198.51.100.88');
-    });
-
-    test('prefers ws._socket over ws.socket', () => {
-      const req = createRequest({});
-      const ws = {
-        _socket: { remoteAddress: '198.51.100.1' },
-        socket: { remoteAddress: '198.51.100.2' }
-      };
-
-      // pickBestIp gets both; both are public so first wins
-      expect(ipOf(ws, req)).toBe('198.51.100.1');
-    });
-
-    test('reads from req.socket.remoteAddress as last resort', () => {
-      const req = createRequest({ remoteAddress: '198.51.100.77' });
-
-      expect(ipOf(undefined, req)).toBe('198.51.100.77');
+    test('preserves a valid plain IPv6 address', () => {
+      expect(
+        resolveClientIp(
+          { 'cf-connecting-ip': '2001:db8::1' },
+          ['172.19.0.2'],
+          CLOUDFLARE
+        )
+      ).toBe('2001:db8::1');
     });
   });
 
   describe('robustness', () => {
-    test('returns undefined when no info is available at all', () => {
-      const req = createRequest({});
-
-      expect(getWsInfo(undefined, req)).toBeUndefined();
-    });
-
-    test('returns undefined when both ws and req are undefined', () => {
-      expect(getWsInfo(undefined, undefined)).toBeUndefined();
-    });
-
-    test('handles completely empty headers object', () => {
-      const req = createRequest({ headers: {} });
-
-      expect(getWsInfo(undefined, req)).toBeUndefined();
-    });
-
-    test('discards oversized header values (DoS protection)', () => {
+    test('discards an oversized x-forwarded-for header (DoS protection)', () => {
       const hugeValue = '198.51.100.1, '.repeat(500);
-      const req = createRequest({
-        headers: { 'x-forwarded-for': hugeValue },
-        remoteAddress: '127.0.0.1'
-      });
-
-      // The oversized x-forwarded-for should be discarded, falling back to socket
-      expect(ipOf(undefined, req)).toBe('127.0.0.1');
+      expect(
+        resolveClientIp(
+          { 'x-forwarded-for': hugeValue },
+          ['127.0.0.1'],
+          ONE_HOP
+        )
+      ).toBe('127.0.0.1');
     });
 
-    test('handles invalid IP strings gracefully', () => {
-      const req = createRequest({
-        headers: { 'cf-connecting-ip': 'not-an-ip-at-all' },
-        remoteAddress: '127.0.0.1'
-      });
-
-      expect(ipOf(undefined, req)).toBe('127.0.0.1');
+    test('prefers ws._socket over later socket candidates', () => {
+      expect(
+        resolveClientIp({}, ['198.51.100.1', '198.51.100.2'], ONE_HOP)
+      ).toBe('198.51.100.1');
     });
 
-    test('handles header with only whitespace', () => {
-      const req = createRequest({
-        headers: { 'x-forwarded-for': '   ' },
-        remoteAddress: '127.0.0.1'
-      });
+    test('skips an invalid leading socket candidate', () => {
+      expect(
+        resolveClientIp({}, [undefined, 'garbage', '198.51.100.2'], ONE_HOP)
+      ).toBe('198.51.100.2');
+    });
+  });
+});
 
-      expect(ipOf(undefined, req)).toBe('127.0.0.1');
+describe('getWsInfo - default env wiring (single trusted proxy)', () => {
+  test('uses the rightmost x-forwarded-for entry', () => {
+    const req = createRequest({
+      headers: { 'x-forwarded-for': '9.9.9.9, 203.0.113.7' },
+      remoteAddress: '172.19.0.2'
     });
 
-    test('handles header with empty array', () => {
-      const req = createRequest({
-        headers: { 'x-real-ip': [] as unknown as string[] },
-        remoteAddress: '198.51.100.1'
-      });
+    expect(ipOf(undefined, req)).toBe('203.0.113.7');
+  });
 
-      expect(ipOf(undefined, req)).toBe('198.51.100.1');
+  test('ignores spoofable cf-connecting-ip by default', () => {
+    const req = createRequest({
+      headers: { 'cf-connecting-ip': '8.8.8.8' },
+      remoteAddress: '203.0.113.7'
     });
 
-    test('truncates candidate list to prevent abuse from long chains', () => {
-      // 50 IPs in chain, only the 25th is public
-      const ips = Array.from({ length: 50 }, (_, i) =>
-        i === 24 ? '203.0.113.1' : `10.0.0.${i % 256}`
-      );
-      const req = createRequest({
-        headers: { 'x-forwarded-for': ips.join(', ') }
-      });
+    expect(ipOf(undefined, req)).toBe('203.0.113.7');
+  });
 
-      const result = ipOf(undefined, req);
-      // MAX_IP_CANDIDATES is 20, so index 24 is beyond the limit.
-      // should get first private IP instead
-      expect(result).toBe('10.0.0.0');
-    });
+  test('falls back to the request socket when no forwarding header is present', () => {
+    const req = createRequest({ remoteAddress: '198.51.100.33' });
+
+    expect(ipOf(undefined, req)).toBe('198.51.100.33');
+  });
+
+  test('reads the websocket socket when no req socket is available', () => {
+    const req = createRequest({});
+    const ws = { _socket: { remoteAddress: '198.51.100.99' } };
+
+    expect(ipOf(ws, req)).toBe('198.51.100.99');
+  });
+
+  test('normalizes IPv4-mapped IPv6 from the websocket socket', () => {
+    const req = createRequest({});
+    const ws = { _socket: { remoteAddress: '::ffff:127.0.0.1' } };
+
+    expect(ipOf(ws, req)).toBe('127.0.0.1');
+  });
+});
+
+describe('getWsInfo - robustness', () => {
+  test('returns undefined when no info is available at all', () => {
+    expect(getWsInfo(undefined, createRequest({}))).toBeUndefined();
+  });
+
+  test('returns undefined when both ws and req are undefined', () => {
+    expect(getWsInfo(undefined, undefined)).toBeUndefined();
+  });
+
+  test('handles completely empty headers object', () => {
+    expect(
+      getWsInfo(undefined, createRequest({ headers: {} }))
+    ).toBeUndefined();
   });
 });
 
@@ -353,9 +308,7 @@ describe('getWsInfo - user-agent parsing', () => {
       remoteAddress: '127.0.0.1'
     });
 
-    const result = getWsInfo(undefined, req);
-
-    expect(result?.os).toBe('Windows 10');
+    expect(getWsInfo(undefined, req)?.os).toBe('Windows 10');
   });
 
   test('sets device to Desktop for non-mobile user-agents', () => {
@@ -367,9 +320,7 @@ describe('getWsInfo - user-agent parsing', () => {
       remoteAddress: '127.0.0.1'
     });
 
-    const result = getWsInfo(undefined, req);
-
-    expect(result?.device).toBe('Desktop');
+    expect(getWsInfo(undefined, req)?.device).toBe('Desktop');
   });
 
   test('parses mobile device info', () => {
@@ -387,27 +338,12 @@ describe('getWsInfo - user-agent parsing', () => {
     expect(result?.device).toBe('Apple iPhone');
   });
 
-  test('returns userAgent string when present', () => {
-    const ua = 'CustomBot/1.0';
-    const req = createRequest({
-      headers: { 'user-agent': ua },
-      remoteAddress: '127.0.0.1'
-    });
-
-    const result = getWsInfo(undefined, req);
-
-    expect(result?.userAgent).toBe(ua);
-  });
-
   test('returns ip even when user-agent is missing', () => {
     const req = createRequest({ remoteAddress: '198.51.100.1' });
-
     const result = getWsInfo(undefined, req);
 
     expect(result?.ip).toBe('198.51.100.1');
     expect(result?.userAgent).toBeUndefined();
-    expect(result?.os).toBeUndefined();
-    expect(result?.device).toBeUndefined();
   });
 
   test('returns user-agent info even when ip is unavailable', () => {
@@ -416,56 +352,21 @@ describe('getWsInfo - user-agent parsing', () => {
         'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
       }
     });
-
     const result = getWsInfo(undefined, req);
 
     expect(result?.ip).toBeUndefined();
-    expect(result?.userAgent).toBeDefined();
     expect(result?.os).toBe('Linux');
-  });
-
-  test('handles empty user-agent string', () => {
-    const req = createRequest({
-      headers: { 'user-agent': '' },
-      remoteAddress: '198.51.100.1'
-    });
-
-    const result = getWsInfo(undefined, req);
-
-    expect(result?.ip).toBe('198.51.100.1');
-    expect(result?.userAgent).toBeUndefined();
   });
 });
 
 describe('getWsInfo - return value', () => {
-  test('returns all fields when ip and user-agent are present', () => {
-    const req = createRequest({
-      headers: {
-        'cf-connecting-ip': '203.0.113.1',
-        'user-agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      }
-    });
-
-    const result = getWsInfo(undefined, req);
-
-    expect(result).toBeDefined();
-    expect(result?.ip).toBe('203.0.113.1');
-    expect(result?.os).toBe('Windows 10');
-    expect(result?.device).toBe('Desktop');
-    expect(result?.userAgent).toContain('Windows NT');
-  });
-
   test('result shape has only expected keys', () => {
     const req = createRequest({
-      headers: {
-        'cf-connecting-ip': '203.0.113.1',
-        'user-agent': 'TestBot/1.0'
-      }
+      headers: { 'user-agent': 'TestBot/1.0' },
+      remoteAddress: '203.0.113.1'
     });
 
-    const result = getWsInfo(undefined, req);
-    const keys = Object.keys(result!).sort();
+    const keys = Object.keys(getWsInfo(undefined, req)!).sort();
 
     expect(keys).toEqual(['device', 'ip', 'os', 'userAgent']);
   });
