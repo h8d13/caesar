@@ -106,6 +106,9 @@ export const useAccessibleChannels = () => {
     return useMemo(
         () =>
             channels.filter((channel) => {
+                // DMs aren't server channels and shouldn't be linkable.
+                if (channel.isDm) return false;
+
                 if (isOwner || !channel.private) return true;
 
                 return (
