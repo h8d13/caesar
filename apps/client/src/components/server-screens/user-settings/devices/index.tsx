@@ -3,6 +3,7 @@ import { getVoiceControlsBridge } from '@/components/media-provider/controls-bri
 import { closeServerScreens } from '@/features/server-screens/actions';
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
 import { usePublicServerSettings } from '@/features/server/hooks';
+import { leaveVoice } from '@/features/server/voice/actions';
 import { useOwnVoiceState } from '@/features/server/voice/hooks';
 import { MICROPHONE_GATE_DEFAULT_THRESHOLD_DB } from '@/helpers/audio-gate';
 import {
@@ -132,6 +133,16 @@ const Devices = memo(() => {
         saveDevices(values);
         toast.success('Device settings saved');
     }, [saveDevices, values]);
+
+    // Device settings (codec, simulcast, resolution, etc.) only bind when a
+    // producer is created on join, so editing them is incompatible with an
+    // active call. Leave the channel on entry; changes then apply cleanly on
+    // the next join. leaveVoice no-ops when not connected.
+    useEffect(() => {
+        if (currentVoiceChannelId) {
+            void leaveVoice({ reason: 'open_device_settings' });
+        }
+    }, [currentVoiceChannelId]);
     const didPrimeDevicesOnGrantedRef = useRef(false);
     const mutedByTestRef = useRef<{
         previousMicMuted: boolean;
@@ -265,15 +276,6 @@ const Devices = memo(() => {
                 </CardAction>
             </CardHeader>
             <CardContent className="space-y-6">
-                {currentVoiceChannelId && (
-                    <Alert variant="default">
-                        <Info />
-                        <AlertDescription>
-                            You are in a voice channel, changes will only take
-                            effect after you leave and rejoin the channel.
-                        </AlertDescription>
-                    </Alert>
-                )}
                 <div className="space-y-6">
                     <Group label="Playback">
                         <Select
@@ -670,7 +672,7 @@ const Devices = memo(() => {
 
                             <Group
                                 label="Simulcast"
-                                description="Send your video in multiple quality layers so viewers on slower connections get a smoother stream. Turn off to send a single full-quality stream."
+                                description="Send video and screen share in multiple quality layers so viewers on slower connections get a smoother stream."
                             >
                                 <Switch
                                     checked={!!values.simulcastEnabled}
