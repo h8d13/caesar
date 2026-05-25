@@ -37,7 +37,7 @@
     "prettier-plugin-organize-imports": "^4.3.0",
     "tsx": "^4.22.3",
     "typescript-eslint": "^8.59.4",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.7"
   },
   "peerDependencies": {
     "typescript": "~6.0.3"
