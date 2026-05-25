@@ -67,6 +67,27 @@ const loginRateLimiter = createRateLimiter({
 const GENERIC_AUTH_ERROR =
   'Invalid credentials. Check your username/password or invite code.';
 
+// The known-identity path always runs argon2 verify (~100-500ms). An
+// unknown identity that bails before any hashing returns much faster, so
+// response latency alone leaks which identities exist. Burn an equivalent
+// argon2 verify against a throwaway hash on those early-exit branches to
+// flatten the timing. Lazy singleton: hashed once on first miss; a rejected
+// hash resets the cache so a transient failure can't become a new timing
+// signal (fast 500 vs slow 400).
+let dummyHashPromise: Promise<string> | null = null;
+const burnTimingBudget = async (): Promise<void> => {
+  if (!dummyHashPromise) {
+    dummyHashPromise = hashPassword('caesar-dummy-password-for-timing').catch(
+      (error) => {
+        dummyHashPromise = null;
+        throw error;
+      }
+    );
+  }
+
+  await verifyPassword('dummy', await dummyHashPromise);
+};
+
 const registerUser = async (
   identity: string,
   password: string,
@@ -202,6 +223,8 @@ const loginRouteHandler = async (
       const result = await isInviteValid(data.invite);
 
       if (result.error) {
+        await burnTimingBudget();
+
         logger.info(
           `[Auth] Signup failed for "${data.identity}": ${result.error} (IP: ${connectionInfo?.ip || 'unknown'})`
         );

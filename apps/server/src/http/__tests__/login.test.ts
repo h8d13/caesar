@@ -213,6 +213,31 @@ describe('/login', () => {
     expect(data.errors.identity).toContain('banned');
   });
 
+  test('should hide ban status from a banned user with the wrong password', async () => {
+    // Anti-enumeration: the ban check runs only after the password is
+    // verified, so a wrong password yields the same generic error as any
+    // other failure. An attacker can't probe which accounts are banned.
+    await tdb
+      .update(users)
+      .set({
+        banned: true,
+        banReason: 'Test ban reason'
+      })
+      .where(eq(users.identity, 'testuser'));
+
+    const response = await login('testuser', 'wrongpassword');
+
+    expect(response.status).toBe(400);
+
+    const data: any = await response.json();
+
+    expect(data).toHaveProperty('errors');
+    expect(data.errors).toHaveProperty('identity');
+    expect(data.errors.identity).toMatch(/Invalid credentials/);
+    expect(data.errors.identity).not.toContain('banned');
+    expect(data.errors.identity).not.toContain('Test ban reason');
+  });
+
   test('should fail with missing identity', async () => {
     const response = await login('', 'somepassword');
 
