@@ -12,11 +12,11 @@
 - Audio / video preview
 - Client-side embeds for links
 - Add support for YT shorts / lives / etc. to preview
-- Add ability to mention channels using `#`
+- Add ability to mention channels using `#` and `@` for user mentions + notifications
 
 ## Messaging & DMs
 
-- Search all messages (DMs and global)
+- Search messages (DMs and global)
 - DMs / mentions fixes / direct reply (from upstream)
 - Added 1:1 calls in DMs
   - Fix on 1:1 call: focus DM panel + top-bar voice controls
