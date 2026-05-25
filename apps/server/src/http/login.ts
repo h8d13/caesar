@@ -27,12 +27,6 @@ import { getWsInfo } from '../helpers/get-ws-info';
 import { isAtUserCap } from '../helpers/user-cap';
 import { logger } from '../logger';
 import { enqueueActivityLog } from '../queues/activity-log';
-import {
-  LOGIN_LOCKOUT_BASE_LOCK_MS,
-  LOGIN_LOCKOUT_MAX_FAILURES,
-  LOGIN_LOCKOUT_MAX_LOCK_MS,
-  LOGIN_LOCKOUT_WINDOW_MS
-} from '../utils/env';
 import { invariant } from '../utils/invariant';
 import { hashPassword, verifyPassword } from '../utils/password';
 import { createLoginLockout } from '../utils/rate-limiters/login-lockout';
@@ -70,10 +64,10 @@ const loginRateLimiter = createRateLimiter({
 // above. Counts only failed credential attempts and escalates the lock per
 // failure. IP-keyed; see login-lockout.ts for the design rationale.
 const loginLockout = createLoginLockout({
-  maxFailures: LOGIN_LOCKOUT_MAX_FAILURES,
-  windowMs: LOGIN_LOCKOUT_WINDOW_MS,
-  baseLockMs: LOGIN_LOCKOUT_BASE_LOCK_MS,
-  maxLockMs: LOGIN_LOCKOUT_MAX_LOCK_MS
+  maxFailures: config.loginLockout.maxFailures,
+  windowMs: config.loginLockout.windowMs,
+  baseLockMs: config.loginLockout.baseLockMs,
+  maxLockMs: config.loginLockout.maxLockMs
 });
 
 // Single opaque response for every auth-style failure (unknown identity,

@@ -46,36 +46,10 @@ const TRUSTED_CLIENT_IP_HEADER = (
   .trim()
   .toLowerCase();
 
-// Failed-login lockout (#371). Escalating, IP-keyed. After MAX_FAILURES
-// failed attempts inside WINDOW_MS the IP is locked for BASE_LOCK_MS,
-// doubling per extra failure up to MAX_LOCK_MS. Defaults are intentionally
-// looser than the per-IP burst limiter so this layer only catches sustained
-// brute force across multiple burst windows.
-const LOGIN_LOCKOUT_MAX_FAILURES = parseIntEnv(
-  process.env.CAESAR_LOGIN_LOCKOUT_MAX_FAILURES,
-  10
-);
-const LOGIN_LOCKOUT_WINDOW_MS = parseIntEnv(
-  process.env.CAESAR_LOGIN_LOCKOUT_WINDOW_MS,
-  15 * 60_000
-);
-const LOGIN_LOCKOUT_BASE_LOCK_MS = parseIntEnv(
-  process.env.CAESAR_LOGIN_LOCKOUT_BASE_LOCK_MS,
-  5 * 60_000
-);
-const LOGIN_LOCKOUT_MAX_LOCK_MS = parseIntEnv(
-  process.env.CAESAR_LOGIN_LOCKOUT_MAX_LOCK_MS,
-  60 * 60_000
-);
-
 export {
   IS_DEVELOPMENT,
   IS_PRODUCTION,
   IS_TEST,
-  LOGIN_LOCKOUT_BASE_LOCK_MS,
-  LOGIN_LOCKOUT_MAX_FAILURES,
-  LOGIN_LOCKOUT_MAX_LOCK_MS,
-  LOGIN_LOCKOUT_WINDOW_MS,
   SERVER_VERSION,
   TRUSTED_CLIENT_IP_HEADER,
   TRUSTED_PROXY_HOPS

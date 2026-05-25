@@ -124,6 +124,15 @@ const zConfig = z.object({
     // 0 = unlimited. Counts active (non-deleted) users; banned still count.
     // Bootstrap (count==0) always bypasses so the first admin can register.
     maxUsers: z.coerce.number().int().nonnegative().default(0)
+  }),
+  // Failed-login lockout: escalating, IP-keyed, sits behind the joinServer
+  // burst limiter. After maxFailures failures inside windowMs the IP is locked
+  // for baseLockMs, doubling per extra failure up to maxLockMs.
+  loginLockout: z.object({
+    maxFailures: z.coerce.number().int().positive(),
+    windowMs: z.coerce.number().int().positive(),
+    baseLockMs: z.coerce.number().int().positive(),
+    maxLockMs: z.coerce.number().int().positive()
   })
 });
 
@@ -237,6 +246,12 @@ const defaultConfig: TConfig = {
   },
   limits: {
     maxUsers: 0
+  },
+  loginLockout: {
+    maxFailures: 10,
+    windowMs: 15 * 60_000, // 15 minutes
+    baseLockMs: 5 * 60_000, // 5 minutes
+    maxLockMs: 60 * 60_000 // 1 hour
   }
 };
 
