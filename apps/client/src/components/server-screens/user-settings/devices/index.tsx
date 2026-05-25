@@ -668,6 +668,18 @@ const Devices = memo(() => {
                                 />
                             </Group>
 
+                            <Group
+                                label="Simulcast"
+                                description="Send your video in multiple quality layers so viewers on slower connections get a smoother stream. Turn off to send a single full-quality stream."
+                            >
+                                <Switch
+                                    checked={!!values.simulcastEnabled}
+                                    onCheckedChange={(checked) =>
+                                        onChange('simulcastEnabled', checked)
+                                    }
+                                />
+                            </Group>
+
                             <Group label="Screen Sharing">
                                 <div className="flex">
                                     <ResolutionFpsControl

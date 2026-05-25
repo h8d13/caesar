@@ -37,6 +37,7 @@ const DEFAULT_DEVICE_SETTINGS: TDeviceSettings = {
     noiseSuppressionMode: NoiseSuppressionMode.RNNOISE,
     shareSystemAudio: true,
     mirrorOwnVideo: false,
+    simulcastEnabled: true,
     screenResolution: Resolution['720p'],
     screenFramerate: 30,
     screenCodec: VideoCodec.AUTO,

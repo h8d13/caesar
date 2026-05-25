@@ -811,8 +811,11 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                     routerRtpCapabilities.current
                 );
                 const effectiveMime = effectiveCodec?.mimeType.toLowerCase();
+                // simulcast off -> single full-quality stream (lighter on
+                // sender CPU/upload, no spatial layers for the SFU to switch)
                 const webcamSingleEncoding =
-                    isSingleEncodingMime(effectiveMime);
+                    isSingleEncodingMime(effectiveMime) ||
+                    !devices.simulcastEnabled;
                 const webcamMaxBitrateKbps =
                     devices.webcamBitrate ?? DEFAULT_WEBCAM_BITRATE;
 
@@ -892,7 +895,8 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         devices.webcamId,
         devices.webcamFramerate,
         devices.webcamResolution,
-        devices.webcamBitrate
+        devices.webcamBitrate,
+        devices.simulcastEnabled
     ]);
 
     const stopWebcamStream = useCallback(() => {
@@ -1011,7 +1015,9 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                 const ssCodecMime =
                     preferredCodec?.mimeType.toLowerCase() ??
                     browserSupportedCodec?.mimeType.toLowerCase();
-                const ssSingleEncoding = isSingleEncodingMime(ssCodecMime);
+                const ssSingleEncoding =
+                    isSingleEncodingMime(ssCodecMime) ||
+                    !devices.simulcastEnabled;
 
                 const ssEncodings = buildVideoEncodings({
                     maxBitrateBps: maxBitrateKbps * 1000,
@@ -1116,7 +1122,8 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         devices.screenResolution,
         devices.screenFramerate,
         devices.screenCodec,
-        devices.screenBitrate
+        devices.screenBitrate,
+        devices.simulcastEnabled
     ]);
 
     const cleanup = useCallback(() => {

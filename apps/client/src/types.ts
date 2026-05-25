@@ -62,6 +62,7 @@ export type TDeviceSettings = {
     noiseSuppressionMode: NoiseSuppressionMode;
     shareSystemAudio: boolean;
     mirrorOwnVideo: boolean;
+    simulcastEnabled: boolean;
     screenResolution: Resolution;
     screenFramerate: number;
     screenCodec: VideoCodec;
