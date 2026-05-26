@@ -24,10 +24,6 @@ if [ "${1:-}" = "--prod-dev" ]; then
     exit $?
 fi
 
-# make sure we are up to date
-REMOTE=$(git remote -v)
-git pull && echo "pulled latest from $REMOTE" || { echo "failed to pull"; exit 1; }
-
 # build version: git short hash of HEAD. up.sh pulls latest above, so the
 # tree always matches origin; no dirty marker needed. helpers.ts picks this
 # up over package.json.
