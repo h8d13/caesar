@@ -18,6 +18,7 @@ type TPool = {
     question: string;
     status: 'open' | 'resolved' | 'void';
     closesAt: number;
+    challengeEndsAt: number | null;
     winningOptionId: number | null;
     createdAt: number;
     totalPot: number;
@@ -38,6 +39,7 @@ const CreatePoolForm = memo(
         const [question, setQuestion] = useState('');
         const [options, setOptions] = useState<string[]>(['Yes', 'No']);
         const [minutes, setMinutes] = useState(30);
+        const [challenge, setChallenge] = useState(0);
         const [submitting, setSubmitting] = useState(false);
 
         const submit = useCallback(async () => {
@@ -51,7 +53,8 @@ const CreatePoolForm = memo(
                 const res = await getTRPCClient().prediction.create.mutate({
                     question: question.trim(),
                     options: opts,
-                    durationMinutes: minutes
+                    durationMinutes: minutes,
+                    challengeMinutes: challenge > 0 ? challenge : undefined
                 });
                 onCreated(res);
             } catch {
@@ -59,7 +62,7 @@ const CreatePoolForm = memo(
             } finally {
                 setSubmitting(false);
             }
-        }, [question, options, minutes, onCreated]);
+        }, [question, options, minutes, challenge, onCreated]);
 
         return (
             <div className="flex flex-col gap-3">
@@ -122,6 +125,22 @@ const CreatePoolForm = memo(
                         className="w-20"
                     />
                     <span>min</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Result window</span>
+                    <Input
+                        type="number"
+                        min={0}
+                        max={720}
+                        value={challenge}
+                        onChange={(e) =>
+                            setChallenge(
+                                Math.max(0, Number(e.target.value) || 0)
+                            )
+                        }
+                        className="w-20"
+                    />
+                    <span>min (0 = resolve right after betting)</span>
                 </div>
                 <Button onClick={submit} disabled={submitting}>
                     Open pool
@@ -234,8 +253,19 @@ const PredictionPool = memo(({ className }: { className?: string }) => {
     }
 
     const isCreator = ownUserId === pool.creatorId;
+    // betting locks at closesAt; resolution unlocks there too (early-resolve is
+    // allowed during the challenge window for outcomes that happen early).
     const locked = pool.status === 'open' && now >= pool.closesAt;
     const myOptionId = yourStakes[0]?.optionId ?? null;
+
+    const phaseLabel =
+        pool.status === 'resolved'
+            ? 'Resolved'
+            : now < pool.closesAt
+              ? `Betting closes in ${formatRemaining(pool.closesAt - now)}`
+              : pool.challengeEndsAt && now < pool.challengeEndsAt
+                ? `Result window: ${formatRemaining(pool.challengeEndsAt - now)}`
+                : 'Awaiting result';
 
     return (
         <div className={cn('flex flex-col gap-3 min-h-0', className)}>
@@ -243,11 +273,7 @@ const PredictionPool = memo(({ className }: { className?: string }) => {
             <p className="text-sm font-medium">{pool.question}</p>
 
             <div className="text-xs text-muted-foreground">
-                {pool.status === 'resolved'
-                    ? 'Resolved'
-                    : locked
-                      ? 'Betting closed — awaiting result'
-                      : `Closes in ${formatRemaining(pool.closesAt - now)}`}
+                {phaseLabel}
                 {' · '}
                 <span className="tabular-nums">
                     {pool.totalPot.toLocaleString()} SC pot
