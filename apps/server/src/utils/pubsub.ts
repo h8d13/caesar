@@ -192,6 +192,7 @@ type Events = {
       question: string;
       status: 'open' | 'resolved' | 'void';
       closesAt: number;
+      challengeEndsAt: number | null;
       winningOptionId: number | null;
       createdAt: number;
       totalPot: number;

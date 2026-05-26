@@ -14,6 +14,12 @@ import { protectedProcedure, rateLimitedProcedure, t } from '../../utils/trpc';
 
 const LEDGER_TYPE = 'prediction_pool';
 
+// Optional "challenge window" (the time the predicted event has to play out,
+// after betting closes). Pure display/timing: it holds no SC and gates no
+// resolution (which only needs closesAt), so it lives in memory — a restart
+// just drops the countdown and the pool falls back to "awaiting result".
+const challengeEndsAtById = new Map<number, number>();
+
 type TPoolRow = typeof predictionPools.$inferSelect;
 type TPoolStatus = 'open' | 'resolved' | 'void';
 
@@ -23,6 +29,7 @@ type TPublicPool = {
   question: string;
   status: TPoolStatus;
   closesAt: number;
+  challengeEndsAt: number | null;
   winningOptionId: number | null;
   createdAt: number;
   totalPot: number;
@@ -100,6 +107,7 @@ const buildPublic = async (pool: TPoolRow): Promise<TPublicPool> => {
     question: pool.question,
     status: pool.status as TPoolStatus,
     closesAt: pool.closesAt,
+    challengeEndsAt: challengeEndsAtById.get(pool.id) ?? null,
     winningOptionId: pool.winningOptionId,
     createdAt: pool.createdAt,
     totalPot: bets.reduce((sum, b) => sum + b.amount, 0),
@@ -163,7 +171,8 @@ const createPoolRoute = protectedProcedure
     z.object({
       question: z.string().trim().min(1).max(200),
       options: z.array(z.string().trim().min(1).max(80)).min(2).max(6),
-      durationMinutes: z.number().int().min(1).max(720)
+      durationMinutes: z.number().int().min(1).max(720),
+      challengeMinutes: z.number().int().min(1).max(720).optional()
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -176,13 +185,14 @@ const createPoolRoute = protectedProcedure
       ctx.throwValidationError('pool', 'A pool is already running');
     }
 
+    const closesAt = Date.now() + input.durationMinutes * 60_000;
     const pool = await db
       .insert(predictionPools)
       .values({
         creatorId: ctx.userId,
         question: input.question,
         status: 'open',
-        closesAt: Date.now() + input.durationMinutes * 60_000,
+        closesAt,
         createdAt: Date.now()
       })
       .returning({ id: predictionPools.id })
@@ -193,6 +203,14 @@ const createPoolRoute = protectedProcedure
         .insert(predictionOptions)
         .values({ poolId: pool.id, label })
         .run();
+    }
+
+    // Optional challenge window starts when betting closes. In memory only.
+    if (input.challengeMinutes) {
+      challengeEndsAtById.set(
+        pool.id,
+        closesAt + input.challengeMinutes * 60_000
+      );
     }
 
     await broadcast();
@@ -350,6 +368,7 @@ const resolveRoute = protectedProcedure
       .set({ status: 'resolved', winningOptionId: input.winningOptionId })
       .where(eq(predictionPools.id, p.id))
       .run();
+    challengeEndsAtById.delete(p.id);
 
     for (const userId of new Set(bets.map((b) => b.userId))) {
       await publishUser(userId, 'update');
@@ -386,6 +405,7 @@ const cancelRoute = protectedProcedure.mutation(async ({ ctx }) => {
     .set({ status: 'void' })
     .where(eq(predictionPools.id, p.id))
     .run();
+  challengeEndsAtById.delete(p.id);
 
   for (const userId of new Set(bets.map((b) => b.userId))) {
     await publishUser(userId, 'update');
