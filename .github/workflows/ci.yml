@@ -3,6 +3,8 @@ name: CI
 on:
   push:
     branches: [master]
+    paths-ignore:
+      - '**.md' # do not trigger on docs changes
   pull_request:
   workflow_dispatch:
   workflow_call:
