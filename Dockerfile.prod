@@ -50,36 +50,47 @@ RUN pnpm --filter @caesar/server build:sea
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm --filter @caesar/server deploy --prod /deploy/server
 
-# Static assets the server expects to find on disk on first boot.
-# loadEmbeds() copies these into DATA_PATH at startup.
-RUN mkdir -p /staging \
-    && cp -r /app/apps/client/dist /staging/interface \
-    && cp -r /app/apps/server/src/db/migrations /staging/drizzle \
-    && cp /usr/local/bin/mediasoup-worker /staging/mediasoup-worker
+# Assemble the full runtime tree here, because the distroless runtime has no
+# shell / apt / chown / useradd. Everything is laid out under /out and copied
+# in by the runtime stage:
+#   /out/caesar                    -> SEA binary (read/exec only)
+#   /out/app/node_modules          -> externals (argon2 + mediasoup wrapper)
+#   /out/app/static-prod-assets/*  -> first-boot assets; loadEmbeds() reads
+#                                     process.cwd()/static-prod-assets (= /app)
+#   /out/home/node/.config         -> DATA_PATH parent (XDG_CONFIG_HOME), so the
+#                                     app can create its data dir even without a
+#                                     bind mount
+RUN mkdir -p /out/app/static-prod-assets /out/home/node/.config \
+    && cp -r /app/apps/client/dist /out/app/static-prod-assets/interface \
+    && cp -r /app/apps/server/src/db/migrations /out/app/static-prod-assets/drizzle \
+    && cp /usr/local/bin/mediasoup-worker /out/app/static-prod-assets/mediasoup-worker \
+    && cp -r /deploy/server/node_modules /out/app/node_modules \
+    && cp /app/apps/server/dist/caesar /out/caesar
 
 # --- Runtime stage ---
-FROM debian:bookworm-slim
+# distroless "cc": static base + glibc + libstdc++ + libgcc. That's the minimum
+# for our dynamically-linked Node SEA, the prebuilt (glibc) mediasoup-worker and
+# the argon2 native bindings. (The "static" variant has no libc and would fail
+# to load any of them.) ca-certificates + tzdata are baked in; no apt/shell.
+FROM gcr.io/distroless/cc-debian13
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates libnss3-tools && \
-    rm -rf /var/lib/apt/lists/* && \
-    useradd -u 1000 -m -d /home/node -s /sbin/nologin node
+# os.homedir() reads HOME; DATA_PATH = XDG_CONFIG_HOME/caesar (paths.ts). Set
+# both so the data dir resolves to /home/node/.config/caesar regardless of the
+# (absent) passwd entry for uid 1000.
+ENV CAESAR_ENV=production \
+    HOME=/home/node \
+    XDG_CONFIG_HOME=/home/node/.config
 
-ENV CAESAR_ENV=production
+# SEA binary (node + server ESM bundle). Read/exec only, root ownership is fine.
+COPY --from=builder --chmod=755 /out/caesar /usr/local/bin/caesar
+
+# App tree (node_modules + first-boot assets) and the data-dir parent, owned by
+# the runtime uid 1000 so the SEA can write /app/.caesar-runtime.mjs on boot and
+# the app can create /home/node/.config/caesar.
+COPY --from=builder --chown=1000:1000 /out/app /app
+COPY --from=builder --chown=1000:1000 /out/home /home
 
 WORKDIR /app
-RUN chown node:node /app
-
-# SEA binary contains node + the server ESM bundle as an asset.
-# Bootstrap extracts the bundle to /app/.caesar-runtime.mjs on boot
-# and dynamic-imports it (so bare specifiers resolve to ./node_modules).
-COPY --from=builder --chown=node:node --chmod=755 \
-    /app/apps/server/dist/caesar /usr/local/bin/caesar
-
-# Sidecar node_modules for the externals (argon2 + mediasoup tree).
-COPY --from=builder --chown=node:node /deploy/server/node_modules /app/node_modules
-COPY --from=builder --chown=node:node /staging /app/static-prod-assets
-
-USER node
+USER 1000:1000
 
 CMD ["caesar"]

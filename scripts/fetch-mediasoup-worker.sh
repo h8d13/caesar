@@ -12,8 +12,8 @@
 set -euo pipefail
 
 VERSION=$(node -p "require('./apps/server/package.json').dependencies.mediasoup")
-ARCH=${ARCH:-x64}
-KERNEL=${KERNEL:-kernel6}
+ARCH=${ARCH:-x64} # TODO: Add knob doc for ARM build
+KERNEL=${KERNEL:-kernel6} # backwards compatible linux specs = can run on kernel 7.x.x 
 DEST=${1:-./vendor/mediasoup}
 
 URL="https://github.com/versatica/mediasoup/releases/download/${VERSION}/mediasoup-worker-${VERSION}-linux-${ARCH}-${KERNEL}.tgz"
