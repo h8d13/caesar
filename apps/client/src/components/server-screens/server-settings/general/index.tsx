@@ -78,8 +78,8 @@ const General = memo(() => {
                 </Group>
 
                 <Group
-                    label="Enable Casino Games"
-                    description="Allow users to play Crash, Roulette and Coinflip with social credit. If disabled, all game routes are blocked."
+                    label="Enable Server Activities"
+                    description="Allow users to use Watch Party, Casino with SC. If disabled, all game routes are blocked."
                 >
                     <Switch
                         checked={settings.gamesEnabled}

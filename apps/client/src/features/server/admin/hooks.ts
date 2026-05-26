@@ -70,12 +70,16 @@ export const useAdminGeneral = () => {
                 directMessagesEnabled: settings.directMessagesEnabled,
                 gamesEnabled: settings.gamesEnabled
             });
+            // refresh the cached query so reopening settings reflects what was
+            // saved (staleTime is 30s, so the cache would otherwise serve the
+            // pre-save value and the toggles would appear reverted).
+            await refetch();
             toast.success('Settings updated');
         } catch (error) {
             console.error('Error updating settings:', error);
             setErrors(parseTrpcErrors(error));
         }
-    }, [settings]);
+    }, [settings, refetch]);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const onChange = useCallback((field: keyof typeof settings, value: any) => {
@@ -324,12 +328,15 @@ export const useAdminStorage = () => {
                 storageOverflowAction:
                     values.storageOverflowAction as StorageOverflowAction
             });
+            // keep the cache in sync with the DB (staleTime 30s) so reopening
+            // storage settings shows the saved values, not the pre-save cache.
+            await refetch();
             toast.success('Storage settings updated');
         } catch (error) {
             console.error('Error updating storage settings:', error);
             setTrpcErrors(error);
         }
-    }, [values, setTrpcErrors]);
+    }, [values, setTrpcErrors, refetch]);
 
     const labels = useMemo(() => {
         return {
