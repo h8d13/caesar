@@ -5,7 +5,8 @@ export enum ServerScreen {
     CHANNEL_SETTINGS = 'CHANNEL_SETTINGS',
     CATEGORY_SETTINGS = 'CATEGORY_SETTINGS',
     USER_SETTINGS = 'USER_SETTINGS',
-    GAMES = 'GAMES'
+    GAMES = 'GAMES',
+    WATCH_PARTY = 'WATCH_PARTY'
 }
 
 export type TServerScreenBaseProps = {

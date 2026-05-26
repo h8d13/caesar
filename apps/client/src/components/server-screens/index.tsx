@@ -32,6 +32,9 @@ const ScreensMap = {
     ),
     [ServerScreen.GAMES]: lazy(() =>
         import('./games').then((m) => ({ default: m.Games }))
+    ),
+    [ServerScreen.WATCH_PARTY]: lazy(() =>
+        import('./watch-party').then((m) => ({ default: m.WatchParty }))
     )
 };
 

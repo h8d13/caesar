@@ -69,7 +69,10 @@ export enum ServerEvents {
   DM_CALL_ENDED = 'dmCallEnded',
   DM_READ = 'dmRead',
 
-  SOUNDBOARD_PLAY = 'soundboardPlay'
+  SOUNDBOARD_PLAY = 'soundboardPlay',
+
+  WATCH_PARTY_UPDATE = 'watchPartyUpdate',
+  PREDICTION_POOL_UPDATE = 'predictionPoolUpdate'
 }
 
 export type TNewMessage = {

@@ -178,6 +178,31 @@ type Events = {
     channelId: number;
     soundId: number;
   };
+
+  [ServerEvents.WATCH_PARTY_UPDATE]: {
+    videoId: string | null;
+    setByUserId: number | null;
+    updatedAt: number;
+  };
+
+  [ServerEvents.PREDICTION_POOL_UPDATE]: {
+    pool: {
+      id: number;
+      creatorId: number;
+      question: string;
+      status: 'open' | 'resolved' | 'void';
+      closesAt: number;
+      winningOptionId: number | null;
+      createdAt: number;
+      totalPot: number;
+      options: {
+        id: number;
+        label: string;
+        total: number;
+        backers: number;
+      }[];
+    } | null;
+  };
 };
 
 class PubSub {

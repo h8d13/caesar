@@ -714,6 +714,59 @@ const coinflipGames = sqliteTable(
   ]
 );
 
+const predictionPools = sqliteTable(
+  'prediction_pools',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    creatorId: integer('creator_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    question: text('question').notNull(),
+    status: text('status').notNull(), // 'open' | 'resolved' | 'void'
+    closesAt: integer('closes_at').notNull(),
+    winningOptionId: integer('winning_option_id'),
+    createdAt: integer('created_at').notNull()
+  },
+  (t) => [
+    index('prediction_pools_status_idx').on(t.status),
+    index('prediction_pools_created_idx').on(t.createdAt)
+  ]
+);
+
+const predictionOptions = sqliteTable(
+  'prediction_options',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    poolId: integer('pool_id')
+      .notNull()
+      .references(() => predictionPools.id, { onDelete: 'cascade' }),
+    label: text('label').notNull()
+  },
+  (t) => [index('prediction_options_pool_idx').on(t.poolId)]
+);
+
+const predictionBets = sqliteTable(
+  'prediction_bets',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    poolId: integer('pool_id')
+      .notNull()
+      .references(() => predictionPools.id, { onDelete: 'cascade' }),
+    optionId: integer('option_id')
+      .notNull()
+      .references(() => predictionOptions.id, { onDelete: 'cascade' }),
+    userId: integer('user_id').notNull(),
+    amount: integer('amount').notNull(),
+    ledgerEntryId: integer('ledger_entry_id'),
+    createdAt: integer('created_at').notNull()
+  },
+  (t) => [
+    index('prediction_bets_pool_idx').on(t.poolId),
+    index('prediction_bets_option_idx').on(t.optionId),
+    index('prediction_bets_user_idx').on(t.userId)
+  ]
+);
+
 export {
   activityLog,
   categories,
@@ -732,6 +785,9 @@ export {
   messageFiles,
   messageReactions,
   messages,
+  predictionBets,
+  predictionOptions,
+  predictionPools,
   rolePermissions,
   roles,
   rouletteBets,

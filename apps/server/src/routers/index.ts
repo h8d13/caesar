@@ -11,10 +11,12 @@ import { invitesRouter } from './invites';
 import { keysRouter } from './keys';
 import { messagesRouter } from './messages';
 import { othersRouter } from './others';
+import { predictionRouter } from './prediction';
 import { rolesRouter } from './roles';
 import { soundsRouter } from './sounds';
 import { usersRouter } from './users';
 import { voiceRouter } from './voice';
+import { watchPartyRouter } from './watch-party';
 import { webauthnRouter } from './webauthn';
 import { whiteboardRouter } from './whiteboard';
 
@@ -33,6 +35,8 @@ const appRouter = t.router({
   voice: voiceRouter,
   categories: categoriesRouter,
   whiteboard: whiteboardRouter,
+  watchParty: watchPartyRouter,
+  prediction: predictionRouter,
   crash: crashRouter,
   roulette: rouletteRouter,
   coinflip: coinflipRouter,

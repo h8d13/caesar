@@ -17,7 +17,7 @@ const Games = memo(({ close }: TGamesProps) => {
     const [tab, setTab] = useState<Tab>('games');
 
     return (
-        <ServerScreenLayout close={close} title="Games">
+        <ServerScreenLayout close={close} title="Casino">
             <div className="flex flex-col gap-4 h-full">
                 <div className="flex items-center gap-4 px-4">
                     <Balances />
@@ -31,7 +31,7 @@ const Games = memo(({ close }: TGamesProps) => {
                                     : 'bg-muted text-muted-foreground hover:text-foreground'
                             )}
                         >
-                            Games
+                            Casino
                         </button>
                         <button
                             onClick={() => setTab('history')}

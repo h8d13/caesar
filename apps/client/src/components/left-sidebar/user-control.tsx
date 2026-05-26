@@ -9,16 +9,28 @@ import { useOwnPublicUser } from '@/features/server/users/hooks';
 import { useMedia } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
 import { ChannelPermission } from '@caesar/shared';
-import { Button, Tooltip } from '@caesar/ui';
 import {
+    Button,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+    Separator,
+    Tooltip
+} from '@caesar/ui';
+import {
+    Dices,
     Eye,
     EyeOff,
     HeadphoneOff,
     Headphones,
     Mic,
     MicOff,
+    MonitorPlay,
     Rocket,
-    Settings
+    Settings,
+    Sparkles
 } from 'lucide-react';
 import { memo, useCallback } from 'react';
 import { toast } from 'sonner';
@@ -38,10 +50,6 @@ const UserControl = memo(() => {
         openServerScreen(ServerScreen.USER_SETTINGS);
     }, []);
 
-    const handleGamesClick = useCallback(() => {
-        openServerScreen(ServerScreen.GAMES);
-    }, []);
-
     const appearOffline = ownPublicUser?.appearOffline ?? false;
 
     const handleToggleAppearOffline = useCallback(async () => {
@@ -53,6 +61,26 @@ const UserControl = memo(() => {
     }, [appearOffline]);
 
     if (!ownPublicUser) return null;
+
+    // Activities surfaced from the rocket menu. Add an entry to extend it; the
+    // rocket shows whenever at least one activity is enabled.
+    const activities = [
+        {
+            id: 'casino',
+            label: 'Casino',
+            icon: Dices,
+            enabled: gamesEnabled,
+            onSelect: () => openServerScreen(ServerScreen.GAMES)
+        },
+        {
+            id: 'watch-party',
+            label: 'Watch party',
+            icon: MonitorPlay,
+            enabled: true,
+            onSelect: () => openServerScreen(ServerScreen.WATCH_PARTY)
+        }
+    ];
+    const enabledActivities = activities.filter((activity) => activity.enabled);
 
     return (
         <div className="flex items-center justify-between h-14 px-2 bg-muted/20 border-t border-border">
@@ -144,18 +172,6 @@ const UserControl = memo(() => {
                     )}
                 </Button>
 
-                {gamesEnabled && (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                        onClick={handleGamesClick}
-                        title="Games"
-                    >
-                        <Rocket className="h-4 w-4" />
-                    </Button>
-                )}
-
                 <Button
                     variant="ghost"
                     size="icon"
@@ -165,6 +181,43 @@ const UserControl = memo(() => {
                 >
                     <Settings className="h-4 w-4" />
                 </Button>
+
+                {enabledActivities.length > 0 && (
+                    <>
+                        <Separator
+                            orientation="vertical"
+                            className="h-5 mx-0.5"
+                        />
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-green-500 hover:text-green-400 hover:bg-muted/50"
+                                    title="Activities"
+                                >
+                                    <Rocket className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                {enabledActivities.map((activity) => (
+                                    <DropdownMenuItem
+                                        key={activity.id}
+                                        onClick={activity.onSelect}
+                                    >
+                                        <activity.icon className="h-4 w-4" />
+                                        {activity.label}
+                                    </DropdownMenuItem>
+                                ))}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem disabled>
+                                    <Sparkles className="h-4 w-4" />
+                                    More soon
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </>
+                )}
             </div>
         </div>
     );
