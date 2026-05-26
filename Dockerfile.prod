@@ -50,16 +50,9 @@ RUN pnpm --filter @caesar/server build:sea
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm --filter @caesar/server deploy --prod /deploy/server
 
-# Assemble the full runtime tree here, because the distroless runtime has no
-# shell / apt / chown / useradd. Everything is laid out under /out and copied
-# in by the runtime stage:
-#   /out/caesar                    -> SEA binary (read/exec only)
-#   /out/app/node_modules          -> externals (argon2 + mediasoup wrapper)
-#   /out/app/static-prod-assets/*  -> first-boot assets; loadEmbeds() reads
-#                                     process.cwd()/static-prod-assets (= /app)
-#   /out/home/node/.config         -> DATA_PATH parent (XDG_CONFIG_HOME), so the
-#                                     app can create its data dir even without a
-#                                     bind mount
+# distroless has no shell/chown, so stage the whole tree under /out; the runtime
+# lays it down with COPY --chown. assets -> /app/static-prod-assets (loadEmbeds
+# reads process.cwd()/static-prod-assets), /home/node/.config -> DATA_PATH parent.
 RUN mkdir -p /out/app/static-prod-assets /out/home/node/.config \
     && cp -r /app/apps/client/dist /out/app/static-prod-assets/interface \
     && cp -r /app/apps/server/src/db/migrations /out/app/static-prod-assets/drizzle \
@@ -68,25 +61,18 @@ RUN mkdir -p /out/app/static-prod-assets /out/home/node/.config \
     && cp /app/apps/server/dist/caesar /out/caesar
 
 # --- Runtime stage ---
-# distroless "cc": static base + glibc + libstdc++ + libgcc. That's the minimum
-# for our dynamically-linked Node SEA, the prebuilt (glibc) mediasoup-worker and
-# the argon2 native bindings. (The "static" variant has no libc and would fail
-# to load any of them.) ca-certificates + tzdata are baked in; no apt/shell.
+# distroless "cc" = glibc + libstdc++ + libgcc: minimum for the Node SEA,
+# prebuilt mediasoup-worker and argon2 (all dynamic glibc). "static" has no libc.
 FROM gcr.io/distroless/cc-debian13
 
-# os.homedir() reads HOME; DATA_PATH = XDG_CONFIG_HOME/caesar (paths.ts). Set
-# both so the data dir resolves to /home/node/.config/caesar regardless of the
-# (absent) passwd entry for uid 1000.
+# DATA_PATH = XDG_CONFIG_HOME/caesar; set HOME/XDG since uid 1000 has no passwd entry.
 ENV CAESAR_ENV=production \
     HOME=/home/node \
     XDG_CONFIG_HOME=/home/node/.config
 
-# SEA binary (node + server ESM bundle). Read/exec only, root ownership is fine.
 COPY --from=builder --chmod=755 /out/caesar /usr/local/bin/caesar
 
-# App tree (node_modules + first-boot assets) and the data-dir parent, owned by
-# the runtime uid 1000 so the SEA can write /app/.caesar-runtime.mjs on boot and
-# the app can create /home/node/.config/caesar.
+# uid 1000 so the SEA can write /app/.caesar-runtime.mjs on boot.
 COPY --from=builder --chown=1000:1000 /out/app /app
 COPY --from=builder --chown=1000:1000 /out/home /home
 
