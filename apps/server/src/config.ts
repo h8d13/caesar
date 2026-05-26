@@ -15,7 +15,11 @@ const [SERVER_PUBLIC_IP, SERVER_PRIVATE_IP] = await Promise.all([
   getPrivateIp()
 ]);
 
-const zConfig = z.object({
+// ---------------------------------------------------------------------------
+// Env-backed config: deploy/infra knobs. Set via environment (docker-compose),
+// never written to config.ini. The defaults below apply when the var is unset.
+// ---------------------------------------------------------------------------
+const zEnvConfig = z.object({
   server: z.object({
     port: z.coerce.number().int().positive(),
     debug: z.coerce.boolean()
@@ -24,8 +28,52 @@ const zConfig = z.object({
     port: z.coerce.number().int().positive(),
     announcedAddress: z.string(),
     maxBitrate: z.coerce.number().int().positive(),
-    workers: z.coerce.number().int().nonnegative().default(0)
+    workers: z.coerce.number().int().nonnegative()
   }),
+  limits: z.object({
+    // 0 = unlimited. Counts active (non-deleted) users; banned still count.
+    // Bootstrap (count==0) always bypasses so the first admin can register.
+    maxUsers: z.coerce.number().int().nonnegative()
+  })
+});
+
+type TEnvConfig = z.infer<typeof zEnvConfig>;
+
+const envDefaults: TEnvConfig = {
+  server: {
+    port: 4991,
+    debug: IS_DEVELOPMENT
+  },
+  webRtc: {
+    port: 40000,
+    announcedAddress: '',
+    maxBitrate: 30_000_000, // 30 Mbps
+    // each worker binds basePort + i, must match exposed port range
+    workers: 1
+  },
+  limits: {
+    maxUsers: 0
+  }
+};
+
+const envConfig = zEnvConfig.parse(
+  applyEnvOverrides(structuredClone(envDefaults), {
+    'server.port': 'CAESAR_PORT',
+    'server.debug': 'CAESAR_DEBUG',
+    'webRtc.port': 'CAESAR_WEBRTC_PORT',
+    'webRtc.announcedAddress': 'CAESAR_WEBRTC_ANNOUNCED_ADDRESS',
+    'webRtc.maxBitrate': 'CAESAR_WEBRTC_MAX_BITRATE',
+    'webRtc.workers': 'CAESAR_WEBRTC_WORKERS',
+    'limits.maxUsers': 'CAESAR_MAX_USERS'
+  })
+);
+
+// ---------------------------------------------------------------------------
+// Ini-backed config: rate-limiter policy. Persisted to config.ini and migrated
+// in place (read -> merge with defaults -> validate -> write back), so adding
+// or removing a limiter never needs a manual config migration.
+// ---------------------------------------------------------------------------
+const zIniConfig = z.object({
   rateLimiters: z.object({
     sendAndEditMessage: z.object({
       maxRequests: z.coerce.number().int().positive(),
@@ -120,11 +168,6 @@ const zConfig = z.object({
       windowMs: z.coerce.number().int().positive()
     })
   }),
-  limits: z.object({
-    // 0 = unlimited. Counts active (non-deleted) users; banned still count.
-    // Bootstrap (count==0) always bypasses so the first admin can register.
-    maxUsers: z.coerce.number().int().nonnegative().default(0)
-  }),
   // Failed-login lockout: escalating, IP-keyed, sits behind the joinServer
   // burst limiter. After maxFailures failures inside windowMs the IP is locked
   // for baseLockMs, doubling per extra failure up to maxLockMs.
@@ -136,20 +179,9 @@ const zConfig = z.object({
   })
 });
 
-type TConfig = z.infer<typeof zConfig>;
+type TIniConfig = z.infer<typeof zIniConfig>;
 
-const defaultConfig: TConfig = {
-  server: {
-    port: 4991,
-    debug: IS_DEVELOPMENT
-  },
-  webRtc: {
-    port: 40000,
-    announcedAddress: '',
-    maxBitrate: 30_000_000, // 30 Mbps
-    // each worker binds basePort + i, must match exposed port range
-    workers: 1
-  },
+const iniDefaults: TIniConfig = {
   rateLimiters: {
     sendAndEditMessage: {
       maxRequests: 15,
@@ -244,9 +276,6 @@ const defaultConfig: TConfig = {
       windowMs: 60_000
     }
   },
-  limits: {
-    maxUsers: 0
-  },
   loginLockout: {
     maxFailures: 10,
     windowMs: 15 * 60_000, // 15 minutes
@@ -255,7 +284,7 @@ const defaultConfig: TConfig = {
   }
 };
 
-let config: TConfig = structuredClone(defaultConfig);
+let iniConfig: TIniConfig = structuredClone(iniDefaults);
 
 await ensureServerDirs();
 
@@ -263,7 +292,7 @@ const configExists = existsSync(CONFIG_INI_PATH);
 
 if (!configExists) {
   // config does not exist, create it with the default config
-  await fs.writeFile(CONFIG_INI_PATH, stringify(config));
+  await fs.writeFile(CONFIG_INI_PATH, stringify(iniConfig));
 } else {
   try {
     // config exists, we need to make sure it is up to date with the schema
@@ -273,32 +302,24 @@ if (!configExists) {
       encoding: 'utf-8'
     });
 
-    const existingConfig = parse(existingConfigText) as Partial<TConfig>;
-    const mergedConfig = deepMerge(config, existingConfig);
+    const existingConfig = parse(existingConfigText) as Partial<TIniConfig>;
+    const mergedConfig = deepMerge(iniConfig, existingConfig);
 
-    config = zConfig.parse(mergedConfig);
+    // parse strips unknown keys, so any legacy [server]/[webRtc]/[limits]
+    // sections left in an old config.ini are dropped on write-back.
+    iniConfig = zIniConfig.parse(mergedConfig);
 
-    await fs.writeFile(CONFIG_INI_PATH, stringify(config));
+    await fs.writeFile(CONFIG_INI_PATH, stringify(iniConfig));
   } catch (error) {
     // something went wrong, just log the error and overwrite the config file with the default config
     console.error(
       `Error reading or parsing config.ini. Overwriting with default config. Error: ${getErrorMessage(error)}`
     );
 
-    await fs.writeFile(CONFIG_INI_PATH, stringify(config));
+    await fs.writeFile(CONFIG_INI_PATH, stringify(iniConfig));
   }
 }
 
-config = applyEnvOverrides(config, {
-  'server.port': 'CAESAR_PORT',
-  'server.debug': 'CAESAR_DEBUG',
-  'webRtc.port': 'CAESAR_WEBRTC_PORT',
-  'webRtc.announcedAddress': 'CAESAR_WEBRTC_ANNOUNCED_ADDRESS',
-  'webRtc.maxBitrate': 'CAESAR_WEBRTC_MAX_BITRATE',
-  'webRtc.workers': 'CAESAR_WEBRTC_WORKERS',
-  'limits.maxUsers': 'CAESAR_MAX_USERS'
-});
-
-config = Object.freeze(config);
+const config = Object.freeze({ ...envConfig, ...iniConfig });
 
 export { config, SERVER_PRIVATE_IP, SERVER_PUBLIC_IP };

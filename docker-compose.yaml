@@ -11,16 +11,16 @@ services:
     container_name: caesar
     restart: unless-stopped
     stop_grace_period: 2s
+    cpus: "4"
     profiles: ["prod"]
     ports:
-      - "40000-40003:40000-40003/tcp"
-      - "40000-40003:40000-40003/udp"
+      - "40000-40002:40000-40002/tcp"
+      - "40000-40002:40000-40002/udp"
     environment:
       CAESAR_PORT: "4991"
-      CAESAR_WEBRTC_WORKERS: "4"
+      CAESAR_WEBRTC_WORKERS: "3"
       CAESAR_SITE: ${CAESAR_SITE:-localhost}
-      # One Caddy hop in front of the app: trust exactly one proxy for client-IP
-      # derivation (rate limiting / lockout / audit). See wiki Configuration.
+      # See wiki Configuration.
       CAESAR_TRUSTED_PROXY_HOPS: "1"
     volumes:
       - ./data:/home/node/.config/caesar
