@@ -141,6 +141,11 @@ class VoiceRuntime {
   private userWorkerIndex: Map<number, number> = new Map();
   // producers piped to non-owner routers: producerId -> set of dest worker idx
   private pipedProducers: Map<string, Set<number>> = new Map();
+  // in-flight pipe ops keyed by `${producerId}-${destWorkerIndex}` so
+  // concurrent consumes of the same producer share one pipeToRouter call
+  // instead of racing into a duplicate (the duplicate reuses the producer id
+  // on the dest router and throws, dropping that listener's consumer).
+  private pipePromises: Map<string, Promise<void>> = new Map();
   private rrCursor = 0;
   private consumerTransports: TTransportMap = {};
   private producerTransports: TTransportMap = {};
@@ -436,19 +441,36 @@ class VoiceRuntime {
     }
     if (piped.has(destWorkerIndex)) return;
 
+    // Register the in-flight promise BEFORE awaiting so a concurrent consume
+    // of the same producer to the same worker awaits it instead of issuing a
+    // duplicate pipeToRouter. Without this, two listeners on the same foreign
+    // worker both pass the piped.has() check and the second pipe throws on
+    // the dest router => "heard by some but not all" after a re-consume burst.
+    const key = `${producer.id}-${destWorkerIndex}`;
+    const inflight = this.pipePromises.get(key);
+    if (inflight) return inflight;
+
     const srcRouter = this.routers.get(ownerIndex);
     const destRouter = this.routers.get(destWorkerIndex);
     if (!srcRouter || !destRouter) return;
 
-    await srcRouter.pipeToRouter({
-      producerId: producer.id,
-      router: destRouter
+    const pipePromise = (async () => {
+      await srcRouter.pipeToRouter({
+        producerId: producer.id,
+        router: destRouter
+      });
+      piped.add(destWorkerIndex);
+    })().finally(() => {
+      this.pipePromises.delete(key);
     });
-    piped.add(destWorkerIndex);
+
+    this.pipePromises.set(key, pipePromise);
 
     producer.observer.once('close', () => {
       this.pipedProducers.delete(producer.id);
     });
+
+    return pipePromise;
   };
 
   public createConsumerTransport = async (userId: number) => {

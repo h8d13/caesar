@@ -712,38 +712,57 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
 
                 logVoice('Obtained audio track', { audioTrack: rawAudioTrack });
 
-                localAudioProducer.current =
-                    await producerTransport.current?.produce({
-                        track: transmitTrack,
-                        codecOptions: {
-                            opusStereo: false,
-                            opusFec: true,
-                            opusDtx: false,
-                            opusMaxPlaybackRate: 48000,
-                            opusMaxAverageBitrate: 128000
-                        },
-                        appData: { kind: StreamKind.AUDIO }
+                const existingProducer = localAudioProducer.current;
+
+                if (existingProducer && !existingProducer.closed) {
+                    // Reuse the live producer: swap the fresh mic track in
+                    // rather than building a new one. Keeps producer.id stable
+                    // across re-acquire (unmute after the mic track dropped
+                    // while muted), so the server never fans out
+                    // VOICE_NEW_PRODUCER and listeners never re-consume, which
+                    // is what triggered the cross-worker pipe race.
+                    await existingProducer.replaceTrack({
+                        track: transmitTrack
+                    });
+                } else {
+                    localAudioProducer.current =
+                        await producerTransport.current?.produce({
+                            track: transmitTrack,
+                            // disableTrackOnPause:false so mediasoup-client never
+                            // flips track.enabled on its own. Mute is owned
+                            // solely by syncTransmitMicrophoneTrackState, and
+                            // replaceTrack must not fight it.
+                            disableTrackOnPause: false,
+                            codecOptions: {
+                                opusStereo: false,
+                                opusFec: true,
+                                opusDtx: false,
+                                opusMaxPlaybackRate: 48000,
+                                opusMaxAverageBitrate: 128000
+                            },
+                            appData: { kind: StreamKind.AUDIO }
+                        });
+
+                    logVoice('Microphone audio producer created', {
+                        producer: localAudioProducer.current
                     });
 
-                logVoice('Microphone audio producer created', {
-                    producer: localAudioProducer.current
-                });
+                    localAudioProducer.current?.on('@close', async () => {
+                        logVoice('Audio producer closed');
 
-                localAudioProducer.current?.on('@close', async () => {
-                    logVoice('Audio producer closed');
-
-                    // teardown race: this handler can fire after the WS+trpc
-                    // cleanup has already run (kick / disconnect / refresh).
-                    // wrap getTRPCClient too so the null-client throw doesn't
-                    // escape as an unhandled rejection.
-                    try {
-                        await getTRPCClient().voice.closeProducer.mutate({
-                            kind: StreamKind.AUDIO
-                        });
-                    } catch (error) {
-                        logVoice('Error closing audio producer', { error });
-                    }
-                });
+                        // teardown race: this handler can fire after the WS+trpc
+                        // cleanup has already run (kick / disconnect / refresh).
+                        // wrap getTRPCClient too so the null-client throw doesn't
+                        // escape as an unhandled rejection.
+                        try {
+                            await getTRPCClient().voice.closeProducer.mutate({
+                                kind: StreamKind.AUDIO
+                            });
+                        } catch (error) {
+                            logVoice('Error closing audio producer', { error });
+                        }
+                    });
+                }
 
                 rawAudioTrack.onended = () => {
                     logVoice('Audio track ended, cleaning up microphone');
@@ -752,8 +771,10 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                         track.stop();
                     });
                     cleanupMicProcessingResources();
-                    localAudioProducer.current?.close();
-
+                    // Keep the producer alive (do not close) so the next
+                    // unmute can replaceTrack into it and preserve producer.id,
+                    // avoiding a re-consume fanout. It is closed for real on
+                    // leave via clearLocalStreams.
                     setLocalAudioStream(undefined);
                 };
             } else {
