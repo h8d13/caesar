@@ -15,6 +15,7 @@
 - Add ability to mention channels using `#` and `@` for user mentions + notifications
 - Watch party: share a YouTube stream synced live to every connected client
   - Prediction pools: stake social credit on outcomes; optional timed challenge
+- Casino and hookers
 
 ## Messaging & DMs
 
