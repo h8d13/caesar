@@ -5,8 +5,6 @@ docker compose version >/dev/null 2>&1 || { echo "docker compose not found"; exi
 
 export CAESAR_BUILD_VERSION=$(git rev-parse --short HEAD)
 
-# default is 212992 on debian servers which for media soup is too low
-# especially if running multiple streams/videos see net-buffers.sh helper.
 # Prod-dev: hermetic test of the real prod binary on https://localhost:8443
 # (self-signed). Skips git pull / system prune / container nuke so it stays
 # safe to run alongside the real prod or while iterating on local commits.
