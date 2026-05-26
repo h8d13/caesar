@@ -12,7 +12,7 @@ import { getFileUrl } from '@/helpers/get-file-url';
 import { getTRPCClient } from '@/lib/trpc';
 import { ChannelType, UserStatus } from '@caesar/shared';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Users } from 'lucide-react';
 import { memo } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -69,7 +69,7 @@ const OnlineCount = memo(() => {
                 <span className="tabular-nums font-medium text-foreground">
                     {onlineCount}
                 </span>
-                {onlineCount === 1 ? 'user' : 'users'}
+                <Users className="h-3 w-3" />
             </span>
         </div>
     );
