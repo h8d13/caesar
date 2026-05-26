@@ -33,9 +33,11 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile
 
 # Worker fetch only needs the script + server manifest (already present), so
-# it caches until the pinned mediasoup version changes.
+# it caches until the pinned mediasoup version (or target arch) changes.
+# TARGETARCH (amd64/arm64) is auto-set by BuildKit; the script normalizes it.
+ARG TARGETARCH
 COPY scripts ./scripts
-RUN scripts/fetch-mediasoup-worker.sh /usr/local/bin
+RUN ARCH=${TARGETARCH} scripts/fetch-mediasoup-worker.sh /usr/local/bin
 
 # Now the source; edits below this line no longer bust install/fetch.
 COPY . .

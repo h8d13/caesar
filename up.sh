@@ -37,5 +37,14 @@ echo ""
 echo "BUILDING CAESAR-PROD VERSION HASH: $CAESAR_BUILD_VERSION"
 echo ""
 
-# convenience wrapper for prod builds
-docker system prune -f && docker compose --profile prod build --no-cache && docker compose --profile prod up -d
+# convenience wrapper for prod builds. default reuses Docker's layer cache (the
+# Dockerfile only rebuilds changed layers). pass --clean for a cold reproducible
+# build: system-wide prune + --no-cache (releases, or to clear a bad cache).
+if [ "${1:-}" = "--clean" ]; then
+    echo "cold build: docker system prune + --no-cache"
+    docker system prune -f && docker compose --profile prod build --no-cache
+else
+    docker compose --profile prod build
+fi || exit 1
+
+docker compose --profile prod up -d
