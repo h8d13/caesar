@@ -13,20 +13,22 @@
 - Client-side embeds for links
 - Add support for YT shorts / lives / etc. to preview
 - Add ability to mention channels using `#` and `@` for user mentions + notifications
+- Watch party: share a YouTube stream synced live to every connected client
+  - Prediction pools: stake social credit on outcomes; optional timed challenge
 
 ## Messaging & DMs
 
 - Search messages (DMs and global)
-- DMs / mentions fixes / direct reply (from upstream)
+- DMs / mentions fixes / direct reply
 - Added 1:1 calls in DMs
   - Fix on 1:1 call: focus DM panel + top-bar voice controls
 - Bulk "Delete entire conversation" trash icon in DM top bar
 - `Read at HH:MM` opt-in via Notifications tab
-- Files in DMs using ephemeral mode are encrypted (blobs)
+- Suppress typing signal when sender is offline
+- Ephemeral mode in DMs (msgs + files); encryption detail under Security
 - Various DM fixes: no threads, no upvotes
 - Fix emojis serving stale (customs not appended to recent or quick replies)
 - Fix upvotes appearing twice for message groups
-- Suppress typing signal when sender is offline
 
 ## Voice & streams
 
@@ -35,8 +37,7 @@
 - 2 streams in view split horizontally instead of vertically
 - Optional simulcast toggle in settings (spatial quality layers)
 - Add `DTLN` noise suppression from upstream (alongside `RNNoise`); noise gate on by default
-- Volume controller for soundboard
-- Soundboard
+- Soundboard + volume controller (both soundboard and individual streams)
 - Hook transport stats to actually reflect issues
 - Fix stream encoding strategies; create media paused, then request
 - Various race fixes (audio context)
@@ -81,11 +82,11 @@
 - Fix various input validation issues
 - Client IP for rate limiting / lockout / audit is derived only from trusted
   proxy hops or a configured header (`CAESAR_TRUSTED_PROXY_HOPS`,
-  `CAESAR_TRUSTED_CLIENT_IP_HEADER`); spoofable forwarding headers are ignored *(in progress)*
+  `CAESAR_TRUSTED_CLIENT_IP_HEADER`); spoofable forwarding headers are ignored
 - Various rate limiting additions:
   - Per-IP burst limiter on `/login`
   - Rate-limit the `/public` file endpoint
-  - Failed-login lockout: escalating per-IP lock after repeated failures (#371) *(in progress)*
+  - Failed-login lockout: escalating per-IP lock after repeated failures (#371)
 
 ## Permissions & moderation (ACL)
 
@@ -111,11 +112,17 @@
 - Fix cache ETag on images (stops re-downloading same assets)
 - Mobile layout fixes
 - Social credit (reward 1 per 15 min active, capped at 50/day)
+- Online-count pill in server view
+- Fix thread reply count not updating live
+- Fix stale admin / server-settings toggles
 - Other layout / UX polish
 
 ## Build, deps & repo
 
 - Full switch from `bun` to `pnpm`
+- Switch prod image to distroless
+- Wire up ARM builds (multi-arch)
+- Target Linux only
 - Update all deps; pin major for TS / Node / mediasoup
 - Remove logging deps and git integration
 - `prod-dev` compose profile for fresh HTTPS testing on `:8443`
