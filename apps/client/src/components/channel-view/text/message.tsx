@@ -160,7 +160,12 @@ const Message = memo(
                             <button
                                 type="button"
                                 onClick={onThreadClick}
-                                className="flex items-center gap-1 text-xs text-primary/70 hover:text-primary hover:underline mt-1 transition-colors"
+                                className={cn(
+                                    'inline-flex items-center gap-1 mt-1 rounded-full border px-2 py-0.5 text-xs font-medium transition-colors',
+                                    isActiveThread
+                                        ? 'border-primary/40 bg-primary/20 text-primary'
+                                        : 'border-primary/20 bg-primary/10 text-primary/80 hover:bg-primary/20 hover:text-primary'
+                                )}
                             >
                                 <MessageSquareText className="h-3 w-3" />
                                 <span>
