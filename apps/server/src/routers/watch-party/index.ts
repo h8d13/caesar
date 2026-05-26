@@ -1,6 +1,6 @@
 import { ServerEvents } from '@caesar/shared';
+import { protectedProcedure, t } from '@server/utils/trpc';
 import z from 'zod';
-import { protectedProcedure, t } from '../../utils/trpc';
 
 // Single shared watch-party state for this server instance. In memory: a watch
 // party is ephemeral, so it resets on restart by design (no persistence).
