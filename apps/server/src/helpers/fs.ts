@@ -7,8 +7,6 @@ const ensureDir = async (path: string) => {
 };
 
 const getAppDataPath = (): string => {
-  const platform = process.platform;
-
   // Linux → ~/.config
   return process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
 };
