@@ -182,7 +182,12 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
     return (
         <Popover>
             <PopoverTrigger asChild>{children}</PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="start" side="right">
+            <PopoverContent
+                className="w-80 max-w-[calc(100vw-1rem)] p-0"
+                align="center"
+                side="top"
+                collisionPadding={8}
+            >
                 <div className="relative">
                     {user.banned && (
                         <div className="absolute right-2 top-2 bg-red-500 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
