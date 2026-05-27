@@ -2,7 +2,6 @@ import crypto from 'crypto';
 import fs from 'fs';
 import jwt from 'jsonwebtoken';
 import path from 'path';
-import { getServerToken } from '../db/queries/server';
 import { DATA_PATH } from '../helpers/paths';
 import { logger } from '../logger';
 
@@ -58,15 +57,10 @@ const loadJwtSecret = async (): Promise<string> => {
 // skipped (e.g. tests that drive the DB layer directly).
 const getJwtSecret = (): Promise<string> => loadJwtSecret();
 
-// Verify against the dedicated key, falling back to the legacy `secretToken`
-// for sessions minted before the key split. Legacy tokens expire within 7d,
-// after which the fallback is dead and the catch branch can be removed.
-const verifyJwt = async <T>(token: string): Promise<T> => {
-  try {
-    return jwt.verify(token, await getJwtSecret()) as T;
-  } catch {
-    return jwt.verify(token, await getServerToken()) as T;
-  }
-};
+// Verify against the dedicated key only. Sessions signed with the legacy
+// pre-split `secretToken` are intentionally not accepted: those users
+// re-login once and get a fresh `jwt.key`-signed token.
+const verifyJwt = async <T>(token: string): Promise<T> =>
+  jwt.verify(token, await getJwtSecret()) as T;
 
 export { getJwtSecret, loadJwtSecret, verifyJwt };
