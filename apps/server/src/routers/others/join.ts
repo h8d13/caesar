@@ -28,14 +28,12 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
 })
   .input(
     z.object({
-      handshakeHash: z.string(),
-      password: z.string().optional()
+      handshakeHash: z.string()
     })
   )
   .query(async ({ input, ctx }) => {
     const connectionInfo = ctx.getConnectionInfo();
     const settings = await getSettings();
-    const hasPassword = !!settings?.password;
 
     invariant(
       input.handshakeHash &&
@@ -46,11 +44,6 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
         message: 'Invalid handshake hash'
       }
     );
-
-    invariant(hasPassword ? input.password === settings?.password : true, {
-      code: 'FORBIDDEN',
-      message: 'Invalid password'
-    });
 
     invariant(ctx.user, {
       code: 'UNAUTHORIZED',

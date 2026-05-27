@@ -32,7 +32,6 @@ export const useAdminGeneral = () => {
     const [settings, setSettings] = useState({
         name: '',
         description: '',
-        password: '',
         directMessagesEnabled: true,
         gamesEnabled: true
     });
@@ -53,7 +52,6 @@ export const useAdminGeneral = () => {
         setSettings({
             name: data.name,
             description: data.description ?? '',
-            password: data.password ?? '',
             directMessagesEnabled: data.directMessagesEnabled ?? true,
             gamesEnabled: data.gamesEnabled ?? true
         });
@@ -66,7 +64,6 @@ export const useAdminGeneral = () => {
             await trpc.others.updateSettings.mutate({
                 name: settings.name,
                 description: settings.description,
-                password: settings.password || undefined,
                 directMessagesEnabled: settings.directMessagesEnabled,
                 gamesEnabled: settings.gamesEnabled
             });

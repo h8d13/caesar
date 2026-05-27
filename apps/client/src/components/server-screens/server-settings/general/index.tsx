@@ -53,16 +53,6 @@ const General = memo(() => {
                     />
                 </Group>
 
-                <Group label="Password">
-                    <Input
-                        type="password"
-                        value={settings.password}
-                        onChange={(e) => onChange('password', e.target.value)}
-                        placeholder="Leave empty for no password"
-                        error={errors.password}
-                    />
-                </Group>
-
                 <LogoManager logo={logo} refetch={refetch} />
 
                 <Group

@@ -61,7 +61,6 @@ const seedDatabase = async (db: LibSQLDatabase) => {
   const initialSettings: TISettings = {
     name: 'Test Server',
     description: 'Test server description',
-    password: '',
     serverId: randomUUIDv7(),
     secretToken: await sha256(TEST_SECRET_TOKEN),
     directMessagesEnabled: true,

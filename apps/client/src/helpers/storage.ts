@@ -2,7 +2,6 @@ export enum LocalStorageKey {
     IDENTITY = 'caesar-identity',
     REMEMBER_CREDENTIALS = 'caesar-remember-identity',
     USER_PASSWORD = 'caesar-user-password',
-    SERVER_PASSWORD = 'caesar-server-password',
     VITE_UI_THEME = 'vite-ui-theme',
     DEVICES_SETTINGS = 'caesar-devices-settings',
     FLOATING_CARD_POSITION = 'caesar-floating-card-position',

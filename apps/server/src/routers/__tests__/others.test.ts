@@ -45,21 +45,6 @@ describe('others router', () => {
     expect(result.ownUserId).toBe(joiningUserId);
   });
 
-  test('should ask for password if server has one set', async () => {
-    const { caller } = await initTest(1);
-    const { hasPassword } = await caller.others.handshake();
-
-    expect(hasPassword).toBe(false);
-
-    await caller.others.updateSettings({
-      password: 'testpassword'
-    });
-
-    const { hasPassword: hasPasswordAfter } = await caller.others.handshake();
-
-    expect(hasPasswordAfter).toBe(true);
-  });
-
   test('should update server settings', async () => {
     const { caller } = await initTest(1);
 

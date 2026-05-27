@@ -176,6 +176,13 @@
       "when": 1780307422853,
       "tag": "0024_status_images",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1780393822853,
+      "tag": "0025_drop_server_password",
+      "breakpoints": true
     }
   ]
 }

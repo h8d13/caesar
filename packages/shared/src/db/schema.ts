@@ -40,7 +40,6 @@ const settings = sqliteTable(
   {
     name: text('name').notNull(),
     description: text('description'),
-    password: text('password'),
     serverId: text('server_id').notNull(),
     secretToken: text('secret_token'),
     logoId: integer('logo_id').references(() => files.id, {

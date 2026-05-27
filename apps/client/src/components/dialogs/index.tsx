@@ -13,11 +13,6 @@ const DialogsMap = {
     [Dialog.TEXT_INPUT]: lazy(() =>
         import('./text-input').then((m) => ({ default: m.TextInputDialog }))
     ),
-    [Dialog.SERVER_PASSWORD]: lazy(() =>
-        import('./server-password').then((m) => ({
-            default: m.ServerPasswordDialog
-        }))
-    ),
     [Dialog.ASSIGN_ROLE]: lazy(() =>
         import('./assign-role').then((m) => ({ default: m.AssignRoleDialog }))
     ),

@@ -1,4 +1,3 @@
-import { Dialog } from '@/components/dialogs/dialogs';
 import { logDebug } from '@/helpers/browser-logger';
 import { getHostFromServer, getUrlFromServer } from '@/helpers/get-file-url';
 import {
@@ -11,7 +10,6 @@ import {
 import { cleanup, connectToTRPC, getTRPCClient } from '@/lib/trpc';
 import { type TPublicServerSettings, type TServerInfo } from '@caesar/shared';
 import { toast } from 'sonner';
-import { openDialog } from '../dialogs/actions';
 import { store } from '../store';
 import { infoSelector } from './selectors';
 import { serverSliceActions } from './slice';
@@ -46,27 +44,18 @@ export const connect = async () => {
         throw new Error('Failed to fetch server info');
     }
 
-    const { serverId } = info;
-
     const host = getHostFromServer();
     const trpc = await connectToTRPC(host);
 
-    const { hasPassword, handshakeHash } = await trpc.others.handshake.query();
-
-    if (hasPassword) {
-        // show password prompt
-        openDialog(Dialog.SERVER_PASSWORD, { handshakeHash, serverId });
-        return;
-    }
+    const { handshakeHash } = await trpc.others.handshake.query();
 
     await joinServer(handshakeHash);
 };
 
-export const joinServer = async (handshakeHash: string, password?: string) => {
+export const joinServer = async (handshakeHash: string) => {
     const trpc = getTRPCClient();
     const data = await trpc.others.joinServer.query({
-        handshakeHash,
-        password
+        handshakeHash
     });
 
     logDebug('joinServer', data);
