@@ -5,6 +5,7 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
+import { getServerToken } from '../db/queries/server';
 import { DATA_PATH, DRIZZLE_PATH } from '../helpers/paths';
 import { createHttpServer } from '../http';
 import { clearRateLimitersForTests } from '../utils/rate-limiters/rate-limiter';
@@ -131,6 +132,10 @@ beforeEach(async () => {
   await sqlite.execute('PRAGMA foreign_keys = ON;');
 
   await seedDatabase(tdb);
+
+  // Warm the server-token cache (getServerTokenSync consumers: file tokens,
+  // IP hashing, webauthn). loadDb does this in prod; tests seed directly.
+  await getServerToken();
 });
 
 afterEach(() => {

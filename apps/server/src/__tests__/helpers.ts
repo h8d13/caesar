@@ -1,16 +1,14 @@
-import { sha256, UploadHeaders } from '@caesar/shared';
+import { UploadHeaders } from '@caesar/shared';
 import { users } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
+import { getJwtSecret } from '@server/utils/jwt-secret';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import { appRouter } from '../routers';
 import { createMockContext } from './context';
-import { TEST_SECRET_TOKEN } from './seed';
 import { testsBaseUrl } from './setup';
 
 const getMockedToken = async (userId: number) => {
-  const hashedToken = await sha256(TEST_SECRET_TOKEN);
-
   // mirror the current sessionEpoch so tests that interleave manual
   // tokens with real /login calls (which bump the epoch) don't get
   // rejected by getUserByToken's epoch check.
@@ -22,7 +20,7 @@ const getMockedToken = async (userId: number) => {
 
   const token = jwt.sign(
     { userId, sessionEpoch: row?.sessionEpoch ?? 0 },
-    hashedToken,
+    await getJwtSecret(),
     { expiresIn: '86400s' }
   );
 

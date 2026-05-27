@@ -3,6 +3,7 @@ import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql';
 import { migrate } from 'drizzle-orm/libsql/migrator';
 import { DB_PATH, DRIZZLE_PATH } from '../helpers/paths';
 import { IS_PRODUCTION } from '../utils/env';
+import { getServerToken } from './queries/server';
 import { seedDatabase } from './seed';
 
 let db: LibSQLDatabase;
@@ -31,6 +32,11 @@ const loadDb = async () => {
   }
 
   await seedDatabase();
+
+  // Warm the in-memory server-token cache so getServerTokenSync (file
+  // tokens, IP hashing, webauthn) works without a prior async read. Session
+  // JWTs moved to jwt.key, so nothing else calls getServerToken at boot.
+  await getServerToken();
 };
 
 const closeDb = () => {
