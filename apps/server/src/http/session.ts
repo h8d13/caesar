@@ -4,7 +4,7 @@ import { eq, sql } from 'drizzle-orm';
 import http from 'http';
 import jwt from 'jsonwebtoken';
 import { db } from '../db';
-import { getServerToken } from '../db/queries/server';
+import { getJwtSecret } from '../utils/jwt-secret';
 import { closeUserSessions } from '../utils/wss';
 
 // Single-session by default: bump sessionEpoch so prior tokens fail the
@@ -32,7 +32,7 @@ const issueSession = async (
 
   const token = jwt.sign(
     { userId: user.id, sessionEpoch },
-    await getServerToken(),
+    await getJwtSecret(),
     { expiresIn: '604800s' /* 7 days */ }
   );
 

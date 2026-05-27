@@ -1,8 +1,7 @@
-import { sha256 } from '@caesar/shared';
 import { invites, roles, userRoles, users } from '@caesar/shared/db/schema';
 import { login } from '@server/__tests__/helpers';
-import { TEST_SECRET_TOKEN } from '@server/__tests__/seed';
 import { tdb } from '@server/__tests__/setup';
+import { getJwtSecret } from '@server/utils/jwt-secret';
 import { setRateLimitingDisabled } from '@server/utils/rate-limiters';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
@@ -19,7 +18,7 @@ describe('/login', () => {
     expect(data).toHaveProperty('success', true);
     expect(data).toHaveProperty('token');
 
-    const decoded = jwt.verify(data.token, await sha256(TEST_SECRET_TOKEN));
+    const decoded = jwt.verify(data.token, await getJwtSecret());
 
     expect(decoded).toHaveProperty('userId');
   });
@@ -268,7 +267,7 @@ describe('/login', () => {
 
     const decoded = jwt.verify(
       data.token,
-      await sha256(TEST_SECRET_TOKEN)
+      await getJwtSecret()
     ) as jwt.JwtPayload;
 
     expect(decoded).toHaveProperty('userId');
@@ -359,7 +358,7 @@ describe('/login', () => {
 
     const decoded = jwt.verify(
       data.token,
-      await sha256(TEST_SECRET_TOKEN)
+      await getJwtSecret()
     ) as jwt.JwtPayload;
 
     expect(decoded).toHaveProperty('userId');
@@ -378,7 +377,7 @@ describe('/login', () => {
 
     const decoded2 = jwt.verify(
       data2.token,
-      await sha256(TEST_SECRET_TOKEN)
+      await getJwtSecret()
     ) as jwt.JwtPayload;
 
     expect(decoded2).toHaveProperty('userId');

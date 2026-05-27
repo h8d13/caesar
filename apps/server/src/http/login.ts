@@ -21,13 +21,13 @@ import { db } from '../db';
 import { publishUser } from '../db/publishers';
 import { isInviteValid } from '../db/queries/invites';
 import { getDefaultRole } from '../db/queries/roles';
-import { getServerToken } from '../db/queries/server';
 import { getUserByIdentity } from '../db/queries/users';
 import { getWsInfo } from '../helpers/get-ws-info';
 import { isAtUserCap } from '../helpers/user-cap';
 import { logger } from '../logger';
 import { enqueueActivityLog } from '../queues/activity-log';
 import { invariant } from '../utils/invariant';
+import { getJwtSecret } from '../utils/jwt-secret';
 import { hashPassword, verifyPassword } from '../utils/password';
 import { createLoginLockout } from '../utils/rate-limiters/login-lockout';
 import {
@@ -375,7 +375,7 @@ const loginRouteHandler = async (
 
     const preAuthToken = jwt.sign(
       { userId: existingUser.id, type: 'pre-2fa' },
-      await getServerToken(),
+      await getJwtSecret(),
       { expiresIn: '300s' /* 5 minutes */ }
     );
 

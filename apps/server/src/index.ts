@@ -19,9 +19,11 @@ import { logger } from './logger';
 import { enqueueActivityLog } from './queues/activity-log';
 import { initVoiceRuntimes } from './runtimes';
 import { createServers } from './utils/create-servers';
+import { loadJwtSecret } from './utils/jwt-secret';
 import { getAllWorkers, loadMediasoup } from './utils/mediasoup';
 
 await loadDb();
+await loadJwtSecret();
 await createServers();
 await loadMediasoup();
 await initVoiceRuntimes();

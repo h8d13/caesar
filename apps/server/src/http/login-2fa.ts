@@ -1,11 +1,10 @@
 import type { AuthenticationResponseJSON } from '@simplewebauthn/server';
 import http from 'http';
-import jwt from 'jsonwebtoken';
 import z from 'zod';
-import { getServerToken } from '../db/queries/server';
 import { getUserById } from '../db/queries/users';
 import { getWsInfo } from '../helpers/get-ws-info';
 import { logger } from '../logger';
+import { verifyJwt } from '../utils/jwt-secret';
 import {
   createRateLimiter,
   getClientRateLimitKey,
@@ -37,7 +36,7 @@ const verifyPreAuthToken = async (
   token: string
 ): Promise<PreAuthClaims | null> => {
   try {
-    const decoded = jwt.verify(token, await getServerToken()) as PreAuthClaims;
+    const decoded = await verifyJwt<PreAuthClaims>(token);
     if (decoded.type !== 'pre-2fa' || typeof decoded.userId !== 'number') {
       return null;
     }

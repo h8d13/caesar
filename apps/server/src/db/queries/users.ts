@@ -5,12 +5,11 @@ import {
 } from '@caesar/shared';
 import { files, userRoles, users } from '@caesar/shared/db/schema';
 import type { TTokenPayload } from '@server/types';
+import { verifyJwt } from '@server/utils/jwt-secret';
 import { count, eq, sum } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
-import jwt from 'jsonwebtoken';
 import { db } from '..';
 import { getAllUserRoleIdsMap } from './roles';
-import { getServerToken } from './server';
 import {
   joinedUserBaseFields,
   publicUserBaseFields,
@@ -169,10 +168,7 @@ const getUserByToken = async (token: string | undefined) => {
   try {
     if (!token) return undefined;
 
-    const decoded = jwt.verify(
-      token,
-      await getServerToken()
-    ) as TTokenPayload & { type?: string };
+    const decoded = await verifyJwt<TTokenPayload & { type?: string }>(token);
 
     // Reject pre-2FA tokens. They share the JWT secret but must never grant
     // a session: their only valid use is exchange via /login/2fa.

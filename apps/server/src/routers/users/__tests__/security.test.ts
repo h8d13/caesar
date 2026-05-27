@@ -1,8 +1,8 @@
 import { sha256 } from '@caesar/shared';
 import { logins, users } from '@caesar/shared/db/schema';
 import { initTest, login } from '@server/__tests__/helpers';
-import { TEST_SECRET_TOKEN } from '@server/__tests__/seed';
 import { tdb } from '@server/__tests__/setup';
+import { getJwtSecret } from '@server/utils/jwt-secret';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import { describe, expect, test } from 'vitest';
@@ -77,7 +77,7 @@ describe('/login epoch behavior with allowMultipleSessions', () => {
 
     // and the minted token carries that same (un-bumped) epoch
     const data = (await response.json()) as { token: string };
-    const decoded = jwt.verify(data.token, await sha256(TEST_SECRET_TOKEN));
+    const decoded = jwt.verify(data.token, await getJwtSecret());
     expect((decoded as { sessionEpoch: number }).sessionEpoch).toBe(before);
   });
 });
@@ -99,7 +99,7 @@ describe('users.signOutOtherSessions', () => {
     const { caller } = await initTest(1);
 
     const { token } = await caller.users.signOutOtherSessions();
-    const decoded = jwt.verify(token, await sha256(TEST_SECRET_TOKEN));
+    const decoded = jwt.verify(token, await getJwtSecret());
 
     const epochNow = await epochFor(1);
     expect((decoded as { sessionEpoch: number }).sessionEpoch).toBe(epochNow);

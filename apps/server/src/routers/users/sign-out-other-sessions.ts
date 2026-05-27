@@ -1,7 +1,7 @@
 import { DisconnectCode } from '@caesar/shared';
 import { users } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import { getServerToken } from '@server/db/queries/server';
+import { getJwtSecret } from '@server/utils/jwt-secret';
 import { protectedProcedure } from '@server/utils/trpc';
 import { closeUserSessions } from '@server/utils/wss';
 import { eq, sql } from 'drizzle-orm';
@@ -25,7 +25,7 @@ const signOutOtherSessionsRoute = protectedProcedure
     // doesn't bounce off the new epoch.
     const newToken = jwt.sign(
       { userId: ctx.userId, sessionEpoch },
-      await getServerToken(),
+      await getJwtSecret(),
       { expiresIn: '604800s' }
     );
 
