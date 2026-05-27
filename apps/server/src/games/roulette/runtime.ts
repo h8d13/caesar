@@ -299,7 +299,11 @@ class RouletteRuntime {
   }
 
   private generateLightningNumbers(): TLightningNumber[] {
-    const count = randomInt(6); // 0-5 lightning numbers
+    // 0-2 lightning numbers (mean ~1/round). The multipliers (mean ~212x) are
+    // large, so at higher frequencies a straight bet's EV turns player-positive
+    // and the bank bleeds; capping the count near 1 keeps a ~2.9% house edge
+    // alongside the 30:1 standard straight payout.
+    const count = randomInt(3); // 0-2 lightning numbers
     const available = Array.from({ length: 37 }, (_, i) => i); // 0-36
     const selected: TLightningNumber[] = [];
 

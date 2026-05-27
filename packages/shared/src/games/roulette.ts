@@ -28,7 +28,11 @@ export const BLACK_NUMBERS = [
 ];
 
 export const PAYOUT_MAP: Record<RouletteBetType, number> = {
-  [RouletteBetType.STRAIGHT]: 35,
+  // Reduced from the European 35:1 to 30:1 to fund the lightning multipliers
+  // (mirrors real Lightning Roulette). With 35:1 + multipliers the straight
+  // bet ran a ~+30% player edge; 30:1 plus the reduced lightning frequency in
+  // generateLightningNumbers restores a ~2.9% house edge.
+  [RouletteBetType.STRAIGHT]: 30,
   [RouletteBetType.RED]: 1,
   [RouletteBetType.BLACK]: 1,
   [RouletteBetType.ODD]: 1,
