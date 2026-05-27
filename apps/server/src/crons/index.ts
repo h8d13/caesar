@@ -2,6 +2,7 @@ import { CronJob } from 'cron';
 import { logger } from '../logger';
 import { cleanupFiles } from './cleanup-files';
 import { pruneExpiredMessages } from './prune-expired';
+import { pruneExpiredStatuses } from './prune-expired-statuses';
 
 enum CRON_TIMES {
   EVERY_15_MINUTES = '*/15 * * * *'
@@ -23,6 +24,16 @@ const loadCrons = () => {
   new CronJob(
     CRON_TIMES.EVERY_15_MINUTES,
     pruneExpiredMessages,
+    null,
+    true,
+    'Europe/Lisbon',
+    null,
+    true
+  );
+
+  new CronJob(
+    CRON_TIMES.EVERY_15_MINUTES,
+    pruneExpiredStatuses,
     null,
     true,
     'Europe/Lisbon',

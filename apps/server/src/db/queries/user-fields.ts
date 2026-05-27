@@ -16,6 +16,10 @@ const publicUserBaseFields = {
   banned: users.banned,
   avatarId: users.avatarId,
   bannerId: users.bannerId,
+  // count of non-expired status images ("stories"). drives the avatar ring
+  // for every user without shipping the images; the list itself is fetched
+  // lazily when a viewer opens. unixepoch()*1000 matches our ms timestamps.
+  activeStatusCount: sql<number>`(SELECT COUNT(*) FROM status_images WHERE user_id = ${users.id} AND expires_at > (unixepoch() * 1000))`,
   createdAt: users.createdAt,
   // selected for redaction at the boundary: callers only forward this for
   // the requester's own row (see join handler), never to peers.

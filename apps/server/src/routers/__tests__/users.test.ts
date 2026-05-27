@@ -14,11 +14,14 @@ import {
   rolePermissions,
   roles,
   settings,
+  statusImages,
   userRoles,
   users
 } from '@caesar/shared/db/schema';
 import { initTest, uploadFile } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
+import { pruneExpiredStatuses } from '@server/crons/prune-expired-statuses';
+import { getOrphanedFileIds } from '@server/db/queries/files';
 import { verifyPassword } from '@server/utils/password';
 import { and, eq } from 'drizzle-orm';
 import { describe, expect, test } from 'vitest';
@@ -434,6 +437,84 @@ describe('users router', () => {
         fileId: uploadData.id
       })
     ).rejects.toThrow('Banner file exceeds the configured maximum size');
+  });
+
+  const addStatus = async (
+    caller: Awaited<ReturnType<typeof initTest>>['caller'],
+    mockedToken: string
+  ) => {
+    const file = new File(['status content'], 'status.png', {
+      type: 'image/png'
+    });
+    const uploadResponse = await uploadFile(file, mockedToken);
+    const uploadData = (await uploadResponse.json()) as TTempFile;
+    await caller.users.addStatusImage({ fileId: uploadData.id });
+  };
+
+  test('adds a status image, surfaces it, and keeps its file non-orphaned', async () => {
+    const { caller, mockedToken } = await initTest();
+
+    await addStatus(caller, mockedToken);
+
+    const images = await caller.users.getStatusImages({ userId: 1 });
+    expect(images).toHaveLength(1);
+
+    const users = await caller.users.getAll();
+    expect(users.find((u) => u.id === 1)?.activeStatusCount).toBe(1);
+
+    // regression: a status file must not be treated as orphaned, or the
+    // public route 404s it and the cleanup cron deletes it.
+    const orphaned = await getOrphanedFileIds();
+    expect(orphaned).not.toContain(images[0]!.file.id);
+  });
+
+  test('supports multiple active status images per user', async () => {
+    const { caller, mockedToken } = await initTest();
+
+    await addStatus(caller, mockedToken);
+    await addStatus(caller, mockedToken);
+
+    const images = await caller.users.getStatusImages({ userId: 1 });
+    expect(images).toHaveLength(2);
+  });
+
+  test('removes own status image', async () => {
+    const { caller, mockedToken } = await initTest();
+
+    await addStatus(caller, mockedToken);
+    const [image] = await caller.users.getStatusImages({ userId: 1 });
+
+    await caller.users.removeStatusImage({ id: image!.id });
+
+    expect(await caller.users.getStatusImages({ userId: 1 })).toHaveLength(0);
+  });
+
+  test('forbids removing another user status image', async () => {
+    const owner = await initTest(1);
+    await addStatus(owner.caller, owner.mockedToken);
+    const [image] = await owner.caller.users.getStatusImages({ userId: 1 });
+
+    const other = await initTest(2);
+
+    await expect(
+      other.caller.users.removeStatusImage({ id: image!.id })
+    ).rejects.toThrow('You can only remove your own status');
+  });
+
+  test('prunes expired status images', async () => {
+    const { caller, mockedToken } = await initTest();
+
+    await addStatus(caller, mockedToken);
+    await tdb
+      .update(statusImages)
+      .set({ expiresAt: Date.now() - 1000 })
+      .execute();
+
+    await pruneExpiredStatuses();
+
+    expect(await caller.users.getStatusImages({ userId: 1 })).toHaveLength(0);
+    const users = await caller.users.getAll();
+    expect(users.find((u) => u.id === 1)?.activeStatusCount).toBe(0);
   });
 
   test('should replace existing avatar', async () => {

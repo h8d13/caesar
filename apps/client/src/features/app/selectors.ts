@@ -25,6 +25,9 @@ export const dmsOpenSelector = (state: IRootState) => state.app.dmsOpen;
 export const selectedDmChannelIdSelector = (state: IRootState) =>
     state.app.selectedDmChannelId;
 
+export const storyViewerUserIdSelector = (state: IRootState) =>
+    state.app.storyViewerUserId;
+
 export const browserNotificationsSelector = (state: IRootState) =>
     state.app.browserNotifications;
 

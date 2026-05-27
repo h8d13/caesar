@@ -5,16 +5,20 @@ import { getRenderedUsername } from '@/helpers/get-rendered-username';
 import { cn } from '@/lib/utils';
 import { UserStatus } from '@caesar/shared';
 import { Avatar, AvatarFallback, AvatarImage } from '@caesar/ui';
-import { memo } from 'react';
+import { memo, type MouseEvent } from 'react';
 import { UserPopover } from '../user-popover';
 import { UserStatusBadge } from '../user-status';
+import { AddStatusButton } from './add-status-button';
 
 type TUserAvatarProps = {
     userId: number;
     className?: string;
     showUserPopover?: boolean;
     showStatusBadge?: boolean;
-    onClick?: () => void;
+    // renders the "+" add-status affordance. Only meaningful on the own
+    // avatar; callers gate this themselves.
+    showAddStatus?: boolean;
+    onClick?: (e: MouseEvent) => void;
 };
 
 const UserAvatar = memo(
@@ -23,15 +27,25 @@ const UserAvatar = memo(
         className,
         showUserPopover = false,
         showStatusBadge = true,
+        showAddStatus = false,
         onClick
     }: TUserAvatarProps) => {
         const user = useUserById(userId);
 
         if (!user) return null;
 
+        const hasStatus = (user.activeStatusCount ?? 0) > 0;
+
         const content = (
             <div className="relative w-fit h-fit" onClick={onClick}>
-                <Avatar className={cn('h-8 w-8', className)}>
+                <Avatar
+                    className={cn(
+                        'h-8 w-8',
+                        hasStatus &&
+                            'ring-2 ring-green-500 ring-offset-2 ring-offset-card',
+                        className
+                    )}
+                >
                     <AvatarImage
                         src={getFileUrl(user.avatar)}
                         key={user.avatarId}
@@ -46,6 +60,7 @@ const UserAvatar = memo(
                         className="absolute bottom-0 right-0"
                     />
                 )}
+                {showAddStatus && <AddStatusButton />}
             </div>
         );
 

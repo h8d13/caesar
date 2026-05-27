@@ -1,4 +1,5 @@
 import {
+    openStoryViewer,
     setDmsOpen,
     setModViewOpen,
     setSelectedDmChannelId
@@ -14,6 +15,7 @@ import { getRenderedUsername } from '@/helpers/get-rendered-username';
 import { getSocialCreditColor } from '@/helpers/get-social-credit-color';
 import { getNickname, removeNickname, setNickname } from '@/helpers/nicknames';
 import { getTRPCClient } from '@/lib/trpc';
+import { cn } from '@/lib/utils';
 import {
     DELETED_USER_IDENTITY_AND_NAME,
     Permission,
@@ -170,6 +172,7 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
     if (!user) return <>{children}</>;
 
     const isDeleted = user.name === DELETED_USER_IDENTITY_AND_NAME;
+    const hasStatus = (user.activeStatusCount ?? 0) > 0;
     const showDmButton =
         settings?.directMessagesEnabled &&
         can(Permission.USE_DMS) &&
@@ -211,8 +214,17 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
                     <div className="absolute left-4 top-16">
                         <UserAvatar
                             userId={user.id}
-                            className="h-16 w-16 border-4 border-card"
+                            className={cn(
+                                'h-16 w-16 border-4 border-card',
+                                hasStatus && 'cursor-pointer'
+                            )}
                             showStatusBadge={false}
+                            showAddStatus={isOwnUser}
+                            onClick={
+                                hasStatus
+                                    ? () => openStoryViewer(user.id)
+                                    : undefined
+                            }
                         />
                     </div>
                 </div>

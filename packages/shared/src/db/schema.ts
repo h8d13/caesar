@@ -767,6 +767,28 @@ const predictionBets = sqliteTable(
   ]
 );
 
+// Ephemeral per-user status images ("stories"). Each row is one image with
+// its own 24h expiry; a user may have several active at once. Pruned by the
+// prune-expired-statuses cron; the file is reclaimed alongside the row.
+const statusImages = sqliteTable(
+  'status_images',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    fileId: integer('file_id')
+      .notNull()
+      .references(() => files.id, { onDelete: 'cascade' }),
+    expiresAt: integer('expires_at').notNull(),
+    createdAt: integer('created_at').notNull()
+  },
+  (t) => [
+    index('status_images_user_idx').on(t.userId),
+    index('status_images_expires_idx').on(t.expiresAt)
+  ]
+);
+
 export {
   activityLog,
   categories,
@@ -796,6 +818,7 @@ export {
   socialCreditLedger,
   socialCreditVotes,
   sounds,
+  statusImages,
   userKeys,
   userRoles,
   users,

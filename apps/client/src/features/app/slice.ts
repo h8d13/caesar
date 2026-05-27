@@ -13,6 +13,8 @@ export interface TAppState {
     threadChannelId: number | undefined;
     dmsOpen: boolean;
     selectedDmChannelId: number | undefined;
+    // userId whose stories the fullscreen viewer is showing; undefined = closed
+    storyViewerUserId: number | undefined;
     browserNotifications: boolean;
     browserNotificationsForMentions: boolean;
     browserNotificationsForDms: boolean;
@@ -29,6 +31,7 @@ const initialState: TAppState = {
     threadChannelId: undefined,
     dmsOpen: false,
     selectedDmChannelId: undefined,
+    storyViewerUserId: undefined,
     browserNotifications: getLocalStorageItemBool(
         LocalStorageKey.BROWSER_NOTIFICATIONS,
         false
@@ -86,6 +89,12 @@ export const appSlice = createSlice({
             action: PayloadAction<number | undefined>
         ) => {
             state.selectedDmChannelId = action.payload;
+        },
+        setStoryViewerUserId: (
+            state,
+            action: PayloadAction<number | undefined>
+        ) => {
+            state.storyViewerUserId = action.payload;
         },
         setBrowserNotifications: (state, action: PayloadAction<boolean>) => {
             state.browserNotifications = action.payload;

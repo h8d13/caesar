@@ -20,6 +20,7 @@ import {
   socialCreditLedger,
   socialCreditVotes,
   sounds,
+  statusImages,
   userRoles,
   users
 } from './db/schema';
@@ -43,6 +44,7 @@ export type TSound = InferSelectModel<typeof sounds>;
 export type TMessageReaction = InferSelectModel<typeof messageReactions>;
 export type TInvite = InferSelectModel<typeof invites>;
 export type TActivityLog = InferSelectModel<typeof activityLog>;
+export type TStatusImage = InferSelectModel<typeof statusImages>;
 export type TUserRole = InferSelectModel<typeof userRoles>;
 export type TChannelRolePermission = InferSelectModel<
   typeof channelRolePermissions
@@ -110,6 +112,7 @@ type TPublicUser = Pick<
   | 'bannerId'
   | 'banned'
   | 'socialCredit'
+  | 'activeStatusCount'
   | 'createdAt'
 > & {
   status?: UserStatus;
@@ -166,6 +169,14 @@ export type TJoinedUser = TUser & {
   banner: TFile | null;
   roleIds: number[];
   socialCredit: number;
+  // count of this user's non-expired status images; drives the "has a story"
+  // ring without shipping the images themselves (fetched lazily on view).
+  activeStatusCount: number;
+};
+
+// A single status image joined with its file, for the story viewer.
+export type TJoinedStatusImage = TStatusImage & {
+  file: TFile;
 };
 
 export type TJoinedPublicUser = TPublicUser & {

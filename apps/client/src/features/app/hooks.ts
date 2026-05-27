@@ -10,6 +10,7 @@ import {
     modViewOpenSelector,
     modViewUserIdSelector,
     selectedDmChannelIdSelector,
+    storyViewerUserIdSelector,
     threadSidebarDataSelector
 } from './selectors';
 
@@ -25,6 +26,9 @@ export const useModViewOpen = () => {
 };
 
 export const useThreadSidebar = () => useSelector(threadSidebarDataSelector);
+
+export const useStoryViewerUserId = () =>
+    useSelector(storyViewerUserIdSelector);
 
 export const useDmsOpen = () => useSelector(dmsOpenSelector);
 

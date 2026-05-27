@@ -83,7 +83,14 @@ export const resetApp = () => {
             channelId: undefined
         })
     );
+    store.dispatch(appSliceActions.setStoryViewerUserId(undefined));
 };
+
+export const openStoryViewer = (userId: number) =>
+    store.dispatch(appSliceActions.setStoryViewerUserId(userId));
+
+export const closeStoryViewer = () =>
+    store.dispatch(appSliceActions.setStoryViewerUserId(undefined));
 
 export const setDmsOpen = (open: boolean) =>
     store.dispatch(appSliceActions.setDmsOpen(open));

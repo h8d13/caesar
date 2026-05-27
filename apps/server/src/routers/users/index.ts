@@ -1,5 +1,6 @@
 import { t } from '@server/utils/trpc';
 import { addRoleRoute } from './add-role';
+import { addStatusImageRoute } from './add-status-image';
 import { banRoute } from './ban';
 import { changeAvatarRoute } from './change-avatar';
 import { changeBannerRoute } from './change-banner';
@@ -14,12 +15,14 @@ import {
 } from './events';
 import { getMySessionsRoute } from './get-my-sessions';
 import { getMyVotesTodayRoute } from './get-my-votes-today';
+import { getStatusImagesRoute } from './get-status-images';
 import { getUserInfoRoute } from './get-user-info';
 import { getUsersRoute } from './get-users';
 import { kickRoute } from './kick';
 import { meRoute } from './me';
 import { onMyLoginRoute } from './on-my-login';
 import { removeRoleRoute } from './remove-role';
+import { removeStatusImageRoute } from './remove-status-image';
 import { renameIdentityRoute } from './rename-identity';
 import { setAllowMultipleSessionsRoute } from './set-allow-multiple-sessions';
 import { setAppearOfflineRoute } from './set-appear-offline';
@@ -33,6 +36,9 @@ import { voteSocialCreditRoute } from './vote-social-credit';
 export const usersRouter = t.router({
   changeAvatar: changeAvatarRoute,
   changeBanner: changeBannerRoute,
+  addStatusImage: addStatusImageRoute,
+  removeStatusImage: removeStatusImageRoute,
+  getStatusImages: getStatusImagesRoute,
   addRole: addRoleRoute,
   removeRole: removeRoleRoute,
   update: updateUserRoute,

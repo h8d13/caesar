@@ -4,6 +4,7 @@ import { MediaProvider } from '@/components/media-provider';
 import { ModViewSheet } from '@/components/mod-view-sheet';
 import { Protect } from '@/components/protect';
 import { RightSidebar } from '@/components/right-sidebar';
+import { StoryViewer } from '@/components/story-viewer';
 import { ThreadSidebar } from '@/components/thread-sidebar';
 import { TopBar } from '@/components/top-bar';
 import { setDmsOpen } from '@/features/app/actions';
@@ -158,6 +159,8 @@ const ServerView = memo(() => {
                     <Protect permission={Permission.MANAGE_USERS}>
                         <ModViewSheet />
                     </Protect>
+
+                    <StoryViewer />
                 </div>
             </div>
         </MediaProvider>

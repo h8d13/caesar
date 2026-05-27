@@ -1,5 +1,6 @@
 import { ResizableSidebar } from '@/components/resizable-sidebar';
 import { UserAvatar } from '@/components/user-avatar';
+import { openStoryViewer } from '@/features/app/actions';
 import {
     useChannelById,
     useSelectedChannelId,
@@ -25,30 +26,50 @@ type TUserProps = {
     user: { name: string };
     banned: boolean;
     socialCredit: number;
+    hasStatus: boolean;
 };
 
-const User = memo(({ userId, user, banned, socialCredit }: TUserProps) => {
-    return (
-        <UserPopover userId={userId}>
-            <div className="flex items-center gap-3 rounded px-2 py-1.5 hover:bg-accent select-none min-w-0">
-                <UserAvatar userId={userId} className="h-8 w-8 shrink-0" />
-                <span
-                    className={cn(
-                        'text-sm truncate',
-                        banned && 'line-through opacity-50'
-                    )}
-                    style={{
-                        color: banned
-                            ? undefined
-                            : getSocialCreditColor(socialCredit)
-                    }}
-                >
-                    {getRenderedUsername(user, userId)}
-                </span>
-            </div>
-        </UserPopover>
-    );
-});
+const User = memo(
+    ({ userId, user, banned, socialCredit, hasStatus }: TUserProps) => {
+        return (
+            <UserPopover userId={userId}>
+                <div className="flex items-center gap-3 rounded px-2 py-1.5 hover:bg-accent select-none min-w-0">
+                    <UserAvatar
+                        userId={userId}
+                        className={cn(
+                            'h-8 w-8 shrink-0',
+                            hasStatus && 'cursor-pointer'
+                        )}
+                        // story present: avatar jumps straight to the viewer
+                        // and swallows the click so the row popover stays shut.
+                        // no story: click falls through to the popover.
+                        onClick={
+                            hasStatus
+                                ? (e) => {
+                                      e.stopPropagation();
+                                      openStoryViewer(userId);
+                                  }
+                                : undefined
+                        }
+                    />
+                    <span
+                        className={cn(
+                            'text-sm truncate',
+                            banned && 'line-through opacity-50'
+                        )}
+                        style={{
+                            color: banned
+                                ? undefined
+                                : getSocialCreditColor(socialCredit)
+                        }}
+                    >
+                        {getRenderedUsername(user, userId)}
+                    </span>
+                </div>
+            </UserPopover>
+        );
+    }
+);
 
 type TRightSidebarProps = {
     className?: string;
@@ -158,6 +179,7 @@ const RightSidebar = memo(
                                 user={user}
                                 banned={user.banned}
                                 socialCredit={user.socialCredit ?? 0}
+                                hasStatus={(user.activeStatusCount ?? 0) > 0}
                             />
                         ))}
                         {hasHiddenUsers && (
