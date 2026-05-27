@@ -12,7 +12,7 @@ import { getFileUrl } from '@/helpers/get-file-url';
 import { getTRPCClient } from '@/lib/trpc';
 import { ChannelType, UserStatus } from '@caesar/shared';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, ArrowRight, Users } from 'lucide-react';
+import { Activity, ArrowLeft, ArrowRight, Database, Users } from 'lucide-react';
 import { memo } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -40,14 +40,20 @@ const PingInfo = memo(() => {
 
     return (
         <div className="flex gap-4 text-xs text-muted-foreground mt-3 justify-center">
-            <span>
-                RT:{' '}
+            <span
+                className="inline-flex items-center gap-1.5"
+                title="Round-trip time"
+            >
+                <Activity className="h-3.5 w-3.5" />
                 <span className="tabular-nums font-medium text-foreground">
                     {serverPing !== null ? `${serverPing}ms` : '...'}
                 </span>
             </span>
-            <span>
-                DB:{' '}
+            <span
+                className="inline-flex items-center gap-1.5"
+                title="Database query time"
+            >
+                <Database className="h-3.5 w-3.5" />
                 <span className="tabular-nums font-medium text-foreground">
                     {dbPing !== null ? `${dbPing}ms` : '...'}
                 </span>
