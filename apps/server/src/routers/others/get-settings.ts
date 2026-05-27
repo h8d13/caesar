@@ -9,7 +9,8 @@ const getSettingsRoute = protectedProcedure.query(async ({ ctx }) => {
 
   // Never ship the server's internal HMAC key to a client. It signs nothing
   // anymore (sessions use the dedicated jwt.key) but still keys IP / file /
-  // webauthn hashing and the owner-spawn check, so it stays server-only.
+  // webauthn hashing and the owner-spawn check, it MUST be server only.
+  // or rely on new jwt seperate concern if client-facing.
   const { secretToken: _secretToken, ...safeSettings } = settings;
   void _secretToken;
 
