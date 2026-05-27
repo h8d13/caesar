@@ -30,7 +30,7 @@ import {
 } from '@caesar/ui';
 import type { PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser';
 import { startAuthentication } from '@simplewebauthn/browser';
-import { KeyRound, ShieldCheck } from 'lucide-react';
+import { KeyRound, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -372,10 +372,22 @@ const Connect = memo(() => {
                                             documentation.
                                         </AlertDescription>
                                     </Alert>
-                                ) : (
+                                ) : window.location.protocol === 'https:' ? (
                                     <div className="flex items-center gap-2 text-sm text-green-500">
                                         <ShieldCheck size={16} />
                                         <span>Secure connection</span>
+                                    </div>
+                                ) : (
+                                    // secure *context* (localhost/127.0.0.1)
+                                    // but not HTTPS: media devices work, yet
+                                    // traffic is unencrypted. don't claim
+                                    // "secure".
+                                    <div className="flex items-center gap-2 text-sm text-amber-500">
+                                        <ShieldAlert size={16} />
+                                        <span>
+                                            Local connection (HTTP, not
+                                            encrypted)
+                                        </span>
                                     </div>
                                 )}
 
