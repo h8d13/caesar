@@ -3,21 +3,24 @@ import type { TJoinedPublicUser } from '@caesar/shared';
 import { Extension } from '@tiptap/core';
 import { PluginKey } from '@tiptap/pm/state';
 import Suggestion from '@tiptap/suggestion';
-import { MENTION_STORAGE_KEY, MentionSuggestion } from './mention-suggestion';
+import {
+    USER_MENTION_STORAGE_KEY,
+    UserMentionSuggestion
+} from './user-mention-suggestion';
 
 const MentionPluginKey = new PluginKey('mention');
 
 type TMentionOptions = {
     users: TJoinedPublicUser[];
-    suggestion: typeof MentionSuggestion;
+    suggestion: typeof UserMentionSuggestion;
 };
 
 const Mention = Extension.create<TMentionOptions>({
-    name: MENTION_STORAGE_KEY,
+    name: USER_MENTION_STORAGE_KEY,
     addOptions() {
         return {
             users: [],
-            suggestion: MentionSuggestion
+            suggestion: UserMentionSuggestion
         };
     },
     addStorage() {

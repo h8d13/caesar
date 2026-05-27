@@ -1,7 +1,7 @@
 import { UserAvatar } from '@/components/user-avatar';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
 import type { TJoinedPublicUser } from '@caesar/shared';
-import { computePosition } from '@floating-ui/dom';
+import { computePosition, flip, shift } from '@floating-ui/dom';
 import type { Editor } from '@tiptap/core';
 import { ReactRenderer } from '@tiptap/react';
 import {
@@ -12,7 +12,7 @@ import {
     useState
 } from 'react';
 
-const MENTION_STORAGE_KEY = 'mentionUsers';
+const USER_MENTION_STORAGE_KEY = 'mentionUsers';
 
 type TUserListProps = {
     items: TJoinedPublicUser[];
@@ -109,15 +109,19 @@ type TSuggestionProps = {
 
 const reposition = (component: ReactRenderer | null, clientRect: DOMRect) => {
     if (!component?.element) return;
+    component.element.style.position = 'fixed';
     const virtual = { getBoundingClientRect: () => clientRect };
     computePosition(virtual, component.element, {
-        placement: 'top-start'
+        placement: 'top-start',
+        strategy: 'fixed',
+        middleware: [flip(), shift({ padding: 8 })]
     }).then((pos) => {
         if (component?.element)
             Object.assign(component.element.style, {
                 left: `${pos.x}px`,
                 top: `${pos.y}px`,
-                position: pos.strategy === 'fixed' ? 'fixed' : 'absolute'
+                position: pos.strategy === 'fixed' ? 'fixed' : 'absolute',
+                zIndex: '300'
             });
     });
 };
@@ -133,7 +137,7 @@ type TMentionStorage = Record<
     { users?: TJoinedPublicUser[] } | undefined
 >;
 
-const MentionSuggestion = {
+const UserMentionSuggestion = {
     items: ({
         editor,
         query
@@ -142,8 +146,9 @@ const MentionSuggestion = {
         query: string;
     }): TJoinedPublicUser[] => {
         const users: TJoinedPublicUser[] =
-            (editor.storage as unknown as TMentionStorage)[MENTION_STORAGE_KEY]
-                ?.users ?? [];
+            (editor.storage as unknown as TMentionStorage)[
+                USER_MENTION_STORAGE_KEY
+            ]?.users ?? [];
         if (!query) return users.slice(0, 10);
         const q = query.toLowerCase();
         return users
@@ -166,7 +171,7 @@ const MentionSuggestion = {
         let component: ReactRenderer | null = null;
         return {
             onStart(props: TSuggestionProps) {
-                const items = MentionSuggestion.items({
+                const items = UserMentionSuggestion.items({
                     editor: props.editor,
                     query: props.query
                 });
@@ -184,7 +189,7 @@ const MentionSuggestion = {
                 if (rect) reposition(component, rect);
             },
             onUpdate(props: TSuggestionProps) {
-                const items = MentionSuggestion.items({
+                const items = UserMentionSuggestion.items({
                     editor: props.editor,
                     query: props.query
                 });
@@ -211,4 +216,4 @@ const MentionSuggestion = {
     }
 };
 
-export { MENTION_STORAGE_KEY, MentionSuggestion };
+export { USER_MENTION_STORAGE_KEY, UserMentionSuggestion };

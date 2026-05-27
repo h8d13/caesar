@@ -1,5 +1,5 @@
 import type { TBuiltInCommand } from '@/helpers/built-in-commands';
-import { computePosition } from '@floating-ui/dom';
+import { computePosition, flip, shift } from '@floating-ui/dom';
 import type { Editor } from '@tiptap/core';
 import { ReactRenderer } from '@tiptap/react';
 import { CommandList, type CommandListRef } from './command-list';
@@ -37,18 +37,22 @@ export const CommandSuggestion = {
 
         const reposition = (clientRect: DOMRect) => {
             if (!component?.element) return;
+            component.element.style.position = 'fixed';
 
             const virtualElement = { getBoundingClientRect: () => clientRect };
 
             computePosition(virtualElement, component.element, {
-                placement: 'top-start'
+                placement: 'top-start',
+                strategy: 'fixed',
+                middleware: [flip(), shift({ padding: 8 })]
             }).then((pos) => {
                 if (component?.element) {
                     Object.assign(component.element.style, {
                         left: `${pos.x}px`,
                         top: `${pos.y}px`,
                         position:
-                            pos.strategy === 'fixed' ? 'fixed' : 'absolute'
+                            pos.strategy === 'fixed' ? 'fixed' : 'absolute',
+                        zIndex: '300'
                     });
                 }
             });

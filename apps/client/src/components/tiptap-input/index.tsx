@@ -1,38 +1,16 @@
 import { EmojiPicker } from '@/components/emoji-picker';
 import { useCustomEmojis } from '@/features/server/emojis/hooks';
 import { useAccessibleChannels } from '@/features/server/hooks';
-import { BUILT_IN_COMMANDS } from '@/helpers/built-in-commands';
 import type { TChannel, TJoinedPublicUser } from '@caesar/shared';
 import { Button } from '@caesar/ui';
-import type { Extension } from '@tiptap/core';
-import Emoji, { gitHubEmojis } from '@tiptap/extension-emoji';
+import { gitHubEmojis } from '@tiptap/extension-emoji';
 import { EditorContent, useEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import { ChevronDown, ChevronUp, Smile } from 'lucide-react';
-import {
-    memo,
-    useEffect,
-    useLayoutEffect,
-    useMemo,
-    useRef,
-    useState
-} from 'react';
-import { ChannelMention } from './commands/channel-mention-extension';
-import { ChannelMentionNode } from './commands/channel-mention-node';
-import {
-    CHANNEL_MENTION_STORAGE_KEY,
-    ChannelMentionSuggestion
-} from './commands/channel-mention-suggestion';
-import { CommandSuggestion } from './commands/command-suggestion';
-import { Mention } from './commands/mention-extension';
-import { MentionNode } from './commands/mention-node';
-import {
-    MENTION_STORAGE_KEY,
-    MentionSuggestion
-} from './commands/mention-suggestion';
-import { SlashCommands } from './commands/slash-commands-extension';
-import { EmojiSuggestion } from './commands/suggestions';
+import { ChevronDown, ChevronUp, Maximize2, Smile } from 'lucide-react';
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { CHANNEL_MENTION_STORAGE_KEY } from './commands/channel-mention-suggestion';
+import { USER_MENTION_STORAGE_KEY } from './commands/user-mention-suggestion';
 import type { TEmojiItem } from './helpers';
+import { useMessageEditorExtensions } from './use-message-editor-extensions';
 
 type TTiptapInputProps = {
     disabled?: boolean;
@@ -42,6 +20,7 @@ type TTiptapInputProps = {
     onSubmit?: () => void;
     onCancel?: () => void;
     onTyping?: () => void;
+    onPopOut?: () => void;
     users?: TJoinedPublicUser[];
 };
 
@@ -52,6 +31,7 @@ const TiptapInput = memo(
         onSubmit,
         onCancel,
         onTyping,
+        onPopOut,
         disabled,
         readOnly,
         users
@@ -69,51 +49,7 @@ const TiptapInput = memo(
         const customEmojis = useCustomEmojis();
         const channels = useAccessibleChannels();
 
-        const extensions = useMemo((): Extension[] => {
-            const exts = [
-                StarterKit.configure({
-                    hardBreak: {
-                        HTMLAttributes: {
-                            class: 'hard-break'
-                        }
-                    }
-                }),
-                Emoji.configure({
-                    emojis: [...gitHubEmojis, ...customEmojis],
-                    enableEmoticons: false,
-                    suggestion: EmojiSuggestion,
-                    HTMLAttributes: {
-                        class: 'emoji-image'
-                    }
-                }),
-                SlashCommands.configure({
-                    commands: BUILT_IN_COMMANDS,
-                    suggestion: CommandSuggestion
-                }) as Extension
-            ] as Extension[];
-
-            if (users && users.length > 0) {
-                exts.push(MentionNode as Extension);
-                exts.push(
-                    Mention.configure({
-                        users,
-                        suggestion: MentionSuggestion
-                    }) as Extension
-                );
-            }
-
-            if (channels.length > 0) {
-                exts.push(ChannelMentionNode as Extension);
-                exts.push(
-                    ChannelMention.configure({
-                        channels,
-                        suggestion: ChannelMentionSuggestion
-                    }) as Extension
-                );
-            }
-
-            return exts;
-        }, [customEmojis, users, channels]);
+        const extensions = useMessageEditorExtensions(users);
 
         const editor = useEditor({
             extensions,
@@ -247,7 +183,7 @@ const TiptapInput = memo(
                         string,
                         { users?: TJoinedPublicUser[] }
                     >
-                )[MENTION_STORAGE_KEY];
+                )[USER_MENTION_STORAGE_KEY];
                 if (slot) slot.users = users;
             }
         }, [editor, users]);
@@ -308,7 +244,7 @@ const TiptapInput = memo(
                         editor={editor}
                         className={`border p-2 rounded w-full min-h-10 tiptap overflow-auto relative transition-colors focus-within:border-ring [&_.ProseMirror:focus]:outline-none ${
                             isExpanded ? 'max-h-80' : 'max-h-20'
-                        } ${disabled ? 'opacity-50 cursor-not-allowed bg-muted' : ''}`}
+                        } ${onPopOut ? 'pr-9' : ''} ${disabled ? 'opacity-50 cursor-not-allowed bg-muted' : ''}`}
                     />
                     {showExpandButton && (isHovering || isFocused) && (
                         <Button
@@ -324,6 +260,19 @@ const TiptapInput = memo(
                             ) : (
                                 <ChevronUp className="h-4 w-4" />
                             )}
+                        </Button>
+                    )}
+                    {onPopOut && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            disabled={disabled}
+                            onClick={onPopOut}
+                            title="Open full editor"
+                            className="absolute right-1 top-1 h-6 w-6 text-muted-foreground hover:text-foreground"
+                        >
+                            <Maximize2 className="h-4 w-4" />
                         </Button>
                     )}
                 </div>

@@ -18,7 +18,6 @@ import {
     type TMessageMetadata
 } from '@caesar/shared';
 import { Tooltip } from '@caesar/ui';
-import parse from 'html-react-parser';
 import { memo, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { FileCard } from '../file-card';
@@ -28,8 +27,7 @@ import { AudioOverride } from '../overrides/audio';
 import { EmbedOverride } from '../overrides/embed';
 import { ImageOverride } from '../overrides/image';
 import { VideoOverride } from '../overrides/video';
-import { renderMarkdown } from './render-markdown';
-import { serializer } from './serializer';
+import { renderMessageContent } from './render-content';
 import type { TFoundMedia } from './types';
 
 type TMessageRendererProps = {
@@ -114,16 +112,12 @@ const MessageRenderer = memo(
 
         const { foundMedia, messageHtml } = useMemo(() => {
             const foundMedia: TFoundMedia[] = [];
-            const renderedContent = renderMarkdown(message.content ?? '');
 
-            const messageHtml = parse(renderedContent, {
-                replace: (domNode) =>
-                    serializer(
-                        domNode,
-                        (found) => foundMedia.push(found),
-                        message.id
-                    )
-            });
+            const messageHtml = renderMessageContent(
+                message.content ?? '',
+                message.id,
+                (found) => foundMedia.push(found)
+            );
 
             return { messageHtml, foundMedia };
         }, [message.content, message.id]);

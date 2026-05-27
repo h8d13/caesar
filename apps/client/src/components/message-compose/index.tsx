@@ -23,6 +23,7 @@ import {
 } from 'react';
 import { PreviewFile } from '../channel-view/text/preview-file';
 import { UsersTypingIndicator } from '../channel-view/text/users-typing';
+import { MessageEditorFullscreen } from '../message-editor-fullscreen';
 
 type TMessageComposeProps = {
     channelId: number;
@@ -53,6 +54,7 @@ const MessageCompose = memo(
         const sendingRef = useRef(false);
         const containerRef = useRef<HTMLDivElement>(null);
         const [sending, setSending] = useState(false);
+        const [fullEditorOpen, setFullEditorOpen] = useState(false);
         const can = useCan();
         const channelCan = useChannelCan(channelId);
         const channel = useChannelById(channelId);
@@ -140,6 +142,14 @@ const MessageCompose = memo(
             [removeFile]
         );
 
+        const handleFullEditorSave = useCallback(
+            (html: string) => {
+                onMessageChange(html);
+                setFullEditorOpen(false);
+            },
+            [onMessageChange]
+        );
+
         return (
             <div
                 ref={containerRef}
@@ -177,6 +187,11 @@ const MessageCompose = memo(
                         onChange={onMessageChange}
                         onSubmit={handleSend}
                         onTyping={onTyping}
+                        onPopOut={
+                            canSendMessages
+                                ? () => setFullEditorOpen(true)
+                                : undefined
+                        }
                         disabled={uploading || !canSendMessages}
                         readOnly={sending}
                         users={users}
@@ -202,6 +217,15 @@ const MessageCompose = memo(
                         <Send className="h-4 w-4" />
                     </Button>
                 </div>
+
+                {fullEditorOpen && (
+                    <MessageEditorFullscreen
+                        initialValue={message}
+                        users={users}
+                        onSave={handleFullEditorSave}
+                        onClose={() => setFullEditorOpen(false)}
+                    />
+                )}
             </div>
         );
     }
