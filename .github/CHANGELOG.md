@@ -16,6 +16,7 @@
 - Watch party: share a YouTube stream synced live to every connected client
   - Prediction pools: stake social credit on outcomes; optional timed challenge
 - Casino and hookers
+- Image statuses 24h story style 
 
 ## Messaging & DMs
 
@@ -30,6 +31,7 @@
 - Various DM fixes: no threads, no upvotes
 - Fix emojis serving stale (customs not appended to recent or quick replies)
 - Fix upvotes appearing twice for message groups
+- Add markdown full screen editor using TipTap + customs
 
 ## Voice & streams
 
