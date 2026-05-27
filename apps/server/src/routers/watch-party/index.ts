@@ -1,5 +1,6 @@
 import { ServerEvents } from '@caesar/shared';
-import { protectedProcedure, t } from '@server/utils/trpc';
+import { gamesProcedure } from '@server/games/shared-bindings';
+import { t } from '@server/utils/trpc';
 import z from 'zod';
 
 // Single shared watch-party state for this server instance. In memory: a watch
@@ -36,9 +37,9 @@ const parseYoutubeId = (input: string): string | null => {
   return /^[a-zA-Z0-9_-]{11}$/.test(trimmed) ? trimmed : null;
 };
 
-const getStateRoute = protectedProcedure.query(() => state);
+const getStateRoute = gamesProcedure.query(() => state);
 
-const setUrlRoute = protectedProcedure
+const setUrlRoute = gamesProcedure
   .input(z.object({ url: z.string().trim().min(1).max(500) }))
   .mutation(({ ctx, input }) => {
     const videoId = parseYoutubeId(input.url);
@@ -53,7 +54,7 @@ const setUrlRoute = protectedProcedure
     return state;
   });
 
-const clearRoute = protectedProcedure.mutation(({ ctx }) => {
+const clearRoute = gamesProcedure.mutation(({ ctx }) => {
   state = { videoId: null, setByUserId: null, updatedAt: Date.now() };
   ctx.pubsub.publish(ServerEvents.WATCH_PARTY_UPDATE, state);
 
@@ -62,7 +63,7 @@ const clearRoute = protectedProcedure.mutation(({ ctx }) => {
 
 // Global publish/subscribe pair: the watch party is server-wide, so every
 // connected client listens regardless of channel/user.
-const onUpdateRoute = protectedProcedure.subscription(({ ctx }) => {
+const onUpdateRoute = gamesProcedure.subscription(({ ctx }) => {
   return ctx.pubsub.subscribe(ServerEvents.WATCH_PARTY_UPDATE);
 });
 

@@ -76,7 +76,7 @@ const UserControl = memo(() => {
             id: 'watch-party',
             label: 'Watch party',
             icon: MonitorPlay,
-            enabled: true,
+            enabled: gamesEnabled,
             onSelect: () => openServerScreen(ServerScreen.WATCH_PARTY)
         }
     ];

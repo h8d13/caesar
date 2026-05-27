@@ -200,6 +200,9 @@ describe('others router', () => {
     await expect(caller.roulette.getState()).rejects.toThrow(
       'Games are disabled on this server'
     );
+    await expect(caller.watchParty.getState()).rejects.toThrow(
+      'Games are disabled on this server'
+    );
     await expect(caller.others.getBankBalance()).rejects.toThrow(
       'Games are disabled on this server'
     );
