@@ -10,3 +10,6 @@ data-test/
 .note**
 .env
 .env.*
+.key
+.key.*
+
