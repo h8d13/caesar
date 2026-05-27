@@ -141,8 +141,8 @@ const Storage = memo(() => {
                 </Group>
 
                 <Group
-                    label="Max avatar size"
-                    description="The maximum avatar file size users are allowed to set on their profile."
+                    label="Max avatar / status size"
+                    description="The maximum file size users are allowed to set for their avatar and status images."
                 >
                     <StorageSizeControl
                         value={Number(values.storageMaxAvatarSize)}
