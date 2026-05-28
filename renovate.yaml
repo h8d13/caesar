@@ -46,7 +46,7 @@ packageRules:
   - matchPackageNames: [prettier, prettier-plugin-organize-imports]
     groupName: prettier
 
-  - matchPackageNames: [node, actions/setup-node, '@types/node']
+  - matchPackageNames: [node, pnpm, actions/setup-node, '@types/node']
     groupName: node runtime
 
   - matchPackageNames: [typescript, '@types/node', mediasoup]
@@ -77,14 +77,8 @@ customManagers:
     depNameTemplate: pnpm
     datasourceTemplate: npm
 
-  - customType: regex
-    description: node-version pin in CI workflows
-    fileMatch:
-      - ^\.github/workflows/[^/]+\.ya?ml$
-    matchStrings:
-      - 'node-version:\s*[''"]?(?<currentValue>\d+\.\d+\.\d+)[''"]?'
-    depNameTemplate: node
-    datasourceTemplate: node-version
+  # Note: the github-actions manager already bumps `node-version:` in
+  # actions/setup-node steps natively, no customManager needed for ci.yml.
 
 vulnerabilityAlerts:
   enabled: true
