@@ -3,9 +3,12 @@ packages:
   - 'packages/*'
 
 # Whitelist of native deps whose postinstall scripts we permit.
-# strictDepBuilds is true by default in pnpm 11 — unreviewed builds fail.
+# strictDepBuilds is set explicitly: pnpm 10 default is false, pnpm 11
+# flips to true. Forcing it now keeps the failsafe active on this branch
+# and survives the version bump unchanged.
 # (mediasoup still requires python+pip to build the worker locally; ship a
 # prebuilt mediasoup-worker binary in deploy artifacts to skip that.)
+strictDepBuilds: true
 onlyBuiltDependencies:
   - argon2
   # drizzle-orm declares better-sqlite3 as a peer dep, so pnpm installs
@@ -34,3 +37,8 @@ overrides:
 # deployed artifact is self-contained outside the monorepo. Without this
 # flag pnpm errors with ERR_PNPM_DEPLOY_NONINJECTED_WORKSPACE.
 injectWorkspacePackages: true
+
+# Bootstrap the pnpm version pinned by `packageManager` in package.json,
+# so contributors don't have to run corepack themselves. CI already
+# defers to packageManager (see .github/workflows/ci.yml).
+managePackageManagerVersions: true

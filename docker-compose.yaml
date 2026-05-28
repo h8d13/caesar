@@ -27,7 +27,7 @@ services:
 
   # HTTPS reverse proxy see caddy/Caddyfile
   caddy:
-    image: caddy:alpine
+    image: caddy:2-alpine
     container_name: caesar-caddy
     restart: unless-stopped
     profiles: ["prod"]
@@ -72,7 +72,7 @@ services:
       - ./data-prod-dev:/home/node/.config/caesar
 
   caddy-prod-dev:
-    image: caddy:alpine
+    image: caddy:2-alpine
     container_name: caesar-caddy-prod-dev
     restart: "no"
     profiles: ["prod-dev"]

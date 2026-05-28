@@ -1,0 +1,91 @@
+# yaml-language-server: $schema=https://docs.renovatebot.com/renovate-schema.json
+
+extends:
+  - config:recommended
+  - :dependencyDashboard
+  - :semanticCommits
+  - :timezone(Europe/Lisbon)
+  - helpers:pinGitHubActionDigests
+
+pinDigests: true
+enabledManagers: [npm, github-actions, dockerfile, docker-compose, pre-commit]
+rangeStrategy: bump
+minimumReleaseAge: 3 days
+prConcurrentLimit: 5
+prHourlyLimit: 2
+schedule:
+  - before 5am on monday
+
+lockFileMaintenance:
+  enabled: true
+  schedule:
+    - before 5am on monday
+
+packageRules:
+  - matchUpdateTypes: [minor, patch]
+    matchDepTypes: [devDependencies]
+    groupName: dev minor+patch
+    automerge: true
+
+  - matchUpdateTypes: [minor, patch]
+    matchDepTypes: [dependencies]
+    groupName: prod minor+patch
+
+  - matchUpdateTypes: [major]
+    dependencyDashboardApproval: true
+
+  - matchManagers: [github-actions]
+    groupName: github-actions
+
+  - matchManagers: [dockerfile, docker-compose]
+    groupName: docker
+
+  - matchManagers: [pre-commit]
+    groupName: pre-commit
+
+  - matchPackageNames: [prettier, prettier-plugin-organize-imports]
+    groupName: prettier
+
+  - matchPackageNames: [node, actions/setup-node, '@types/node']
+    groupName: node runtime
+
+  - matchPackageNames: [typescript, '@types/node', mediasoup]
+    matchUpdateTypes: [major]
+    dependencyDashboardApproval: true
+    description: ts/node/mediasoup majors must be approved on the dashboard
+
+  - matchPackageNames: [mediasoup, argon2, better-sqlite3]
+    rangeStrategy: pin
+    description: native postinstall, pin exact so prebuilt-binary caches stay valid
+
+customManagers:
+  - customType: regex
+    description: engines.node in package.json
+    fileMatch:
+      - (^|/)package\.json$
+    matchStrings:
+      - '"node"\s*:\s*">=(?<currentValue>\d+\.\d+\.\d+)"'
+    depNameTemplate: node
+    datasourceTemplate: node-version
+
+  - customType: regex
+    description: engines.pnpm in package.json
+    fileMatch:
+      - (^|/)package\.json$
+    matchStrings:
+      - '"pnpm"\s*:\s*">=(?<currentValue>\d+\.\d+\.\d+)"'
+    depNameTemplate: pnpm
+    datasourceTemplate: npm
+
+  - customType: regex
+    description: node-version pin in CI workflows
+    fileMatch:
+      - ^\.github/workflows/[^/]+\.ya?ml$
+    matchStrings:
+      - 'node-version:\s*[''"]?(?<currentValue>\d+\.\d+\.\d+)[''"]?'
+    depNameTemplate: node
+    datasourceTemplate: node-version
+
+vulnerabilityAlerts:
+  enabled: true
+  labels: [security]
