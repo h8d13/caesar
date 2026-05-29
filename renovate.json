@@ -5,21 +5,11 @@
     ":dependencyDashboard",
     ":semanticCommits",
     ":timezone(Europe/Lisbon)",
-    // Pin every GH action ref to a commit SHA, with the tag in a trailing
-    // comment. Same supply-chain class as minimumReleaseAge below.
     "helpers:pinGitHubActionDigests"
   ],
-  // Pin docker image tags to a content digest too (e.g. caddy:2-alpine
-  // becomes caddy:2-alpine@sha256:...). Handles the distroless image in
-  // Dockerfile.prod that otherwise floats on `latest`.
   "pinDigests": true,
   "enabledManagers": ["npm", "github-actions", "dockerfile", "docker-compose", "pre-commit"],
   "rangeStrategy": "bump",
-  // 3 days lag on every npm release. pnpm-workspace.yaml sets its own
-  // 1440min (24h) minimumReleaseAge as a hard floor at install time;
-  // renovate's 3d sits above so it never proposes a bump that would
-  // fail the install check. Bump to 7d if same-week upgrades aren't
-  // worth the supply-chain exposure window.
   "minimumReleaseAge": "3 days",
   "prConcurrentLimit": 5,
   "prHourlyLimit": 2,
@@ -29,22 +19,17 @@
     "schedule": ["before 5am on monday"]
   },
   "packageRules": [
-    // Auto-merge dev tooling minor/patch. Low blast radius; reviewing
-    // every prettier/eslint patch by hand is noise.
     {
       "matchUpdateTypes": ["minor", "patch"],
       "matchDepTypes": ["devDependencies"],
       "groupName": "dev minor+patch",
       "automerge": true
     },
-    // Prod minor/patch still goes through review (no automerge).
     {
       "matchUpdateTypes": ["minor", "patch"],
       "matchDepTypes": ["dependencies"],
       "groupName": "prod minor+patch"
     },
-    // Every major bump waits on the Dependency Dashboard checkbox.
-    // Stops a runaway PR storm on a multi-major-release week.
     {
       "matchUpdateTypes": ["major"],
       "dependencyDashboardApproval": true
@@ -56,27 +41,16 @@
       "matchPackageNames": ["prettier", "prettier-plugin-organize-imports"],
       "groupName": "prettier"
     },
-    // Node + pnpm cross-source group: built-in github-actions manager
-    // catches ci.yml `node-version:`, built-in npm manager catches the
-    // root `packageManager` field (pnpm@x.y.z) and @types/node.
-    // engines.node / engines.pnpm in package.json are doc-only floors;
-    // bump those by hand when you want to require a newer runtime.
     {
       "matchPackageNames": ["node", "pnpm", "actions/setup-node", "@types/node"],
       "groupName": "node runtime"
     },
-    // Extra guard on packages whose majors tend to be migrations, not
-    // upgrades. Belt-and-braces with the generic major rule above.
     {
       "matchPackageNames": ["typescript", "@types/node", "mediasoup"],
       "matchUpdateTypes": ["major"],
       "dependencyDashboardApproval": true,
       "description": "ts/node/mediasoup majors must be approved on the dashboard"
     },
-    // Native postinstall: every bump fetches/builds a prebuilt binary
-    // per-version. Pin exact so the lockfile and the binary cache stay
-    // in lockstep; a floating caret could resolve to a version the
-    // prebuilt fetcher (scripts/fetch-mediasoup-worker.sh) doesn't have.
     {
       "matchPackageNames": ["mediasoup", "argon2", "better-sqlite3"],
       "rangeStrategy": "pin",
