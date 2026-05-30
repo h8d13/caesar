@@ -233,8 +233,8 @@ importers:
         specifier: ^4.0.3
         version: 4.0.3
       mediasoup:
-        specifier: 3.19.22
-        version: 3.19.22
+        specifier: 3.20.0
+        version: 3.20.0
       mime-types:
         specifier: ^3.0.2
         version: 3.0.2
@@ -345,8 +345,8 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1
       mediasoup:
-        specifier: 3.19.22
-        version: 3.19.22
+        specifier: 3.20.0
+        version: 3.20.0
       prettier:
         specifier: ^3.8.3
         version: 3.8.3
@@ -3039,8 +3039,8 @@ packages:
     resolution: {integrity: sha512-FL6RlsGwvmXbXkbMoc1eW2EqW7k8Cw/Mhls3QewQXH+mioWVeVNWjzcDPmTZ3Sw+mua/n0IH5C/ntuVsx+KegA==}
     engines: {node: '>=22'}
 
-  mediasoup@3.19.22:
-    resolution: {integrity: sha512-BzEl6zSNsANdq8LCGswoF7cr2r84SDgfGHnA393SL4wFjPmW7kij3gHPHvj6o+i15hjnzSvqWV2fUiFNWKq6Jw==}
+  mediasoup@3.20.0:
+    resolution: {integrity: sha512-IOV/BpuGKJ2gUsA90QCmla+osNNuGHRxyIUxE43abdQ9qqk7iVtoUCUXwNLML+6BXBcVuklBofHJjJDj+jCepQ==}
     engines: {node: '>=22'}
 
   mime-db@1.54.0:
@@ -6063,7 +6063,7 @@ snapshots:
       sdp-transform: 3.0.0
       supports-color: 10.2.2
 
-  mediasoup@3.19.22:
+  mediasoup@3.20.0:
     dependencies:
       debug: 4.4.3(supports-color@10.2.2)
       flatbuffers: 25.9.23
