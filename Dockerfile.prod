@@ -26,8 +26,14 @@ WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
 COPY apps/client/package.json ./apps/client/
 COPY apps/server/package.json ./apps/server/
-COPY packages/shared/package.json ./packages/shared/
-COPY packages/ui/package.json ./packages/ui/
+# Full directories (not just package.json) for the two library packages:
+# injectWorkspacePackages: true makes pnpm hardlink-copy workspace deps
+# instead of symlinking, and that copy is a one-off snapshot taken at
+# install time. Only shipping the manifest here left the injected
+# @caesar/ui copy with no src/ at all -- the later `COPY . .` brings in
+# the real source but never refreshes an already-taken hardlink snapshot.
+COPY packages/shared ./packages/shared
+COPY packages/ui ./packages/ui
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile
