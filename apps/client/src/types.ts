@@ -61,7 +61,8 @@ export type TDeviceSettings = {
     noiseGateThresholdDb: number;
     noiseSuppressionMode: NoiseSuppressionMode;
     pushToTalkEnabled: boolean;
-    pushToTalkKey: string;
+    // "+"-joined, sorted KeyboardEvent.code list, e.g. "ControlLeft+Space".
+    pushToTalkKeys: string;
     shareSystemAudio: boolean;
     mirrorOwnVideo: boolean;
     simulcastEnabled: boolean;

@@ -25,6 +25,7 @@ import {
     markRNNoiseWorkletUnavailable
 } from '@/helpers/audio-worklet/rnnoise-worklet';
 import { logVoice } from '@/helpers/browser-logger';
+import { parseKeyCombo } from '@/helpers/format-key-code';
 import { getResWidthHeight } from '@/helpers/get-res-with-height';
 import { getTRPCClient } from '@/lib/trpc';
 import {
@@ -477,7 +478,8 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
 
         if (!devices.pushToTalkEnabled) return;
 
-        const targetKeyCode = devices.pushToTalkKey || 'Space';
+        const comboCodes = parseKeyCombo(devices.pushToTalkKeys || 'Space');
+        const heldCodes = new Set<string>();
 
         const isTypingTarget = (target: EventTarget | null) => {
             if (!(target instanceof HTMLElement)) return false;
@@ -490,29 +492,35 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             );
         };
 
+        const syncActiveFromHeldCodes = () => {
+            const isActive = comboCodes.every((code) => heldCodes.has(code));
+
+            if (pushToTalkActiveRef.current === isActive) return;
+
+            pushToTalkActiveRef.current = isActive;
+            syncTransmitMicrophoneTrackState();
+        };
+
         const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.code !== targetKeyCode) return;
-            if (pushToTalkActiveRef.current) return;
+            if (!comboCodes.includes(event.code)) return;
             if (isTypingTarget(event.target)) return;
 
-            pushToTalkActiveRef.current = true;
-            syncTransmitMicrophoneTrackState();
+            heldCodes.add(event.code);
+            syncActiveFromHeldCodes();
         };
 
         const handleKeyUp = (event: KeyboardEvent) => {
-            if (event.code !== targetKeyCode) return;
+            if (!comboCodes.includes(event.code)) return;
 
-            pushToTalkActiveRef.current = false;
-            syncTransmitMicrophoneTrackState();
+            heldCodes.delete(event.code);
+            syncActiveFromHeldCodes();
         };
 
         // Window blur (e.g. alt-tab while held) has no matching keyup, so
-        // the mic would stay open until the key is pressed again.
+        // the mic would stay open until the combo is pressed again.
         const handleBlur = () => {
-            if (!pushToTalkActiveRef.current) return;
-
-            pushToTalkActiveRef.current = false;
-            syncTransmitMicrophoneTrackState();
+            heldCodes.clear();
+            syncActiveFromHeldCodes();
         };
 
         window.addEventListener('keydown', handleKeyDown);
@@ -528,7 +536,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         };
     }, [
         devices.pushToTalkEnabled,
-        devices.pushToTalkKey,
+        devices.pushToTalkKeys,
         syncTransmitMicrophoneTrackState
     ]);
 

@@ -318,11 +318,11 @@ const Devices = memo(() => {
                                         }
                                     />
                                     <PushToTalkKeyPicker
-                                        keyCode={
-                                            values.pushToTalkKey || 'Space'
+                                        combo={
+                                            values.pushToTalkKeys || 'Space'
                                         }
-                                        onKeyCodeChange={(code) =>
-                                            onChange('pushToTalkKey', code)
+                                        onComboChange={(combo) =>
+                                            onChange('pushToTalkKeys', combo)
                                         }
                                         disabled={!values.pushToTalkEnabled}
                                     />
