@@ -64,7 +64,7 @@
     "eslint": "^10.6.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
-    "eslint-plugin-react-you-might-not-need-an-effect": "^0.11.1",
+    "eslint-plugin-react-you-might-not-need-an-effect": "^1.0.1",
     "eslint-plugin-unused-imports": "^4.4.1",
     "globals": "^17.7.0",
     "prettier": "^3.8.3",
