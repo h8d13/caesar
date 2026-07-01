@@ -318,9 +318,7 @@ const Devices = memo(() => {
                                         }
                                     />
                                     <PushToTalkKeyPicker
-                                        combo={
-                                            values.pushToTalkKeys || 'Space'
-                                        }
+                                        combo={values.pushToTalkKeys || 'Space'}
                                         onComboChange={(combo) =>
                                             onChange('pushToTalkKeys', combo)
                                         }
