@@ -28,16 +28,16 @@
     "@types/node": "^24.12.4",
     "@types/sanitize-html": "^2.16.1",
     "@types/ws": "^8.18.1",
-    "esbuild": "^0.28.0",
-    "eslint": "^10.4.0",
+    "esbuild": "^0.28.1",
+    "eslint": "^10.6.0",
     "eslint-plugin-unused-imports": "^4.4.1",
-    "globals": "^17.6.0",
+    "globals": "^17.7.0",
     "postject": "^1.0.0-alpha.6",
     "prettier": "^3.8.3",
     "prettier-plugin-organize-imports": "^4.3.0",
-    "tsx": "^4.22.3",
-    "typescript-eslint": "^8.60.0",
-    "vitest": "^4.1.7"
+    "tsx": "^4.22.4",
+    "typescript-eslint": "^8.62.0",
+    "vitest": "^4.1.9"
   },
   "peerDependencies": {
     "typescript": "~6.0.3"
