@@ -415,13 +415,17 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
     );
     const microphoneDTLNWorkletNodeRef = useRef<AudioWorkletNode | null>(null);
     const micMutedRef = useRef(ownVoiceState.micMuted);
+    const pushToTalkEnabledRef = useRef(!!devices.pushToTalkEnabled);
+    const pushToTalkActiveRef = useRef(false);
 
     const syncTransmitMicrophoneTrackState = useCallback(() => {
         const track = transmitMicrophoneTrackRef.current;
 
         if (!track) return;
 
-        const shouldEnable = !micMutedRef.current;
+        const shouldEnable =
+            !micMutedRef.current &&
+            (!pushToTalkEnabledRef.current || pushToTalkActiveRef.current);
 
         if (track.enabled !== shouldEnable) {
             track.enabled = shouldEnable;
@@ -465,6 +469,68 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         micMutedRef.current = ownVoiceState.micMuted;
         syncTransmitMicrophoneTrackState();
     }, [ownVoiceState.micMuted, syncTransmitMicrophoneTrackState]);
+
+    useEffect(() => {
+        pushToTalkEnabledRef.current = !!devices.pushToTalkEnabled;
+        pushToTalkActiveRef.current = false;
+        syncTransmitMicrophoneTrackState();
+
+        if (!devices.pushToTalkEnabled) return;
+
+        const targetKeyCode = devices.pushToTalkKey || 'Space';
+
+        const isTypingTarget = (target: EventTarget | null) => {
+            if (!(target instanceof HTMLElement)) return false;
+
+            return (
+                target.isContentEditable ||
+                target.tagName === 'INPUT' ||
+                target.tagName === 'TEXTAREA' ||
+                target.tagName === 'SELECT'
+            );
+        };
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.code !== targetKeyCode) return;
+            if (pushToTalkActiveRef.current) return;
+            if (isTypingTarget(event.target)) return;
+
+            pushToTalkActiveRef.current = true;
+            syncTransmitMicrophoneTrackState();
+        };
+
+        const handleKeyUp = (event: KeyboardEvent) => {
+            if (event.code !== targetKeyCode) return;
+
+            pushToTalkActiveRef.current = false;
+            syncTransmitMicrophoneTrackState();
+        };
+
+        // Window blur (e.g. alt-tab while held) has no matching keyup, so
+        // the mic would stay open until the key is pressed again.
+        const handleBlur = () => {
+            if (!pushToTalkActiveRef.current) return;
+
+            pushToTalkActiveRef.current = false;
+            syncTransmitMicrophoneTrackState();
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+        window.addEventListener('blur', handleBlur);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
+            window.removeEventListener('blur', handleBlur);
+            pushToTalkActiveRef.current = false;
+            syncTransmitMicrophoneTrackState();
+        };
+    }, [
+        devices.pushToTalkEnabled,
+        devices.pushToTalkKey,
+        syncTransmitMicrophoneTrackState
+    ]);
 
     useEffect(() => {
         if (!microphoneNoiseGateWorkletNodeRef.current) return;

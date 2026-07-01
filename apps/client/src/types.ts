@@ -60,6 +60,8 @@ export type TDeviceSettings = {
     noiseGateEnabled: boolean;
     noiseGateThresholdDb: number;
     noiseSuppressionMode: NoiseSuppressionMode;
+    pushToTalkEnabled: boolean;
+    pushToTalkKey: string;
     shareSystemAudio: boolean;
     mirrorOwnVideo: boolean;
     simulcastEnabled: boolean;
