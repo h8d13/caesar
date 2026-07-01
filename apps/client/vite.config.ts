@@ -33,16 +33,7 @@ export default defineConfig({
     assetsInclude: ['**/*.wasm'],
     build: {
         target: 'esnext',
-        chunkSizeWarningLimit: 1000,
-        rolldownOptions: {
-            output: {
-                // DIAGNOSTIC: forced off to isolate whether Rolldown's
-                // code-splitter is what's producing the bogus "failed to
-                // resolve @caesar/ui" error. Revert once confirmed either
-                // way.
-                codeSplitting: false
-            }
-        }
+        chunkSizeWarningLimit: 1000
     },
     resolve: {
         alias: {

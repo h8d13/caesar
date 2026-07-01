@@ -42,6 +42,21 @@ RUN ARCH=${TARGETARCH} scripts/fetch-mediasoup-worker.sh /usr/local/bin
 # Now the source; edits below this line no longer bust install/fetch.
 COPY . .
 
+# TEMP DIAGNOSTIC: ground-truth check of @caesar/ui linkage/resolution before
+# the failing vite build step, so we stop guessing at bundler config blind.
+# Remove once the Rolldown resolve failure is root-caused.
+RUN echo "=== DIAG: root node_modules/@caesar/ui ===" ; \
+    ls -la node_modules/@caesar/ui ; \
+    echo "=== DIAG: apps/client node_modules/@caesar/ui ===" ; \
+    ls -la apps/client/node_modules/@caesar/ui ; \
+    echo "=== DIAG: package.json seen via apps/client node_modules ===" ; \
+    cat apps/client/node_modules/@caesar/ui/package.json ; \
+    echo "=== DIAG: does src/index.ts actually exist through that link ===" ; \
+    ls -la apps/client/node_modules/@caesar/ui/src/index.ts ; \
+    echo "=== DIAG: plain Node ESM resolve (bypasses Rolldown entirely) ===" ; \
+    (cd apps/client && node --input-type=module -e "import('@caesar/ui').then(m => console.log('NODE_RESOLVE_OK', Object.keys(m).slice(0,5))).catch(e => console.log('NODE_RESOLVE_FAIL', e.message))") ; \
+    echo "=== DIAG END ==="
+
 RUN pnpm --filter @caesar/client build
 # Bundle (esbuild) + SEA (postject) -> apps/server/dist/caesar.
 RUN pnpm --filter @caesar/server build:sea
