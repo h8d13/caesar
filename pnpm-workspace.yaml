@@ -3,20 +3,19 @@ packages:
   - 'packages/*'
 
 # Whitelist of native deps whose postinstall scripts we permit.
-# strictDepBuilds is set explicitly: pnpm 10 default is false, pnpm 11
-# flips to true. Forcing it now keeps the failsafe active on this branch
-# and survives the version bump unchanged.
+# strictDepBuilds defaults to true as of pnpm 11; kept explicit so it also
+# fails closed on pnpm 10.
 # (mediasoup still requires python+pip to build the worker locally; ship a
 # prebuilt mediasoup-worker binary in deploy artifacts to skip that.)
 strictDepBuilds: true
-onlyBuiltDependencies:
-  - argon2
+allowBuilds:
+  argon2: true
   # drizzle-orm declares better-sqlite3 as a peer dep, so pnpm installs
   # it even though we use the libsql driver. Allow its postinstall so
   # pnpm doesn't warn; we never actually load the .node binding.
-  - better-sqlite3
-  - esbuild
-  - mediasoup
+  better-sqlite3: true
+  esbuild: true
+  mediasoup: true
 
 # Refuse versions published less than 24h ago. Catches compromised releases
 # during the window where a malicious publish hasn't been detected yet.
