@@ -36,14 +36,11 @@ export default defineConfig({
         chunkSizeWarningLimit: 1000,
         rolldownOptions: {
             output: {
-                // @caesar/ui is a source-only workspace package (no dist),
-                // reached both statically (main.tsx) and through many
-                // React.lazy route chunks. Pin it to one explicit chunk so
-                // the splitter can't end up with an ambiguous/dangling
-                // reference to it across that static+dynamic boundary.
-                manualChunks(id) {
-                    if (id.includes('/packages/ui/src/')) return 'caesar-ui';
-                }
+                // DIAGNOSTIC: forced off to isolate whether Rolldown's
+                // code-splitter is what's producing the bogus "failed to
+                // resolve @caesar/ui" error. Revert once confirmed either
+                // way.
+                codeSplitting: false
             }
         }
     },
