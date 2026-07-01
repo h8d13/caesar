@@ -37,10 +37,10 @@ const UserAvatar = memo(
         const hasStatus = (user.activeStatusCount ?? 0) > 0;
 
         const content = (
-            <div className="relative w-fit h-fit" onClick={onClick}>
+            <div className="relative size-fit" onClick={onClick}>
                 <Avatar
                     className={cn(
-                        'h-8 w-8',
+                        'size-8 bg-muted',
                         hasStatus &&
                             'ring-2 ring-green-500 ring-offset-2 ring-offset-card',
                         className
