@@ -66,7 +66,7 @@ const loadMediasoup = async () => {
   );
 
   for (let i = 0; i < count; i++) {
-    const workerConfig: mediasoup.types.WorkerSettings = {
+    const workerConfig = {
       logLevel,
       disableLiburing: true,
       workerBin: MEDIASOUP_BINARY_PATH
