@@ -40,13 +40,6 @@ export default defineConfig({
             '@': path.resolve(__dirname, './src')
         }
     },
-    // @caesar/ui is a workspace package with no compiled output (its
-    // "exports" point straight at .ts source), so it must be explicitly
-    // pre-bundled like any other linked monorepo package without a build
-    // step; otherwise Vite's dependency crawler can skip over it.
-    optimizeDeps: {
-        include: ['@caesar/ui']
-    },
     define: {
         VITE_APP_NAME: JSON.stringify(manifest.name),
         VITE_APP_VERSION: JSON.stringify(pkg.version),
