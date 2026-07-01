@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.24
+# syntax=docker/dockerfile:1.25@sha256:0adf442eae370b6087e08edc7c50b552d80ddf261576f4ebd6421006b2461f12
 ARG CAESAR_BUILD_VERSION
 
 FROM node:24.15.0-slim AS builder
@@ -65,7 +65,7 @@ RUN mkdir -p /out/app/static-prod-assets /out/home/node/.config \
 # --- Runtime stage ---
 # distroless "cc" = glibc + libstdc++ + libgcc: minimum for the Node SEA,
 # prebuilt mediasoup-worker and argon2 (all dynamic glibc). "static" has no libc.
-FROM gcr.io/distroless/cc-debian13
+FROM gcr.io/distroless/cc-debian13@sha256:a017e74bd2a12d98342dbecd33d121d2b160415ed777573dc1808969e989d94d
 
 # DATA_PATH = XDG_CONFIG_HOME/caesar; set HOME/XDG since uid 1000 has no passwd entry.
 ENV CAESAR_ENV=production \
