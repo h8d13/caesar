@@ -17,7 +17,7 @@ import { login2faRouteHandler } from './login-2fa';
 import { logoutRouteHandler } from './logout';
 import { publicRouteHandler } from './public';
 import { uploadFileRouteHandler } from './upload';
-import { HttpValidationError } from './utils';
+import { HttpValidationError, PayloadTooLargeError } from './utils';
 
 type RouteContext = {
   info: ReturnType<typeof getWsInfo>;
@@ -159,6 +159,10 @@ const createHttpServer = async (port: number = config.server.port) => {
 
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ errors: errorsMap }));
+            return;
+          } else if (error instanceof PayloadTooLargeError) {
+            res.writeHead(413, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: error.message }));
             return;
           }
 

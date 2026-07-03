@@ -22,7 +22,11 @@ const [SERVER_PUBLIC_IP, SERVER_PRIVATE_IP] = await Promise.all([
 const zEnvConfig = z.object({
   server: z.object({
     port: z.coerce.number().int().positive(),
-    debug: z.coerce.boolean()
+    debug: z.coerce.boolean(),
+    // Hard cap on buffered request bodies (login/2fa). Prevents an
+    // unauthenticated peer from streaming a huge body into memory before
+    // any auth or rate-limit check runs.
+    maxRequestBodyBytes: z.coerce.number().int().positive()
   }),
   webRtc: z.object({
     port: z.coerce.number().int().positive(),
@@ -42,7 +46,8 @@ type TEnvConfig = z.infer<typeof zEnvConfig>;
 const envDefaults: TEnvConfig = {
   server: {
     port: 4991,
-    debug: IS_DEVELOPMENT
+    debug: IS_DEVELOPMENT,
+    maxRequestBodyBytes: 64 * 1024
   },
   webRtc: {
     port: 40000,
@@ -60,6 +65,7 @@ const envConfig = zEnvConfig.parse(
   applyEnvOverrides(structuredClone(envDefaults), {
     'server.port': 'CAESAR_PORT',
     'server.debug': 'CAESAR_DEBUG',
+    'server.maxRequestBodyBytes': 'CAESAR_MAX_REQUEST_BODY_BYTES',
     'webRtc.port': 'CAESAR_WEBRTC_PORT',
     'webRtc.announcedAddress': 'CAESAR_WEBRTC_ANNOUNCED_ADDRESS',
     'webRtc.maxBitrate': 'CAESAR_WEBRTC_MAX_BITRATE',

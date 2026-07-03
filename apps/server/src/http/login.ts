@@ -172,7 +172,9 @@ const loginRouteHandler = async (
   req: http.IncomingMessage,
   res: http.ServerResponse
 ) => {
-  const data = zBody.parse(await getJsonBody(req));
+  const data = zBody.parse(
+    await getJsonBody(req, config.server.maxRequestBodyBytes)
+  );
 
   if (data.identity === DELETED_USER_IDENTITY_AND_NAME) {
     logger.info(`[Auth] Login attempt with reserved identity sentinel`);

@@ -6,6 +6,7 @@ import {
   getRequestPathname,
   hasPrefixPathSegment
 } from '../helpers';
+import { PayloadTooLargeError } from '../utils';
 
 const createMockRequest = (
   url?: string,
@@ -101,6 +102,50 @@ describe('http helpers', () => {
       });
 
       await expect(getJsonBody(req)).rejects.toThrow('request failed');
+    });
+
+    test('rejects a single chunk over the max size', async () => {
+      const req = createMockRequest('/login', 'localhost:9999');
+
+      queueMicrotask(() => {
+        req.emit('data', 'x'.repeat(100));
+        req.emit('end');
+      });
+
+      await expect(getJsonBody(req, 50)).rejects.toBeInstanceOf(
+        PayloadTooLargeError
+      );
+    });
+
+    test('rejects when accumulated chunks exceed the max size', async () => {
+      const req = createMockRequest('/login', 'localhost:9999');
+
+      queueMicrotask(() => {
+        req.emit('data', 'x'.repeat(30));
+        req.emit('data', 'x'.repeat(30));
+        req.emit('end');
+      });
+
+      await expect(getJsonBody(req, 50)).rejects.toBeInstanceOf(
+        PayloadTooLargeError
+      );
+    });
+
+    test('accepts a body exactly at the max size', async () => {
+      const payload = JSON.stringify({ a: 'b' });
+      const req = createMockRequest('/login', 'localhost:9999');
+
+      queueMicrotask(() => {
+        req.emit('data', payload);
+        req.emit('end');
+      });
+
+      const body = await getJsonBody<{ a: string }>(
+        req,
+        Buffer.byteLength(payload)
+      );
+
+      expect(body.a).toBe('b');
     });
   });
 });

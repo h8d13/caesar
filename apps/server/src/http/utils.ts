@@ -9,4 +9,12 @@ class HttpValidationError extends Error {
   }
 }
 
-export { HttpValidationError };
+class PayloadTooLargeError extends Error {
+  constructor(message = 'Payload too large') {
+    super(message);
+    this.name = 'PayloadTooLargeError';
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+export { HttpValidationError, PayloadTooLargeError };

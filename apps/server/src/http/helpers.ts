@@ -1,6 +1,7 @@
 import type fs from 'fs';
 import http from 'http';
 import path from 'path';
+import { PayloadTooLargeError } from './utils';
 
 type HttpRouteHandler<TContext = undefined> = (
   req: http.IncomingMessage,
@@ -8,17 +9,42 @@ type HttpRouteHandler<TContext = undefined> = (
   ctx: TContext
 ) => Promise<unknown> | unknown;
 
+// Fallback cap when a caller doesn't pass one. Callers should pass
+// config.server.maxRequestBodyBytes; this keeps helpers.ts config-free (and
+// cheap to unit-test) while still failing closed if a cap is ever omitted.
+const DEFAULT_MAX_JSON_BODY_BYTES = 64 * 1024;
+
 const getJsonBody = async <T = unknown>(
-  req: http.IncomingMessage
+  req: http.IncomingMessage,
+  maxBytes: number = DEFAULT_MAX_JSON_BODY_BYTES
 ): Promise<T> => {
   return new Promise((resolve, reject) => {
     let body = '';
+    let size = 0;
+    let settled = false;
 
     req.on('data', (chunk) => {
+      if (settled) return;
+
+      // Count actual received bytes, not the spoofable Content-Length.
+      size +=
+        typeof chunk === 'string' ? Buffer.byteLength(chunk) : chunk.length;
+
+      if (size > maxBytes) {
+        settled = true;
+        // Stop reading so an attacker can't keep streaming into memory.
+        if (typeof req.destroy === 'function') req.destroy();
+        reject(new PayloadTooLargeError());
+        return;
+      }
+
       body += chunk;
     });
 
     req.on('end', () => {
+      if (settled) return;
+      settled = true;
+
       try {
         const json = body ? JSON.parse(body) : {};
         resolve(json);
@@ -27,7 +53,11 @@ const getJsonBody = async <T = unknown>(
       }
     });
 
-    req.on('error', reject);
+    req.on('error', (err) => {
+      if (settled) return;
+      settled = true;
+      reject(err);
+    });
   });
 };
 

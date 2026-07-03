@@ -1,6 +1,7 @@
 import type { AuthenticationResponseJSON } from '@simplewebauthn/server';
 import http from 'http';
 import z from 'zod';
+import { config } from '../config';
 import { getUserById } from '../db/queries/users';
 import { getWsInfo } from '../helpers/get-ws-info';
 import { logger } from '../logger';
@@ -50,7 +51,9 @@ const login2faRouteHandler = async (
   req: http.IncomingMessage,
   res: http.ServerResponse
 ) => {
-  const data = zBody.parse(await getJsonBody(req));
+  const data = zBody.parse(
+    await getJsonBody(req, config.server.maxRequestBodyBytes)
+  );
   const connectionInfo = getWsInfo(undefined, req);
 
   if (connectionInfo?.ip) {
