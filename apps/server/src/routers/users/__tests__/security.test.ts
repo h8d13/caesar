@@ -343,9 +343,9 @@ describe('owner-account protection', () => {
     const { caller: owner } = await initTest(1);
     const { caller: mod } = await makeModerator(owner);
 
-    await expect(
-      mod.users.delete({ userId: 1, wipe: true })
-    ).rejects.toThrow(/cannot delete the server owner/i);
+    await expect(mod.users.delete({ userId: 1, wipe: true })).rejects.toThrow(
+      /cannot delete the server owner/i
+    );
 
     const row = await tdb
       .select({ id: users.id })
