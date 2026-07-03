@@ -63,6 +63,24 @@ export const signOutOtherSessions = async () => {
     return result.token;
 };
 
+export const updatePassword = async (values: {
+    currentPassword: string;
+    newPassword: string;
+    confirmNewPassword: string;
+}) => {
+    const trpc = getTRPCClient();
+    const result = await trpc.users.updatePassword.mutate(values);
+
+    // A password change bumps sessionEpoch server-side, so the caller's old
+    // token is now stale. Swap in the fresh one the server minted (same
+    // pattern as signOutOtherSessions) so the next reconnect / reload works.
+    setSessionStorageItem(SessionStorageKey.TOKEN, result.token);
+
+    if (getLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN)) {
+        setLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN, result.token);
+    }
+};
+
 export const setAllowMultipleSessions = async (value: boolean) => {
     const trpc = getTRPCClient();
     const result = await trpc.users.setAllowMultipleSessions.mutate({ value });
