@@ -92,6 +92,13 @@ beforeAll(async () => {
     g.__caesarTmpDbPath = tmpDbPath;
     const sqlite = createClient({ url: `file:${tmpDbPath}` });
     await sqlite.execute('PRAGMA foreign_keys = ON;');
+    // The test DB is a disposable per-fork tempfile, so durability is
+    // irrelevant: drop fsync-on-every-write (synchronous=FULL) and the
+    // on-disk journal. Each test's beforeEach does ~20 DELETEs + 17 seed
+    // inserts, and at synchronous=FULL every one fsyncs. This is the fixed
+    // per-test cost paid by every test, unit tests included.
+    await sqlite.execute('PRAGMA journal_mode = MEMORY;');
+    await sqlite.execute('PRAGMA synchronous = OFF;');
     const localTdb = drizzle(sqlite);
     await migrate(localTdb, { migrationsFolder: DRIZZLE_PATH });
     const tablesRes = await sqlite.execute(
