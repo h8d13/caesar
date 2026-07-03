@@ -1,6 +1,6 @@
 import { SettingsFooterActions } from '@/components/server-screens/settings-footer-actions';
+import { updatePassword as updatePasswordAction } from '@/features/server/users/actions';
 import { useForm } from '@/hooks/use-form';
-import { getTRPCClient } from '@/lib/trpc';
 import {
     Card,
     CardContent,
@@ -21,10 +21,8 @@ const Password = memo(() => {
     });
 
     const updatePassword = useCallback(async () => {
-        const trpc = getTRPCClient();
-
         try {
-            await trpc.users.updatePassword.mutate(values);
+            await updatePasswordAction(values);
             toast.success('Password updated!');
         } catch (error) {
             setTrpcErrors(error);

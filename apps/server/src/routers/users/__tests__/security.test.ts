@@ -474,3 +474,37 @@ describe('role-assignment escalation', () => {
     expect(assigned.map((r) => r.roleId)).toContain(adminRoleId);
   });
 });
+
+// A password change must revoke sessions an attacker may already hold. The
+// only session gate is sessionEpoch, so changing the password has to bump it
+// and hand the caller a fresh token minted at the new epoch.
+describe('users.updatePassword session invalidation', () => {
+  test('bumps sessionEpoch so existing tokens go stale', async () => {
+    const { caller } = await initTest(1);
+    const before = await epochFor(1);
+
+    await caller.users.updatePassword({
+      currentPassword: 'password123',
+      newPassword: 'newpass456',
+      confirmNewPassword: 'newpass456'
+    });
+
+    const after = await epochFor(1);
+    expect(after).toBe(before + 1);
+  });
+
+  test('returns a fresh JWT minted at the new epoch', async () => {
+    const { caller } = await initTest(1);
+
+    const { token } = await caller.users.updatePassword({
+      currentPassword: 'password123',
+      newPassword: 'newpass456',
+      confirmNewPassword: 'newpass456'
+    });
+
+    const decoded = jwt.verify(token, await getJwtSecret());
+    const epochNow = await epochFor(1);
+    expect((decoded as { sessionEpoch: number }).sessionEpoch).toBe(epochNow);
+    expect((decoded as { userId: number }).userId).toBe(1);
+  });
+});
