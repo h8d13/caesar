@@ -3,9 +3,8 @@ import { messages } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import dns from 'dns';
 import { eq } from 'drizzle-orm';
-import ipaddr from 'ipaddr.js';
 import { getLinkPreview } from 'link-preview-js';
-import { isIP } from 'net';
+import { isFetchableUrl, isPrivateIP } from './url-guard';
 
 type LinkPreviewResult = Awaited<ReturnType<typeof getLinkPreview>>;
 const metadataCache = new Map<string, LinkPreviewResult>();
@@ -14,27 +13,6 @@ setInterval(
   () => metadataCache.clear(),
   1000 * 60 * 60 * 2 // clear cache every 2 hours
 );
-
-const isPrivateIP = (ip: string): boolean => {
-  try {
-    const addr = ipaddr.parse(ip);
-    const range = addr.range();
-
-    const blockedRanges = [
-      'unspecified',
-      'broadcast',
-      'multicast',
-      'linkLocal',
-      'loopback',
-      'private',
-      'uniqueLocal'
-    ];
-
-    return blockedRanges.includes(range);
-  } catch {
-    return true; // if we can't parse it, block it
-  }
-};
 
 const urlMetadataParser = async (
   content: string
@@ -47,19 +25,7 @@ const urlMetadataParser = async (
     const promises = urls.map(async (url) => {
       if (metadataCache.has(url)) return metadataCache.get(url);
 
-      if (!URL.canParse(url)) {
-        return;
-      }
-
-      const parsed = new URL(url);
-
-      // allow only http and https protocols
-      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-        return;
-      }
-
-      // it's already an ip address, check if it's private
-      if (isIP(parsed.hostname) && isPrivateIP(parsed.hostname)) {
+      if (!isFetchableUrl(url)) {
         return;
       }
 
@@ -67,7 +33,14 @@ const urlMetadataParser = async (
         headers: {
           'user-agent': 'Mozilla/5.0 (compatible; bot)'
         },
-        followRedirects: 'follow',
+        // 'follow' lets node-fetch chase redirects internally, and the
+        // library only re-validates hosts on 'manual'. So an allowed URL
+        // that 302s to 127.0.0.1 / 169.254.169.254 would be fetched
+        // unchecked. 'manual' + handleRedirects re-runs the host guard (and
+        // resolveDNSHost below) on the redirect target before following it.
+        followRedirects: 'manual',
+        handleRedirects: (_baseUrl: string, forwardedUrl: string) =>
+          isFetchableUrl(forwardedUrl),
         resolveDNSHost: async (url: string) => {
           return new Promise((resolve, reject) => {
             try {
