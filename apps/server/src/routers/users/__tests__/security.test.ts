@@ -12,7 +12,7 @@ import { describe, expect, test } from 'vitest';
 // AFTER the role is assigned so the permission middleware sees it live.
 const makeModerator = async (
   ownerCaller: Awaited<ReturnType<typeof initTest>>['caller'],
-  permissions: Permission[]
+  permissions: Permission[] = [Permission.MANAGE_USERS]
 ) => {
   const roleId = await ownerCaller.roles.add();
 
@@ -325,7 +325,7 @@ describe('users.getMySessions', () => {
 describe('owner-account protection', () => {
   test('a MANAGE_USERS moderator cannot ban the owner', async () => {
     const { caller: owner } = await initTest(1);
-    const { caller: mod } = await makeModerator(owner, [Permission.MANAGE_USERS]);
+    const { caller: mod } = await makeModerator(owner);
 
     await expect(mod.users.ban({ userId: 1 })).rejects.toThrow(
       /cannot ban the server owner/i
@@ -341,7 +341,7 @@ describe('owner-account protection', () => {
 
   test('a MANAGE_USERS moderator cannot delete the owner', async () => {
     const { caller: owner } = await initTest(1);
-    const { caller: mod } = await makeModerator(owner, [Permission.MANAGE_USERS]);
+    const { caller: mod } = await makeModerator(owner);
 
     await expect(
       mod.users.delete({ userId: 1, wipe: true })
@@ -357,7 +357,7 @@ describe('owner-account protection', () => {
 
   test('a MANAGE_USERS moderator cannot kick the owner', async () => {
     const { caller: owner } = await initTest(1);
-    const { caller: mod } = await makeModerator(owner, [Permission.MANAGE_USERS]);
+    const { caller: mod } = await makeModerator(owner);
 
     // Guard fires before the "user not connected" check.
     await expect(mod.users.kick({ userId: 1 })).rejects.toThrow(
@@ -367,7 +367,7 @@ describe('owner-account protection', () => {
 
   test('a MANAGE_USERS moderator cannot rename the owner identity', async () => {
     const { caller: owner } = await initTest(1);
-    const { caller: mod } = await makeModerator(owner, [Permission.MANAGE_USERS]);
+    const { caller: mod } = await makeModerator(owner);
 
     await expect(
       mod.users.renameIdentity({ userId: 1, identity: 'stolen-owner' })
@@ -376,7 +376,7 @@ describe('owner-account protection', () => {
 
   test('the guard protects only the owner: a moderator can still ban a peer', async () => {
     const { caller: owner } = await initTest(1);
-    const { caller: mod } = await makeModerator(owner, [Permission.MANAGE_USERS]);
+    const { caller: mod } = await makeModerator(owner);
     const targetId = await insertUser('peer-target');
 
     await mod.users.ban({ userId: targetId });
@@ -396,7 +396,7 @@ describe('owner-account protection', () => {
 describe('role-assignment escalation', () => {
   test('a MANAGE_USERS moderator cannot assign a role granting MANAGE_ROLES', async () => {
     const { caller: owner } = await initTest(1);
-    const { caller: mod } = await makeModerator(owner, [Permission.MANAGE_USERS]);
+    const { caller: mod } = await makeModerator(owner);
 
     const adminRoleId = await owner.roles.add();
     await owner.roles.update({
@@ -424,7 +424,7 @@ describe('role-assignment escalation', () => {
 
   test('a moderator can assign a role whose permissions it already holds', async () => {
     const { caller: owner } = await initTest(1);
-    const { caller: mod } = await makeModerator(owner, [Permission.MANAGE_USERS]);
+    const { caller: mod } = await makeModerator(owner);
 
     // MANAGE_USERS is a permission the moderator holds, so it may pass it on.
     const peerModRoleId = await owner.roles.add();
