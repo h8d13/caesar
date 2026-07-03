@@ -36,7 +36,7 @@
     "globals": "^17.7.0",
     "prettier": "^3.8.3",
     "prettier-plugin-organize-imports": "^4.3.0",
-    "typescript-eslint": "^8.62.0",
+    "typescript-eslint": "^8.62.1",
     "@trpc/client": "^11.18.0"
   },
   "dependencies": {
