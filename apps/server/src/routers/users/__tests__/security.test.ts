@@ -1,11 +1,53 @@
-import { sha256 } from '@caesar/shared';
-import { logins, users } from '@caesar/shared/db/schema';
+import { OWNER_ROLE_ID, Permission, sha256 } from '@caesar/shared';
+import { logins, userRoles, users } from '@caesar/shared/db/schema';
 import { initTest, login } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { getJwtSecret } from '@server/utils/jwt-secret';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import { describe, expect, test } from 'vitest';
+
+// Stand up a non-owner moderator: user 2 gets a fresh role carrying only the
+// listed permissions, then acts via their own caller. `initTest(2)` must run
+// AFTER the role is assigned so the permission middleware sees it live.
+const makeModerator = async (
+  ownerCaller: Awaited<ReturnType<typeof initTest>>['caller'],
+  permissions: Permission[]
+) => {
+  const roleId = await ownerCaller.roles.add();
+
+  await ownerCaller.roles.update({
+    roleId,
+    name: 'Moderator',
+    color: '#123456',
+    permissions,
+    storageQuotaOverrideEnabled: false,
+    storageSpaceQuota: 0
+  });
+
+  await ownerCaller.users.addRole({ userId: 2, roleId });
+
+  return initTest(2);
+};
+
+const insertUser = async (identity: string): Promise<number> => {
+  const row = await tdb
+    .insert(users)
+    .values({
+      identity,
+      name: identity,
+      avatarId: null,
+      password: 'password',
+      bannerId: null,
+      bio: null,
+      bannerColor: null,
+      createdAt: Date.now()
+    })
+    .returning({ id: users.id })
+    .get();
+
+  return row!.id;
+};
 
 const epochFor = async (userId: number): Promise<number> => {
   const row = await tdb
@@ -274,5 +316,161 @@ describe('users.getMySessions', () => {
     const sessions = await caller1.users.getMySessions();
     const otherHash = (await sha256('other-user-ua')).slice(0, 8);
     expect(sessions.map((s) => s.hash)).not.toContain(otherHash);
+  });
+});
+
+// The owner user (id 1, holds OWNER_ROLE_ID) must be untouchable by a
+// non-owner moderator, even one holding MANAGE_USERS. Ban locks the owner
+// out with no self-recovery; delete is irreversible.
+describe('owner-account protection', () => {
+  test('a MANAGE_USERS moderator cannot ban the owner', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: mod } = await makeModerator(owner, [Permission.MANAGE_USERS]);
+
+    await expect(mod.users.ban({ userId: 1 })).rejects.toThrow(
+      /cannot ban the server owner/i
+    );
+
+    const row = await tdb
+      .select({ banned: users.banned })
+      .from(users)
+      .where(eq(users.id, 1))
+      .get();
+    expect(row?.banned).toBeFalsy();
+  });
+
+  test('a MANAGE_USERS moderator cannot delete the owner', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: mod } = await makeModerator(owner, [Permission.MANAGE_USERS]);
+
+    await expect(
+      mod.users.delete({ userId: 1, wipe: true })
+    ).rejects.toThrow(/cannot delete the server owner/i);
+
+    const row = await tdb
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.id, 1))
+      .get();
+    expect(row?.id).toBe(1);
+  });
+
+  test('a MANAGE_USERS moderator cannot kick the owner', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: mod } = await makeModerator(owner, [Permission.MANAGE_USERS]);
+
+    // Guard fires before the "user not connected" check.
+    await expect(mod.users.kick({ userId: 1 })).rejects.toThrow(
+      /cannot kick the server owner/i
+    );
+  });
+
+  test('a MANAGE_USERS moderator cannot rename the owner identity', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: mod } = await makeModerator(owner, [Permission.MANAGE_USERS]);
+
+    await expect(
+      mod.users.renameIdentity({ userId: 1, identity: 'stolen-owner' })
+    ).rejects.toThrow(/cannot rename the server owner/i);
+  });
+
+  test('the guard protects only the owner: a moderator can still ban a peer', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: mod } = await makeModerator(owner, [Permission.MANAGE_USERS]);
+    const targetId = await insertUser('peer-target');
+
+    await mod.users.ban({ userId: targetId });
+
+    const row = await tdb
+      .select({ banned: users.banned })
+      .from(users)
+      .where(eq(users.id, targetId))
+      .get();
+    expect(row?.banned).toBe(true);
+  });
+});
+
+// MANAGE_USERS lets a moderator assign roles, but not roles carrying
+// permissions the moderator lacks: otherwise MANAGE_USERS self-escalates to
+// full admin. Owner bypasses.
+describe('role-assignment escalation', () => {
+  test('a MANAGE_USERS moderator cannot assign a role granting MANAGE_ROLES', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: mod } = await makeModerator(owner, [Permission.MANAGE_USERS]);
+
+    const adminRoleId = await owner.roles.add();
+    await owner.roles.update({
+      roleId: adminRoleId,
+      name: 'Admin',
+      color: '#abcdef',
+      permissions: [Permission.MANAGE_ROLES, Permission.MANAGE_SETTINGS],
+      storageQuotaOverrideEnabled: false,
+      storageSpaceQuota: 0
+    });
+
+    const targetId = await insertUser('escalation-target');
+
+    await expect(
+      mod.users.addRole({ userId: targetId, roleId: adminRoleId })
+    ).rejects.toThrow(/permissions you do not have/i);
+
+    const assigned = await tdb
+      .select({ roleId: userRoles.roleId })
+      .from(userRoles)
+      .where(eq(userRoles.userId, targetId))
+      .all();
+    expect(assigned.map((r) => r.roleId)).not.toContain(adminRoleId);
+  });
+
+  test('a moderator can assign a role whose permissions it already holds', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: mod } = await makeModerator(owner, [Permission.MANAGE_USERS]);
+
+    // MANAGE_USERS is a permission the moderator holds, so it may pass it on.
+    const peerModRoleId = await owner.roles.add();
+    await owner.roles.update({
+      roleId: peerModRoleId,
+      name: 'Peer Mod',
+      color: '#00ff00',
+      permissions: [Permission.MANAGE_USERS],
+      storageQuotaOverrideEnabled: false,
+      storageSpaceQuota: 0
+    });
+
+    const targetId = await insertUser('allowed-target');
+
+    await mod.users.addRole({ userId: targetId, roleId: peerModRoleId });
+
+    const assigned = await tdb
+      .select({ roleId: userRoles.roleId })
+      .from(userRoles)
+      .where(eq(userRoles.userId, targetId))
+      .all();
+    expect(assigned.map((r) => r.roleId)).toContain(peerModRoleId);
+  });
+
+  test('the owner can still assign any role', async () => {
+    const { caller: owner } = await initTest(1);
+
+    const adminRoleId = await owner.roles.add();
+    await owner.roles.update({
+      roleId: adminRoleId,
+      name: 'Admin',
+      color: '#abcdef',
+      permissions: [Permission.MANAGE_ROLES, Permission.MANAGE_SETTINGS],
+      storageQuotaOverrideEnabled: false,
+      storageSpaceQuota: 0
+    });
+
+    const targetId = await insertUser('owner-grant-target');
+
+    await owner.users.addRole({ userId: targetId, roleId: adminRoleId });
+
+    const assigned = await tdb
+      .select({ roleId: userRoles.roleId })
+      .from(userRoles)
+      .where(eq(userRoles.userId, targetId))
+      .all();
+    expect(assigned.map((r) => r.roleId)).toContain(adminRoleId);
   });
 });

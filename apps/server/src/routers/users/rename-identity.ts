@@ -14,6 +14,7 @@ import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { closeUserSessions } from '@server/utils/wss';
 import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
+import { assertCanModifyOwnerUser } from './assert-can-modify-owner-user';
 
 const renameIdentityRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: config.rateLimiters.renameIdentity.maxRequests,
@@ -28,6 +29,8 @@ const renameIdentityRoute = rateLimitedProcedure(protectedProcedure, {
   )
   .mutation(async ({ ctx, input }) => {
     await ctx.needsPermission(Permission.MANAGE_USERS);
+
+    await assertCanModifyOwnerUser(ctx.userId, input.userId, 'rename');
 
     const target = await getUserById(input.userId);
     invariant(target, { code: 'NOT_FOUND', message: 'User not found' });

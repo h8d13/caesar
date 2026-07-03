@@ -7,6 +7,7 @@ import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';
 import z from 'zod';
+import { assertCanModifyOwnerUser } from './assert-can-modify-owner-user';
 
 const banRoute = protectedProcedure
   .input(
@@ -22,6 +23,8 @@ const banRoute = protectedProcedure
       code: 'BAD_REQUEST',
       message: 'You cannot ban yourself.'
     });
+
+    await assertCanModifyOwnerUser(ctx.userId, input.userId, 'ban');
 
     const userWs = ctx.getUserWs(input.userId);
 

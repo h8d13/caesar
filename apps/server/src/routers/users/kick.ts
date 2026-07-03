@@ -3,6 +3,7 @@ import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import z from 'zod';
+import { assertCanModifyOwnerUser } from './assert-can-modify-owner-user';
 
 const kickRoute = protectedProcedure
   .input(
@@ -13,6 +14,8 @@ const kickRoute = protectedProcedure
   )
   .mutation(async ({ ctx, input }) => {
     await ctx.needsPermission(Permission.MANAGE_USERS);
+
+    await assertCanModifyOwnerUser(ctx.userId, input.userId, 'kick');
 
     const userWs = ctx.getUserWs(input.userId);
 

@@ -23,6 +23,7 @@ import { randomUUIDv7 } from '@server/utils/uuid';
 import { eq } from 'drizzle-orm';
 import type { WebSocket } from 'ws';
 import z from 'zod';
+import { assertCanModifyOwnerUser } from './assert-can-modify-owner-user';
 
 const ensureDeletedUser = async (): Promise<number> => {
   const existingDeletedUser = await getUserByIdentity(
@@ -159,6 +160,8 @@ const deleteUserRoute = protectedProcedure
       code: 'BAD_REQUEST',
       message: 'You cannot delete yourself.'
     });
+
+    await assertCanModifyOwnerUser(ctx.userId, input.userId, 'delete');
 
     await performUserDeletion({
       targetUserId: input.userId,

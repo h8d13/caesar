@@ -1,12 +1,7 @@
-import {
-  ChannelType,
-  OWNER_ROLE_ID,
-  Permission,
-  ServerEvents
-} from '@caesar/shared';
+import { ChannelType, Permission, ServerEvents } from '@caesar/shared';
 import { getChannelByIdOrThrow } from '@server/db/queries/channels';
-import { getUserRoleIds } from '@server/db/queries/roles';
 import { logger } from '@server/logger';
+import { assertCanModifyOwnerUser } from '@server/routers/users/assert-can-modify-owner-user';
 import { VoiceRuntime } from '@server/runtimes/voice';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
@@ -46,14 +41,7 @@ const moveUserRoute = protectedProcedure
     if (sourceRuntime.id === input.channelId) return;
 
     // Owner protection: a non-owner moderator can't move the owner around.
-    const targetRoleIds = await getUserRoleIds(input.userId);
-    if (targetRoleIds.includes(OWNER_ROLE_ID)) {
-      const actorRoleIds = await getUserRoleIds(ctx.userId);
-      invariant(actorRoleIds.includes(OWNER_ROLE_ID), {
-        code: 'FORBIDDEN',
-        message: 'You cannot move the server owner.'
-      });
-    }
+    await assertCanModifyOwnerUser(ctx.userId, input.userId, 'move');
 
     ctx.pubsub.publishFor(input.userId, ServerEvents.VOICE_FORCE_MOVE, {
       channelId: input.channelId
