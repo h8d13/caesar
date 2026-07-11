@@ -106,7 +106,8 @@ const buildCsp = (nonce?: string): string => {
     `script-src ${scriptSrc}`,
     `style-src ${styleSrc}`,
     "img-src 'self' data: blob: https:",
-    "connect-src 'self' wss: ws:",
+    // api.giphy.com: keyless GIF search from the client-side picker
+    "connect-src 'self' wss: ws: https://api.giphy.com",
     "media-src 'self' blob:",
     "font-src 'self'",
     'frame-src https://www.youtube-nocookie.com',
