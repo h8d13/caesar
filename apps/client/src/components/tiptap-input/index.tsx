@@ -21,6 +21,7 @@ type TTiptapInputProps = {
     onCancel?: () => void;
     onTyping?: () => void;
     onPopOut?: () => void;
+    onGifSelect?: (url: string) => void;
     users?: TJoinedPublicUser[];
 };
 
@@ -32,6 +33,7 @@ const TiptapInput = memo(
         onCancel,
         onTyping,
         onPopOut,
+        onGifSelect,
         disabled,
         readOnly,
         users
@@ -277,7 +279,10 @@ const TiptapInput = memo(
                     )}
                 </div>
 
-                <EmojiPicker onEmojiSelect={handleEmojiSelect}>
+                <EmojiPicker
+                    onEmojiSelect={handleEmojiSelect}
+                    onGifSelect={onGifSelect}
+                >
                     <Button variant="ghost" size="icon" disabled={disabled}>
                         <Smile className="h-5 w-5" />
                     </Button>

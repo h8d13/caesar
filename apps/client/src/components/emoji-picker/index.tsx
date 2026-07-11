@@ -1,5 +1,6 @@
 import type { TEmojiItem } from '@/components/tiptap-input/helpers';
 import { useCustomEmojis } from '@/features/server/emojis/hooks';
+import { cn } from '@/lib/utils';
 import {
     Input,
     Popover,
@@ -14,19 +15,29 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { CustomEmojiTab } from './custom-emoji-tab';
 import { ALL_EMOJIS, searchEmojis, toTEmojiItem } from './emoji-data';
 import { EmojiGrid } from './emoji-grid';
+import { GifGrid } from './gif-grid';
 import { NativeEmojiTab } from './native-emoji-tab';
 import { useRecentEmojis } from './use-recent-emojis';
 
 type TEmojiPickerProps = {
     children: React.ReactNode;
     onEmojiSelect: (emoji: TEmojiItem) => void;
+    // When set, a GIFs tab appears; selecting a GIF calls back with the
+    // media URL (reaction pickers stay emoji-only by omitting it).
+    onGifSelect?: (url: string) => void;
     defaultTab?: 'native' | 'custom';
 };
 
 const EmojiPicker = memo(
-    ({ children, onEmojiSelect, defaultTab = 'native' }: TEmojiPickerProps) => {
+    ({
+        children,
+        onEmojiSelect,
+        onGifSelect,
+        defaultTab = 'native'
+    }: TEmojiPickerProps) => {
         const [open, setOpen] = useState(false);
         const [search, setSearch] = useState('');
+        const [activeTab, setActiveTab] = useState<string>(defaultTab);
         const customEmojis = useCustomEmojis();
         const { addRecent } = useRecentEmojis();
 
@@ -40,7 +51,8 @@ const EmojiPicker = memo(
             [convertedCustomEmojis]
         );
 
-        const isSearching = search.trim().length > 0;
+        const isGifTab = !!onGifSelect && activeTab === 'gif';
+        const isSearching = !isGifTab && search.trim().length > 0;
 
         const searchResults = useMemo(
             () => (isSearching ? searchEmojis(allEmojis, search) : []),
@@ -70,11 +82,31 @@ const EmojiPicker = memo(
             []
         );
 
-        const handleOpenChange = useCallback((nextOpen: boolean) => {
-            setOpen(nextOpen);
-            if (!nextOpen) {
+        const handleGifSelect = useCallback(
+            (url: string) => {
+                onGifSelect?.(url);
+                setOpen(false);
                 setSearch('');
-            }
+            },
+            [onGifSelect]
+        );
+
+        const handleOpenChange = useCallback(
+            (nextOpen: boolean) => {
+                setOpen(nextOpen);
+                if (!nextOpen) {
+                    setSearch('');
+                    setActiveTab(defaultTab);
+                }
+            },
+            [defaultTab]
+        );
+
+        // Search box is shared between tabs; clear it when hopping so an
+        // emoji query doesn't silently drive the GIF search (and back).
+        const handleTabChange = useCallback((tab: string) => {
+            setActiveTab(tab);
+            setSearch('');
         }, []);
 
         return (
@@ -88,7 +120,11 @@ const EmojiPicker = memo(
                     <div className="h-full flex flex-col">
                         <div className="p-3 border-b">
                             <Input
-                                placeholder="Search all emojis..."
+                                placeholder={
+                                    isGifTab
+                                        ? 'Search GIFs...'
+                                        : 'Search all emojis...'
+                                }
                                 value={search}
                                 onChange={handleSearchChange}
                                 className="h-9"
@@ -110,16 +146,29 @@ const EmojiPicker = memo(
                             </div>
                         ) : (
                             <Tabs
-                                defaultValue={defaultTab}
+                                value={activeTab}
+                                onValueChange={handleTabChange}
                                 className="flex-1 flex flex-col min-h-0"
                             >
-                                <TabsList className="grid w-full grid-cols-2 rounded-none border-b">
+                                <TabsList
+                                    className={cn(
+                                        'grid w-full rounded-none border-b',
+                                        onGifSelect
+                                            ? 'grid-cols-3'
+                                            : 'grid-cols-2'
+                                    )}
+                                >
                                     <TabsTrigger value="native">
                                         Emoji
                                     </TabsTrigger>
                                     <TabsTrigger value="custom">
                                         Custom
                                     </TabsTrigger>
+                                    {onGifSelect && (
+                                        <TabsTrigger value="gif">
+                                            GIFs
+                                        </TabsTrigger>
+                                    )}
                                 </TabsList>
                                 <TabsContent
                                     value="native"
@@ -138,6 +187,17 @@ const EmojiPicker = memo(
                                         onEmojiSelect={handleEmojiSelect}
                                     />
                                 </TabsContent>
+                                {onGifSelect && (
+                                    <TabsContent
+                                        value="gif"
+                                        className="flex-1 mt-0 min-h-0"
+                                    >
+                                        <GifGrid
+                                            search={search}
+                                            onSelect={handleGifSelect}
+                                        />
+                                    </TabsContent>
+                                )}
                             </Tabs>
                         )}
                     </div>

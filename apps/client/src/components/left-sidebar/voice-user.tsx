@@ -1,3 +1,4 @@
+import { VoiceUserContextMenu } from '@/components/context-menus/voice-user';
 import { UserAvatar } from '@/components/user-avatar';
 import { useCan } from '@/features/server/hooks';
 import type { TVoiceUser } from '@/features/server/types';
@@ -47,60 +48,62 @@ const VoiceUser = memo(({ user, channelId }: TVoiceUserProps) => {
             : '';
 
     return (
-        <UserPopover userId={user.id}>
-            <div
-                ref={setNodeRef}
-                {...(canMove ? listeners : {})}
-                {...(canMove ? attributes : {})}
-                className={cn(
-                    'flex items-center gap-2 px-2 py-1 rounded hover:bg-accent/30 text-sm',
-                    canMove && 'cursor-grab',
-                    isDragging && 'opacity-50'
-                )}
-            >
-                <UserAvatar
-                    userId={user.id}
-                    className={cn('h-5 w-5 rounded-full', speakingClass)}
-                    showUserPopover={false}
-                    showStatusBadge={false}
-                />
-
-                <span
-                    className="flex-1 truncate text-xs"
-                    style={{
-                        color: getSocialCreditColor(user.socialCredit ?? 0)
-                    }}
+        <VoiceUserContextMenu user={user}>
+            <UserPopover userId={user.id}>
+                <div
+                    ref={setNodeRef}
+                    {...(canMove ? listeners : {})}
+                    {...(canMove ? attributes : {})}
+                    className={cn(
+                        'flex items-center gap-2 px-2 py-1 rounded hover:bg-accent/30 text-sm',
+                        canMove && 'cursor-grab',
+                        isDragging && 'opacity-50'
+                    )}
                 >
-                    {getRenderedUsername(user, user.id)}
-                </span>
+                    <UserAvatar
+                        userId={user.id}
+                        className={cn('h-5 w-5 rounded-full', speakingClass)}
+                        showUserPopover={false}
+                        showStatusBadge={false}
+                    />
 
-                <div className="flex items-center gap-1 opacity-60">
-                    <div>
-                        {user.state.micMuted ? (
-                            <MicOff className="h-3 w-3 text-red-500" />
-                        ) : (
-                            <Mic className="h-3 w-3 text-green-500" />
+                    <span
+                        className="flex-1 truncate text-xs"
+                        style={{
+                            color: getSocialCreditColor(user.socialCredit ?? 0)
+                        }}
+                    >
+                        {getRenderedUsername(user, user.id)}
+                    </span>
+
+                    <div className="flex items-center gap-1 opacity-60">
+                        <div>
+                            {user.state.micMuted ? (
+                                <MicOff className="h-3 w-3 text-red-500" />
+                            ) : (
+                                <Mic className="h-3 w-3 text-green-500" />
+                            )}
+                        </div>
+
+                        <div>
+                            {user.state.soundMuted ? (
+                                <HeadphoneOff className="h-3 w-3 text-red-500" />
+                            ) : (
+                                <Headphones className="h-3 w-3 text-green-500" />
+                            )}
+                        </div>
+
+                        {user.state.webcamEnabled && (
+                            <Video className="h-3 w-3 text-blue-500" />
+                        )}
+
+                        {user.state.sharingScreen && (
+                            <Monitor className="h-3 w-3 text-purple-500" />
                         )}
                     </div>
-
-                    <div>
-                        {user.state.soundMuted ? (
-                            <HeadphoneOff className="h-3 w-3 text-red-500" />
-                        ) : (
-                            <Headphones className="h-3 w-3 text-green-500" />
-                        )}
-                    </div>
-
-                    {user.state.webcamEnabled && (
-                        <Video className="h-3 w-3 text-blue-500" />
-                    )}
-
-                    {user.state.sharingScreen && (
-                        <Monitor className="h-3 w-3 text-purple-500" />
-                    )}
                 </div>
-            </div>
-        </UserPopover>
+            </UserPopover>
+        </VoiceUserContextMenu>
     );
 });
 

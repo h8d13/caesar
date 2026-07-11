@@ -127,6 +127,23 @@ const MessageCompose = memo(
             publicSettings
         ]);
 
+        // GIF picks send immediately as their own message, leaving any
+        // typed draft untouched; the renderer inlines the bare .gif URL.
+        const handleGifSelect = useCallback(
+            async (url: string) => {
+                if (!canSendMessages || sendingRef.current) return;
+
+                setSending(true);
+                sendingRef.current = true;
+
+                await onSend(url, []);
+
+                sendingRef.current = false;
+                setSending(false);
+            },
+            [canSendMessages, onSend]
+        );
+
         const onRemoveFileClick = useCallback(
             async (fileId: string) => {
                 removeFile(fileId);
@@ -191,6 +208,9 @@ const MessageCompose = memo(
                             canSendMessages
                                 ? () => setFullEditorOpen(true)
                                 : undefined
+                        }
+                        onGifSelect={
+                            canSendMessages ? handleGifSelect : undefined
                         }
                         disabled={uploading || !canSendMessages}
                         readOnly={sending}
