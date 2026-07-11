@@ -1,0 +1,92 @@
+CAESAR CHANGELOG (fork of Sharkord)
+===================================
+
+General
+-------
+- Whiteboards (adapted from BoardFlow), with arrows and snap-to-grid
+- Markdown to HTML rendering using marked
+- External link warning on outbound links
+- Audio/video preview
+- Syntax highlighted code blocks
+- Nicknames (JSON, local only)
+- YouTube shorts/lives/etc supported in previews
+- Client-side embeds for links
+- GIPHY support
+- Search all messages (plus fixed search logic in DMs and global)
+- Soundboard with volume controller
+- Social credit: 1 per 15 min active, capped at 50/day
+- Reset balances and fixed roulette odds
+- DMs: direct reply, mentions fixes, 1:1 calls, no threads/upvotes, bulk delete conversation
+- Files and chats in ephemeral DMs are E2EE encrypted
+- DLTN noise suppression
+- Optional birthday field with toast 24h before
+- Voice indicator and sound/stream controls in left sidebar
+- "Hide own stream" and "appear offline" options
+- Removed auto-join last channel, new Notifications options
+- Optional "Read at HH:MM" receipts via Notifications
+- Keyboard (no mouse) friendly navigation
+- Two streams split horizontal instead of vertical
+- Mention channels using #
+- Move members and categories/channels with drag and drop (overlay + preview)
+- Image statuses (stories-like)
+- Removed per-voice-channel chat (redundant)
+- Removed hardcoded SharkordUser, identity used by default
+- CAESAR_MAX_USERS=N cap
+
+UX/UI
+-----
+- Save/Cancel buttons at top of settings pages
+- Fixed stream placeholder breaking flexbox layout when de-activating
+- Fixed upvotes appearing twice for message groups
+- Fixed stale custom emojis (now appended to recent and quick replies)
+- Fixed cache ETag on images (stops re-downloading same assets)
+- On 1:1 call: focus DM panel and top-bar voice controls
+- Suppress signal when sender is offline
+- Mobile layout fixes
+- Fixed error codes
+- Hooked transport stats to actually reflect issues
+- Various layout/UX polish
+
+Security
+--------
+- UUIDs and JWT tokens for /public/ path files (except server login image)
+- Origin validated against Host header (replaced Access-Control-Allow-Origin: *)
+- Security headers: X-Content-Type-Options, X-Frame-Options, Referrer-Policy, HSTS, CSP
+- Per-request CSP nonces for script-src, stricter CSP policies overall
+- Password hash removed from getUserById/getUsers (kept only in getUserByIdentity)
+- upload.ts enforces actual byte count
+- Login sets HttpOnly SameSite=Strict cookie; public.ts reads header/cookie
+- get-file-url.ts no longer leaks token in URL
+- Invite-only model, no more custom codes
+- Security tab: multiple sessions opt-in (default OFF), session kick-out list
+- Fixed auto-login (multiple tabs) or single session enforced when off
+- U2F key support
+- Admins see hashed location/IPs only, never raw
+- Per-role permissions for DMs, fixed text vs voice channel permissions
+- Tightened user-select queries (data exposure minimization)
+- Input validation fixes
+- Rate limiting additions
+- Various ACL fixes
+- Fixed auth logout endpoint, proper unmount on log-out
+- Properly close E2EE worker
+
+Dev
+---
+- Full switch from bun to pnpm
+- CI: knip added to git workflow
+- Updated all deps, pinned major for TS/Node/mediasoup
+- Removed logging deps and git integration
+- Dockerfile, renovate conf, embed helper: no stale artifacts
+- 570 relative import sites changed to @ patterns
+- 73 imports moved from server to shared
+- Removed shared/trpc.ts re-export and ws.WebSocket module augmentation
+- prod-dev compose profile for fresh https testing on 8443
+- Fixed seed (original spawning for server)
+- PRAGMA modes for SQLite
+- Removed plugin system
+- Lazy load / chunked most things
+- Cleanup after leaving channel or settings page
+- Heap profiling
+- Documentation work
+- Manifest, version strings, github url updates
+- Various upstream ports and duplicate-reducing refactors
