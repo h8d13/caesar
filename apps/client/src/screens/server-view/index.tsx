@@ -145,7 +145,7 @@ const ServerView = memo(() => {
 
                     {isMobileUsersOpen && (
                         <div
-                            className="lg:hidden fixed inset-0 bg-black/50 z-30"
+                            className="lg:hidden fixed inset-0 md:top-8 bg-black/50 z-30"
                             onClick={() => setIsMobileUsersOpen(false)}
                         />
                     )}
@@ -170,6 +170,10 @@ const ServerView = memo(() => {
                     <RightSidebar
                         className={cn(
                             'fixed top-0 bottom-0 right-0 h-full z-40',
+                            // tablet band: overlay starts below the h-8 top
+                            // bar instead of covering it (mobile has no bar,
+                            // lg+ is inline, both keep full height)
+                            'md:top-8 md:h-auto lg:top-0 lg:h-full',
                             'lg:relative lg:z-0',
                             isMobileUsersOpen
                                 ? 'translate-x-0 lg:translate-x-0'
