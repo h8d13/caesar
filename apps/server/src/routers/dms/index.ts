@@ -1,7 +1,8 @@
 import { ServerEvents } from '@caesar/shared';
 import { protectedProcedure, t } from '@server/utils/trpc';
+import { observable } from '@trpc/server/observable';
 import { acceptCallRoute } from './accept-call';
-import { callRoute } from './call';
+import { callRoute, isRingingFresh, pendingCalls } from './call';
 import { getDirectMessagesRoute } from './get-direct-messages';
 import { getE2eeContextRoute } from './get-e2ee-context';
 import { getEphemeralRoute } from './get-ephemeral';
@@ -33,7 +34,23 @@ const onDmWipedRoute = protectedProcedure.subscription(async ({ ctx }) => {
 });
 
 const onCallRingRoute = protectedProcedure.subscription(async ({ ctx }) => {
-  return ctx.pubsub.subscribeFor(ctx.userId, ServerEvents.DM_CALL_RING);
+  return observable<{ channelId: number; callerId: number }>((observer) => {
+    const upstream = ctx.pubsub
+      .subscribeFor(ctx.userId, ServerEvents.DM_CALL_RING)
+      .subscribe(observer);
+
+    // Replay a ring that fired while this client had no WS connection
+    // (woken by the call push): the original DM_CALL_RING landed nowhere,
+    // but pendingCalls still knows the call is ringing. Scoped to this
+    // observer so already-connected devices don't get a duplicate.
+    for (const [channelId, call] of pendingCalls) {
+      if (call.peerId !== ctx.userId || !isRingingFresh(call)) continue;
+
+      observer.next({ channelId, callerId: call.callerId });
+    }
+
+    return upstream;
+  });
 });
 
 const onCallAcceptedRoute = protectedProcedure.subscription(async ({ ctx }) => {

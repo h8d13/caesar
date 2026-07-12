@@ -9,19 +9,28 @@ import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { z } from 'zod';
 
-// In-memory registry: channelId -> { callerId, peerId }.
-// Cleared on accept or hangup. Lives only for the duration of ringing.
+// In-memory registry: channelId -> { callerId, peerId, ringingSince }.
+// Cleared on accept or hangup. Lives only for the duration of ringing;
+// entries older than the ring window count as expired (caller vanished
+// without hangup) so they neither block new calls nor replay as rings.
+export const RING_WINDOW_MS = 60_000;
+
 export const pendingCalls = new Map<
   number,
-  { callerId: number; peerId: number }
+  { callerId: number; peerId: number; ringingSince: number }
 >();
+
+export const isRingingFresh = (call: { ringingSince: number }) =>
+  Date.now() - call.ringingSince <= RING_WINDOW_MS;
 
 const callRoute = protectedProcedure
   .input(z.object({ channelId: z.number() }))
   .mutation(async ({ input, ctx }) => {
     await assertDmParticipant(input.channelId, ctx.userId);
 
-    invariant(!pendingCalls.has(input.channelId), {
+    const existing = pendingCalls.get(input.channelId);
+
+    invariant(!existing || !isRingingFresh(existing), {
       code: 'BAD_REQUEST',
       message: 'A call is already in progress for this DM'
     });
@@ -48,7 +57,11 @@ const callRoute = protectedProcedure
       await runtime.init();
     }
 
-    pendingCalls.set(input.channelId, { callerId: ctx.userId, peerId });
+    pendingCalls.set(input.channelId, {
+      callerId: ctx.userId,
+      peerId,
+      ringingSince: Date.now()
+    });
 
     ctx.pubsub.publishFor(peerId, ServerEvents.DM_CALL_RING, {
       channelId: input.channelId,
