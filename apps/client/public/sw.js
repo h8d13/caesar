@@ -19,11 +19,12 @@ self.addEventListener('push', (event) => {
         // non-JSON payload: fall through to defaults
     }
 
+    // no badge: android renders badges as monochrome silhouettes and the
+    // opaque logo comes out as a solid square; chrome's default is cleaner
     event.waitUntil(
         self.registration.showNotification(data.title || 'New message', {
             body: data.body || 'You have a new message.',
-            icon: '/logo.png',
-            badge: '/logo.png'
+            icon: '/logo.png'
         })
     );
 });
