@@ -78,7 +78,7 @@ describe('roles router', () => {
 
     expect(newRole).toBeDefined();
     expect(newRole!.name).toBe('New Role');
-    expect(newRole!.color).toBe('#ffffff');
+    expect(newRole!.color).toBe('#77767b');
     expect(newRole!.isDefault).toBe(false);
     expect(newRole!.isPersistent).toBe(false);
   });

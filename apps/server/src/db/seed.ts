@@ -97,14 +97,14 @@ const seedDatabase = async () => {
   const initialRoles: TIRole[] = [
     {
       name: 'Owner',
-      color: '#FFFFFF',
+      color: '#77767b',
       isDefault: false,
       isPersistent: true,
       createdAt: firstStart
     },
     {
       name: 'Member',
-      color: '#FFFFFF',
+      color: '#77767b',
       isPersistent: true,
       isDefault: true,
       createdAt: firstStart

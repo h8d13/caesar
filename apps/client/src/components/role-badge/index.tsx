@@ -9,20 +9,24 @@ type TRoleBadgeProps = {
 };
 
 const RoleBadge = memo(({ role, onRemoveRole }: TRoleBadgeProps) => {
+    // clamp lightness into the theme's readable band so white/black
+    // roles stay visible on both themes, hue untouched
+    const readableColor = `oklch(from ${role.color} clamp(var(--role-color-l-min), l, var(--role-color-l-max)) c h)`;
+
     return (
         <Badge
             style={{
                 backgroundColor: role.color + '20',
-                borderColor: role.color
+                borderColor: readableColor
             }}
         >
-            <span style={{ color: role.color }}>{role.name}</span>
+            <span style={{ color: readableColor }}>{role.name}</span>
             {onRemoveRole && (
                 <IconButton
                     icon={X}
                     size="xs"
                     aria-label={`Remove ${role.name} role`}
-                    style={{ color: role.color }}
+                    style={{ color: readableColor }}
                     onClick={() => onRemoveRole(role.id, role.name)}
                 />
             )}

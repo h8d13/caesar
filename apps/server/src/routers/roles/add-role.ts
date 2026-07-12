@@ -12,7 +12,7 @@ const addRoleRoute = protectedProcedure.mutation(async ({ ctx }) => {
     .insert(roles)
     .values({
       name: 'New Role',
-      color: '#ffffff',
+      color: '#77767b',
       isDefault: false,
       isPersistent: false,
       storageQuotaOverrideEnabled: false,
