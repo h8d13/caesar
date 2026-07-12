@@ -72,11 +72,20 @@ type TPushPayload = {
   body: string;
 };
 
+type TPushSendOptions = {
+  // seconds the push service holds the message for an unreachable device;
+  // short for calls (a ring delivered later than the ring window is noise)
+  ttl?: number;
+  // 'high' wakes devices in doze, reserve it for time-critical pushes
+  urgency?: 'normal' | 'high';
+};
+
 // Send one notification. Returns 'gone' when the push service reports the
 // subscription is dead (unsubscribed/expired) so the caller can prune it.
 const sendWebPush = async (
   subscription: { endpoint: string; p256dh: string; auth: string },
-  payload: TPushPayload
+  payload: TPushPayload,
+  options?: TPushSendOptions
 ): Promise<'sent' | 'gone' | 'failed'> => {
   const keys = await loadVapidKeys();
 
@@ -93,7 +102,8 @@ const sendWebPush = async (
           publicKey: keys.publicKey,
           privateKey: keys.privateKey
         },
-        TTL: 24 * 60 * 60
+        TTL: options?.ttl ?? 24 * 60 * 60,
+        urgency: options?.urgency ?? 'normal'
       }
     );
 

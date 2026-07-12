@@ -3,6 +3,7 @@ import {
   assertDmParticipant,
   getDirectMessageChannelParticipantIds
 } from '@server/db/queries/dms';
+import { enqueueCallPush } from '@server/queues/web-push';
 import { VoiceRuntime } from '@server/runtimes/voice';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
@@ -53,6 +54,9 @@ const callRoute = protectedProcedure
       channelId: input.channelId,
       callerId: ctx.userId
     });
+
+    // offline peer: the WS ring above lands nowhere, wake the PWA instead
+    enqueueCallPush({ callerId: ctx.userId, peerId });
   });
 
 export { callRoute };
