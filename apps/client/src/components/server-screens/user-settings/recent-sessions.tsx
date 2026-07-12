@@ -7,6 +7,7 @@ import {
     CardTitle
 } from '@caesar/ui';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
 import { memo, useEffect } from 'react';
 
 const formatRelative = (ts: number): string => {
@@ -24,7 +25,7 @@ const formatRelative = (ts: number): string => {
 
     if (d < 30) return `${d}d ago`;
 
-    return new Date(ts).toLocaleDateString();
+    return format(ts, 'P');
 };
 
 const RecentSessions = memo(() => {

@@ -32,6 +32,7 @@ General
 - Removed per-voice-channel chat (redundant)
 - Removed hardcoded SharkordUser, identity used by default
 - CAESAR_MAX_USERS=N cap
+- Add manifest PWA for native Chrome installs + worker for push
 
 UX/UI
 -----
@@ -47,6 +48,7 @@ UX/UI
 - Hooked transport stats to actually reflect issues
 - Various layout/UX polish
 - Respect system theme pref
+- Set default enGB format HH:MM
 
 Security
 --------

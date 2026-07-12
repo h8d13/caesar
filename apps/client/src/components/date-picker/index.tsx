@@ -8,6 +8,7 @@ import {
     PopoverContent,
     PopoverTrigger
 } from '@caesar/ui';
+import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -25,11 +26,7 @@ const formatDate = (date: Date | undefined): string => {
         return '';
     }
 
-    return date.toLocaleDateString('en-US', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-    });
+    return format(date, 'dd MMMM yyyy');
 };
 
 const isValidDate = (date: Date): boolean => {

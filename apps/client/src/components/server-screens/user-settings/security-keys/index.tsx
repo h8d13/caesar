@@ -11,6 +11,7 @@ import {
     Input
 } from '@caesar/ui';
 import { startRegistration } from '@simplewebauthn/browser';
+import { format } from 'date-fns';
 import { KeyRound, Trash2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -25,12 +26,7 @@ type TCredential = {
     lastUsedAt: number | null;
 };
 
-const formatDate = (ms: number): string =>
-    new Date(ms).toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-    });
+const formatDate = (ms: number): string => format(ms, 'PP');
 
 const SecurityKeys = memo(() => {
     const [credentials, setCredentials] = useState<TCredential[]>([]);

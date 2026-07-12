@@ -9,7 +9,7 @@ import { memo, type ReactNode, useEffect, useMemo, useState } from 'react';
 
 const ONE_MINUTE = 60_000;
 const ONE_HOUR = 60 * ONE_MINUTE;
-const DEFAULT_FORMAT = 'PPpp'; // eg: 12 August 2022, 14:30
+const DEFAULT_FORMAT = 'PPpp'; // enGB default locale, eg: 12 Aug 2022, 14:30:05
 
 type TRelativeTimeProps = {
     date: Date | string;

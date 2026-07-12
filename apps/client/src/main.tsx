@@ -1,5 +1,7 @@
 import { Toaster, TooltipProvider } from '@caesar/ui';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { setDefaultOptions } from 'date-fns';
+import { enGB } from 'date-fns/locale';
 import 'prosemirror-view/style/prosemirror.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -19,6 +21,10 @@ import './index.css';
 import { registerServiceWorker } from './lib/push.ts';
 
 registerServiceWorker();
+
+// every date-fns P/p token app-wide renders european order + 24h clock
+// (24/05/2026, 16:26) instead of the en-US default (5/24/2026, 4:26 PM)
+setDefaultOptions({ locale: enGB });
 
 const queryClient = new QueryClient({
     defaultOptions: {

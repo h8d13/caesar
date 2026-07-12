@@ -13,6 +13,7 @@ import {
     Input,
     Spinner
 } from '@caesar/ui';
+import { format } from 'date-fns';
 import { Hash, Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -65,7 +66,7 @@ const formatRelativeTime = (timestamp: number) => {
     if (minutes < 60) return `${minutes}m ago`;
     if (hours < 24) return `${hours}h ago`;
     if (days < 30) return `${days}d ago`;
-    return new Date(timestamp).toLocaleDateString();
+    return format(timestamp, 'P');
 };
 
 const stripHtml = (html: string) =>

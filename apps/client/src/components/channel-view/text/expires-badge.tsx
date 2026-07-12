@@ -1,3 +1,4 @@
+import { format } from 'date-fns';
 import { Lock } from 'lucide-react';
 import { memo, useEffect, useState } from 'react';
 
@@ -29,7 +30,7 @@ const ExpiresBadge = memo(({ expiresAt }: TExpiresBadgeProps) => {
     return (
         <span
             className="inline-flex items-center gap-0.5 text-xs text-muted-foreground/80"
-            title={`Disappears at ${new Date(expiresAt).toLocaleString()}`}
+            title={`Disappears at ${format(expiresAt, 'PPpp')}`}
         >
             <Lock className="h-3 w-3" />
             {formatRemaining(remaining)}

@@ -2,6 +2,7 @@ import { setDisconnectInfo } from '@/features/server/actions';
 import type { TDisconnectInfo } from '@/features/server/types';
 import { DisconnectCode } from '@caesar/shared';
 import { Button } from '@caesar/ui';
+import { format } from 'date-fns';
 import { AlertCircle, Gavel, LogIn, RefreshCw, WifiOff } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 
@@ -84,7 +85,7 @@ const Disconnected = memo(({ info }: TDisconnectedProps) => {
                     </summary>
                     <div className="mt-2 space-y-1">
                         <div>Code: {info.code}</div>
-                        <div>Time: {info.time.toLocaleString()}</div>
+                        <div>Time: {format(info.time, 'PPpp')}</div>
                     </div>
                 </details>
             </div>
