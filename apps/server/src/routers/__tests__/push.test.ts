@@ -67,6 +67,40 @@ describe('push router', () => {
     expect(row).toBeUndefined();
   });
 
+  test('should reject non-https endpoints', async () => {
+    const { caller } = await initTest();
+
+    await expect(
+      caller.push.subscribe({
+        ...SUB,
+        endpoint: 'http://10.0.0.1/internal'
+      })
+    ).rejects.toThrow();
+  });
+
+  test('should evict oldest subscriptions beyond the per-user cap', async () => {
+    const { caller } = await initTest();
+
+    for (let i = 0; i < 12; i++) {
+      await caller.push.subscribe({
+        ...SUB,
+        endpoint: `https://push.example.com/sub/${i}`
+      });
+    }
+
+    const rows = await db
+      .select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, 1));
+
+    expect(rows).toHaveLength(10);
+    // oldest two evicted, newest kept
+    const endpoints = rows.map((r) => r.endpoint);
+    expect(endpoints).not.toContain('https://push.example.com/sub/0');
+    expect(endpoints).not.toContain('https://push.example.com/sub/1');
+    expect(endpoints).toContain('https://push.example.com/sub/11');
+  });
+
   test('should not remove another user subscription on unsubscribe', async () => {
     const { caller: owner } = await initTest();
 
