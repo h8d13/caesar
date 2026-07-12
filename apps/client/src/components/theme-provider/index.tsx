@@ -46,8 +46,7 @@ function ThemeProvider({
         if (theme === 'system') {
             const media = window.matchMedia('(prefers-color-scheme: dark)');
             // track OS theme flips live, not just at mount
-            const applySystem = () =>
-                apply(media.matches ? 'dark' : 'light');
+            const applySystem = () => apply(media.matches ? 'dark' : 'light');
 
             applySystem();
             media.addEventListener('change', applySystem);

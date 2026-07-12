@@ -42,10 +42,11 @@ UX/UI
 - Fixed cache ETag on images (stops re-downloading same assets)
 - On 1:1 call: focus DM panel and top-bar voice controls
 - Suppress signal when sender is offline
-- Mobile layout fixes
+- Mobile/half-screen(< 1024px) layout fixes
 - Fixed error codes
 - Hooked transport stats to actually reflect issues
 - Various layout/UX polish
+- Respect system theme pref
 
 Security
 --------
