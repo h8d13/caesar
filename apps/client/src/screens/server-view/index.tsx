@@ -111,7 +111,7 @@ const ServerView = memo(() => {
         <MediaProvider>
             <DmIncomingCall />
             <div
-                className="flex h-dvh flex-col bg-background text-foreground dark"
+                className="flex h-dvh flex-col bg-background text-foreground"
                 {...swipeHandlers}
             >
                 <TopBar

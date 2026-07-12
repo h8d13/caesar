@@ -38,20 +38,23 @@ function ThemeProvider({
     useEffect(() => {
         const root = window.document.documentElement;
 
-        root.classList.remove('light', 'dark');
+        const apply = (value: 'light' | 'dark') => {
+            root.classList.remove('light', 'dark');
+            root.classList.add(value);
+        };
 
         if (theme === 'system') {
-            const systemTheme = window.matchMedia(
-                '(prefers-color-scheme: dark)'
-            ).matches
-                ? 'dark'
-                : 'light';
+            const media = window.matchMedia('(prefers-color-scheme: dark)');
+            // track OS theme flips live, not just at mount
+            const applySystem = () =>
+                apply(media.matches ? 'dark' : 'light');
 
-            root.classList.add(systemTheme);
-            return;
+            applySystem();
+            media.addEventListener('change', applySystem);
+            return () => media.removeEventListener('change', applySystem);
         }
 
-        root.classList.add(theme);
+        apply(theme);
     }, [theme]);
 
     const value = {

@@ -30,7 +30,7 @@ createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <QueryClientProvider client={queryClient}>
             <ThemeProvider
-                defaultTheme="dark"
+                defaultTheme="system"
                 storageKey={LocalStorageKey.VITE_UI_THEME}
             >
                 <DebugInfo />
