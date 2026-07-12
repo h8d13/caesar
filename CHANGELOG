@@ -12,7 +12,7 @@ General
 - YouTube shorts/lives/etc supported in previews
 - Client-side embeds for links
 - GIPHY support
-- Search all messages (plus fixed search logic in DMs and global)
+- Search all messages (searches only scoped channels)
 - Soundboard with volume controller
 - Social credit: 1 per 15 min active, capped at 50/day
 - Reset balances and fixed roulette odds

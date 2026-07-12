@@ -4,6 +4,7 @@ import { DEFAULT_MESSAGES_LIMIT, type TJoinedMessage } from '@caesar/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { addMessages, addThreadMessages, clearThreadMessages } from './actions';
+import { lockAutoScroll } from './scroll-lock';
 import {
     latestOwnRootMessageIdSelector,
     messagesByChannelIdSelector,
@@ -235,9 +236,14 @@ export const useMessages = (channelId: number) => {
             const existing = findMessageElement(messageId);
 
             if (existing) {
+                // covers the smooth scroll against initial-scroll retries
+                lockAutoScroll(1_500);
                 highlightMessageElement(existing);
                 return;
             }
+
+            // generous: the lock must survive the fetch + render below
+            lockAutoScroll(10_000);
 
             // message not loaded yet fetch all messages down to the target
             const { messages: rawPage } = await fetchChannelMessagesPage({
@@ -251,6 +257,9 @@ export const useMessages = (channelId: number) => {
 
             // wait for React to render the new messages into the DOM
             const element = await waitForMessageElement(messageId);
+
+            // shrink the lock to a trailing grace for the smooth scroll
+            lockAutoScroll(1_500);
 
             if (element) {
                 highlightMessageElement(element);

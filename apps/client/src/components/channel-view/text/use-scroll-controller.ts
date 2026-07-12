@@ -1,3 +1,4 @@
+import { isAutoScrollLocked } from '@/features/server/messages/scroll-lock';
 import { useCallback, useEffect, useRef } from 'react';
 
 // TODO: this might be improved in the future
@@ -76,8 +77,13 @@ const useScrollController = ({
         if (!hasInitialScroll.current) {
             // try multiple methods to ensure scroll happens after all content is rendered
             const performScroll = () => {
-                scrollToBottom();
+                // a jump-to-message owns the viewport; still mark the
+                // initial scroll done so later effects behave normally
                 hasInitialScroll.current = true;
+
+                if (isAutoScrollLocked()) return;
+
+                scrollToBottom();
                 shouldStickToBottom.current = true;
             };
 
@@ -124,6 +130,8 @@ const useScrollController = ({
         if (shouldStickToBottom.current) {
             // scroll after a short delay to allow content to render
             setTimeout(() => {
+                if (isAutoScrollLocked()) return;
+
                 scrollToBottom();
             }, 10);
         }
@@ -138,7 +146,7 @@ const useScrollController = ({
         }
 
         const observer = new ResizeObserver(() => {
-            if (!shouldStickToBottom.current) {
+            if (!shouldStickToBottom.current || isAutoScrollLocked()) {
                 return;
             }
 
