@@ -83,7 +83,9 @@ const VoiceUserCard = memo(
             >
                 {voiceUser.banner && showUserBanners ? (
                     <div
-                        className="h-full w-full rounded-t-md bg-cover bg-center blur-sm brightness-50 bg-no-repeat absolute inset-0"
+                        // scale-110 pushes the blur's transparent fringe
+                        // outside the card clip: no halo on light bg
+                        className="h-full w-full bg-cover bg-center blur-sm brightness-50 bg-no-repeat absolute inset-0 scale-110"
                         style={{
                             backgroundImage: `url("${getFileUrl(voiceUser.banner)}")`
                         }}
