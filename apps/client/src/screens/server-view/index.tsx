@@ -17,6 +17,7 @@ import { setSelectedChannelId } from '@/features/server/channels/actions';
 import { useCan, usePublicServerSettings } from '@/features/server/hooks';
 import { getLocalStorageItemBool, LocalStorageKey } from '@/helpers/storage';
 import { useBirthdayToasts } from '@/hooks/use-birthday-toasts';
+import { useIsLgUp } from '@/hooks/use-is-lg-up';
 import { useSwipeGestures } from '@/hooks/use-swipe-gestures';
 import { cn } from '@/lib/utils';
 import { Permission } from '@caesar/shared';
@@ -40,6 +41,7 @@ const ServerView = memo(() => {
     const canUseDms = can(Permission.USE_DMS);
     const previousServerChannelIdRef = useRef<number | undefined>(undefined);
     const { isOpen: isThreadSidebarOpen } = useThreadSidebar();
+    const isLgUp = useIsLgUp();
 
     useBirthdayToasts();
 
@@ -52,12 +54,19 @@ const ServerView = memo(() => {
     }, [isDesktopLeftSidebarOpen]);
 
     const handleDesktopRightSidebarToggle = useCallback(() => {
+        // between md and lg the members sidebar only exists as the
+        // mobile overlay, so the top-bar button drives that instead.
+        if (!isLgUp) {
+            setIsMobileUsersOpen((prev) => !prev);
+            return;
+        }
+
         setIsDesktopRightSidebarOpen((prev) => !prev);
         localStorage.setItem(
             LocalStorageKey.RIGHT_SIDEBAR_STATE,
             !isDesktopRightSidebarOpen ? 'true' : 'false'
         );
-    }, [isDesktopRightSidebarOpen]);
+    }, [isLgUp, isDesktopRightSidebarOpen]);
 
     const handleSwipeRight = useCallback(() => {
         if (isMobileMenuOpen || isMobileUsersOpen) {
@@ -109,7 +118,9 @@ const ServerView = memo(() => {
                     onToggleLeftSidebar={handleDesktopLeftSidebarToggle}
                     isLeftSidebarOpen={isDesktopLeftSidebarOpen}
                     onToggleRightSidebar={handleDesktopRightSidebarToggle}
-                    isRightSidebarOpen={isDesktopRightSidebarOpen}
+                    isRightSidebarOpen={
+                        isLgUp ? isDesktopRightSidebarOpen : isMobileUsersOpen
+                    }
                 />
                 <div className="relative flex min-h-0 flex-1 overflow-hidden">
                     <PreventBrowser />

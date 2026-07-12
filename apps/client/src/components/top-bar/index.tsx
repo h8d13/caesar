@@ -34,7 +34,7 @@ const TopBar = memo(
         const currentVoiceChannelId = useCurrentVoiceChannelId();
         const [isSearchOpen, setIsSearchOpen] = useState(false);
         return (
-            <div className="hidden lg:flex h-8 w-full bg-card border-b border-border items-center transition-all duration-300 ease-in-out gap-2">
+            <div className="hidden md:flex h-8 w-full bg-card border-b border-border items-center transition-all duration-300 ease-in-out gap-2">
                 <Button
                     variant="ghost"
                     size="sm"

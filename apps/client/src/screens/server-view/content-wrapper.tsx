@@ -88,7 +88,7 @@ const WelcomeScreen = memo(
 
         return (
             <>
-                <div className="flex-col gap-3 h-full w-full hidden lg:flex overflow-auto items-center justify-center">
+                <div className="flex-col gap-3 h-full w-full hidden md:flex overflow-auto items-center justify-center">
                     <img
                         src={logoSrc}
                         alt={serverName ?? VITE_APP_NAME}
