@@ -788,6 +788,36 @@ const statusImages = sqliteTable(
   ]
 );
 
+const pushSubscriptions = sqliteTable(
+  'push_subscriptions',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    // push service URL; unique per browser+device subscription
+    endpoint: text('endpoint').notNull(),
+    p256dh: text('p256dh').notNull(),
+    auth: text('auth').notNull(),
+    // mirror of the client notification prefs so the server can decide
+    // what to push without asking a device that may be asleep
+    notifyAll: integer('notify_all', { mode: 'boolean' })
+      .notNull()
+      .default(false),
+    notifyMentions: integer('notify_mentions', { mode: 'boolean' })
+      .notNull()
+      .default(false),
+    notifyDms: integer('notify_dms', { mode: 'boolean' })
+      .notNull()
+      .default(false),
+    createdAt: integer('created_at').notNull()
+  },
+  (t) => [
+    uniqueIndex('push_subscriptions_endpoint_unique_idx').on(t.endpoint),
+    index('push_subscriptions_user_idx').on(t.userId)
+  ]
+);
+
 export {
   activityLog,
   categories,
@@ -809,6 +839,7 @@ export {
   predictionBets,
   predictionOptions,
   predictionPools,
+  pushSubscriptions,
   rolePermissions,
   roles,
   rouletteBets,

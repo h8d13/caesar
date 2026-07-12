@@ -12,6 +12,7 @@ import { keysRouter } from './keys';
 import { messagesRouter } from './messages';
 import { othersRouter } from './others';
 import { predictionRouter } from './prediction';
+import { pushRouter } from './push';
 import { rolesRouter } from './roles';
 import { soundsRouter } from './sounds';
 import { usersRouter } from './users';
@@ -37,6 +38,7 @@ const appRouter = t.router({
   whiteboard: whiteboardRouter,
   watchParty: watchPartyRouter,
   prediction: predictionRouter,
+  push: pushRouter,
   crash: crashRouter,
   roulette: rouletteRouter,
   coinflip: coinflipRouter,

@@ -1,5 +1,6 @@
 import { getUrlFromServer } from '@/helpers/get-file-url';
 import { LocalStorageKey, setLocalStorageItemBool } from '@/helpers/storage';
+import { syncPushSubscription } from '@/lib/push';
 import { getTRPCClient } from '@/lib/trpc';
 import type { TServerInfo } from '@caesar/shared';
 import { toast } from 'sonner';
@@ -108,31 +109,52 @@ export const setSelectedDmChannelId = (channelId: number | undefined) => {
     }
 };
 
-export const setBrowserNotifications = async (enabled: boolean) => {
-    if (enabled && 'Notification' in window) {
-        const permission = await Notification.requestPermission();
+// enabling any notification pref needs OS-level permission; returns false
+// when the user denied it so the toggle stays off
+const ensureNotificationPermission = async (
+    enabled: boolean
+): Promise<boolean> => {
+    if (!enabled || !('Notification' in window)) return true;
 
-        if (permission !== 'granted') {
-            return;
-        }
-    }
+    const permission = await Notification.requestPermission();
+
+    return permission === 'granted';
+};
+
+// mirror the prefs into this device's Web Push subscription so closed
+// PWAs keep getting notified; the in-app path reads redux directly
+const syncPush = () => {
+    void syncPushSubscription().catch((e) =>
+        console.error('push subscription sync failed', e)
+    );
+};
+
+export const setBrowserNotifications = async (enabled: boolean) => {
+    if (!(await ensureNotificationPermission(enabled))) return;
 
     store.dispatch(appSliceActions.setBrowserNotifications(enabled));
     setLocalStorageItemBool(LocalStorageKey.BROWSER_NOTIFICATIONS, enabled);
+    syncPush();
 };
 
-export const setBrowserNotificationsForMentions = (enabled: boolean) => {
+export const setBrowserNotificationsForMentions = async (enabled: boolean) => {
+    if (!(await ensureNotificationPermission(enabled))) return;
+
     store.dispatch(appSliceActions.setBrowserNotificationsForMentions(enabled));
     setLocalStorageItemBool(
         LocalStorageKey.BROWSER_NOTIFICATIONS_FOR_MENTIONS,
         enabled
     );
+    syncPush();
 };
 
-export const setBrowserNotificationsForDms = (enabled: boolean) => {
+export const setBrowserNotificationsForDms = async (enabled: boolean) => {
+    if (!(await ensureNotificationPermission(enabled))) return;
+
     store.dispatch(appSliceActions.setBrowserNotificationsForDms(enabled));
     setLocalStorageItemBool(
         LocalStorageKey.BROWSER_NOTIFICATIONS_FOR_DMS,
         enabled
     );
+    syncPush();
 };

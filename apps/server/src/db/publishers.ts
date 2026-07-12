@@ -12,6 +12,7 @@ import {
 import { count, eq, inArray } from 'drizzle-orm';
 import { db } from '.';
 import { extractMentionUserIds } from '../helpers/extract-mention-user-ids';
+import { enqueueMessagePush } from '../queues/web-push';
 import { pubsub } from '../utils/pubsub';
 import {
   getAffectedOnlineUserIdsForChannel,
@@ -60,6 +61,17 @@ const publishMessage = async (
   });
 
   pubsub.publishFor(affectedUserIds, targetEvent, message);
+
+  // Web Push reaches devices with no live WS connection (closed PWA,
+  // locked phone). Fire-and-forget queue; create only, edits and
+  // metadata re-publishes must not re-notify.
+  if (type === 'create') {
+    enqueueMessagePush({
+      channelId,
+      messageUserId: message.userId,
+      content: message.content ?? null
+    });
+  }
 
   // thread replies should not increment the channel's unread count
   if (message.parentMessageId) return;

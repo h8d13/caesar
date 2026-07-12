@@ -19,6 +19,7 @@ import { getLocalStorageItemBool, LocalStorageKey } from '@/helpers/storage';
 import { useBirthdayToasts } from '@/hooks/use-birthday-toasts';
 import { useIsLgUp } from '@/hooks/use-is-lg-up';
 import { useSwipeGestures } from '@/hooks/use-swipe-gestures';
+import { syncPushSubscription } from '@/lib/push';
 import { cn } from '@/lib/utils';
 import { Permission } from '@caesar/shared';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
@@ -93,6 +94,16 @@ const ServerView = memo(() => {
         onSwipeRight: handleSwipeRight,
         onSwipeLeft: handleSwipeLeft
     });
+
+    // push subscriptions rotate (browser refresh, permission changes);
+    // re-mirror once the server hands us its VAPID key
+    useEffect(() => {
+        if (!publicSettings?.vapidPublicKey) return;
+
+        syncPushSubscription().catch((e) =>
+            console.error('push subscription sync failed', e)
+        );
+    }, [publicSettings?.vapidPublicKey]);
 
     useEffect(() => {
         const dmsBlocked =

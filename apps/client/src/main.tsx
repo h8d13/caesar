@@ -16,6 +16,9 @@ import { ThemeProvider } from './components/theme-provider/index.tsx';
 import { store } from './features/store.ts';
 import { LocalStorageKey } from './helpers/storage.ts';
 import './index.css';
+import { registerServiceWorker } from './lib/push.ts';
+
+registerServiceWorker();
 
 const queryClient = new QueryClient({
     defaultOptions: {

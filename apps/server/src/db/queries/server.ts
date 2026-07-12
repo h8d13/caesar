@@ -1,6 +1,7 @@
 import type { TJoinedSettings, TPublicServerSettings } from '@caesar/shared';
 import { files, settings } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
+import { getVapidPublicKey } from '@server/utils/web-push';
 import { eq } from 'drizzle-orm';
 import { db } from '..';
 
@@ -49,7 +50,8 @@ const getPublicSettings: () => Promise<TPublicServerSettings> = async () => {
     storageMaxFilesPerMessage: settings.storageMaxFilesPerMessage,
     storageSpaceQuotaByUser: settings.storageSpaceQuotaByUser,
     storageOverflowAction: settings.storageOverflowAction,
-    webRtcMaxBitrate: config.webRtc.maxBitrate
+    webRtcMaxBitrate: config.webRtc.maxBitrate,
+    vapidPublicKey: await getVapidPublicKey()
   };
 
   return publicSettings;

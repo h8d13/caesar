@@ -8,6 +8,7 @@ import {
 } from '@/features/app/selectors';
 import { store } from '@/features/store';
 import { getFileUrl } from '@/helpers/get-file-url';
+import { getRegistration } from '@/lib/push';
 import { getTRPCClient } from '@/lib/trpc';
 import { hasMention, TYPING_MS, type TJoinedMessage } from '@caesar/shared';
 import {
@@ -53,7 +54,27 @@ const sendBrowserNotification = (
     const body = 'You have a new message.';
     const icon = user?.avatar ? getFileUrl(user.avatar) : undefined;
 
-    new Notification(title, { body, icon });
+    // Android Chrome has no Notification() constructor (throws); the
+    // service worker path works everywhere, so the constructor is only
+    // a fallback for when registration failed.
+    void (async () => {
+        try {
+            const registration = await getRegistration();
+
+            if (registration) {
+                await registration.showNotification(title, { body, icon });
+                return;
+            }
+        } catch {
+            // fall through to the constructor
+        }
+
+        try {
+            new Notification(title, { body, icon });
+        } catch (e) {
+            console.error('browser notification failed', e);
+        }
+    })();
 };
 
 const typingTimeouts: { [key: string]: NodeJS.Timeout } = {};

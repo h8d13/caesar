@@ -1,10 +1,10 @@
 # Security
 
 ## Policy
-  
+
 ### Supported Versions
 Only the latest `master` is supported. Older tags receive no patches.
-  
+
 ### Reporting a Vulnerability
 Please **do not** open a public issue. hadean-eon-dev@proton.me
 
@@ -40,3 +40,4 @@ HTTPS enforcement: behind Caddy, server 301s any `x-forwarded-proto: http`
 - Operator vs Admin: An 'admin'(or equivalent role) never gets IP or GEO. Only hashes.
 - Operator still has full logs. (Aside from 1:1 DMs where he only sees blobs in DB)
 - Made for smaller trusted communities, not for public exposure.
+- Generic exposure (notifications do not leak on lock-screens/E2EE)

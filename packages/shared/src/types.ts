@@ -47,6 +47,8 @@ export type TPublicServerSettings = Pick<
   | 'storageOverflowAction'
 > & {
   webRtcMaxBitrate: number;
+  // VAPID public key clients use to create Web Push subscriptions
+  vapidPublicKey: string;
 };
 
 export type TGenericObject = Record<string, unknown>;

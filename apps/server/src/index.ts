@@ -21,9 +21,11 @@ import { initVoiceRuntimes } from './runtimes';
 import { createServers } from './utils/create-servers';
 import { loadJwtSecret } from './utils/jwt-secret';
 import { getAllWorkers, loadMediasoup } from './utils/mediasoup';
+import { loadVapidKeys } from './utils/web-push';
 
 await loadDb();
 await loadJwtSecret();
+await loadVapidKeys();
 await createServers();
 await loadMediasoup();
 await initVoiceRuntimes();

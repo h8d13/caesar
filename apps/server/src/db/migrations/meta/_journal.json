@@ -183,6 +183,13 @@
       "when": 1780393822853,
       "tag": "0025_drop_server_password",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1783863411594,
+      "tag": "0026_web_push",
+      "breakpoints": true
     }
   ]
 }
