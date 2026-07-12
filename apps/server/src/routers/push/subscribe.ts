@@ -50,12 +50,13 @@ const subscribeRoute = protectedProcedure
     // per-user cap so one account can't turn every message into an
     // unbounded outbound POST storm. Endpoints rotate, so evict oldest
     // instead of rejecting: a rejected rotation would brick the device.
-    const stale = await db
+    const rows = await db
       .select({ id: pushSubscriptions.id })
       .from(pushSubscriptions)
       .where(eq(pushSubscriptions.userId, ctx.userId))
-      .orderBy(desc(pushSubscriptions.createdAt), desc(pushSubscriptions.id))
-      .offset(MAX_SUBSCRIPTIONS_PER_USER);
+      .orderBy(desc(pushSubscriptions.createdAt), desc(pushSubscriptions.id));
+
+    const stale = rows.slice(MAX_SUBSCRIPTIONS_PER_USER);
 
     if (stale.length > 0) {
       await db.delete(pushSubscriptions).where(

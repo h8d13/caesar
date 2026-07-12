@@ -347,7 +347,7 @@ const Connect = memo(() => {
                             >
                                 <Switch checked={values.autoLogin} />
                                 <span className="text-sm font-medium cursor-pointer">
-                                    Stay signed in across tabs?
+                                    Stay signed in?
                                 </span>
                             </div>
 
