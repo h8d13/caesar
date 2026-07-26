@@ -41,8 +41,8 @@
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
-    "js-sha256": "^0.11.1",
+    "js-sha256": "^0.12.0",
     "linkify-it": "^5.0.2",
-    "mediasoup": "3.20.10"
+    "mediasoup": "3.22.0"
   }
 }
