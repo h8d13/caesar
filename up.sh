@@ -10,23 +10,33 @@ export CAESAR_BUILD_VERSION=$(git rev-parse --short HEAD)
 # safe to run alongside the real prod or while iterating on local commits.
 # Wipes ./data-prod-dev each invocation so every test starts clean
 if [ "${1:-}" = "--prod-dev" ]; then
-	echo ""
-	echo "BUILDING CAESAR-PROD-DEV VERSION HASH: $CAESAR_BUILD_VERSION"
-	echo ""
+    echo ""
+    echo "BUILDING CAESAR-PROD-DEV VERSION HASH: $CAESAR_BUILD_VERSION"
+    echo ""
     # Separate project name so prod-dev gets its own default network. With
     # the default `name: caesar` from compose.yaml both stacks would share
     # caesar_default, and `down` would fight the other stack's containers
-    # over network removal. for easier debug we pass progress plain
-    COMPOSE="docker compose -p caesar-prod-dev --profile --progress=plain prod-dev"
+    # over network removal. --progress=plain keeps full build output.
+    COMPOSE="docker compose -p caesar-prod-dev --profile prod-dev --progress=plain"
     $COMPOSE down
     rm -rf ./data-prod-dev && mkdir -p ./data-prod-dev
     $COMPOSE build && $COMPOSE up
     exit $?
 fi
 
-# build version: git short hash of HEAD. up.sh pulls latest above, so the
-# tree always matches origin; no dirty marker needed. helpers.ts picks this
-# up over package.json.
+# reject typos instead of silently falling through to a default warm build
+case "${1:-}" in
+    ""|--clean) ;;
+    *)
+        echo "unknown option: $1"
+        echo "usage: $0 [--prod-dev|--clean]"
+        exit 1
+        ;;
+esac
+
+# build version: git short hash of HEAD. run updown.sh first if you want the
+# tree to match origin; no dirty marker needed. helpers.ts picks this up over
+# package.json.
 echo ""
 echo "BUILDING CAESAR-PROD VERSION HASH: $CAESAR_BUILD_VERSION"
 echo ""
@@ -34,11 +44,14 @@ echo ""
 # convenience wrapper for prod builds. default reuses Docker's layer cache (the
 # Dockerfile only rebuilds changed layers). pass --clean for a cold reproducible
 # build: system-wide prune + --no-cache (releases, or to clear a bad cache).
+COMPOSE="docker compose --profile prod --progress=plain"
+
 if [ "${1:-}" = "--clean" ]; then
     echo "cold build: docker system prune + --no-cache"
-    docker system prune -f && docker compose --profile prod build --no-cache
+    docker system prune -f && $COMPOSE build --no-cache
 else
-    docker compose --profile prod build
+    echo "warm build: reusing docker layer cache (--clean for a cold build)"
+    $COMPOSE build
 fi || exit 1
 
-docker compose --profile prod up -d
+$COMPOSE up -d
