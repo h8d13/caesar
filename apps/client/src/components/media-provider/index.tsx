@@ -328,6 +328,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         setLocalAudioStream,
         setLocalVideoStream,
         setLocalScreenShare,
+        setLocalScreenShareAudio,
         clearLocalStreams
     } = useLocalStreams();
 
@@ -1020,20 +1021,28 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         localScreenShareProducer.current?.close();
         localScreenShareProducer.current = undefined;
 
+        localScreenShareAudioProducer.current?.close();
+        localScreenShareAudioProducer.current = undefined;
+
         setScreenShareProducer(null);
         setLocalScreenShare(undefined);
+        setLocalScreenShareAudio(undefined);
     }, [
         localScreenShareStream,
         setLocalScreenShare,
+        setLocalScreenShareAudio,
         localScreenShareProducer,
+        localScreenShareAudioProducer,
         setScreenShareProducer
     ]);
 
     const startScreenShareStream = useCallback(async () => {
+        let stream: MediaStream | undefined;
+
         try {
             logVoice('Starting screen share stream');
 
-            const stream = await navigator.mediaDevices.getDisplayMedia({
+            stream = await navigator.mediaDevices.getDisplayMedia({
                 video: {
                     ...getResWidthHeight(devices?.screenResolution),
                     frameRate: devices?.screenFramerate
@@ -1050,11 +1059,19 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             logVoice('Screen share stream obtained', { stream });
             setLocalScreenShare(stream);
 
-            const videoTrack = stream.getVideoTracks()[0];
-            const audioTrack = stream.getAudioTracks()[0];
+            // stable binding for the track handlers below; `stream` is
+            // mutable so closures cannot rely on its narrowed type
+            const displayStream = stream;
+
+            const videoTrack = displayStream.getVideoTracks()[0];
+            const audioTrack = displayStream.getAudioTracks()[0];
 
             if (videoTrack) {
                 logVoice('Obtained video track', { videoTrack });
+
+                // bias the encoder toward sharpness over framerate; screen
+                // content is mostly static text, not motion
+                videoTrack.contentHint = 'detail';
 
                 // Resolve effective codec: user-preferred (if browser can
                 // encode it) → browser/router intersection → undefined.
@@ -1165,13 +1182,21 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                         'Screen share track ended, cleaning up screen share'
                     );
 
-                    localScreenShareStream?.getTracks().forEach((track) => {
+                    // the local stream, not the state value: the setter above
+                    // has not committed yet when this closure is created
+                    displayStream.getTracks().forEach((track) => {
                         track.stop();
                     });
+
                     localScreenShareProducer.current?.close();
+                    localScreenShareProducer.current = undefined;
+
+                    localScreenShareAudioProducer.current?.close();
+                    localScreenShareAudioProducer.current = undefined;
 
                     setScreenShareProducer(null);
                     setLocalScreenShare(undefined);
+                    setLocalScreenShareAudio(undefined);
                 };
 
                 if (audioTrack) {
@@ -1190,9 +1215,32 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                             appData: { kind: StreamKind.SCREEN_AUDIO }
                         });
 
+                    setLocalScreenShareAudio(new MediaStream([audioTrack]));
+
+                    localScreenShareAudioProducer.current?.on(
+                        '@close',
+                        async () => {
+                            logVoice('Screen share audio producer closed');
+
+                            // teardown race: see video handler comment.
+                            try {
+                                await getTRPCClient().voice.closeProducer.mutate(
+                                    { kind: StreamKind.SCREEN_AUDIO }
+                                );
+                            } catch (error) {
+                                logVoice(
+                                    'Error closing screen share audio producer',
+                                    { error }
+                                );
+                            }
+                        }
+                    );
+
                     audioTrack.onended = () => {
                         localScreenShareAudioProducer.current?.close();
                         localScreenShareAudioProducer.current = undefined;
+
+                        setLocalScreenShareAudio(undefined);
                     };
                 }
 
@@ -1201,15 +1249,29 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                 throw new Error('No video track obtained for screen share');
             }
         } catch (error) {
+            // state was set before produce(); a throw here would otherwise
+            // leave a live stream and half-built producers behind
+            stream?.getTracks().forEach((track) => track.stop());
+
+            localScreenShareAudioProducer.current?.close();
+            localScreenShareAudioProducer.current = undefined;
+
+            localScreenShareProducer.current?.close();
+            localScreenShareProducer.current = undefined;
+
+            setScreenShareProducer(null);
+            setLocalScreenShare(undefined);
+            setLocalScreenShareAudio(undefined);
+
             logVoice('Error starting screen share stream', { error });
             throw error;
         }
     }, [
         setLocalScreenShare,
+        setLocalScreenShareAudio,
         localScreenShareProducer,
         localScreenShareAudioProducer,
         producerTransport,
-        localScreenShareStream,
         setScreenShareProducer,
         devices.screenResolution,
         devices.screenFramerate,
@@ -1333,7 +1395,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         removeExternalStreamTrack,
         removeExternalStream,
         clearRemoteUserStreamsForUser,
-        rtpCapabilities: routerRtpCapabilities.current!
+        rtpCapabilities: routerRtpCapabilities.current
     });
 
     useEffect(() => {
