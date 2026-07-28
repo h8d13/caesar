@@ -14,23 +14,18 @@ import crypto from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../db';
 import { getServerTokenSync } from '../db/queries/server';
+import { parseSite } from '../helpers/parse-site';
 import { IS_DEVELOPMENT } from './env';
 
-const CAESAR_SITE = process.env.CAESAR_SITE ?? 'localhost';
-const SITE_HOST = CAESAR_SITE.split(':')[0] ?? 'localhost';
-// :8443 is the prod-dev surface (Caddy `tls internal`); plain localhost is
-// the vite dev server. Everything else assumes HTTPS.
-const SITE_SCHEME =
-  SITE_HOST === 'localhost' && !CAESAR_SITE.includes(':8443')
-    ? 'http'
-    : 'https';
+// Throws at boot on a multi-host CAESAR_SITE, see helpers/parse-site.
+const SITE = parseSite(process.env.CAESAR_SITE);
 
-const RP_ID = SITE_HOST;
+const RP_ID = SITE.host;
 const RP_NAME = process.env.CAESAR_WEBAUTHN_RPNAME ?? 'Caesar';
 // Dev also accepts the vite origin so :5173 and :8443 are interchangeable.
 const EXPECTED_ORIGIN = IS_DEVELOPMENT
-  ? [`${SITE_SCHEME}://${CAESAR_SITE}`, 'http://localhost:5173']
-  : [`${SITE_SCHEME}://${CAESAR_SITE}`];
+  ? [SITE.origin, 'http://localhost:5173']
+  : [SITE.origin];
 
 const CHALLENGE_TTL_MS = 5 * 60 * 1000;
 

@@ -17,7 +17,7 @@ services:
       - "40000-40002:40000-40002/tcp"
       - "40000-40002:40000-40002/udp"
     environment:
-      CAESAR_PORT: "4991"
+      CAESAR_PORT: ${CAESAR_PORT:-4991}
       CAESAR_WEBRTC_WORKERS: "3"
       CAESAR_SITE: ${CAESAR_SITE:-localhost}
       # See wiki Configuration.
@@ -39,6 +39,10 @@ services:
       - "443:443/udp"
     environment:
       CAESAR_SITE: ${CAESAR_SITE:-localhost}
+      # Caddy substitutes this at config load, so the proxy target follows
+      # CAESAR_PORT instead of the Caddyfile's hardcoded 4991 fallback.
+      # Same default as the caesar service above; changing one changes both.
+      CAESAR_UPSTREAM: caesar:${CAESAR_PORT:-4991}
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
