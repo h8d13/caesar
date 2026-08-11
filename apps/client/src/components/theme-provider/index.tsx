@@ -3,27 +3,14 @@ import {
     LocalStorageKey,
     setLocalStorageItem
 } from '@/helpers/storage';
-import { createContext, useEffect, useState } from 'react';
-
-type Theme = 'dark' | 'light' | 'system';
+import { useEffect, useState } from 'react';
+import { ThemeProviderContext, type Theme } from './theme-context';
 
 type ThemeProviderProps = {
     children: React.ReactNode;
     defaultTheme?: Theme;
     storageKey?: LocalStorageKey;
 };
-
-type ThemeProviderState = {
-    theme: Theme;
-    setTheme: (theme: Theme) => void;
-};
-
-const initialState: ThemeProviderState = {
-    theme: 'system',
-    setTheme: () => null
-};
-
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
 function ThemeProvider({
     children,

@@ -1,4 +1,5 @@
 import { SearchDialog } from '@/components/search-dialog';
+import { ThemeToggle } from '@/components/theme-provider/theme-toggle';
 import {
     useCurrentVoiceChannelId,
     useIsCurrentVoiceChannelSelected
@@ -76,6 +77,7 @@ const TopBar = memo(
                     open={isSearchOpen}
                     onClose={() => setIsSearchOpen(false)}
                 />
+                <ThemeToggle />
                 <Button
                     variant="ghost"
                     size="sm"
