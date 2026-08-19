@@ -1,4 +1,4 @@
-import { channels, messages } from '@caesar/shared/db/schema';
+import { messages } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import {
   joinMessagesWithRelations,
@@ -17,16 +17,7 @@ const getPinnedRoute = protectedProcedure
     })
   )
   .query(async ({ ctx, input }) => {
-    await assertChannelAccess(ctx, input.channelId);
-
-    const channel = await db
-      .select({
-        private: channels.private,
-        fileAccessToken: channels.fileAccessToken
-      })
-      .from(channels)
-      .where(eq(channels.id, input.channelId))
-      .get();
+    const channel = await assertChannelAccess(ctx, input.channelId);
 
     invariant(channel, {
       code: 'NOT_FOUND',

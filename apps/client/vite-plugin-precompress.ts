@@ -3,15 +3,12 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import type { Plugin } from 'vite';
 
-// Build-time gzip/brotli for the emitted bundle. The server used to run
-// brotli at its default quality 11 on every asset request with no cache,
-// which costs ~1.3s of CPU for the largest chunk and produces byte-identical
-// output each time. Doing it once here makes q11 free at request time; the
-// server falls back to (cheaper) runtime compression for anything without a
-// precompressed sibling.
+// Build-time gzip/brotli for the emitted bundle, so the server never spends
+// ~1.3s of CPU recomputing byte-identical quality-11 output per request. It
+// falls back to cheaper runtime compression where no sibling exists.
 //
-// index.html is excluded on purpose: the server injects a fresh CSP nonce
-// into it per request, so a precompressed copy would serve stale markup.
+// index.html is excluded: the server injects a fresh CSP nonce per request,
+// so a precompressed copy would serve stale markup.
 const COMPRESSIBLE_EXTENSIONS = new Set([
     '.js',
     '.css',

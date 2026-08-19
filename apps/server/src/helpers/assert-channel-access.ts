@@ -5,19 +5,16 @@ import { assertDmChannel } from '@server/db/queries/dms';
 import type { Context } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';
 
-// Both checks below need the same channel row, and callers usually need it
-// again afterwards (fileAccessToken for attachment tokens). Read it once here
-// and hand it to everyone; the row is returned so the caller does not issue a
-// third identical select.
+// Reads the channel row once and hands it to both checks, then returns it so
+// callers (which need fileAccessToken) do not select it again.
 //
-// The DM check runs before the permission check rather than alongside it: on
-// a DM channel it establishes participation, which is exactly what the
-// permission check would otherwise re-query. Non-DM channels short-circuit
-// without a query, so nothing is serialized for them.
+// The DM check runs first because on a DM it establishes participation, which
+// is what the permission check would otherwise re-query. Non-DM channels
+// short-circuit without a query.
 //
-// Returns undefined for a missing channel rather than throwing: the
-// permission check already rejects that as FORBIDDEN, and changing it to
-// NOT_FOUND would alter the error every caller surfaces today.
+// Missing channel returns undefined rather than throwing: the permission
+// check already rejects it as FORBIDDEN, and NOT_FOUND here would change the
+// error every caller surfaces.
 const assertChannelAccess = async (
   ctx: Context,
   channelId: number

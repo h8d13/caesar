@@ -5,7 +5,6 @@ import {
   Permission,
   ServerEvents,
   UserStatus,
-  type TChannelPermissionHints,
   type TConnectionParams
 } from '@caesar/shared';
 import { channels, socialCreditLedger } from '@caesar/shared/db/schema';
@@ -29,7 +28,7 @@ import { getUserRoles } from '../routers/users/get-user-roles';
 import { VoiceRuntime } from '../runtimes/voice';
 import { invariant } from './invariant';
 import { pubsub } from './pubsub';
-import type { Context } from './trpc';
+import type { Context, TChannelPermissionHints } from './trpc';
 
 // Server-local extension of the ws WebSocket. Replaces the previous
 // global `declare module 'ws'` augmentation: keeping it local stops the
@@ -147,8 +146,7 @@ const createContext = async ({
   const hasChannelPermission = async (
     channelId: number,
     targetPermission: ChannelPermission,
-    // assertChannelAccess has already read the channel row and, for DMs,
-    // established participation. Reusing both keeps this check queryless.
+    // assertChannelAccess passes what it already looked up.
     opts?: TChannelPermissionHints
   ) => {
     const channel =
@@ -305,25 +303,12 @@ const createContext = async ({
 
 const createWsServer = async (server: http.Server) => {
   return new Promise<WebSocketServer>((resolve) => {
-    // The client uses a single wsLink, so every tRPC query, mutation and
-    // subscription rides this socket -- it carries essentially all app
-    // bytes. The payloads are near-ideal deflate input: getMessages returns
-    // 100 rows of the full messages table (most columns null), and the live
-    // events repeat the same key names forever.
-    //
-    // threshold is deliberately below ws's 1024 default. That default
-    // assumes each frame compresses alone; with context takeover (on by
-    // default) the shared LZ77 window already holds previous frames, so a
-    // 121-byte TYPING event is almost entirely back-references. Measured on
-    // a realistic frame mix: history pages 10.1x either way, but live
-    // traffic goes 1.0x -> 10.8x by dropping the threshold, at ~52us of
-    // deflate per small frame.
-    //
-    // That per-frame cost is the thing that scales badly: node runs zlib on
-    // the libuv threadpool, and a broadcast deflates once per recipient. If
-    // this ever serves thousands of concurrent users, raise the threshold
-    // (256 keeps ~2.1x on live traffic) or drop context takeover to cap the
-    // per-connection zlib window instead.
+    // The client uses a single wsLink, so every tRPC call rides this socket.
+    // threshold is below ws's 1024 default on purpose: context takeover means
+    // small repetitive frames (typing, presence) are almost entirely
+    // back-references, so they compress nearly free. Cost is ~52us of
+    // threadpool deflate per frame, paid once per recipient on a broadcast:
+    // raise it if this ever serves thousands of concurrent users.
     wss = new WebSocketServer({
       server,
       perMessageDeflate: {

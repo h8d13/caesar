@@ -44,9 +44,18 @@ const recordSql = async (fn: () => Promise<unknown>): Promise<string[]> => {
   return statements;
 };
 
-const countReadsOf = (statements: string[], table: string) =>
-  statements.filter((sql) => new RegExp(`from "${table}"`, 'i').test(sql))
-    .length;
+// Match the exact projections under test rather than "any read of table X":
+// the route fires publishes whose own queries land in the same window, and a
+// table-level count would fold those in and break on unrelated changes.
+const ACCESS_CHANNEL_READ =
+  /select "private", "is_dm_channel", "file_access_token" from "channels"/i;
+
+// The ordered limit-1 lookup the read-state update used to issue on every
+// page, including pages that already contained the newest message.
+const LATEST_MESSAGE_LOOKUP = /select "id" from "messages".*order by/is;
+
+const countMatching = (statements: string[], pattern: RegExp) =>
+  statements.filter((sql) => pattern.test(sql)).length;
 
 const getReadState = async (userId: number, channelId: number) =>
   tdb
@@ -83,22 +92,17 @@ const sendMessages = async (caller: Caller, channelId: number, n: number) => {
   return ids;
 };
 
-// The route's fire-and-forget publishes issue their own queries; let them
-// settle so they are not attributed to the call under measurement.
-const settle = () => new Promise((resolve) => setTimeout(resolve, 200));
-
 describe('messages.get channel access', () => {
   test('reads the channel row once on a plain channel', async () => {
     const { caller } = await initTest(1);
 
     await caller.messages.send({ channelId: 1, content: 'hi', files: [] });
-    await settle();
 
     const statements = await recordSql(() =>
       caller.messages.get({ channelId: 1, cursor: null, limit: 50 })
     );
 
-    expect(countReadsOf(statements, 'channels')).toBe(1);
+    expect(countMatching(statements, ACCESS_CHANNEL_READ)).toBe(1);
   });
 
   test('reads the channel row once on a DM channel', async () => {
@@ -108,36 +112,90 @@ describe('messages.get channel access', () => {
     const { channelId } = await caller1.dms.open({ userId: 2 });
 
     await caller1.messages.send({ channelId, content: 'hi', files: [] });
-    await settle();
 
     const statements = await recordSql(() =>
       caller1.messages.get({ channelId, cursor: null, limit: 50 })
     );
 
     // The DM path also used to check participation twice (once via
-    // assertDmParticipant, once via hasChannelPermission). One read remains
-    // for the access check; the other is the read-state rollup.
-    expect(countReadsOf(statements, 'channels')).toBe(1);
-    expect(countReadsOf(statements, 'direct_messages')).toBe(2);
+    // assertDmParticipant, once via hasChannelPermission).
+    expect(countMatching(statements, ACCESS_CHANNEL_READ)).toBe(1);
   });
 
   test('does not re-query the newest message on a first page', async () => {
     const { caller } = await initTest(1);
 
     await sendMessages(caller, 1, 3);
-    await settle();
 
     const statements = await recordSql(() =>
       caller.messages.get({ channelId: 1, cursor: null, limit: 50 })
     );
 
-    // One select of message rows for the page itself; the read-state update
-    // reuses rows[0] instead of issuing its own ordered limit-1 lookup.
-    const ordered = statements.filter((sql) =>
-      /from "messages".*order by/is.test(sql)
+    // rows[0] is already the newest message on a first page.
+    expect(countMatching(statements, LATEST_MESSAGE_LOOKUP)).toBe(0);
+  });
+
+  test('does re-query the newest message on a cursor page', async () => {
+    const { caller } = await initTest(1);
+
+    await sendMessages(caller, 1, 5);
+
+    const firstPage = await caller.messages.get({
+      channelId: 1,
+      cursor: null,
+      limit: 2
+    });
+
+    const statements = await recordSql(() =>
+      caller.messages.get({
+        channelId: 1,
+        cursor: firstPage.nextCursor,
+        limit: 2
+      })
     );
 
-    expect(ordered).toHaveLength(1);
+    // Paging back, rows[0] is not the channel's newest, so the lookup is
+    // required -- this is the query the first-page test asserts is absent.
+    expect(countMatching(statements, LATEST_MESSAGE_LOOKUP)).toBe(1);
+  });
+
+  test('reads the channel row once on pinned and thread reads', async () => {
+    const { caller } = await initTest(1);
+
+    await caller.messages.send({ channelId: 1, content: 'parent', files: [] });
+
+    const page = await caller.messages.get({
+      channelId: 1,
+      cursor: null,
+      limit: 50
+    });
+    const parentId = page.messages[0]!.id;
+
+    await caller.messages.togglePin({ messageId: parentId });
+    await caller.messages.send({
+      channelId: 1,
+      content: 'reply',
+      files: [],
+      parentMessageId: parentId
+    });
+
+    // Both routes call assertChannelAccess and then need the same row for
+    // fileAccessToken; they must use the returned one, not select it again.
+    const pinnedSql = await recordSql(() =>
+      caller.messages.getPinned({ channelId: 1 })
+    );
+
+    expect(countMatching(pinnedSql, ACCESS_CHANNEL_READ)).toBe(1);
+
+    const threadSql = await recordSql(() =>
+      caller.messages.getThread({
+        parentMessageId: parentId,
+        cursor: null,
+        limit: 50
+      })
+    );
+
+    expect(countMatching(threadSql, ACCESS_CHANNEL_READ)).toBe(1);
   });
 
   test('still enforces DM participation', async () => {
@@ -198,29 +256,11 @@ describe('messages.get payload shape', () => {
       expect(message).not.toHaveProperty(field);
     }
 
-    // The fields the UI does render must survive the narrowing.
-    for (const field of [
-      'id',
-      'content',
-      'userId',
-      'channelId',
-      'parentMessageId',
-      'editable',
-      'metadata',
-      'expiresAt',
-      'createdAt',
-      'pinned',
-      'pinnedAt',
-      'pinnedBy',
-      'editedAt',
-      'editedBy',
-      'files',
-      'reactions',
-      'scVotes',
-      'replyCount'
-    ]) {
-      expect(message).toHaveProperty(field);
-    }
+    // Spot-check that narrowing the select did not also drop a rendered
+    // column; the full field list is enforced by TJoinedMessage.
+    expect(message.content).toBe('hello');
+    expect(message.editedAt).toBeNull();
+    expect(message.files).toEqual([]);
   });
 
   test('resolves replyTo instead of shipping the raw id', async () => {

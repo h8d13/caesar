@@ -37,12 +37,6 @@ export type TChannelAccess = Pick<
   TChannel,
   'private' | 'isDm' | 'fileAccessToken'
 >;
-// What a caller can hand the channel-permission check to spare it repeating
-// lookups the caller has already done.
-export type TChannelPermissionHints = {
-  channel?: TChannelAccess;
-  isDmParticipant?: boolean;
-};
 export type TFile = InferSelectModel<typeof files> & {
   _accessToken?: string;
 };

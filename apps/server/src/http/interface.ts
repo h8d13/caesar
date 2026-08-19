@@ -26,10 +26,9 @@ const ENCODING_EXTENSIONS = { br: '.br', gzip: '.gz' } as const;
 
 type Encoding = keyof typeof ENCODING_EXTENSIONS;
 
-// Quality 11 (the brotli default) costs ~1.3s of CPU on a 1.4MB chunk and is
-// recomputed on every request, so it only belongs in the build-time plugin.
-// At quality 5 the same chunk is 12% larger and 36x cheaper, which is the
-// right trade for assets that have no precompressed sibling.
+// Quality 11 (the brotli default) costs ~1.3s of CPU on the largest chunk and
+// would be recomputed per request, so it belongs in the build plugin. Quality
+// 5 is 12% larger and 36x cheaper: the right trade for the fallback path.
 const RUNTIME_BROTLI_QUALITY = 5;
 
 const createCompressor = (encoding: Encoding, sizeHint: number) => {
@@ -43,20 +42,46 @@ const createCompressor = (encoding: Encoding, sizeHint: number) => {
   });
 };
 
+// A substring test would accept "br;q=0", which is a client refusing brotli.
+// Parse the q-values instead and drop anything explicitly disabled.
+const acceptsEncoding = (accept: string, encoding: string): boolean => {
+  for (const part of accept.split(',')) {
+    const [name, ...params] = part.trim().split(';');
+
+    if (name?.trim().toLowerCase() !== encoding) continue;
+
+    const q = params
+      .map((p) => p.trim().match(/^q=(.+)$/i)?.[1])
+      .find((value) => value !== undefined);
+
+    return q === undefined || parseFloat(q) > 0;
+  }
+
+  return false;
+};
+
 const getEncoding = (req: http.IncomingMessage): Encoding | null => {
   const accept = req.headers['accept-encoding'] || '';
-  if (accept.includes('br')) return 'br';
-  if (accept.includes('gzip')) return 'gzip';
+  if (acceptsEncoding(accept, 'br')) return 'br';
+  if (acceptsEncoding(accept, 'gzip')) return 'gzip';
   return null;
 };
 
 // Resolves the build-time sibling, or null when the build did not emit one
 // (file below the plugin's size floor, or it failed to shrink).
-const statPrecompressed = (filePath: string, encoding: Encoding) => {
+const statPrecompressed = (
+  filePath: string,
+  encoding: Encoding,
+  sourceMtimeMs: number
+) => {
   try {
     const stat = fs.statSync(filePath + ENCODING_EXTENSIONS[encoding]);
 
-    return stat.isFile() ? stat : null;
+    if (!stat.isFile()) return null;
+
+    // A sibling older than its source is stale: the ETag comes from the
+    // source, so serving it would hand back old bytes under a fresh tag.
+    return stat.mtimeMs >= sourceMtimeMs ? stat : null;
   } catch {
     return null;
   }
@@ -157,13 +182,12 @@ const interfaceRouteHandler = (
 
   const contentType = mime.lookup(requestedPath) || 'application/octet-stream';
   const baseType = contentType.split(';')[0]?.trim() || '';
-  // Narrowed to the encoding actually used, so the branches below get a
-  // non-null Encoding without re-checking.
+  // Narrowed so the branches below get a non-null Encoding.
   const compressWith =
     encoding && COMPRESSIBLE_TYPES.has(baseType) ? encoding : null;
 
   const precompressedStats = compressWith
-    ? statPrecompressed(requestedPath, compressWith)
+    ? statPrecompressed(requestedPath, compressWith, stats.mtimeMs)
     : null;
 
   // index.html gets no ETag because the nonce is injected fresh per response,

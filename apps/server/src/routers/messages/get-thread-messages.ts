@@ -1,5 +1,5 @@
 import { DEFAULT_MESSAGES_LIMIT } from '@caesar/shared';
-import { channels, messages } from '@caesar/shared/db/schema';
+import { messages } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import {
   joinMessagesWithRelations,
@@ -25,7 +25,10 @@ const getThreadMessagesRoute = protectedProcedure
     const { parentMessageId, cursor, limit } = input;
 
     const parentMessage = await db
-      .select()
+      .select({
+        channelId: messages.channelId,
+        parentMessageId: messages.parentMessageId
+      })
       .from(messages)
       .where(eq(messages.id, parentMessageId))
       .limit(1)
@@ -41,16 +44,7 @@ const getThreadMessagesRoute = protectedProcedure
       message: 'Cannot get thread for a reply message'
     });
 
-    await assertChannelAccess(ctx, parentMessage.channelId);
-
-    const channel = await db
-      .select({
-        private: channels.private,
-        fileAccessToken: channels.fileAccessToken
-      })
-      .from(channels)
-      .where(eq(channels.id, parentMessage.channelId))
-      .get();
+    const channel = await assertChannelAccess(ctx, parentMessage.channelId);
 
     invariant(channel, {
       code: 'NOT_FOUND',

@@ -2,7 +2,7 @@ import {
   ChannelPermission,
   UserStatus,
   type Permission,
-  type TChannelPermissionHints,
+  type TChannelAccess,
   type TUser
 } from '@caesar/shared';
 import { initTRPC, TRPCError } from '@trpc/server';
@@ -16,6 +16,14 @@ import {
   createRateLimiter,
   getClientRateLimitKey
 } from './rate-limiters/rate-limiter';
+
+// What a caller can hand the channel-permission check to spare it repeating
+// lookups it has already done. Server-internal, so it does not live in
+// @caesar/shared alongside the types the client consumes.
+export type TChannelPermissionHints = {
+  channel?: TChannelAccess;
+  isDmParticipant?: boolean;
+};
 
 export type Context = {
   handshakeHash: string;
