@@ -4,13 +4,13 @@ import { openDialog } from '@/features/dialogs/actions';
 import { dmKey, hasPriv, seal } from '@/lib/e2ee';
 import { getTRPCClient } from '@/lib/trpc';
 import type { TE2eeWriteContext } from '@/lib/use-decrypted-message';
-import { type TMessage, isEmptyMessage } from '@caesar/shared';
+import { type TJoinedMessage, isEmptyMessage } from '@caesar/shared';
 import { AutoFocus } from '@caesar/ui';
 import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
 type TMessageEditInlineProps = {
-    message: TMessage;
+    message: TJoinedMessage;
     // Plaintext to seed the editor. For non-ephemeral messages this is just
     // message.content; for ephemeral, the parent passes the decrypted text.
     initialContent: string;

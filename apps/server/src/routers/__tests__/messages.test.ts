@@ -1,5 +1,5 @@
 import { ChannelPermission, Permission } from '@caesar/shared';
-import { rolePermissions, settings } from '@caesar/shared/db/schema';
+import { messages, rolePermissions, settings } from '@caesar/shared/db/schema';
 import { initTest, uploadFile } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { setRateLimitingDisabled } from '@server/utils/rate-limiters';
@@ -233,8 +233,18 @@ describe('messages router', () => {
 
     expect(editedMessage).toBeDefined();
     expect(editedMessage!.content).toBe('Edited content');
-    expect(editedMessage!.updatedAt).toBeDefined();
-    expect(editedMessage!.updatedAt).not.toBeNull();
+    expect(editedMessage!.editedAt).toBeDefined();
+    expect(editedMessage!.editedAt).not.toBeNull();
+
+    // updatedAt is server-side bookkeeping and no longer travels to the
+    // client, so assert it on the row rather than on the response.
+    const row = await tdb
+      .select({ updatedAt: messages.updatedAt })
+      .from(messages)
+      .where(eq(messages.id, messageId))
+      .get();
+
+    expect(row?.updatedAt).not.toBeNull();
   });
 
   test('should allow admin to edit any message', async () => {
@@ -830,7 +840,17 @@ describe('messages router', () => {
     });
 
     const messageId = messagesBefore.messages[0]!.id;
-    const originalUpdatedAt = messagesBefore.messages[0]!.updatedAt;
+
+    const readUpdatedAt = async () =>
+      (
+        await tdb
+          .select({ updatedAt: messages.updatedAt })
+          .from(messages)
+          .where(eq(messages.id, messageId))
+          .get()
+      )?.updatedAt;
+
+    const originalUpdatedAt = await readUpdatedAt();
 
     await new Promise((r) => setTimeout(r, 10));
 
@@ -849,9 +869,13 @@ describe('messages router', () => {
       (m) => m.id === messageId
     );
 
-    expect(editedMessage!.updatedAt).toBeDefined();
-    expect(editedMessage!.updatedAt).not.toBe(originalUpdatedAt);
-    expect(editedMessage!.updatedAt).toBeGreaterThan(
+    expect(editedMessage!.editedAt).not.toBeNull();
+
+    const updatedAt = await readUpdatedAt();
+
+    expect(updatedAt).toBeDefined();
+    expect(updatedAt).not.toBe(originalUpdatedAt);
+    expect(updatedAt).toBeGreaterThan(
       originalUpdatedAt ?? editedMessage!.createdAt
     );
   });

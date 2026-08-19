@@ -137,14 +137,16 @@ const isUserDmParticipant = async (
   return !!dm;
 };
 
-// check if the user is a participant in the DM channel, throw if not
+// throws unless the user is a participant. Callers that already know the
+// channel is a DM skip the lookup by passing isDm.
 const assertDmParticipant = async (
   channelId: number,
-  userId: number
+  userId: number,
+  isDm?: boolean
 ): Promise<void> => {
-  const isDm = await isDirectMessageChannel(channelId);
+  const isDmChannel = isDm ?? (await isDirectMessageChannel(channelId));
 
-  if (!isDm) return;
+  if (!isDmChannel) return;
 
   const isParticipant = await isUserDmParticipant(channelId, userId);
 
@@ -156,14 +158,19 @@ const assertDmParticipant = async (
   }
 };
 
-// checks if the channel of the message is a DM channel, and if so checks if the user is a participant, throwing if not
+// checks if the channel of the message is a DM channel, and if so checks if
+// the user is a participant, throwing if not. Resolves true once
+// participation is confirmed, or undefined when the channel is not a DM;
+// callers pass that on so the permission check does not look the participant
+// row up a second time.
 const assertDmChannel = async (
   channelId: number,
-  userId: number
-): Promise<void> => {
-  const isDm = await isDirectMessageChannel(channelId);
+  userId: number,
+  isDm?: boolean
+): Promise<boolean | undefined> => {
+  const isDmChannel = isDm ?? (await isDirectMessageChannel(channelId));
 
-  if (!isDm) return;
+  if (!isDmChannel) return undefined;
 
   const settings = await getSettings();
 
@@ -174,7 +181,10 @@ const assertDmChannel = async (
     });
   }
 
-  await assertDmParticipant(channelId, userId);
+  // isDm is already established, so this must not re-read the channel row.
+  await assertDmParticipant(channelId, userId, true);
+
+  return true;
 };
 
 const getDmEphemeralMs = async (channelId: number): Promise<number | null> => {

@@ -2,6 +2,7 @@ import {
   ChannelPermission,
   UserStatus,
   type Permission,
+  type TChannelPermissionHints,
   type TUser
 } from '@caesar/shared';
 import { initTRPC, TRPCError } from '@trpc/server';
@@ -32,11 +33,13 @@ export type Context = {
   ) => Promise<void>;
   hasChannelPermission: (
     channelId: number,
-    targetPermission: ChannelPermission
+    targetPermission: ChannelPermission,
+    opts?: TChannelPermissionHints
   ) => Promise<boolean>;
   needsChannelPermission: (
     channelId: number,
-    targetPermission: ChannelPermission
+    targetPermission: ChannelPermission,
+    opts?: TChannelPermissionHints
   ) => Promise<void>;
   getOwnWs: () => WebSocket | undefined;
   getStatusById: (userId: number) => UserStatus;

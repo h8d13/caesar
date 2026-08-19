@@ -1,17 +1,13 @@
-import {
-  DEFAULT_MESSAGES_LIMIT,
-  ServerEvents,
-  type TMessage
-} from '@caesar/shared';
-import {
-  channelReadStates,
-  channels,
-  messages
-} from '@caesar/shared/db/schema';
+import { DEFAULT_MESSAGES_LIMIT, ServerEvents } from '@caesar/shared';
+import { channelReadStates, messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { getChannelsReadStatesForUser } from '@server/db/queries/channels';
-import { joinMessagesWithRelations } from '@server/db/queries/messages';
+import {
+  joinMessagesWithRelations,
+  messageColumns,
+  type TMessageRow
+} from '@server/db/queries/messages';
 import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { pubsub } from '@server/utils/pubsub';
@@ -35,18 +31,11 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
   )
   .meta({ infinite: true })
   .query(async ({ ctx, input }) => {
-    await assertChannelAccess(ctx, input.channelId);
+    // Returns the row the access checks already read, so the private /
+    // fileAccessToken lookup below does not repeat it.
+    const channel = await assertChannelAccess(ctx, input.channelId);
 
     const { channelId, cursor, limit, targetMessageId } = input;
-
-    const channel = await db
-      .select({
-        private: channels.private,
-        fileAccessToken: channels.fileAccessToken
-      })
-      .from(channels)
-      .where(eq(channels.id, channelId))
-      .get();
 
     invariant(channel, {
       code: 'NOT_FOUND',
@@ -58,7 +47,7 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
       isNull(messages.parentMessageId)
     );
 
-    let rows: TMessage[];
+    let rows: TMessageRow[];
     let nextCursor: number | null = null;
 
     if (targetMessageId) {
@@ -91,14 +80,14 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
       // fetch everything from newest down to the target, plus 20 older messages
       // for context around the target
       const olderMessages = await db
-        .select()
+        .select(messageColumns)
         .from(messages)
         .where(and(baseWhere, lt(messages.createdAt, targetMessage.createdAt)))
         .orderBy(desc(messages.createdAt))
         .limit(20);
 
       const newerMessages = await db
-        .select()
+        .select(messageColumns)
         .from(messages)
         .where(and(baseWhere, gte(messages.createdAt, targetMessage.createdAt)))
         .orderBy(desc(messages.createdAt));
@@ -107,7 +96,7 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
     } else {
       // standard cursor-based pagination
       rows = await db
-        .select()
+        .select(messageColumns)
         .from(messages)
         .where(
           cursor ? and(baseWhere, lt(messages.createdAt, cursor)) : baseWhere
@@ -158,33 +147,41 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
       replyCount: replyCountByMessage[msg.id] ?? 0
     }));
 
-    // always update read state to the absolute latest message in the channel
-    // (not just the newest in this batch, in case user is scrolling back through history)
-    // this is not ideal, but it's good enough for now
-    const latestMessage = await db
-      .select()
-      .from(messages)
-      .where(
-        and(eq(messages.channelId, channelId), isNull(messages.parentMessageId))
-      )
-      .orderBy(desc(messages.createdAt))
-      .limit(1)
-      .get();
+    // Read state tracks the channel's newest message rather than the newest
+    // in this batch, so scrolling back through history does not mark the
+    // channel unread. Both query branches order by createdAt desc, so on a
+    // first page rows[0] already is that message -- only a cursor page has
+    // to look it up, and then only for the id.
+    let latestMessageId: number | undefined = rows[0]?.id;
 
-    if (latestMessage) {
+    if (cursor) {
+      const latestMessage = await db
+        .select({ id: messages.id })
+        .from(messages)
+        .where(baseWhere)
+        .orderBy(desc(messages.createdAt))
+        .limit(1)
+        .get();
+
+      latestMessageId = latestMessage?.id;
+    }
+
+    if (latestMessageId) {
+      const readAt = Date.now();
+
       await db
         .insert(channelReadStates)
         .values({
           channelId,
           userId: ctx.userId,
-          lastReadMessageId: latestMessage.id,
-          lastReadAt: Date.now()
+          lastReadMessageId: latestMessageId,
+          lastReadAt: readAt
         })
         .onConflictDoUpdate({
           target: [channelReadStates.channelId, channelReadStates.userId],
           set: {
-            lastReadMessageId: latestMessage.id,
-            lastReadAt: Date.now()
+            lastReadMessageId: latestMessageId,
+            lastReadAt: readAt
           }
         });
 

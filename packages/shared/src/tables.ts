@@ -31,6 +31,18 @@ export type TSettings = InferSelectModel<typeof settings>;
 export type TRole = InferSelectModel<typeof roles>;
 export type TCategory = InferSelectModel<typeof categories>;
 export type TChannel = InferSelectModel<typeof channels>;
+// The channel columns every access check needs. Read once per request and
+// threaded through the checks so one operation reads the row a single time.
+export type TChannelAccess = Pick<
+  TChannel,
+  'private' | 'isDm' | 'fileAccessToken'
+>;
+// What a caller can hand the channel-permission check to spare it repeating
+// lookups the caller has already done.
+export type TChannelPermissionHints = {
+  channel?: TChannelAccess;
+  isDmParticipant?: boolean;
+};
 export type TFile = InferSelectModel<typeof files> & {
   _accessToken?: string;
 };
@@ -141,7 +153,13 @@ export type TMessageScVote = {
   value: number;
 };
 
-export type TJoinedMessage = TMessage & {
+// replyToMessageId and updatedAt are dropped on the way out: the client
+// renders the resolved `replyTo` object rather than the raw id, and updatedAt
+// is server-side bookkeeping written on edit/pin that nothing reads back.
+export type TJoinedMessage = Omit<
+  TMessage,
+  'replyToMessageId' | 'updatedAt'
+> & {
   files: TFile[];
   reactions: TJoinedMessageReaction[];
   scVotes: TMessageScVote[];

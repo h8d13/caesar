@@ -1,7 +1,11 @@
-import { DEFAULT_MESSAGES_LIMIT, type TMessage } from '@caesar/shared';
+import { DEFAULT_MESSAGES_LIMIT } from '@caesar/shared';
 import { channels, messages } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import { joinMessagesWithRelations } from '@server/db/queries/messages';
+import {
+  joinMessagesWithRelations,
+  messageColumns,
+  type TMessageRow
+} from '@server/db/queries/messages';
 import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
@@ -53,8 +57,8 @@ const getThreadMessagesRoute = protectedProcedure
       message: 'Channel not found'
     });
 
-    const rows: TMessage[] = await db
-      .select()
+    const rows: TMessageRow[] = await db
+      .select(messageColumns)
       .from(messages)
       .where(
         cursor

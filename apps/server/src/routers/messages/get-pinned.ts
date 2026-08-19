@@ -1,6 +1,9 @@
 import { channels, messages } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import { joinMessagesWithRelations } from '@server/db/queries/messages';
+import {
+  joinMessagesWithRelations,
+  messageColumns
+} from '@server/db/queries/messages';
 import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
@@ -31,7 +34,7 @@ const getPinnedRoute = protectedProcedure
     });
 
     const rows = await db
-      .select()
+      .select(messageColumns)
       .from(messages)
       .where(
         and(eq(messages.channelId, input.channelId), eq(messages.pinned, true))

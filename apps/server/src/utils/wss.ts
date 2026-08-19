@@ -5,6 +5,7 @@ import {
   Permission,
   ServerEvents,
   UserStatus,
+  type TChannelPermissionHints,
   type TConnectionParams
 } from '@caesar/shared';
 import { channels, socialCreditLedger } from '@caesar/shared/db/schema';
@@ -145,25 +146,29 @@ const createContext = async ({
 
   const hasChannelPermission = async (
     channelId: number,
-    targetPermission: ChannelPermission
+    targetPermission: ChannelPermission,
+    // assertChannelAccess has already read the channel row and, for DMs,
+    // established participation. Reusing both keeps this check queryless.
+    opts?: TChannelPermissionHints
   ) => {
-    const channel = await db
-      .select({
-        private: channels.private,
-        isDm: channels.isDm
-      })
-      .from(channels)
-      .where(eq(channels.id, channelId))
-      .limit(1)
-      .get();
+    const channel =
+      opts?.channel ??
+      (await db
+        .select({
+          private: channels.private,
+          isDm: channels.isDm
+        })
+        .from(channels)
+        .where(eq(channels.id, channelId))
+        .limit(1)
+        .get());
 
     if (!channel) return false;
 
     if (channel.isDm) {
-      const isParticipant = await isUserDmParticipant(
-        channelId,
-        decodedUser.id
-      );
+      const isParticipant =
+        opts?.isDmParticipant ??
+        (await isUserDmParticipant(channelId, decodedUser.id));
 
       if (isParticipant) return true;
     }
@@ -249,9 +254,10 @@ const createContext = async ({
 
   const needsChannelPermission = async (
     channelId: number,
-    targetPermission: ChannelPermission
+    targetPermission: ChannelPermission,
+    opts?: TChannelPermissionHints
   ) => {
-    invariant(await hasChannelPermission(channelId, targetPermission), {
+    invariant(await hasChannelPermission(channelId, targetPermission, opts), {
       code: 'FORBIDDEN',
       message: 'Insufficient channel permissions'
     });

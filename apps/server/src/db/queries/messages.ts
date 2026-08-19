@@ -19,6 +19,29 @@ import { generateFileToken } from '@server/helpers/files-crypto';
 import { and, count, desc, eq, inArray, notExists } from 'drizzle-orm';
 import { db } from '..';
 
+// The columns that leave the server, plus replyToMessageId, which is only
+// used to resolve `replyTo` and is stripped before the row goes out. A bare
+// select() would also ship updatedAt, which nothing reads.
+const messageColumns = {
+  id: messages.id,
+  content: messages.content,
+  userId: messages.userId,
+  channelId: messages.channelId,
+  parentMessageId: messages.parentMessageId,
+  replyToMessageId: messages.replyToMessageId,
+  editable: messages.editable,
+  metadata: messages.metadata,
+  expiresAt: messages.expiresAt,
+  createdAt: messages.createdAt,
+  pinned: messages.pinned,
+  pinnedAt: messages.pinnedAt,
+  pinnedBy: messages.pinnedBy,
+  editedAt: messages.editedAt,
+  editedBy: messages.editedBy
+};
+
+export type TMessageRow = Omit<TMessage, 'updatedAt'>;
+
 const getMessageByFileId = async (
   fileId: number
 ): Promise<TMessage | undefined> => {
@@ -36,7 +59,7 @@ const getMessage = async (
   messageId: number
 ): Promise<TJoinedMessage | undefined> => {
   const message = await db
-    .select()
+    .select(messageColumns)
     .from(messages)
     .where(eq(messages.id, messageId))
     .limit(1)
@@ -152,8 +175,10 @@ const getMessage = async (
     replyTo = replyToRow ?? null;
   }
 
+  const { replyToMessageId: _replyToMessageId, ...wireMessage } = message;
+
   return {
-    ...message,
+    ...wireMessage,
     files: filesForMessage ?? [],
     reactions: reactions ?? [],
     scVotes,
@@ -199,7 +224,7 @@ const getReaction = async (
     .get();
 
 const joinMessagesWithRelations = async (
-  rows: TMessage[],
+  rows: TMessageRow[],
   channel: {
     private: boolean;
     fileAccessToken: string;
@@ -340,13 +365,13 @@ const joinMessagesWithRelations = async (
     );
   }
 
-  return rows.map((msg) => ({
+  return rows.map(({ replyToMessageId, ...msg }) => ({
     ...msg,
     files: filesByMessage[msg.id] ?? [],
     reactions: reactionsByMessage[msg.id] ?? [],
     scVotes: scVotesByMessage[msg.id] ?? [],
-    replyTo: msg.replyToMessageId
-      ? (replyToByMessage[msg.replyToMessageId] ?? null)
+    replyTo: replyToMessageId
+      ? (replyToByMessage[replyToMessageId] ?? null)
       : null
   }));
 };
@@ -356,5 +381,6 @@ export {
   getMessageByFileId,
   getNonDirectMessagesFromUserId,
   getReaction,
-  joinMessagesWithRelations
+  joinMessagesWithRelations,
+  messageColumns
 };
