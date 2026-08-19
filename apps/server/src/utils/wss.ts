@@ -299,7 +299,32 @@ const createContext = async ({
 
 const createWsServer = async (server: http.Server) => {
   return new Promise<WebSocketServer>((resolve) => {
-    wss = new WebSocketServer({ server });
+    // The client uses a single wsLink, so every tRPC query, mutation and
+    // subscription rides this socket -- it carries essentially all app
+    // bytes. The payloads are near-ideal deflate input: getMessages returns
+    // 100 rows of the full messages table (most columns null), and the live
+    // events repeat the same key names forever.
+    //
+    // threshold is deliberately below ws's 1024 default. That default
+    // assumes each frame compresses alone; with context takeover (on by
+    // default) the shared LZ77 window already holds previous frames, so a
+    // 121-byte TYPING event is almost entirely back-references. Measured on
+    // a realistic frame mix: history pages 10.1x either way, but live
+    // traffic goes 1.0x -> 10.8x by dropping the threshold, at ~52us of
+    // deflate per small frame.
+    //
+    // That per-frame cost is the thing that scales badly: node runs zlib on
+    // the libuv threadpool, and a broadcast deflates once per recipient. If
+    // this ever serves thousands of concurrent users, raise the threshold
+    // (256 keeps ~2.1x on live traffic) or drop context takeover to cap the
+    // per-connection zlib window instead.
+    wss = new WebSocketServer({
+      server,
+      perMessageDeflate: {
+        threshold: 64,
+        concurrencyLimit: 10
+      }
+    });
 
     wss.on('connection', (incoming) => {
       const ws = attachSessionFields(incoming);

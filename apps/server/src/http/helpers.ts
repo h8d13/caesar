@@ -115,12 +115,20 @@ const buildCsp = (nonce?: string): string => {
   ].join('; ');
 };
 
-const buildEtag = (md5: string | null, stat: fs.Stats) => {
+// `variant` distinguishes byte streams built from the same source file --
+// currently Content-Encoding. Without it a br body and an identity body share
+// one ETag, so a cache that ignores Vary can hand the wrong one to a client.
+const buildEtag = (md5: string | null, stat: fs.Stats, variant?: string) => {
+  const suffix = variant ? `-${variant}` : '';
+
   if (md5) {
-    return `"${md5}"`;
+    return `"${md5}${suffix}"`;
   }
 
-  return `W/"${stat.size.toString(16)}-${Math.floor(stat.mtimeMs).toString(16)}"`;
+  const size = stat.size.toString(16);
+  const mtime = Math.floor(stat.mtimeMs).toString(16);
+
+  return `W/"${size}-${mtime}${suffix}"`;
 };
 
 const hasMatchingEtag = (

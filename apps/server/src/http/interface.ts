@@ -21,11 +21,45 @@ const COMPRESSIBLE_TYPES = new Set([
   'application/xml'
 ]);
 
-const getEncoding = (req: http.IncomingMessage): 'br' | 'gzip' | null => {
+// Suffixes written by the client's precompress vite plugin.
+const ENCODING_EXTENSIONS = { br: '.br', gzip: '.gz' } as const;
+
+type Encoding = keyof typeof ENCODING_EXTENSIONS;
+
+// Quality 11 (the brotli default) costs ~1.3s of CPU on a 1.4MB chunk and is
+// recomputed on every request, so it only belongs in the build-time plugin.
+// At quality 5 the same chunk is 12% larger and 36x cheaper, which is the
+// right trade for assets that have no precompressed sibling.
+const RUNTIME_BROTLI_QUALITY = 5;
+
+const createCompressor = (encoding: Encoding, sizeHint: number) => {
+  if (encoding === 'gzip') return zlib.createGzip();
+
+  return zlib.createBrotliCompress({
+    params: {
+      [zlib.constants.BROTLI_PARAM_QUALITY]: RUNTIME_BROTLI_QUALITY,
+      [zlib.constants.BROTLI_PARAM_SIZE_HINT]: sizeHint
+    }
+  });
+};
+
+const getEncoding = (req: http.IncomingMessage): Encoding | null => {
   const accept = req.headers['accept-encoding'] || '';
   if (accept.includes('br')) return 'br';
   if (accept.includes('gzip')) return 'gzip';
   return null;
+};
+
+// Resolves the build-time sibling, or null when the build did not emit one
+// (file below the plugin's size floor, or it failed to shrink).
+const statPrecompressed = (filePath: string, encoding: Encoding) => {
+  try {
+    const stat = fs.statSync(filePath + ENCODING_EXTENSIONS[encoding]);
+
+    return stat.isFile() ? stat : null;
+  } catch {
+    return null;
+  }
 };
 
 const interfaceRouteHandler = (
@@ -83,10 +117,17 @@ const interfaceRouteHandler = (
       res.setHeader('Vary', 'Accept-Encoding');
 
       if (encoding) {
+        const body = Buffer.from(nonced);
+        // Cannot be precompressed: the CSP nonce is fresh per request.
         const compressed =
           encoding === 'br'
-            ? zlib.brotliCompressSync(Buffer.from(nonced))
-            : zlib.gzipSync(Buffer.from(nonced));
+            ? zlib.brotliCompressSync(body, {
+                params: {
+                  [zlib.constants.BROTLI_PARAM_QUALITY]: RUNTIME_BROTLI_QUALITY,
+                  [zlib.constants.BROTLI_PARAM_SIZE_HINT]: body.length
+                }
+              })
+            : zlib.gzipSync(body);
 
         res.writeHead(200, {
           'Content-Type': 'text/html',
@@ -114,9 +155,21 @@ const interfaceRouteHandler = (
     ? 'public, max-age=31536000, immutable'
     : 'public, max-age=3600';
 
+  const contentType = mime.lookup(requestedPath) || 'application/octet-stream';
+  const baseType = contentType.split(';')[0]?.trim() || '';
+  // Narrowed to the encoding actually used, so the branches below get a
+  // non-null Encoding without re-checking.
+  const compressWith =
+    encoding && COMPRESSIBLE_TYPES.has(baseType) ? encoding : null;
+
+  const precompressedStats = compressWith
+    ? statPrecompressed(requestedPath, compressWith)
+    : null;
+
   // index.html gets no ETag because the nonce is injected fresh per response,
   // so the byte stream differs even when the source file is unchanged.
-  const etag = buildEtag(null, stats);
+  // Compressed responses tag the encoding so the variants stay distinct.
+  const etag = buildEtag(null, stats, compressWith ?? undefined);
   const lastModified = stats.mtime.toUTCString();
 
   if (
@@ -124,7 +177,8 @@ const interfaceRouteHandler = (
       etag,
       lastModified,
       cacheControl,
-      mtimeMs: stats.mtimeMs
+      mtimeMs: stats.mtimeMs,
+      extraHeaders: compressWith ? { Vary: 'Accept-Encoding' } : undefined
     })
   ) {
     return res;
@@ -134,21 +188,49 @@ const interfaceRouteHandler = (
   res.setHeader('ETag', etag);
   res.setHeader('Last-Modified', lastModified);
 
-  const contentType = mime.lookup(requestedPath) || 'application/octet-stream';
-  const baseType = contentType.split(';')[0]?.trim() || '';
-  const shouldCompress = encoding && COMPRESSIBLE_TYPES.has(baseType);
-
-  if (shouldCompress) {
+  if (compressWith) {
     res.setHeader('Vary', 'Accept-Encoding');
 
-    const compress =
-      encoding === 'br' ? zlib.createBrotliCompress() : zlib.createGzip();
+    // Prefer the build-time sibling: no compression work, and Content-Length
+    // is known so the response is not chunked.
+    if (precompressedStats) {
+      const fileStream = fs.createReadStream(
+        requestedPath + ENCODING_EXTENSIONS[compressWith]
+      );
+
+      fileStream.on('open', () => {
+        res.writeHead(200, {
+          'Content-Type': contentType,
+          'Content-Encoding': compressWith,
+          'Content-Length': precompressedStats.size
+        });
+        fileStream.pipe(res);
+      });
+
+      fileStream.on('error', (err) => {
+        logger.error('Error serving precompressed file:', err);
+        if (!res.headersSent) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Internal server error' }));
+        } else {
+          res.destroy();
+        }
+      });
+
+      res.on('close', () => {
+        fileStream.destroy();
+      });
+
+      return res;
+    }
+
+    const compress = createCompressor(compressWith, stats.size);
     const fileStream = fs.createReadStream(requestedPath);
 
     fileStream.on('open', () => {
       res.writeHead(200, {
         'Content-Type': contentType,
-        'Content-Encoding': encoding
+        'Content-Encoding': compressWith
       });
       fileStream.pipe(compress).pipe(res);
     });

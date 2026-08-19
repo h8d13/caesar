@@ -6,6 +6,7 @@ import { defineConfig } from 'vite';
 import pkg from './package.json';
 import manifest from './public/manifest.json';
 import dumpDevMaps from './vite-plugin-dump-dev-maps';
+import precompress from './vite-plugin-precompress';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -13,6 +14,7 @@ export default defineConfig({
         react(),
         tailwindcss(),
         dumpDevMaps({ outDir: '.vite-devmaps' }),
+        precompress(),
         {
             name: 'inject-app-name',
             transformIndexHtml: (html) =>
