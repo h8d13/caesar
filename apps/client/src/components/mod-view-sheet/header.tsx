@@ -1,3 +1,4 @@
+import { Protect } from '@/components/protect';
 import { UserAvatar } from '@/components/user-avatar';
 import { setModViewOpen } from '@/features/app/actions';
 import {
@@ -11,10 +12,11 @@ import { getTRPCClient } from '@/lib/trpc';
 import {
     DELETED_USER_IDENTITY_AND_NAME,
     getTrpcError,
+    Permission,
     UserStatus
 } from '@caesar/shared';
 import { Button } from '@caesar/ui';
-import { Gavel, Plus, Trash, UserMinus } from 'lucide-react';
+import { Gavel, KeyRound, Plus, Trash, UserMinus } from 'lucide-react';
 import { memo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Dialog } from '../dialogs/dialogs';
@@ -178,6 +180,19 @@ const Header = memo(() => {
                     <Gavel className="h-4 w-4" />
                     {user.banned ? 'Unban' : 'Ban'}
                 </Button>
+                <Protect permission={Permission.MANAGE_USERS}>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                            openDialog(Dialog.RESET_PASSWORD, { user, refetch })
+                        }
+                        disabled={isOwnUser || isDeletedUser}
+                    >
+                        <KeyRound className="h-4 w-4" />
+                        Reset Password
+                    </Button>
+                </Protect>
                 <Button
                     variant="outline"
                     size="sm"

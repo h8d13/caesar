@@ -24,6 +24,7 @@ import { onMyLoginRoute } from './on-my-login';
 import { removeRoleRoute } from './remove-role';
 import { removeStatusImageRoute } from './remove-status-image';
 import { renameIdentityRoute } from './rename-identity';
+import { resetPasswordRoute } from './reset-password';
 import { setAllowMultipleSessionsRoute } from './set-allow-multiple-sessions';
 import { setAppearOfflineRoute } from './set-appear-offline';
 import { setSendDmReadReceiptsRoute } from './set-send-dm-read-receipts';
@@ -48,6 +49,7 @@ export const usersRouter = t.router({
   setSendDmReadReceipts: setSendDmReadReceiptsRoute,
   signOutOtherSessions: signOutOtherSessionsRoute,
   updatePassword: updatePasswordRoute,
+  resetPassword: resetPasswordRoute,
   getInfo: getUserInfoRoute,
   getAll: getUsersRoute,
   me: meRoute,

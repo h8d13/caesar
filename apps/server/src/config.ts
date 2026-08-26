@@ -129,6 +129,10 @@ const zIniConfig = z.object({
       maxRequests: z.coerce.number().int().positive(),
       windowMs: z.coerce.number().int().positive()
     }),
+    resetPassword: z.object({
+      maxRequests: z.coerce.number().int().positive(),
+      windowMs: z.coerce.number().int().positive()
+    }),
     uploadFile: z.object({
       maxRequests: z.coerce.number().int().positive(),
       windowMs: z.coerce.number().int().positive()
@@ -234,6 +238,10 @@ const iniDefaults: TIniConfig = {
       windowMs: 60_000
     },
     updatePassword: {
+      maxRequests: 5,
+      windowMs: 60_000
+    },
+    resetPassword: {
       maxRequests: 5,
       windowMs: 60_000
     },

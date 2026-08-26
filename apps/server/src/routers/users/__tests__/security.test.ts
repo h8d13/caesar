@@ -1,8 +1,13 @@
-import { Permission, sha256 } from '@caesar/shared';
+import {
+  DELETED_USER_IDENTITY_AND_NAME,
+  Permission,
+  sha256
+} from '@caesar/shared';
 import { logins, userRoles, users } from '@caesar/shared/db/schema';
 import { initTest, login } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { getJwtSecret } from '@server/utils/jwt-secret';
+import { verifyPassword } from '@server/utils/password';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import { describe, expect, test } from 'vitest';
@@ -233,6 +238,80 @@ describe('users.renameIdentity', () => {
     await expect(
       nonAdmin.users.renameIdentity({ userId: 1, identity: 'hack' })
     ).rejects.toThrow();
+  });
+});
+
+describe('users.resetPassword', () => {
+  const passwordFor = async (userId: number): Promise<string> => {
+    const row = await tdb
+      .select({ password: users.password })
+      .from(users)
+      .where(eq(users.id, userId))
+      .get();
+    return row!.password;
+  };
+
+  test('returns a temporary password that verifies against the new hash', async () => {
+    const { caller: adminCaller } = await initTest(1);
+
+    const { temporaryPassword } = await adminCaller.users.resetPassword({
+      userId: 2
+    });
+
+    expect(temporaryPassword.length).toBeGreaterThanOrEqual(16);
+    expect(await verifyPassword(temporaryPassword, await passwordFor(2))).toBe(
+      true
+    );
+  });
+
+  test('bumps the target sessionEpoch so existing JWTs invalidate', async () => {
+    const { caller: adminCaller } = await initTest(1);
+    const before = await epochFor(2);
+
+    await adminCaller.users.resetPassword({ userId: 2 });
+
+    expect(await epochFor(2)).toBe(before + 1);
+  });
+
+  test('generates a distinct password on every call', async () => {
+    const { caller: adminCaller } = await initTest(1);
+
+    const first = await adminCaller.users.resetPassword({ userId: 2 });
+    const second = await adminCaller.users.resetPassword({ userId: 2 });
+
+    expect(first.temporaryPassword).not.toBe(second.temporaryPassword);
+  });
+
+  test('rejects resetting your own password', async () => {
+    const { caller: adminCaller } = await initTest(1);
+
+    await expect(
+      adminCaller.users.resetPassword({ userId: 1 })
+    ).rejects.toThrow(/your own account/);
+  });
+
+  test('non-admins cannot reset anyone', async () => {
+    const { caller: nonAdmin } = await initTest(2);
+
+    await expect(nonAdmin.users.resetPassword({ userId: 1 })).rejects.toThrow();
+  });
+
+  test('a MANAGE_USERS moderator cannot reset the owner', async () => {
+    const { caller: ownerCaller } = await initTest(1);
+    const { caller: modCaller } = await makeModerator(ownerCaller);
+
+    await expect(modCaller.users.resetPassword({ userId: 1 })).rejects.toThrow(
+      /server owner/
+    );
+  });
+
+  test('rejects the deleted user placeholder', async () => {
+    const { caller: adminCaller } = await initTest(1);
+    const placeholderId = await insertUser(DELETED_USER_IDENTITY_AND_NAME);
+
+    await expect(
+      adminCaller.users.resetPassword({ userId: placeholderId })
+    ).rejects.toThrow(/placeholder/);
   });
 });
 
