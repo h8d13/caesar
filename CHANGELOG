@@ -65,6 +65,7 @@ Security
 - Fixed auto-login (multiple tabs) or single session enforced when off
 - U2F key support
 - Admins see hashed location/IPs only, never raw
+- Mod view: admin password reset (one-shot generated credential, sessions revoked)
 - Per-role permissions for DMs, fixed text vs voice channel permissions
 - Tightened user-select queries (data exposure minimization)
 - Input validation fixes
