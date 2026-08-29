@@ -1,7 +1,6 @@
 import type {
     TFile,
     TJoinedUser,
-    TLogin,
     TMessage,
     TStorageData
 } from '@caesar/shared';
@@ -17,7 +16,7 @@ type TModViewContext = {
     refetch: () => void;
     userId: number;
     user: TJoinedUser;
-    logins: TLogin[];
+    lastLoginIp: string | null;
     files: TFile[];
     storage: TStorageData & { quota: number };
     messages: TMessage[];
@@ -29,7 +28,7 @@ type TModViewContext = {
 const ModViewContext = createContext<TModViewContext>({
     refetch: () => {},
     userId: -1,
-    logins: [],
+    lastLoginIp: null,
     files: [],
     storage: {
         userId: -1,

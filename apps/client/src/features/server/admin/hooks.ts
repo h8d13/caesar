@@ -435,7 +435,7 @@ export const useAdminUserInfo = (userId: number) => {
 
     return {
         user: data?.user ?? null,
-        logins: data?.logins ?? [],
+        lastLoginIp: data?.lastLoginIp ?? null,
         files: data?.files ?? [],
         messages: data?.messages ?? [],
         storage: data?.storage ?? {

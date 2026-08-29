@@ -634,6 +634,51 @@ describe('/public', () => {
     expect(disposition).toContain("filename*=UTF-8''");
   });
 
+  // the served mime is derived from the extension, so these also pin the
+  // extension -> mime -> disposition chain the client relies on: a voice
+  // message must not come back as text/plain or as an attachment.
+  test.each([
+    { name: 'voice-message.weba', mimeType: 'audio/webm' },
+    { name: 'voice-message.ogg', mimeType: 'audio/ogg' },
+    { name: 'voice-message.m4a', mimeType: 'audio/mp4' }
+  ])('serves $name inline as $mimeType', async ({ name, mimeType }) => {
+    const { caller } = await initTest();
+
+    const tempFile = await upload(new File(['audio-bytes'], name), token);
+    const messageId = await caller.messages.send({
+      content: 'Voice message',
+      channelId: 1,
+      files: [tempFile.id]
+    });
+
+    const dbFile = await getFileByMessageId(messageId);
+
+    expect(dbFile).toBeDefined();
+
+    const response = await fetch(
+      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
+      { headers: { 'x-token': token } }
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe(mimeType);
+    expect(response.headers.get('Content-Disposition')).toContain('inline');
+  });
+
+  test('serves a non-allowlisted type as an attachment', async () => {
+    const file = filesToCreate[0];
+    const dbFile = await getFileByMessageId(file!.messageId!);
+
+    const response = await fetch(
+      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
+      { headers: { 'x-token': token } }
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toContain('text/plain');
+    expect(response.headers.get('Content-Disposition')).toContain('attachment');
+  });
+
   test('should not allow path traversal to read arbitrary files', async () => {
     const response = await fetch(`${testsBaseUrl}/public/../../../etc/passwd`);
 

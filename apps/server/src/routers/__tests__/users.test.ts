@@ -181,11 +181,48 @@ describe('users router', () => {
     expect(info.user.id).toBe(1);
 
     expect(info.user.identity).toBe('');
-    expect(info.logins.length).toBeGreaterThan(0);
+    expect(info.lastLoginIp).toBeNull();
+  });
 
-    info.logins.forEach((login) => {
-      expect(login.ip).toBeNull();
+  // Positive control for the redaction test above: without this, a null
+  // lastLoginIp could just mean "no login row" rather than "redacted".
+  test('should expose last login ip when user has VIEW_USER_SENSITIVE_DATA', async () => {
+    // initTest records its own login row, so pin this one ahead of it to
+    // assert the "most recent" ordering rather than whichever landed last.
+    await tdb.insert(logins).values({
+      userId: 1,
+      ip: 'deadbeefcafebabe',
+      createdAt: Date.now() + 60_000
     });
+
+    const { caller } = await initTest();
+
+    const info = await caller.users.getInfo({
+      userId: 1
+    });
+
+    expect(info.lastLoginIp).toBe('deadbeefcafebabe');
+  });
+
+  // createdAt is ms precision, so two logins can share one (enqueueLogin
+  // stamps Date.now()). Pins "newest wins" as the contract. Note sqlite
+  // already returns this row without the id tiebreaker, so this asserts
+  // intent rather than guarding its removal.
+  test('should return the newest login ip when createdAt ties', async () => {
+    const tiedAt = Date.now() + 60_000;
+
+    await tdb.insert(logins).values([
+      { userId: 1, ip: 'tie-older', createdAt: tiedAt },
+      { userId: 1, ip: 'tie-newer', createdAt: tiedAt }
+    ]);
+
+    const { caller } = await initTest();
+
+    const info = await caller.users.getInfo({
+      userId: 1
+    });
+
+    expect(info.lastLoginIp).toBe('tie-newer');
   });
 
   test('should throw when getting info for non-existing user', async () => {

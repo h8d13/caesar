@@ -69,10 +69,7 @@ const Row = memo(
 );
 
 const Details = memo(() => {
-    const { user, logins, refetch } = useModViewContext();
-    // Last login only. The full per-user list moved to
-    // user-settings/recent-sessions, which is self-scoped.
-    const lastLogin = logins[0];
+    const { user, lastLoginIp, refetch } = useModViewContext();
 
     const onRenameIdentity = useCallback(async () => {
         const next = await requestTextInput({
@@ -142,7 +139,7 @@ const Details = memo(() => {
                                 <Network className="h-4 w-4 text-muted-foreground" />
                             }
                             label="Client hash"
-                            value={lastLogin?.ip || 'Unknown'}
+                            value={lastLoginIp || 'Unknown'}
                             hidden
                         />
                     </Protect>

@@ -1,6 +1,6 @@
-import { Permission, type TLogin } from '@caesar/shared';
+import { Permission } from '@caesar/shared';
 import { getFilesByUserId } from '@server/db/queries/files';
-import { getLastLogins } from '@server/db/queries/logins';
+import { getLastLoginIp } from '@server/db/queries/logins';
 import { getNonDirectMessagesFromUserId } from '@server/db/queries/messages';
 import { getEffectiveStorageSpaceQuotaByUserId } from '@server/db/queries/roles';
 import { getSettings } from '@server/db/queries/server';
@@ -26,15 +26,14 @@ const getUserInfoRoute = protectedProcedure
       message: 'User not found'
     });
 
-    const [logins, files, messages, storageUsage, settings] = await Promise.all(
-      [
-        getLastLogins(user.id, 6),
+    const [lastLoginIp, files, messages, storageUsage, settings] =
+      await Promise.all([
+        getLastLoginIp(user.id),
         getFilesByUserId(user.id),
         getNonDirectMessagesFromUserId(user.id),
         getStorageUsageByUserId(user.id),
         getSettings()
-      ]
-    );
+      ]);
 
     const storageQuota = await getEffectiveStorageSpaceQuotaByUserId(
       user.id,
@@ -42,20 +41,17 @@ const getUserInfoRoute = protectedProcedure
     );
 
     let cleanUser = clearFields(user, ['password']);
-    let cleanLogins: TLogin[] = [...logins];
+    let cleanLastLoginIp = lastLoginIp;
 
     if (!(await ctx.hasPermission(Permission.VIEW_USER_SENSITIVE_DATA))) {
       // doesn't have permission to view sensitive data, remove identity and ip hash
       cleanUser = clearFields(cleanUser, ['identity']);
-      cleanLogins = logins.map((login) => ({
-        ...login,
-        ip: null
-      }));
+      cleanLastLoginIp = null;
     }
 
     return {
       user: cleanUser,
-      logins: cleanLogins,
+      lastLoginIp: cleanLastLoginIp,
       files,
       messages,
       storage: {

@@ -25,6 +25,24 @@ const publicFileRateLimiter = createRateLimiter({
   windowMs: config.rateLimiters.publicFile.windowMs
 });
 
+// Types a browser decodes as passive media. Everything else is served
+// `attachment` so a direct navigation cannot execute uploaded content
+// (see f0bb0150). Never add a type the browser can script from: no
+// text/html, no image/svg+xml, no application/*.
+const inlineMimeAllowlist = [
+  'image/png',
+  'image/jpeg',
+  'image/gif',
+  'image/webp',
+  'image/avif',
+  'video/mp4',
+  'audio/mpeg',
+  // containers MediaRecorder produces for voice messages
+  'audio/webm',
+  'audio/ogg',
+  'audio/mp4'
+];
+
 const pipeFileStream = (
   filePath: string,
   res: http.ServerResponse,
@@ -190,17 +208,7 @@ const publicRouteHandler = async (
     return res;
   }
 
-  const inlineAllowlist = [
-    'image/png',
-    'image/jpeg',
-    'image/gif',
-    'image/webp',
-    'image/avif',
-    'video/mp4',
-    'audio/mpeg'
-  ];
-
-  const contentDisposition = inlineAllowlist.includes(dbFile.mimeType)
+  const contentDisposition = inlineMimeAllowlist.includes(dbFile.mimeType)
     ? 'inline'
     : 'attachment';
 
