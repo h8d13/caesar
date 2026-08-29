@@ -32,7 +32,10 @@ export const audioExtensions = [
   '.ogg',
   '.m4a',
   '.wma',
-  '.alac'
+  '.alac',
+  // audio-only webm, what MediaRecorder produces for voice messages.
+  // '.webm' would resolve to video/webm and render as a black video box.
+  '.weba'
 ];
 
 export const documentExtensions = [

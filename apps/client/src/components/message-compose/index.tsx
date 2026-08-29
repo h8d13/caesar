@@ -5,13 +5,18 @@ import {
     useChannelCan,
     usePublicServerSettings
 } from '@/features/server/hooks';
+import {
+    formatRecordingTime,
+    isVoiceRecordingSupported
+} from '@/helpers/voice-recording';
 import { useUploadFiles } from '@/hooks/use-upload-files';
+import { useVoiceRecorder } from '@/hooks/use-voice-recorder';
 import { getTRPCClient } from '@/lib/trpc';
 import type { TJoinedPublicUser, TTempFile } from '@caesar/shared';
 import { ChannelPermission, Permission, isEmptyMessage } from '@caesar/shared';
 import { Button, Spinner } from '@caesar/ui';
 import { filesize } from 'filesize';
-import { Paperclip, Send } from 'lucide-react';
+import { Mic, Paperclip, Send, Square, X } from 'lucide-react';
 import {
     memo,
     useCallback,
@@ -88,8 +93,31 @@ const MessageCompose = memo(
             uploadingSize,
             uploadSpeed,
             openFileDialog,
-            fileInputProps
+            fileInputProps,
+            addFiles
         } = useUploadFiles(channelId, containerRef, !canSendMessages);
+
+        // a finished recording lands in the attachment strip like any other
+        // upload: the user still reviews it and presses send.
+        const onRecorded = useCallback(
+            (file: File) => {
+                void addFiles([file]);
+            },
+            [addFiles]
+        );
+
+        const {
+            isRecording,
+            elapsedMs,
+            startRecording,
+            stopRecording,
+            cancelRecording
+        } = useVoiceRecorder(onRecorded);
+
+        const canRecordVoice = useMemo(
+            () => canUploadFiles && isVoiceRecordingSupported(),
+            [canUploadFiles]
+        );
 
         useImperativeHandle(ref, () => ({ clearFiles }), [clearFiles]);
 
@@ -226,12 +254,53 @@ const MessageCompose = memo(
                     >
                         <Paperclip className="h-4 w-4" />
                     </Button>
+                    {isRecording ? (
+                        <>
+                            <span className="text-xs tabular-nums text-destructive">
+                                {formatRecordingTime(elapsedMs)}
+                            </span>
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={cancelRecording}
+                                title="Discard recording"
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 text-destructive"
+                                onClick={stopRecording}
+                                title="Stop recording"
+                            >
+                                <Square className="h-4 w-4 fill-current" />
+                            </Button>
+                        </>
+                    ) : (
+                        <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            disabled={uploading || !canRecordVoice}
+                            onClick={startRecording}
+                            title="Record voice message"
+                        >
+                            <Mic className="h-4 w-4" />
+                        </Button>
+                    )}
                     <Button
                         size="icon"
                         variant="ghost"
                         className="h-8 w-8"
                         onClick={handleSend}
-                        disabled={uploading || sending || !canSendMessages}
+                        disabled={
+                            uploading ||
+                            sending ||
+                            isRecording ||
+                            !canSendMessages
+                        }
                         title="Send (Ctrl+Enter)"
                     >
                         <Send className="h-4 w-4" />

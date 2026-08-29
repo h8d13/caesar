@@ -508,7 +508,11 @@ const useUploadFiles = (
             uploadingSize,
             uploadSpeed,
             openFileDialog,
-            fileInputProps
+            fileInputProps,
+            // for callers that produce a File without a dialog, paste or
+            // drop (voice recordings). permission gating stays with the
+            // caller, same as the three paths above.
+            addFiles: processFiles
         }),
         [
             files,
@@ -519,7 +523,8 @@ const useUploadFiles = (
             uploadingSize,
             uploadSpeed,
             openFileDialog,
-            fileInputProps
+            fileInputProps,
+            processFiles
         ]
     );
 };
