@@ -12,7 +12,6 @@ export enum LayerType {
 
 export enum CanvasMode {
   None = 'none',
-  Pressing = 'pressing',
   SelectionNet = 'selectionNet',
   Translating = 'translating',
   Inserting = 'inserting',

@@ -70,7 +70,9 @@ const Row = memo(
 
 const Details = memo(() => {
     const { user, logins, refetch } = useModViewContext();
-    const lastLogin = logins[0]; // TODO: in the future we might show a list of logins, atm we just show info about the last one
+    // Last login only. The full per-user list moved to
+    // user-settings/recent-sessions, which is self-scoped.
+    const lastLogin = logins[0];
 
     const onRenameIdentity = useCallback(async () => {
         const next = await requestTextInput({

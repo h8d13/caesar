@@ -10,8 +10,7 @@ import { createContext, useContext } from 'react';
 enum ModViewScreen {
     FILES = 'FILES',
     MESSAGES = 'MESSAGES',
-    LINKS = 'LINKS',
-    LOGINS = 'LOGINS'
+    LINKS = 'LINKS'
 }
 
 type TModViewContext = {
