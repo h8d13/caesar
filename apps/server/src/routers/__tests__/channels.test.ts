@@ -1,10 +1,13 @@
 import { ChannelPermission, ChannelType } from '@caesar/shared';
+import { messages } from '@caesar/shared/db/schema';
 import { initTest } from '@server/__tests__/helpers';
+import { tdb } from '@server/__tests__/setup';
 import { getChannelsReadStatesForUser } from '@server/db/queries/channels';
 import {
   generateFileToken,
   verifyFileToken
 } from '@server/helpers/files-crypto';
+import { desc, eq } from 'drizzle-orm';
 import { describe, expect, test } from 'vitest';
 
 describe('channels router', () => {
@@ -450,6 +453,68 @@ describe('channels router', () => {
     // after marking as read, there should be 0 unread messages
     expect(afterReadStates[2]).toBeDefined();
     expect(afterReadStates[2]).toBe(0);
+  });
+
+  // channel_read_states.last_read_message_id is ON DELETE SET NULL, so
+  // deleting whatever message the pointer names (a manual delete, or the
+  // expired-message cron) wipes it. Without a fallback the channel then
+  // reads as fully unread, which only surfaces on the next reconnect
+  // because the live badge is driven by events.
+  test('keeps a channel read after its last-read message is deleted', async () => {
+    const { caller: caller1 } = await initTest(1);
+    const { caller: caller2 } = await initTest(2);
+
+    for (const content of ['One', 'Two', 'Three']) {
+      await caller1.messages.send({ channelId: 2, content, files: [] });
+    }
+
+    await caller2.channels.markAsRead({ channelId: 2 });
+
+    expect((await getChannelsReadStatesForUser(2, 2))[2]).toBe(0);
+
+    const newest = await tdb
+      .select()
+      .from(messages)
+      .where(eq(messages.channelId, 2))
+      .orderBy(desc(messages.id))
+      .limit(1)
+      .get();
+
+    await caller1.messages.delete({ messageId: newest!.id });
+
+    const afterDelete = await getChannelsReadStatesForUser(2, 2);
+
+    expect(afterDelete[2]).toBe(0);
+  });
+
+  test('counts only messages newer than a lost read pointer', async () => {
+    const { caller: caller1 } = await initTest(1);
+    const { caller: caller2 } = await initTest(2);
+
+    for (const content of ['One', 'Two']) {
+      await caller1.messages.send({ channelId: 2, content, files: [] });
+    }
+
+    await caller2.channels.markAsRead({ channelId: 2 });
+
+    const newest = await tdb
+      .select()
+      .from(messages)
+      .where(eq(messages.channelId, 2))
+      .orderBy(desc(messages.id))
+      .limit(1)
+      .get();
+
+    await caller1.messages.delete({ messageId: newest!.id });
+
+    // arrives after the pointer was lost, so it is genuinely unread
+    await caller1.messages.send({
+      channelId: 2,
+      content: 'Three',
+      files: []
+    });
+
+    expect((await getChannelsReadStatesForUser(2, 2))[2]).toBe(1);
   });
 
   test('should mark channel as read with no messages', async () => {

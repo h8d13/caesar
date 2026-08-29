@@ -151,7 +151,8 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
     // in this batch, so scrolling back through history does not mark the
     // channel unread. Both query branches order by createdAt desc, so on a
     // first page rows[0] already is that message -- only a cursor page has
-    // to look it up, and then only for the id.
+    // to look it up, and then only for the id. The lookup orders by id to
+    // match the comparison the unread count makes.
     let latestMessageId: number | undefined = rows[0]?.id;
 
     if (cursor) {
@@ -159,7 +160,7 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
         .select({ id: messages.id })
         .from(messages)
         .where(baseWhere)
-        .orderBy(desc(messages.createdAt))
+        .orderBy(desc(messages.id))
         .limit(1)
         .get();
 

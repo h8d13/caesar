@@ -26,14 +26,17 @@ const markAsReadRoute = rateLimitedProcedure(protectedProcedure, {
 
     const { channelId } = input;
 
-    // get the newest root message in the channel (excluding thread replies)
+    // get the newest root message in the channel (excluding thread replies).
+    // ordered by id, not createdAt: the unread count compares ids, so a
+    // same-millisecond tie resolved the other way would leave the newest
+    // message counted as unread.
     const newestMessage: TMessage | undefined = await db
       .select()
       .from(messages)
       .where(
         and(eq(messages.channelId, channelId), isNull(messages.parentMessageId))
       )
-      .orderBy(desc(messages.createdAt))
+      .orderBy(desc(messages.id))
       .limit(1)
       .get();
 

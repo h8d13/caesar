@@ -360,12 +360,23 @@ const getChannelsReadStatesForUser = async (
   const results = await db
     .select({
       channelId: messages.channelId,
+      // Three read states, and they must stay distinguishable. No joined
+      // row (lastReadAt NULL) means never opened, so everything counts.
+      // A live pointer counts by id. A row whose pointer was nulled by
+      // ON DELETE SET NULL (the read message was deleted or expired)
+      // falls back to lastReadAt, otherwise losing the pointer would
+      // resurrect the whole channel as unread.
       unreadCount: sql<number>`
         COUNT(CASE
           WHEN ${messages.userId} != ${userId}
             AND ${messages.parentMessageId} IS NULL
-            AND (${channelReadStates.lastReadMessageId} IS NULL
-              OR ${messages.id} > ${channelReadStates.lastReadMessageId})
+            AND (
+              ${channelReadStates.lastReadAt} IS NULL
+              OR (${channelReadStates.lastReadMessageId} IS NOT NULL
+                AND ${messages.id} > ${channelReadStates.lastReadMessageId})
+              OR (${channelReadStates.lastReadMessageId} IS NULL
+                AND ${messages.createdAt} > ${channelReadStates.lastReadAt})
+            )
           THEN 1
         END)
       `.as('unread_count')

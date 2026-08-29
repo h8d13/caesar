@@ -1,11 +1,9 @@
 import { RelativeTime } from '@/components/relative-time';
-import { requestConfirmation } from '@/features/dialogs/actions';
 import { useChannelById } from '@/features/server/channels/hooks';
 import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
 import { getFileUrl } from '@/helpers/get-file-url';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
 import { dmKey, hasPriv, openStreamed } from '@/lib/e2ee';
-import { getTRPCClient } from '@/lib/trpc';
 import { useDmE2eeContext } from '@/lib/use-dm-e2ee';
 import { cn } from '@/lib/utils';
 import {
@@ -46,10 +44,6 @@ const MessageRenderer = memo(
     }: TMessageRendererProps) => {
         const ownUserId = useOwnUserId();
         const editedByUser = useUserById(message.editedBy ?? -1);
-        const isOwnMessage = useMemo(
-            () => message.userId === ownUserId,
-            [message.userId, ownUserId]
-        );
         const channel = useChannelById(message.channelId);
         // ephemeral DM messages carry an expiresAt; the matching file
         // bytes were sealed with the same dmKey at upload time. inline
@@ -121,30 +115,6 @@ const MessageRenderer = memo(
 
             return { messageHtml, foundMedia };
         }, [message.content, message.id]);
-
-        const onRemoveFileClick = useCallback(async (fileId: number) => {
-            if (!fileId) return;
-
-            const choice = await requestConfirmation({
-                title: 'Delete file',
-                message: 'Are you sure you want to delete this file?',
-                confirmLabel: 'Delete'
-            });
-
-            if (!choice) return;
-
-            const trpc = getTRPCClient();
-
-            try {
-                await trpc.files.delete.mutate({
-                    fileId
-                });
-
-                toast.success('File deleted');
-            } catch {
-                toast.error('Failed to delete file');
-            }
-        }, []);
 
         const allMedia = useMemo(() => {
             // MVP: ephemeral encrypted files have ciphertext at /public,
@@ -292,6 +262,11 @@ const MessageRenderer = memo(
                     </div>
                 )}
 
+                {/* No per-file delete here: deleting the message already
+                    removes its attachments (delete-message.ts drops every
+                    file row and blob first), so a second affordance only
+                    differed on multi-file messages. The mod view keeps its
+                    own FileCard remove for moderation. */}
                 {message.files.length > 0 && !disableFiles && (
                     <div className="flex gap-1 flex-wrap">
                         {message.files.map((file) =>
@@ -301,11 +276,6 @@ const MessageRenderer = memo(
                                     name={file.originalName}
                                     extension={file.extension}
                                     size={file.size}
-                                    onRemove={
-                                        isOwnMessage
-                                            ? () => onRemoveFileClick(file.id)
-                                            : undefined
-                                    }
                                     onClick={(e) => {
                                         e.preventDefault();
                                         void downloadEncryptedFile(file);
@@ -317,11 +287,6 @@ const MessageRenderer = memo(
                                     name={file.originalName}
                                     extension={file.extension}
                                     size={file.size}
-                                    onRemove={
-                                        isOwnMessage
-                                            ? () => onRemoveFileClick(file.id)
-                                            : undefined
-                                    }
                                     href={getFileUrl(file)}
                                 />
                             )
