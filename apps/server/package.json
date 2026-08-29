@@ -52,17 +52,17 @@
     "cron": "^4.4.0",
     "drizzle-orm": "^0.45.2",
     "ini": "^7.0.0",
-    "ipaddr.js": "^2.4.0",
+    "ipaddr.js": "^2.5.0",
     "jsonwebtoken": "^9.0.3",
     "link-preview-js": "^4.0.4",
-    "mediasoup": "3.22.0",
+    "mediasoup": "3.26.0",
     "mime-types": "^3.0.2",
     "queue": "^7.0.0",
-    "sanitize-html": "^2.17.6",
+    "sanitize-html": "^2.17.7",
     "ua-parser-js": "^2.0.10",
-    "uuid": "^14.0.1",
+    "uuid": "^14.0.2",
     "web-push": "^3.6.7",
-    "ws": "^8.21.1",
+    "ws": "^8.21.3",
     "zod": "^4.4.3"
   }
 }
