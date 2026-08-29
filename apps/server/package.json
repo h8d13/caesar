@@ -48,7 +48,7 @@
     "@libsql/client": "0.17.4",
     "@simplewebauthn/server": "^13.3.2",
     "@trpc/server": "^11.18.0",
-    "argon2": "^0.45.0",
+    "argon2": "0.45.1",
     "cron": "^4.4.0",
     "drizzle-orm": "^0.45.2",
     "ini": "^7.0.0",
