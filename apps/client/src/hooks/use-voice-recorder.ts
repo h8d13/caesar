@@ -1,3 +1,4 @@
+import { useDevices } from '@/components/devices-provider/hooks/use-devices';
 import { pickRecordingFormat } from '@/helpers/voice-recording';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -6,8 +7,13 @@ import { toast } from 'sonner';
 // size limit while nobody is watching the timer.
 const MAX_RECORDING_MS = 5 * 60 * 1000;
 const TICK_MS = 200;
+// devices-provider seeds microphoneId with a real device id rather than
+// this sentinel, so an unset/explicit "default" is the only case where the
+// browser gets to pick.
+const DEFAULT_DEVICE_NAME = 'default';
 
 const useVoiceRecorder = (onRecorded: (file: File) => void) => {
+    const { devices } = useDevices();
     const onRecordedRef = useRef(onRecorded);
     const recorderRef = useRef<MediaRecorder | null>(null);
     const cancelledRef = useRef(false);
@@ -40,8 +46,27 @@ const useVoiceRecorder = (onRecorded: (file: File) => void) => {
 
         let stream: MediaStream;
 
+        // same capture settings as the voice-call and mic-test paths: a bare
+        // { audio: true } opens the OS default input instead of the mic the
+        // user picked, which records silence whenever the two differ. the
+        // advanced RNNoise/DTLN worklets stay call-only.
+        const hasSpecificMic =
+            !!devices.microphoneId &&
+            devices.microphoneId !== DEFAULT_DEVICE_NAME;
+
         try {
-            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    deviceId: hasSpecificMic
+                        ? { exact: devices.microphoneId }
+                        : undefined,
+                    autoGainControl: devices.autoGainControl,
+                    echoCancellation: devices.echoCancellation,
+                    noiseSuppression: devices.noiseSuppression,
+                    channelCount: 1
+                },
+                video: false
+            });
         } catch (err) {
             console.error('microphone access failed', err);
             toast.error('Could not access the microphone.');
@@ -96,7 +121,13 @@ const useVoiceRecorder = (onRecorded: (file: File) => void) => {
 
             if (elapsed >= MAX_RECORDING_MS) recorderRef.current?.stop();
         }, TICK_MS);
-    }, [stopTicking]);
+    }, [
+        stopTicking,
+        devices.microphoneId,
+        devices.autoGainControl,
+        devices.echoCancellation,
+        devices.noiseSuppression
+    ]);
 
     const stopRecording = useCallback(() => {
         recorderRef.current?.stop();
