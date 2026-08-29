@@ -3,7 +3,6 @@ import { useInfo } from '@/features/server/hooks';
 import { ensureAudioCtxReady } from '@/features/server/sounds/actions';
 import { getFileUrl, getUrlFromServer } from '@/helpers/get-file-url';
 import {
-    getLocalStorageItem,
     getLocalStorageItemBool,
     LocalStorageKey,
     removeLocalStorageItem,
@@ -39,15 +38,11 @@ const Connect = memo(() => {
         identity: string;
         password: string;
         confirmPassword: string;
-        rememberCredentials: boolean;
         autoLogin: boolean;
     }>({
-        identity: getLocalStorageItem(LocalStorageKey.IDENTITY) || '',
-        password: getLocalStorageItem(LocalStorageKey.USER_PASSWORD) || '',
+        identity: '',
+        password: '',
         confirmPassword: '',
-        rememberCredentials: !!getLocalStorageItem(
-            LocalStorageKey.REMEMBER_CREDENTIALS
-        ),
         autoLogin: getLocalStorageItemBool(LocalStorageKey.AUTO_LOGIN)
     });
 
