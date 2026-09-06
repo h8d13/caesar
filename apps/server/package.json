@@ -45,8 +45,8 @@
   },
   "dependencies": {
     "@caesar/shared": "workspace:*",
-    "@libsql/client": "0.17.4",
-    "@simplewebauthn/server": "^13.3.2",
+    "@libsql/client": "0.18.0",
+    "@simplewebauthn/server": "^13.3.3",
     "@trpc/server": "^11.18.0",
     "argon2": "^0.45.0",
     "cron": "^4.4.0",
@@ -63,6 +63,6 @@
     "uuid": "^14.0.2",
     "web-push": "^3.6.7",
     "ws": "^8.21.3",
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   }
 }
