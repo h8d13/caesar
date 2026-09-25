@@ -10,6 +10,7 @@ import {
     SessionStorageKey
 } from '@/helpers/storage';
 import { clearPriv } from '@/lib/e2ee';
+import { queryClient } from '@/lib/query-client';
 // AppRouter is the server's router type; imported directly via the
 // @server/* alias (the agreed channel for cross-workspace server refs).
 // Top-level `import type` (not inline `import { type ... }`) is required
@@ -113,9 +114,11 @@ const cleanup = () => {
 
     removeSessionStorageItem(SessionStorageKey.TOKEN);
 
-    // the key belongs to this session's user; a later login in this tab
-    // must never see (or register) it
+    // the key and the query cache (per-viewer E2EE context, decrypted
+    // plaintext) belong to this session's user; a later login in this tab
+    // must never see, register or encrypt with them
     clearPriv();
+    queryClient.clear();
 
     // this should help Firefox users who report that auto login is not consistent
     setTimeout(() => {
