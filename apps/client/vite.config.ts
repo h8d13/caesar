@@ -36,7 +36,22 @@ export default defineConfig({
     assetsInclude: ['**/*.wasm'],
     build: {
         target: 'esnext',
-        chunkSizeWarningLimit: 1000
+        chunkSizeWarningLimit: 1000,
+        rolldownOptions: {
+            output: {
+                codeSplitting: {
+                    groups: [
+                        {
+                            // the message editor stack (incl. the emoji
+                            // dataset) changes far less often than app code,
+                            // so it stays cached across deploys
+                            name: 'editor',
+                            test: /node_modules[\\/](@tiptap|prosemirror-)/
+                        }
+                    ]
+                }
+            }
+        }
     },
     resolve: {
         alias: {

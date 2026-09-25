@@ -41,7 +41,6 @@ import {
     type TStreamQualityLayer,
     type TVoiceUserState
 } from '@caesar/shared';
-import { Device } from 'mediasoup-client';
 import type {
     RtpCapabilities,
     RtpCodecCapability
@@ -1320,6 +1319,9 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
 
                 routerRtpCapabilities.current = incomingRouterRtpCapabilities;
 
+                // loaded on first voice join: mediasoup-client is the
+                // largest dependency no text-only session ever touches
+                const { Device } = await import('mediasoup-client');
                 const device = new Device();
 
                 await device.load({

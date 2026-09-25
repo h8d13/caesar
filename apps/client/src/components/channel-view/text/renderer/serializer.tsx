@@ -1,10 +1,8 @@
-import { ensureHljsTheme } from '@/components/hljs-theme';
 import {
     audioExtensions,
     imageExtensions,
     videoExtensions
 } from '@caesar/shared';
-import hljs from 'highlight.js/lib/common';
 import {
     Element,
     type DOMNode,
@@ -13,6 +11,7 @@ import {
 import { ChannelMentionOverride } from '../overrides/channel-mention';
 import { LinkOverride } from '../overrides/link';
 import { MentionOverride } from '../overrides/mention';
+import { CodeBlock } from './code-block';
 import { sanitizeElement } from './sanitize-element';
 import type { TFoundMedia } from './types';
 
@@ -44,34 +43,14 @@ const serializer = (
             );
 
             if (codeChild) {
-                ensureHljsTheme();
-                const codeText = getTextContent(codeChild);
                 const langClass = codeChild.attribs?.class || '';
-                const langMatch = langClass.match(/language-(\w+)/);
-                const language = langMatch?.[1];
-
-                let highlightedHtml: string;
-                try {
-                    if (language && hljs.getLanguage(language)) {
-                        highlightedHtml = hljs.highlight(codeText, {
-                            language
-                        }).value;
-                    } else {
-                        highlightedHtml = hljs.highlightAuto(codeText).value;
-                    }
-                } catch {
-                    highlightedHtml = codeText;
-                }
+                const language = langClass.match(/language-(\w+)/)?.[1];
 
                 return (
-                    <pre className="hljs-pre">
-                        <code
-                            className={`hljs ${language ? `language-${language}` : ''}`}
-                            dangerouslySetInnerHTML={{
-                                __html: highlightedHtml
-                            }}
-                        />
-                    </pre>
+                    <CodeBlock
+                        code={getTextContent(codeChild)}
+                        language={language}
+                    />
                 );
             }
         }
