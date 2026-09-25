@@ -9,6 +9,7 @@ import {
     removeSessionStorageItem,
     SessionStorageKey
 } from '@/helpers/storage';
+import { clearPriv } from '@/lib/e2ee';
 // AppRouter is the server's router type; imported directly via the
 // @server/* alias (the agreed channel for cross-workspace server refs).
 // Top-level `import type` (not inline `import { type ... }`) is required
@@ -111,6 +112,10 @@ const cleanup = () => {
     resetApp();
 
     removeSessionStorageItem(SessionStorageKey.TOKEN);
+
+    // the key belongs to this session's user; a later login in this tab
+    // must never see (or register) it
+    clearPriv();
 
     // this should help Firefox users who report that auto login is not consistent
     setTimeout(() => {

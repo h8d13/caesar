@@ -11,6 +11,7 @@ import {
     useOwnUserId,
     useUserById
 } from '@/features/server/users/hooks';
+import { E2EE_LOCKED_MESSAGE, hasPriv } from '@/lib/e2ee';
 import { useDecryptedMessage } from '@/lib/use-decrypted-message';
 import { cn } from '@/lib/utils';
 import { hasMention, Permission, type TJoinedMessage } from '@caesar/shared';
@@ -137,7 +138,7 @@ const Message = memo(
                         )}
                         {decrypted.status === 'expired' ? (
                             <span className="italic text-muted-foreground">
-                                expired
+                                {hasPriv() ? 'expired' : E2EE_LOCKED_MESSAGE}
                             </span>
                         ) : (
                             <MessageRenderer

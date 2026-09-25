@@ -33,11 +33,6 @@ const DialogsMap = {
         import('./reset-password').then((m) => ({
             default: m.ResetPasswordDialog
         }))
-    ),
-    [Dialog.E2EE_PASSWORD]: lazy(() =>
-        import('./e2ee-password').then((m) => ({
-            default: m.E2eePasswordDialog
-        }))
     )
 };
 

@@ -1,10 +1,8 @@
-import { Dialog } from '@/components/dialogs/dialogs';
 import {
     MessageCompose,
     type TMessageComposeHandle
 } from '@/components/message-compose';
 import { ResizableSidebar } from '@/components/resizable-sidebar';
-import { openDialog } from '@/features/dialogs/actions';
 import { useChannelById } from '@/features/server/channels/hooks';
 import {
     useChannelCan,
@@ -21,14 +19,14 @@ import { useOwnUserId, useUsers } from '@/features/server/users/hooks';
 import { handleBuiltInCommand } from '@/helpers/built-in-commands';
 import { LocalStorageKey } from '@/helpers/storage';
 import { throttle } from '@/helpers/throttle';
-import { dmKey, hasPriv, open, seal } from '@/lib/e2ee';
+import { dmKey, E2EE_LOCKED_MESSAGE, hasPriv, open, seal } from '@/lib/e2ee';
 import { getTRPCClient } from '@/lib/trpc';
 import { useDmE2eeContext } from '@/lib/use-dm-e2ee';
 import {
     ChannelPermission,
     DELETED_USER_IDENTITY_AND_NAME,
-    TYPING_MS,
     getTrpcError,
+    TYPING_MS,
     type TJoinedMessage
 } from '@caesar/shared';
 import { Spinner } from '@caesar/ui';
@@ -200,7 +198,7 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
 
             if (ephemeralMs != null) {
                 if (!hasPriv()) {
-                    openDialog(Dialog.E2EE_PASSWORD);
+                    toast.error(E2EE_LOCKED_MESSAGE);
                     return false;
                 }
                 if (

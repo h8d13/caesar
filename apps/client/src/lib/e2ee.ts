@@ -1,8 +1,10 @@
 // E2EE for ephemeral DMs (expiresAt != null).
 //
 // priv = argon2id(password, identity). deterministic, heap-only,
-// never persisted/sent. wiped on refresh; rederived on manual login
-// (auto-login replays JWT only => no password => no priv => "expired").
+// never persisted/sent. derived at manual login before the session starts,
+// so it is fixed for the session's lifetime. auto-login replays the JWT
+// only => no password => no priv => ephemeral DMs stay locked until the
+// user logs out and back in.
 //
 // "ephemeral" = server TTL, not forward secrecy: password holder can
 // always rederive and read still-live msgs.
@@ -26,43 +28,22 @@ const ARGON2 =
 let myPriv: Uint8Array | null = null;
 let myPubB64: string | null = null;
 
-// React-observable change notification. Bumped on every priv mutation so
-// useSyncExternalStore-based consumers (see usePriv() below) re-render
-// when the in-session re-derive flips priv from null to set. Without
-// this, components that called hasPriv() during render kept their stale
-// "no priv" enabled flags and existing "expired" message bubbles never
-// re-tried decryption after the password-prompt dialog.
-let privVersion = 0;
-const privListeners = new Set<() => void>();
-
-const notifyPrivChange = () => {
-    privVersion++;
-    privListeners.forEach((listener) => listener());
-};
-
-const subscribePriv = (listener: () => void) => {
-    privListeners.add(listener);
-    return () => {
-        privListeners.delete(listener);
-    };
-};
-
-const getPrivVersion = () => privVersion;
-
 const setPriv = (priv: Uint8Array) => {
     myPriv = priv;
     myPubB64 = bytesToBase64(x25519.getPublicKey(priv));
-    notifyPrivChange();
 };
 
 const clearPriv = () => {
     myPriv = null;
     myPubB64 = null;
     terminateWorker();
-    notifyPrivChange();
 };
 
 const hasPriv = () => myPriv !== null;
+
+// shown wherever ephemeral DMs need the key this session doesn't have
+const E2EE_LOCKED_MESSAGE =
+    'Ephemeral messages are locked. Log out and log back in with your password to read and send them.';
 
 // base64 of our X25519 public key, or null if no priv loaded.
 // idempotent register: caller can fire this at any auth checkpoint.
@@ -86,9 +67,8 @@ const derivePub = (priv: Uint8Array): Uint8Array => x25519.getPublicKey(priv);
 // is on a slow device or the tab is throttled it can read as "hang".
 // The worker computes off-thread; callers await a Promise.
 //
-// Sync derivePriv() above stays available for tests + any caller that
-// genuinely needs synchronous behavior. UI callers should prefer
-// derivePrivAsync / tryDeriveAndSetAsync.
+// Sync derivePriv() above stays available for tests; UI callers use
+// derivePrivAsync.
 
 let _worker: Worker | null = null;
 let _workerSeq = 0;
@@ -151,18 +131,6 @@ const derivePrivAsync = (
             params: ARGON2
         });
     });
-
-const tryDeriveAndSetAsync = async (
-    password: string,
-    identity: string,
-    expectedPubB64: string | null
-): Promise<boolean> => {
-    const priv = await derivePrivAsync(password, identity);
-    const pubB64 = bytesToBase64(x25519.getPublicKey(priv));
-    if (expectedPubB64 !== null && pubB64 !== expectedPubB64) return false;
-    setPriv(priv);
-    return true;
-};
 
 // per-DM symmetric key (HKDF over ECDH shared secret)
 const dmKey = async (
@@ -342,14 +310,12 @@ export {
     derivePrivAsync,
     derivePub,
     dmKey,
+    E2EE_LOCKED_MESSAGE,
     getMyPubB64,
-    getPrivVersion,
     hasPriv,
     open,
     openStreamed,
     seal,
     sealStreamed,
-    setPriv,
-    subscribePriv,
-    tryDeriveAndSetAsync
+    setPriv
 };

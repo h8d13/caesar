@@ -1,7 +1,5 @@
-import { Dialog } from '@/components/dialogs/dialogs';
 import { TiptapInput } from '@/components/tiptap-input';
-import { openDialog } from '@/features/dialogs/actions';
-import { dmKey, hasPriv, seal } from '@/lib/e2ee';
+import { dmKey, E2EE_LOCKED_MESSAGE, hasPriv, seal } from '@/lib/e2ee';
 import { getTRPCClient } from '@/lib/trpc';
 import type { TE2eeWriteContext } from '@/lib/use-decrypted-message';
 import { type TJoinedMessage, isEmptyMessage } from '@caesar/shared';
@@ -40,7 +38,7 @@ const MessageEditInline = memo(
 
                 if (isEncrypted) {
                     if (!hasPriv()) {
-                        openDialog(Dialog.E2EE_PASSWORD);
+                        toast.error(E2EE_LOCKED_MESSAGE);
                         onBlur();
                         return;
                     }

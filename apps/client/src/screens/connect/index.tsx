@@ -68,16 +68,18 @@ const Connect = memo(() => {
     // Runs once we hold the final session token (password-only OR 2FA).
     const completeLogin = useCallback(
         async (token: string) => {
-            // E2EE: argon2id runs in a Web Worker so the main thread
-            // stays responsive. <E2eeKeyRegister /> picks up the pub via
-            // the priv subscriber and registers once joinServer has set
-            // authenticated=true.
-            derivePrivAsync(values.password, values.identity)
-                .then(setPriv)
-                .catch(() => {
-                    // derivation failed; user can retry via the e2ee
-                    // password dialog if they need ephemeral DMs.
-                });
+            // E2EE: derive before connecting so the key is fixed for the
+            // whole session (<E2eeKeyRegister /> registers it once
+            // joinServer lands). argon2id runs in a Web Worker, so the
+            // login spinner stays responsive. A failed derive only locks
+            // ephemeral DMs; logging out and back in retries it.
+            try {
+                setPriv(
+                    await derivePrivAsync(values.password, values.identity)
+                );
+            } catch {
+                // proceed without a key
+            }
 
             // Toggle gates cross-tab session sharing. When ON, the token is
             // written to localStorage so other tabs of this browser silently
