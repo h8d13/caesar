@@ -19,8 +19,7 @@ import { and, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '..';
 import {
   getDirectMessageChannelIdsForUser,
-  getDirectMessageChannelParticipantIds,
-  isUserDmParticipant
+  getDirectMessageChannelParticipantIds
 } from './dms';
 import { getUserRoleIds } from './roles';
 import { getAllUserIds } from './users';
@@ -87,10 +86,7 @@ const getPermissions = async (
 
 const getChannelsForUser = async (userId: number): Promise<TChannel[]> => {
   const roleIds = await getUserRoleIds(userId);
-
-  if (roleIds.includes(OWNER_ROLE_ID)) {
-    return await db.select().from(channels);
-  }
+  const isOwner = roleIds.includes(OWNER_ROLE_ID);
 
   const [allChannels, { userPermissionMap, rolePermissionMap }, dmChannelIds] =
     await Promise.all([
@@ -100,12 +96,11 @@ const getChannelsForUser = async (userId: number): Promise<TChannel[]> => {
     ]);
 
   const accessibleChannels = allChannels.filter((channel) => {
-    const isPublicChannel = !channel.private;
-    const isDmChannelParticipant = dmChannelIds.includes(channel.id);
+    // DMs by participation only: the owner bypass below must not reach
+    // another pair's conversation
+    if (channel.isDm) return dmChannelIds.includes(channel.id);
 
-    if (isPublicChannel || isDmChannelParticipant) {
-      return true;
-    }
+    if (isOwner || !channel.private) return true;
 
     const userPerm = userPermissionMap.get(channel.id);
 
@@ -124,8 +119,12 @@ const getChannelsForUser = async (userId: number): Promise<TChannel[]> => {
 const getAllChannelUserPermissions = async (
   userId: number
 ): Promise<TChannelUserPermissionsMap> => {
-  const roleIds = await getUserRoleIds(userId);
-  const allChannels = await db.select().from(channels);
+  const [roleIds, allChannels, dmChannelIds] = await Promise.all([
+    getUserRoleIds(userId),
+    db.select().from(channels),
+    getDirectMessageChannelIdsForUser(userId)
+  ]);
+  const ownDmChannelIds = new Set(dmChannelIds);
 
   const userPermissions = await db
     .select({
@@ -185,6 +184,9 @@ const getAllChannelUserPermissions = async (
   > = {};
 
   for (const channel of allChannels) {
+    // another pair's DM gets no entry: even its id is not the user's to see
+    if (channel.isDm && !ownDmChannelIds.has(channel.id)) continue;
+
     const permissions: Record<string, boolean> = {};
 
     for (const permissionType of allPermissionTypes) {
@@ -207,15 +209,10 @@ const getAllChannelUserPermissions = async (
       permissions[permissionType] = false;
     }
 
+    // DMs have no granular permissions: a participant holds all of them
     if (channel.isDm) {
-      // for DM channels we need to check if the user is a participant, if not we set all permissions to false
-      const isParticipant = await isUserDmParticipant(channel.id, userId);
-
-      if (isParticipant) {
-        // if the user is a participant in the DM channel, we set all permissions to true because DM channels don't have granular permissions
-        for (const permissionType of allPermissionTypes) {
-          permissions[permissionType] = true;
-        }
+      for (const permissionType of allPermissionTypes) {
+        permissions[permissionType] = true;
       }
     }
 
@@ -334,27 +331,16 @@ const getChannelsReadStatesForUser = async (
   userId: number,
   channelId?: number
 ): Promise<TReadStateMap> => {
-  // get DM channel IDs the user participates in so we can exclude
-  // DM channels between other users from the read state results
-  const dmChannelIds = await getDirectMessageChannelIdsForUser(userId);
+  // Only channels the user can view: a count for a private channel (or
+  // another pair's DM) would reveal its activity to a non-member.
+  const accessibleIds = (await getChannelsForUser(userId)).map((c) => c.id);
 
-  const conditions = [];
+  if (accessibleIds.length === 0) return {};
+
+  const conditions = [inArray(messages.channelId, accessibleIds)];
 
   if (channelId) {
     conditions.push(eq(messages.channelId, channelId));
-  }
-
-  // exclude DM channels the user does not participate in:
-  // include the message if the channel is NOT a DM, or if it IS a DM the user is part of
-  if (dmChannelIds.length > 0) {
-    conditions.push(
-      sql`(${channels.isDm} = 0 OR ${messages.channelId} IN (${sql.join(
-        dmChannelIds.map((id) => sql`${id}`),
-        sql`, `
-      )}))`
-    );
-  } else {
-    conditions.push(eq(channels.isDm, false));
   }
 
   const results = await db
@@ -382,7 +368,6 @@ const getChannelsReadStatesForUser = async (
       `.as('unread_count')
     })
     .from(messages)
-    .innerJoin(channels, eq(channels.id, messages.channelId))
     .leftJoin(
       channelReadStates,
       and(
@@ -390,7 +375,7 @@ const getChannelsReadStatesForUser = async (
         eq(channelReadStates.userId, userId)
       )
     )
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .groupBy(messages.channelId);
 
   const readStateMap: TReadStateMap = {};
