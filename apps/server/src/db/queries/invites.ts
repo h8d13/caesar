@@ -1,38 +1,10 @@
-import type { TInvite, TJoinedInvite } from '@caesar/shared';
+import type { TJoinedInvite } from '@caesar/shared';
 import { files, invites, roles, users } from '@caesar/shared/db/schema';
 import { eq } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { db } from '..';
 import { getAllUserRoleIdsMap } from './roles';
 import { publicUserBaseFields, socialCreditSubquery } from './user-fields';
-
-const isInviteValid = async (
-  code: string | undefined
-): Promise<{ error?: string; invite?: TInvite }> => {
-  if (!code) {
-    return { error: 'Invalid invite code' };
-  }
-
-  const invite = await db
-    .select()
-    .from(invites)
-    .where(eq(invites.code, code))
-    .get();
-
-  if (!invite) {
-    return { error: 'Invite code not found' };
-  }
-
-  if (invite.expiresAt && invite.expiresAt < Date.now()) {
-    return { error: 'Invite code has expired' };
-  }
-
-  if (invite.maxUses && invite.uses >= invite.maxUses) {
-    return { error: 'Invite code has reached maximum uses' };
-  }
-
-  return { invite };
-};
 
 const getInvites = async (): Promise<TJoinedInvite[]> => {
   const avatarFiles = alias(files, 'avatarFiles');
@@ -73,4 +45,4 @@ const getInvites = async (): Promise<TJoinedInvite[]> => {
   }));
 };
 
-export { getInvites, isInviteValid };
+export { getInvites };

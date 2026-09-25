@@ -45,7 +45,7 @@ const updateSoundRoute = protectedProcedure
       .returning()
       .get();
 
-    publishSound(updatedSound.id, 'update');
+    void publishSound(updatedSound.id, 'update');
     enqueueActivityLog({
       type: ActivityLogType.UPDATED_SOUND,
       userId: ctx.user.id,

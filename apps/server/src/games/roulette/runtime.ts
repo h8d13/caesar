@@ -14,6 +14,7 @@ import {
 import { db } from '@server/db';
 import { createHash, randomInt } from 'crypto';
 import { desc, eq, isNotNull } from 'drizzle-orm';
+import { withBalanceLock } from '../shared-bindings';
 import {
   BETTING_PHASE_DURATION_MS,
   MAX_BET,
@@ -114,59 +115,62 @@ class RouletteRuntime {
     betValue: number | null,
     amount: number
   ): Promise<void> {
-    if (this.phase !== RoulettePhase.BETTING) {
-      throw new Error('Bets can only be placed during the betting phase');
-    }
+    // Locked: the per-round bet cap only holds once the bet is pushed.
+    return withBalanceLock(userId, async () => {
+      if (this.phase !== RoulettePhase.BETTING) {
+        throw new Error('Bets can only be placed during the betting phase');
+      }
 
-    if (amount < MIN_BET || amount > MAX_BET) {
-      throw new Error(`Bet must be between ${MIN_BET} and ${MAX_BET}`);
-    }
+      if (amount < MIN_BET || amount > MAX_BET) {
+        throw new Error(`Bet must be between ${MIN_BET} and ${MAX_BET}`);
+      }
 
-    const userBetCount = this.activeBets.filter(
-      (b) => b.userId === userId
-    ).length;
-    if (userBetCount >= MAX_BETS_PER_USER) {
-      throw new Error(`Maximum ${MAX_BETS_PER_USER} bets per round`);
-    }
+      const userBetCount = this.activeBets.filter(
+        (b) => b.userId === userId
+      ).length;
+      if (userBetCount >= MAX_BETS_PER_USER) {
+        throw new Error(`Maximum ${MAX_BETS_PER_USER} bets per round`);
+      }
 
-    const balance = await this.callbacks.getBalance(userId);
-    if (balance < amount) {
-      throw new Error('Insufficient balance');
-    }
+      const balance = await this.callbacks.getBalance(userId);
+      if (balance < amount) {
+        throw new Error('Insufficient balance');
+      }
 
-    const ledgerEntryId = await this.callbacks.createLedgerEntry(
-      userId,
-      -amount,
-      this.roundId
-    );
-
-    const bet = await db
-      .insert(rouletteBets)
-      .values({
-        roundId: this.roundId,
+      const ledgerEntryId = await this.callbacks.createLedgerEntry(
         userId,
+        -amount,
+        this.roundId
+      );
+
+      const bet = await db
+        .insert(rouletteBets)
+        .values({
+          roundId: this.roundId,
+          userId,
+          betType,
+          betValue,
+          amount,
+          ledgerEntryId,
+          createdAt: Date.now()
+        })
+        .returning({ id: rouletteBets.id })
+        .get();
+
+      this.activeBets.push({
+        betId: bet.id,
+        userId,
+        userName,
         betType,
         betValue,
         amount,
         ledgerEntryId,
-        createdAt: Date.now()
-      })
-      .returning({ id: rouletteBets.id })
-      .get();
+        profit: null
+      });
 
-    this.activeBets.push({
-      betId: bet.id,
-      userId,
-      userName,
-      betType,
-      betValue,
-      amount,
-      ledgerEntryId,
-      profit: null
+      this.notifyStateSubscribers();
+      await this.callbacks.onUserBalanceChanged(userId);
     });
-
-    this.notifyStateSubscribers();
-    await this.callbacks.onUserBalanceChanged(userId);
   }
 
   async removeBet(userId: number, betId: number): Promise<void> {

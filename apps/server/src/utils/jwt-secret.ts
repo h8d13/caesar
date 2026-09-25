@@ -57,9 +57,7 @@ const loadJwtSecret = async (): Promise<string> => {
 // skipped (e.g. tests that drive the DB layer directly).
 const getJwtSecret = (): Promise<string> => loadJwtSecret();
 
-// Verify against the dedicated key only. Sessions signed with the legacy
-// pre-split `secretToken` are intentionally not accepted: those users
-// re-login once and get a fresh `jwt.key`-signed token.
+// Verify against jwt.key only; secretToken never signs sessions.
 const verifyJwt = async <T>(token: string): Promise<T> =>
   jwt.verify(token, await getJwtSecret()) as T;
 

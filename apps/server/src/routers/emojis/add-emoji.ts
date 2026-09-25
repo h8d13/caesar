@@ -40,7 +40,7 @@ const addEmojiRoute = rateLimitedProcedure(protectedProcedure, {
         .returning()
         .get();
 
-      publishEmoji(emoji.id, 'create');
+      void publishEmoji(emoji.id, 'create');
       enqueueActivityLog({
         type: ActivityLogType.CREATED_EMOJI,
         userId: ctx.user.id,

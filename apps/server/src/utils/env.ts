@@ -12,10 +12,6 @@ const IS_PRODUCTION = env === 'production';
 const IS_DEVELOPMENT = !IS_PRODUCTION;
 const IS_TEST = process.env.NODE_ENV === 'test';
 
-// Master (Bun) required CAESAR_MEDIASOUP_BIN_NAME because the embedded
-// binary was renamed per build target. On Node the binary always lives at
-// MEDIASOUP_PATH/mediasoup-worker, so the env var is no longer required.
-
 const parseIntEnv = (value: string | undefined, fallback: number): number => {
   if (value === undefined) return fallback;
   const parsed = Number.parseInt(value, 10);

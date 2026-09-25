@@ -55,7 +55,7 @@ export type Context = {
   getUserWs: (userId: number) => WebSocket | undefined;
   getConnectionInfo: () => TConnectionInfo | undefined;
   throwValidationError: (field: string, message: string) => never;
-  saveUserIp: (userId: number, ip: string) => Promise<void>;
+  saveUserIp: (userId: number, ip: string) => void;
 };
 
 const t = initTRPC.context<Context>().create();

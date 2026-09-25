@@ -17,14 +17,9 @@ const logoutRouteHandler = async (
   req: http.IncomingMessage,
   res: http.ServerResponse
 ) => {
-  const token =
-    (req.headers['x-token'] as string | undefined) ||
-    req.headers.cookie
-      ?.split('; ')
-      .find((c) => c.startsWith('caesar-token='))
-      ?.split('=')
-      .slice(1)
-      .join('=');
+  // Header only: the session cookie is scoped to Path=/public, so the
+  // browser never sends it here.
+  const token = req.headers['x-token'] as string | undefined;
 
   const user = await getUserByToken(token || undefined);
 

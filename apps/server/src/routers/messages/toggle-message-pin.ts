@@ -53,7 +53,7 @@ const toggleMessagePinRoute = rateLimitedProcedure(protectedProcedure, {
       })
       .where(eq(messages.id, input.messageId));
 
-    publishMessage(input.messageId, message.channelId, 'update');
+    void publishMessage(input.messageId, message.channelId, 'update');
     enqueueActivityLog({
       type: ActivityLogType.TOGGLED_MESSAGE_PIN,
       userId: ctx.user.id,

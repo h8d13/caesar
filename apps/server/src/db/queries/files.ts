@@ -1,12 +1,19 @@
 import type { TFile } from '@caesar/shared';
 import {
   channels,
+  emojis,
   files,
   messageFiles,
-  messages
+  messageReactions,
+  messages,
+  settings,
+  sounds,
+  statusImages,
+  users
 } from '@caesar/shared/db/schema';
 import { generateFileToken } from '@server/helpers/files-crypto';
-import { asc, eq, sql, sum } from 'drizzle-orm';
+import { and, asc, eq, notExists, sql, sum } from 'drizzle-orm';
+import type { SQLiteColumn } from 'drizzle-orm/sqlite-core';
 import { db } from '..';
 import { getSettings } from './server';
 
@@ -107,61 +114,54 @@ const getUsedFileQuota = async (): Promise<number> => {
   return Number(result?.usedSpace ?? 0);
 };
 
-const getOrphanedFileIds = async (): Promise<number[]> => {
-  const orphanedFileIds = await db.all<{ id: number }>(sql`
-    SELECT f.id
-    FROM files f
-    WHERE NOT EXISTS (
-      SELECT 1 FROM message_files mf WHERE mf.file_id = f.id
-    )
-    AND NOT EXISTS (
-      SELECT 1 FROM users u WHERE u.avatar_id = f.id OR u.banner_id = f.id
-    )
-    AND NOT EXISTS (
-      SELECT 1 FROM emojis e WHERE e.file_id = f.id
-    )
-    AND NOT EXISTS (
-      SELECT 1 FROM message_reactions mr WHERE mr.file_id = f.id
-    )
-    AND NOT EXISTS (
-      SELECT 1 FROM settings s WHERE s.logo_id = f.id
-    )
-    AND NOT EXISTS (
-      SELECT 1 FROM sounds snd WHERE snd.file_id = f.id
-    )
-    AND NOT EXISTS (
-      SELECT 1 FROM status_images si WHERE si.file_id = f.id
-    )
-  `);
+// Every column that keeps a file alive. Both orphan checks build from this
+// one list: a referencing column missing here gets its files deleted by the
+// cleanup cron. The schema drift test fails when a new FK to files is not
+// listed.
+const FILE_REFERENCES = [
+  messageFiles.fileId,
+  users.avatarId,
+  users.bannerId,
+  emojis.fileId,
+  messageReactions.fileId,
+  settings.logoId,
+  sounds.fileId,
+  statusImages.fileId
+];
 
-  return orphanedFileIds.map(({ id }) => id);
+const isUnreferenced = (fileId: SQLiteColumn) =>
+  and(
+    ...FILE_REFERENCES.map((column) =>
+      notExists(
+        db
+          .select({ one: sql`1` })
+          .from(column.table)
+          .where(eq(column, fileId))
+      )
+    )
+  );
+
+const getOrphanedFileIds = async (): Promise<number[]> => {
+  const rows = await db
+    .select({ id: files.id })
+    .from(files)
+    .where(isUnreferenced(files.id));
+
+  return rows.map(({ id }) => id);
 };
 
 const isFileOrphaned = async (fileId: number): Promise<boolean> => {
-  // libsql returns rows as { columnName: value } objects (drizzle's libsql
-  // driver); the previous bun-sqlite path returned positional arrays.
-  // Read by alias so the same code works regardless of driver.
-  const result = (await db.get(sql`
-    SELECT
-      CASE
-        WHEN NOT EXISTS (SELECT 1 FROM message_files mf WHERE mf.file_id = ${fileId})
-        AND NOT EXISTS (SELECT 1 FROM users u WHERE u.avatar_id = ${fileId} OR u.banner_id = ${fileId})
-        AND NOT EXISTS (SELECT 1 FROM emojis e WHERE e.file_id = ${fileId})
-        AND NOT EXISTS (SELECT 1 FROM message_reactions mr WHERE mr.file_id = ${fileId})
-        AND NOT EXISTS (SELECT 1 FROM settings s WHERE s.logo_id = ${fileId})
-        AND NOT EXISTS (SELECT 1 FROM sounds snd WHERE snd.file_id = ${fileId})
-        AND NOT EXISTS (SELECT 1 FROM status_images si WHERE si.file_id = ${fileId})
-        THEN 1
-        ELSE 0
-      END as isOrphaned
-  `)) as { isOrphaned: number } | number[] | undefined;
+  const row = await db
+    .select({ id: files.id })
+    .from(files)
+    .where(and(eq(files.id, fileId), isUnreferenced(files.id)))
+    .get();
 
-  if (!result) return false;
-  const flag = Array.isArray(result) ? result[0] : result.isOrphaned;
-  return flag === 1;
+  return row !== undefined;
 };
 
 export {
+  FILE_REFERENCES,
   getExceedingOldFiles,
   getFilesByMessageId,
   getFilesByUserId,

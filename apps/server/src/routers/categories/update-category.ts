@@ -38,7 +38,7 @@ const updateCategoryRoute = protectedProcedure
       })
       .where(eq(categories.id, input.categoryId));
 
-    publishCategory(input.categoryId, 'update');
+    void publishCategory(input.categoryId, 'update');
     enqueueActivityLog({
       type: ActivityLogType.UPDATED_CATEGORY,
       userId: ctx.user.id,

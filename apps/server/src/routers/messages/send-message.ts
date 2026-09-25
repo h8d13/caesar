@@ -187,10 +187,10 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
       }
     }
 
-    publishMessage(message.id, input.channelId, 'create');
+    void publishMessage(message.id, input.channelId, 'create');
 
     if (input.parentMessageId) {
-      publishReplyCount(input.parentMessageId, input.channelId);
+      void publishReplyCount(input.parentMessageId, input.channelId);
     }
 
     enqueueProcessMetadata(targetContent, message.id);

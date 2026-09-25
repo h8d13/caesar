@@ -5,10 +5,15 @@ import {
     videoExtensions
 } from '@caesar/shared';
 import hljs from 'highlight.js/lib/common';
-import { Element, type DOMNode } from 'html-react-parser';
+import {
+    Element,
+    type DOMNode,
+    type HTMLReactParserOptions
+} from 'html-react-parser';
 import { ChannelMentionOverride } from '../overrides/channel-mention';
 import { LinkOverride } from '../overrides/link';
 import { MentionOverride } from '../overrides/mention';
+import { sanitizeElement } from './sanitize-element';
 import type { TFoundMedia } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -28,7 +33,8 @@ const getTextContent = (node: any): string => {
 const serializer = (
     domNode: DOMNode,
     pushMedia: (media: TFoundMedia) => void,
-    messageId: number
+    messageId: number,
+    options: HTMLReactParserOptions
 ) => {
     try {
         if (domNode instanceof Element && domNode.name === 'pre') {
@@ -74,7 +80,7 @@ const serializer = (
             const href = domNode.attribs.href;
 
             if (!URL.canParse(href)) {
-                return null;
+                return sanitizeElement(domNode, options);
             }
 
             const url = new URL(href);
@@ -92,15 +98,15 @@ const serializer = (
             if (isImage) {
                 pushMedia({ type: 'image', url: href });
 
-                return;
+                return sanitizeElement(domNode, options);
             } else if (isVideo) {
                 pushMedia({ type: 'video', url: href });
 
-                return;
+                return sanitizeElement(domNode, options);
             } else if (isAudio) {
                 pushMedia({ type: 'audio', url: href });
 
-                return;
+                return sanitizeElement(domNode, options);
             } else {
                 const label = getTextContent(domNode);
                 return <LinkOverride link={href} label={label || undefined} />;
@@ -131,13 +137,22 @@ const serializer = (
                 );
             }
         }
+
+        // everything no override claimed goes through the allowlist
+        if (domNode instanceof Element) {
+            return sanitizeElement(domNode, options);
+        }
     } catch (error) {
         console.error(
             `Error parsing DOM node for message ID ${messageId}:`,
             error
         );
+
+        // fail closed: a node that broke an override is not rendered raw
+        return <></>;
     }
 
+    // text nodes keep the parser's default (escaped) rendering
     return null;
 };
 

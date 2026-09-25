@@ -856,3 +856,11 @@ describe('/public', () => {
     expect(data).toHaveProperty('error', 'Too many requests');
   });
 });
+
+describe('/public malformed paths', () => {
+  test('malformed percent-escape is a 400, not a 500', async () => {
+    const response = await fetch(`${testsBaseUrl}/public/%zz`);
+
+    expect(response.status).toBe(400);
+  });
+});

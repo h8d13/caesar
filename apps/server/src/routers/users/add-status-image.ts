@@ -65,7 +65,7 @@ const addStatusImageRoute = rateLimitedProcedure(protectedProcedure, {
       })
       .run();
 
-    publishUser(ctx.userId, 'update');
+    void publishUser(ctx.userId, 'update');
   });
 
 export { addStatusImageRoute };

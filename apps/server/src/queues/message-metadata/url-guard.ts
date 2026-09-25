@@ -1,25 +1,22 @@
 import ipaddr from 'ipaddr.js';
 import { isIP } from 'net';
 
-// Block IP ranges that could reach the loopback interface, link-local
-// metadata endpoints (169.254.169.254), or internal/private networks. A
+// Only globally routable unicast is fetchable. An allowlist, because the
+// blocklist it replaces missed ranges ipaddr.js reports separately (CGNAT,
+// reserved, 6to4, teredo). IPv4-mapped IPv6 (::ffff:127.0.0.1) is unwrapped
+// first: its own range is "ipv4Mapped", which would hide the loopback. A
 // parse failure fails closed (treated as private).
 const isPrivateIP = (ip: string): boolean => {
   try {
-    const addr = ipaddr.parse(ip);
-    const range = addr.range();
+    let addr = ipaddr.parse(ip);
 
-    const blockedRanges = [
-      'unspecified',
-      'broadcast',
-      'multicast',
-      'linkLocal',
-      'loopback',
-      'private',
-      'uniqueLocal'
-    ];
+    if (addr.kind() === 'ipv6') {
+      const v6 = addr as ipaddr.IPv6;
 
-    return blockedRanges.includes(range);
+      if (v6.isIPv4MappedAddress()) addr = v6.toIPv4Address();
+    }
+
+    return addr.range() !== 'unicast';
   } catch {
     return true; // if we can't parse it, block it
   }

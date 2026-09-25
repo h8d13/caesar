@@ -7,19 +7,18 @@ import {
 } from '@caesar/shared';
 import {
   channelReadStates,
-  invites,
   messages,
   userRoles,
   users
 } from '@caesar/shared/db/schema';
-import { count, eq, isNull, max, sql } from 'drizzle-orm';
+import { count, isNull, max } from 'drizzle-orm';
 import http from 'http';
 import jwt from 'jsonwebtoken';
 import z from 'zod';
 import { config } from '../config';
 import { db } from '../db';
+import { consumeInvite, refundInvite } from '../db/mutations/invites';
 import { publishUser } from '../db/publishers';
-import { isInviteValid } from '../db/queries/invites';
 import { getDefaultRole } from '../db/queries/roles';
 import { getUserByIdentity } from '../db/queries/users';
 import { getWsInfo } from '../helpers/get-ws-info';
@@ -32,14 +31,14 @@ import { hashPassword, verifyPassword } from '../utils/password';
 import { createLoginLockout } from '../utils/rate-limiters/login-lockout';
 import {
   createRateLimiter,
-  getClientRateLimitKey,
-  getRateLimitRetrySeconds
+  getClientRateLimitKey
 } from '../utils/rate-limiters/rate-limiter';
 import {
   generateLoginOptions,
   hasWebauthnCredentials
 } from '../utils/webauthn';
 import { getJsonBody } from './helpers';
+import { enforceHttpRateLimit, sendTooManyRequests } from './rate-limit';
 import { issueSession } from './session';
 import { HttpValidationError } from './utils';
 
@@ -56,8 +55,8 @@ const zBody = z.object({
 });
 
 const loginRateLimiter = createRateLimiter({
-  maxRequests: config.rateLimiters.joinServer.maxRequests,
-  windowMs: config.rateLimiters.joinServer.windowMs
+  maxRequests: config.rateLimiters.login.maxRequests,
+  windowMs: config.rateLimiters.login.windowMs
 });
 
 // Sustained-brute-force lockout (#371), layered behind the burst limiter
@@ -106,13 +105,6 @@ const registerUser = async (
   inviteRoleId?: number | null,
   ip?: string
 ): Promise<TJoinedUser> => {
-  if (!IDENTITY_REGEX.test(identity)) {
-    throw new HttpValidationError(
-      'identity',
-      'Identity must start with a letter or number and contain only letters, numbers, _ or -.'
-    );
-  }
-
   const hashedPassword = await hashPassword(password);
 
   const defaultRole = await getDefaultRole();
@@ -148,7 +140,7 @@ const registerUser = async (
     });
   }
 
-  publishUser(user.id, 'create');
+  void publishUser(user.id, 'create');
 
   const registeredUser = await getUserByIdentity(identity);
 
@@ -181,12 +173,24 @@ const loginRouteHandler = async (
     throw new HttpValidationError('identity', GENERIC_AUTH_ERROR);
   }
 
-  let existingUser = await getUserByIdentity(data.identity);
+  // Burst limit before any DB work, and ahead of the lockout so the
+  // well-known "too many attempts" response is unchanged.
+  if (
+    !enforceHttpRateLimit(
+      req,
+      res,
+      loginRateLimiter,
+      '/login',
+      'Too many login attempts. Please try again shortly.'
+    )
+  ) {
+    return;
+  }
+
   const connectionInfo = getWsInfo(undefined, req);
 
-  // Stable key for both the burst limiter and the failed-login lockout.
-  // Lifted to handler scope so the lockout can be updated after the
-  // credential check below.
+  // Key for the failed-login lockout. Lifted to handler scope so the
+  // lockout can be updated after the credential check below.
   const lockoutKey = connectionInfo?.ip
     ? getClientRateLimitKey(connectionInfo.ip)
     : undefined;
@@ -199,57 +203,33 @@ const loginRouteHandler = async (
     if (lockoutKey) loginLockout.recordSuccess(lockoutKey);
   };
 
-  if (lockoutKey) {
-    // Burst limiter first (short window, all requests). Kept ahead of the
-    // lockout so the well-known "too many attempts" response is unchanged.
-    const rateLimit = loginRateLimiter.consume(lockoutKey);
+  // Failed-login lockout (#371): sustained brute force from this IP.
+  const lockout = lockoutKey ? loginLockout.check(lockoutKey) : undefined;
 
-    if (!rateLimit.allowed) {
-      logger.debug(
-        `[Rate Limiter HTTP] /login rate limited for key "${lockoutKey}"`
-      );
-
-      res.setHeader(
-        'Retry-After',
-        getRateLimitRetrySeconds(rateLimit.retryAfterMs)
-      );
-      res.writeHead(429, { 'Content-Type': 'application/json' });
-      res.end(
-        JSON.stringify({
-          error: 'Too many login attempts. Please try again shortly.'
-        })
-      );
-
-      return;
-    }
-
-    // Failed-login lockout (#371): sustained brute force from this IP.
-    const lockout = loginLockout.check(lockoutKey);
-
-    if (lockout.locked) {
-      logger.info(`[Auth] /login locked out for key "${lockoutKey}"`);
-
-      res.setHeader(
-        'Retry-After',
-        getRateLimitRetrySeconds(lockout.retryAfterMs)
-      );
-      res.writeHead(429, { 'Content-Type': 'application/json' });
-      res.end(
-        JSON.stringify({
-          error: 'Too many failed login attempts. Please try again later.'
-        })
-      );
-
-      return;
-    }
-  } else {
-    logger.warn(
-      '[Rate Limiter HTTP] Missing IP address in request info, skipping rate limiting for /login route.'
+  if (lockout?.locked) {
+    logger.info(`[Auth] /login locked out for key "${lockoutKey}"`);
+    sendTooManyRequests(
+      res,
+      lockout.retryAfterMs,
+      'Too many failed login attempts. Please try again later.'
     );
+    return;
   }
 
+  let existingUser = await getUserByIdentity(data.identity);
+
   if (!existingUser) {
+    // Format check before any invite work: a malformed identity must not
+    // spend an invite use.
+    if (!IDENTITY_REGEX.test(data.identity)) {
+      throw new HttpValidationError(
+        'identity',
+        'Identity must start with a letter or number and contain only letters, numbers, _ or -.'
+      );
+    }
+
     let inviteRoleId: number | null = null;
+    let consumedInviteCode: string | undefined;
 
     // Bootstrap: first user when DB is empty signs up without invite (becomes admin via seeded role assignment).
     // Otherwise: signup requires a valid invite.
@@ -271,39 +251,36 @@ const loginRouteHandler = async (
         );
       }
 
-      const result = await isInviteValid(data.invite);
+      const invite = await consumeInvite(data.invite);
 
-      if (result.error) {
+      if (!invite) {
         await burnTimingBudget();
 
         recordLoginFailure();
 
         logger.info(
-          `[Auth] Signup failed for "${data.identity}": ${result.error} (IP: ${connectionInfo?.ip || 'unknown'})`
+          `[Auth] Signup failed for "${data.identity}": invite missing, expired or used up (IP: ${connectionInfo?.ip || 'unknown'})`
         );
         throw new HttpValidationError('identity', GENERIC_AUTH_ERROR);
       }
 
-      if (result.invite) {
-        inviteRoleId = result.invite.roleId ?? null;
-
-        await db
-          .update(invites)
-          .set({
-            uses: sql`${invites.uses} + 1`
-          })
-          .where(eq(invites.code, data.invite!))
-          .execute();
-      }
+      inviteRoleId = invite.roleId ?? null;
+      consumedInviteCode = invite.code;
     }
 
-    existingUser = await registerUser(
-      data.identity,
-      data.password,
-      data.invite,
-      inviteRoleId,
-      connectionInfo?.ip
-    );
+    try {
+      existingUser = await registerUser(
+        data.identity,
+        data.password,
+        data.invite,
+        inviteRoleId,
+        connectionInfo?.ip
+      );
+    } catch (error) {
+      // e.g. a parallel signup won the identity: the use was never redeemed
+      if (consumedInviteCode) await refundInvite(consumedInviteCode);
+      throw error;
+    }
 
     // mark all existing messages as read so the new user doesn't see
     // a flood of unread messages on first join

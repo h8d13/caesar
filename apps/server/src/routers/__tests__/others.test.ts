@@ -195,4 +195,18 @@ describe('others router', () => {
       'Games are disabled on this server'
     );
   });
+
+  test('should rate limit secret token guessing', async () => {
+    const { caller } = await initTest(2);
+
+    for (let i = 0; i < 5; i++) {
+      await expect(
+        caller.others.useSecretToken({ token: `guess-${i}` })
+      ).rejects.toThrow('Invalid secret token');
+    }
+
+    await expect(
+      caller.others.useSecretToken({ token: 'guess-5' })
+    ).rejects.toThrow('Too many requests. Please try again shortly.');
+  });
 });

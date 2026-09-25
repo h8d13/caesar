@@ -70,7 +70,7 @@ const changeAvatarRoute = rateLimitedProcedure(protectedProcedure, {
         .run();
     }
 
-    publishUser(ctx.userId, 'update');
+    void publishUser(ctx.userId, 'update');
   });
 
 export { changeAvatarRoute };

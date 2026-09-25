@@ -33,7 +33,7 @@ const changeLogoRoute = protectedProcedure
       await updateSettings({ logoId: newFile.id });
     }
 
-    publishSettings();
+    void publishSettings();
   });
 
 export { changeLogoRoute };

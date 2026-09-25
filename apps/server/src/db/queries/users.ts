@@ -174,10 +174,8 @@ const getUserByToken = async (token: string | undefined) => {
     // a session: their only valid use is exchange via /login/2fa.
     if (decoded.type === 'pre-2fa') return undefined;
 
-    // reject tokens minted before the user's current session superseded
-    // by a newer login on another device. Backwards-compat: tokens issued
-    // before this field existed lack `sessionEpoch`; treat them as epoch 0
-    // so existing logins survive the migration but are kicked at next login.
+    // reject tokens minted before the user's current session: superseded
+    // by a newer login, a logout, or a password change.
     const epochRow = await db
       .select({ sessionEpoch: users.sessionEpoch })
       .from(users)
@@ -185,7 +183,7 @@ const getUserByToken = async (token: string | undefined) => {
       .get();
 
     if (!epochRow) return undefined;
-    if ((decoded.sessionEpoch ?? 0) !== epochRow.sessionEpoch) return undefined;
+    if (decoded.sessionEpoch !== epochRow.sessionEpoch) return undefined;
 
     const user = await getUserById(decoded.userId);
 

@@ -2,18 +2,21 @@ import { ServerEvents } from '@caesar/shared';
 import {
   predictionBets,
   predictionOptions,
-  predictionPools,
-  socialCreditLedger
+  predictionPools
 } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
+import {
+  createGameLedgerBindings,
+  withBalanceLock
+} from '@server/games/shared-bindings';
 import { pubsub } from '@server/utils/pubsub';
 import {
   protectedProcedure,
   rateLimitedProcedure,
   t
 } from '@server/utils/trpc';
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import z from 'zod';
 
 const LEDGER_TYPE = 'prediction_pool';
@@ -40,48 +43,8 @@ type TPublicPool = {
   options: { id: number; label: string; total: number; backers: number }[];
 };
 
-const getBalance = async (userId: number): Promise<number> => {
-  const row = await db
-    .select({
-      balance: sql<number>`COALESCE(SUM(${socialCreditLedger.amount}), 0)`
-    })
-    .from(socialCreditLedger)
-    .where(eq(socialCreditLedger.targetId, userId))
-    .get();
-
-  return row?.balance ?? 0;
-};
-
-const createLedgerEntry = async (
-  userId: number,
-  amount: number,
-  poolId: number
-): Promise<number> => {
-  const entry = await db
-    .insert(socialCreditLedger)
-    .values({
-      targetId: userId,
-      ledgerableType: LEDGER_TYPE,
-      ledgerableId: poolId,
-      amount,
-      createdAt: Date.now()
-    })
-    .returning({ id: socialCreditLedger.id })
-    .get();
-
-  return entry.id;
-};
-
-const updateLedgerEntry = async (
-  entryId: number,
-  amount: number
-): Promise<void> => {
-  await db
-    .update(socialCreditLedger)
-    .set({ amount })
-    .where(eq(socialCreditLedger.id, entryId))
-    .run();
-};
+const { getBalance, createLedgerEntry, updateLedgerEntry } =
+  createGameLedgerBindings(LEDGER_TYPE);
 
 // The current pool is simply the most recent one (open, resolved or void). A
 // new pool can only be created once the previous one is no longer open.
@@ -257,42 +220,49 @@ const stakeRoute = rateLimitedProcedure(protectedProcedure, {
       ctx.throwValidationError('optionId', 'Unknown answer');
     }
 
-    // One answer per user; you can top up the same answer, not back two sides.
-    const mine = await db
-      .select()
-      .from(predictionBets)
-      .where(
-        and(
-          eq(predictionBets.poolId, p.id),
-          eq(predictionBets.userId, ctx.userId)
+    // Locked so the one-answer and balance checks hold against a parallel
+    // stake (or a bet in another game) from the same user.
+    await withBalanceLock(ctx.userId, async () => {
+      // One answer per user; you can top up the same answer, not back two sides.
+      const mine = await db
+        .select()
+        .from(predictionBets)
+        .where(
+          and(
+            eq(predictionBets.poolId, p.id),
+            eq(predictionBets.userId, ctx.userId)
+          )
         )
-      )
-      .all();
-    if (mine.length && mine.some((b) => b.optionId !== input.optionId)) {
-      ctx.throwValidationError('optionId', 'You already backed another answer');
-    }
+        .all();
+      if (mine.length && mine.some((b) => b.optionId !== input.optionId)) {
+        ctx.throwValidationError(
+          'optionId',
+          'You already backed another answer'
+        );
+      }
 
-    const balance = await getBalance(ctx.userId);
-    if (balance < input.amount) {
-      ctx.throwValidationError('amount', 'Not enough social credit');
-    }
+      const balance = await getBalance(ctx.userId);
+      if (balance < input.amount) {
+        ctx.throwValidationError('amount', 'Not enough social credit');
+      }
 
-    const ledgerEntryId = await createLedgerEntry(
-      ctx.userId,
-      -input.amount,
-      p.id
-    );
-    await db
-      .insert(predictionBets)
-      .values({
-        poolId: p.id,
-        optionId: input.optionId,
-        userId: ctx.userId,
-        amount: input.amount,
-        ledgerEntryId,
-        createdAt: Date.now()
-      })
-      .run();
+      const ledgerEntryId = await createLedgerEntry(
+        ctx.userId,
+        -input.amount,
+        p.id
+      );
+      await db
+        .insert(predictionBets)
+        .values({
+          poolId: p.id,
+          optionId: input.optionId,
+          userId: ctx.userId,
+          amount: input.amount,
+          ledgerEntryId,
+          createdAt: Date.now()
+        })
+        .run();
+    });
 
     await publishUser(ctx.userId, 'update');
     await broadcast();

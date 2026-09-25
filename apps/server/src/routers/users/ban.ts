@@ -41,7 +41,7 @@ const banRoute = protectedProcedure
       })
       .where(eq(users.id, input.userId));
 
-    publishUser(input.userId, 'update');
+    void publishUser(input.userId, 'update');
 
     enqueueActivityLog({
       type: ActivityLogType.USER_BANNED,

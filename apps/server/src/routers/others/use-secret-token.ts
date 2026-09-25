@@ -4,10 +4,16 @@ import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
 import { getSettings } from '@server/db/queries/server';
 import { invariant } from '@server/utils/invariant';
-import { protectedProcedure } from '@server/utils/trpc';
+import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { z } from 'zod';
 
-const useSecretTokenRoute = protectedProcedure
+// The token grants Owner and is never rotated (it doubles as the HMAC key
+// for IP / file hashing), so guessing must at least be throttled.
+const useSecretTokenRoute = rateLimitedProcedure(protectedProcedure, {
+  maxRequests: 5,
+  windowMs: 60_000,
+  logLabel: 'useSecretToken'
+})
   .input(
     z.object({
       token: z.string()
@@ -28,7 +34,7 @@ const useSecretTokenRoute = protectedProcedure
       createdAt: Date.now()
     });
 
-    publishUser(ctx.userId, 'update');
+    void publishUser(ctx.userId, 'update');
   });
 
 export { useSecretTokenRoute };

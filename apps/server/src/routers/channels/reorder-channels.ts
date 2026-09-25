@@ -37,7 +37,7 @@ const reorderChannelsRoute = protectedProcedure
     });
 
     input.channelIds.forEach((channelId) => {
-      publishChannel(channelId, 'update');
+      void publishChannel(channelId, 'update');
     });
 
     if (input.channelIds.length > 0) {

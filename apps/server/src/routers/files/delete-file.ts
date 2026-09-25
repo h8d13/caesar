@@ -34,14 +34,14 @@ const deleteFileRoute = protectedProcedure
 
     await removeFile(input.fileId);
 
-    publishMessage(message.id, message.channelId, 'update');
+    void publishMessage(message.id, message.channelId, 'update');
 
     const files = await getFilesByMessageId(message.id);
 
     if (isEmptyMessage(message.content) && files.length == 0) {
       await db.delete(messages).where(eq(messages.id, message.id));
 
-      publishMessage(message.id, message.channelId, 'delete');
+      void publishMessage(message.id, message.channelId, 'delete');
     }
   });
 

@@ -33,7 +33,7 @@ const pruneExpiredStatuses = async () => {
   }
 
   for (const userId of affectedUserIds) {
-    publishUser(userId, 'update');
+    void publishUser(userId, 'update');
   }
 };
 

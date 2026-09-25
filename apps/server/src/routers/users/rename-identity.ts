@@ -77,7 +77,7 @@ const renameIdentityRoute = rateLimitedProcedure(protectedProcedure, {
       DisconnectCode.SESSION_SUPERSEDED
     );
 
-    publishUser(input.userId, 'update');
+    void publishUser(input.userId, 'update');
   });
 
 export { renameIdentityRoute };

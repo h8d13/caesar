@@ -100,7 +100,7 @@ const updatePermissionsRoute = protectedProcedure
       input.channelId
     );
 
-    publishChannelPermissions(affectedUserIds);
+    void publishChannelPermissions(affectedUserIds);
     enqueueActivityLog({
       type: ActivityLogType.UPDATED_CHANNEL_PERMISSIONS,
       userId: ctx.user.id,

@@ -359,4 +359,25 @@ describe('/interface', () => {
 
     expect(response.status).toBe(404);
   });
+
+  test('malformed percent-escape is a 400, not a 500', async () => {
+    const response = await fetch(`${testsBaseUrl}/%zz`);
+
+    expect(response.status).toBe(400);
+  });
+
+  test('does not serve a sibling directory sharing the path prefix', async () => {
+    const siblingDir = `${testInterfacePath}-sibling`;
+
+    fs.mkdirSync(siblingDir, { recursive: true });
+    fs.writeFileSync(path.join(siblingDir, 'secret.txt'), 'secret');
+
+    const sibling = path.basename(siblingDir);
+    const response = await fetch(
+      `${testsBaseUrl}/..%2F${sibling}%2Fsecret.txt`
+    );
+
+    expect(response.status).toBe(403);
+    expect(await response.text()).not.toContain('secret');
+  });
 });

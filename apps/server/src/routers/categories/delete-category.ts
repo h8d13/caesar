@@ -29,7 +29,7 @@ const deleteCategoryRoute = protectedProcedure
       .delete(channels)
       .where(eq(channels.categoryId, removedCategory.id));
 
-    publishCategory(removedCategory.id, 'delete');
+    void publishCategory(removedCategory.id, 'delete');
     enqueueActivityLog({
       type: ActivityLogType.DELETED_CATEGORY,
       userId: ctx.user.id,

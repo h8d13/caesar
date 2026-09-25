@@ -31,7 +31,11 @@ describe('isFetchableUrl', () => {
       'http://172.16.0.1',
       'http://0.0.0.0',
       'http://[::1]/',
-      'http://[fc00::1]/'
+      'http://[fc00::1]/',
+      'http://[::ffff:127.0.0.1]/',
+      'http://[::ffff:169.254.169.254]/',
+      'http://100.64.0.1',
+      'http://240.0.0.1'
     ]) {
       expect(isFetchableUrl(url)).toBe(false);
     }

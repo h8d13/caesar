@@ -106,7 +106,7 @@ const toggleMessageScVoteRoute = rateLimitedProcedure(protectedProcedure, {
     }
 
     await publishUser(message.userId, 'update');
-    publishMessage(input.messageId, message.channelId, 'update');
+    void publishMessage(input.messageId, message.channelId, 'update');
   });
 
 export { toggleMessageScVoteRoute };

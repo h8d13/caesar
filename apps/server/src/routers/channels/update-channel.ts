@@ -54,7 +54,7 @@ const updateChannelRoute = protectedProcedure
       ensureUserAccess
     });
 
-    publishChannel(updatedChannel.id, 'update', ensureUserAccess);
+    void publishChannel(updatedChannel.id, 'update', ensureUserAccess);
     enqueueActivityLog({
       type: ActivityLogType.UPDATED_CHANNEL,
       userId: ctx.user.id,

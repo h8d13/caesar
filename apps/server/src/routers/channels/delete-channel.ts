@@ -40,10 +40,10 @@ const deleteChannelRoute = protectedProcedure
     const runtime = VoiceRuntime.findById(removedChannel.id);
 
     if (runtime) {
-      runtime.destroy();
+      void runtime.destroy();
     }
 
-    publishChannel(removedChannel.id, 'delete');
+    void publishChannel(removedChannel.id, 'delete');
     enqueueActivityLog({
       type: ActivityLogType.DELETED_CHANNEL,
       userId: ctx.user.id,

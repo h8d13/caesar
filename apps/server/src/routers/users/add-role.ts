@@ -59,7 +59,7 @@ const addRoleRoute = protectedProcedure
     );
     await publishChannelPermissions([input.userId]);
 
-    publishUser(input.userId, 'update');
+    void publishUser(input.userId, 'update');
   });
 
 export { addRoleRoute };

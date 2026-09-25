@@ -47,7 +47,7 @@ const updateSettingsRoute = protectedProcedure
       storageOverflowAction: input.storageOverflowAction
     });
 
-    publishSettings();
+    void publishSettings();
 
     enqueueActivityLog({
       type: ActivityLogType.EDIT_SERVER_SETTINGS,

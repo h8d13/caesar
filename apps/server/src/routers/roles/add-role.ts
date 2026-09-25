@@ -22,7 +22,7 @@ const addRoleRoute = protectedProcedure.mutation(async ({ ctx }) => {
     .returning()
     .get();
 
-  publishRole(role.id, 'create');
+  void publishRole(role.id, 'create');
   enqueueActivityLog({
     type: ActivityLogType.CREATED_ROLE,
     userId: ctx.user.id,

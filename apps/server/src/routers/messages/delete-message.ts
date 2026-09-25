@@ -57,10 +57,13 @@ const deleteMessageRoute = rateLimitedProcedure(protectedProcedure, {
 
     await db.delete(messages).where(eq(messages.id, input.messageId));
 
-    publishMessage(input.messageId, targetMessage.channelId, 'delete');
+    void publishMessage(input.messageId, targetMessage.channelId, 'delete');
 
     if (targetMessage.parentMessageId) {
-      publishReplyCount(targetMessage.parentMessageId, targetMessage.channelId);
+      void publishReplyCount(
+        targetMessage.parentMessageId,
+        targetMessage.channelId
+      );
     }
   });
 

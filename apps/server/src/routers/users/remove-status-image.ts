@@ -35,7 +35,7 @@ const removeStatusImageRoute = protectedProcedure
     await db.delete(statusImages).where(eq(statusImages.id, input.id)).run();
     await removeFile(story.fileId);
 
-    publishUser(ctx.userId, 'update');
+    void publishUser(ctx.userId, 'update');
   });
 
 export { removeStatusImageRoute };

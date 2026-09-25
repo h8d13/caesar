@@ -45,7 +45,7 @@ const updateEmojiRoute = protectedProcedure
       .returning()
       .get();
 
-    publishEmoji(updatedEmoji.id, 'update');
+    void publishEmoji(updatedEmoji.id, 'update');
     enqueueActivityLog({
       type: ActivityLogType.UPDATED_EMOJI,
       userId: ctx.user.id,

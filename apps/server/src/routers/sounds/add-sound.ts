@@ -35,7 +35,7 @@ const addSoundRoute = protectedProcedure
         .returning()
         .get();
 
-      publishSound(sound.id, 'create');
+      void publishSound(sound.id, 'create');
       enqueueActivityLog({
         type: ActivityLogType.CREATED_SOUND,
         userId: ctx.user.id,

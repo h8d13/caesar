@@ -266,4 +266,41 @@ describe('dms router', () => {
       'Direct messages are disabled on this server'
     );
   });
+
+  test('owner cannot read or search a DM they are not part of', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: userA } = await initTest(3);
+
+    const { channelId } = await userA.dms.open({ userId: 4 });
+
+    await userA.messages.send({
+      channelId,
+      content: 'private-dm-marker',
+      files: []
+    });
+
+    await expect(
+      owner.messages.get({ channelId, cursor: null, limit: 50 })
+    ).rejects.toThrow();
+
+    const scoped = await owner.messages.search({
+      query: 'private-dm-marker',
+      channelId
+    });
+    const global = await owner.messages.search({ query: 'private-dm' });
+
+    expect(scoped).toEqual([]);
+    expect(global.some((m) => m.channelId === channelId)).toBe(false);
+  });
+
+  test('search treats LIKE wildcards literally', async () => {
+    const { caller } = await initTest(1);
+    const { channelId } = await caller.dms.open({ userId: 2 });
+
+    await caller.messages.send({ channelId, content: 'plain', files: [] });
+
+    const results = await caller.messages.search({ query: '_', channelId });
+
+    expect(results).toEqual([]);
+  });
 });

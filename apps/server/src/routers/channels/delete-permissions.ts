@@ -64,7 +64,7 @@ const deletePermissionsRoute = protectedProcedure
       input.channelId
     );
 
-    publishChannelPermissions(affectedUserIds);
+    void publishChannelPermissions(affectedUserIds);
     enqueueActivityLog({
       type: ActivityLogType.DELETED_CHANNEL_PERMISSIONS,
       userId: ctx.user.id,

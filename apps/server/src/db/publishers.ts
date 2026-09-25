@@ -12,6 +12,7 @@ import {
 import { count, eq, inArray } from 'drizzle-orm';
 import { db } from '.';
 import { extractMentionUserIds } from '../helpers/extract-mention-user-ids';
+import { logger } from '../logger';
 import { enqueueMessagePush } from '../queues/web-push';
 import { pubsub } from '../utils/pubsub';
 import {
@@ -26,14 +27,56 @@ import { getPublicSettings } from './queries/server';
 import { getSoundById } from './queries/sounds';
 import { getAllUserIds, getPublicUserById } from './queries/users';
 
-const publishMessage = async (
-  messageId: number | undefined,
-  channelId: number | undefined,
-  type: 'create' | 'update' | 'delete'
-) => {
-  if (!messageId || !channelId) return;
+// Broadcasts announce writes that have already committed, and most callers
+// fire them without awaiting. A failure is logged here instead of rejecting:
+// Node 24 exits the process on an unhandled rejection.
+const logFailures =
+  <A extends unknown[]>(
+    name: string,
+    publish: (...args: A) => Promise<unknown>
+  ) =>
+  async (...args: A): Promise<void> => {
+    try {
+      await publish(...args);
+    } catch (error) {
+      logger.error(`[Publish] ${name} failed:`, error);
+    }
+  };
 
-  if (type === 'delete') {
+const publishMessage = logFailures(
+  'publishMessage',
+  async (
+    messageId: number | undefined,
+    channelId: number | undefined,
+    type: 'create' | 'update' | 'delete'
+  ) => {
+    if (!messageId || !channelId) return;
+
+    if (type === 'delete') {
+      const affectedUserIds = await getAffectedOnlineUserIdsForChannel(
+        channelId,
+        {
+          permission: ChannelPermission.VIEW_CHANNEL
+        }
+      );
+
+      pubsub.publishFor(affectedUserIds, ServerEvents.MESSAGE_DELETE, {
+        messageId: messageId,
+        channelId: channelId
+      });
+
+      return;
+    }
+
+    const message = await getMessage(messageId);
+
+    if (!message) return;
+
+    const targetEvent =
+      type === 'create'
+        ? ServerEvents.NEW_MESSAGE
+        : ServerEvents.MESSAGE_UPDATE;
+
     const affectedUserIds = await getAffectedOnlineUserIdsForChannel(
       channelId,
       {
@@ -41,269 +84,264 @@ const publishMessage = async (
       }
     );
 
-    pubsub.publishFor(affectedUserIds, ServerEvents.MESSAGE_DELETE, {
-      messageId: messageId,
-      channelId: channelId
-    });
+    pubsub.publishFor(affectedUserIds, targetEvent, message);
 
-    return;
-  }
-
-  const message = await getMessage(messageId);
-
-  if (!message) return;
-
-  const targetEvent =
-    type === 'create' ? ServerEvents.NEW_MESSAGE : ServerEvents.MESSAGE_UPDATE;
-
-  const affectedUserIds = await getAffectedOnlineUserIdsForChannel(channelId, {
-    permission: ChannelPermission.VIEW_CHANNEL
-  });
-
-  pubsub.publishFor(affectedUserIds, targetEvent, message);
-
-  // Web Push reaches devices with no live WS connection (closed PWA,
-  // locked phone). Fire-and-forget queue; create only, edits and
-  // metadata re-publishes must not re-notify.
-  if (type === 'create') {
-    enqueueMessagePush({
-      channelId,
-      messageUserId: message.userId,
-      content: message.content ?? null
-    });
-  }
-
-  // thread replies should not increment the channel's unread count
-  if (message.parentMessageId) return;
-
-  // Only `create` bumps the unread counter. `update` covers re-publishes
-  // for edits, sc-vote toggles, file deletions, and the URL-metadata
-  // post-process queue. The metadata queue runs on every send (even
-  // when no URLs are extracted), so without this gate every message
-  // would deliver two deltas and the recipient's unread sits at 2.
-  if (type !== 'create') return;
-
-  // only send unread updates to users OTHER than the message author
-  const usersToNotify = affectedUserIds.filter((id) => id !== message.userId);
-
-  if (usersToNotify.length > 0) {
-    pubsub.publishFor(usersToNotify, ServerEvents.CHANNEL_READ_STATES_DELTA, {
-      channelId,
-      // this was sending the whole unread count before which was causing performance issues, now it just sends a delta of 1 which the client can use to update the unread count
-      // this isn't perfectly accurate in some cases but it should be good enough for most cases and it significantly reduces the amount of work the db has to
-      delta: 1
-    });
-  }
-
-  // notify users who were @mentioned (and can see the channel), excluding the author
-  if (type === 'create' && message.content) {
-    const mentionedIds = extractMentionUserIds(message.content);
-    const affectedSet = new Set(affectedUserIds);
-    const mentionNotify = mentionedIds.filter(
-      (id) => id !== message.userId && affectedSet.has(id)
-    );
-    if (mentionNotify.length > 0) {
-      pubsub.publishFor(mentionNotify, ServerEvents.CHANNEL_MENTION, {
-        channelId
+    // Web Push reaches devices with no live WS connection (closed PWA,
+    // locked phone). Fire-and-forget queue; create only, edits and
+    // metadata re-publishes must not re-notify.
+    if (type === 'create') {
+      enqueueMessagePush({
+        channelId,
+        messageUserId: message.userId,
+        content: message.content ?? null
       });
     }
-  }
-};
 
-const publishEmoji = async (
-  emojiId: number | undefined,
-  type: 'create' | 'update' | 'delete'
-) => {
-  if (!emojiId) return;
+    // thread replies should not increment the channel's unread count
+    if (message.parentMessageId) return;
 
-  if (type === 'delete') {
-    pubsub.publish(ServerEvents.EMOJI_DELETE, emojiId);
-    return;
-  }
+    // Only `create` bumps the unread counter. `update` covers re-publishes
+    // for edits, sc-vote toggles, file deletions, and the URL-metadata
+    // post-process queue. The metadata queue runs on every send (even
+    // when no URLs are extracted), so without this gate every message
+    // would deliver two deltas and the recipient's unread sits at 2.
+    if (type !== 'create') return;
 
-  const emoji = await getEmojiById(emojiId);
+    // only send unread updates to users OTHER than the message author
+    const usersToNotify = affectedUserIds.filter((id) => id !== message.userId);
 
-  if (!emoji) return;
+    if (usersToNotify.length > 0) {
+      pubsub.publishFor(usersToNotify, ServerEvents.CHANNEL_READ_STATES_DELTA, {
+        channelId,
+        // this was sending the whole unread count before which was causing performance issues, now it just sends a delta of 1 which the client can use to update the unread count
+        // this isn't perfectly accurate in some cases but it should be good enough for most cases and it significantly reduces the amount of work the db has to
+        delta: 1
+      });
+    }
 
-  const targetEvent =
-    type === 'create' ? ServerEvents.EMOJI_CREATE : ServerEvents.EMOJI_UPDATE;
-
-  pubsub.publish(targetEvent, emoji);
-};
-
-const publishSound = async (
-  soundId: number | undefined,
-  type: 'create' | 'update' | 'delete'
-) => {
-  if (!soundId) return;
-
-  if (type === 'delete') {
-    pubsub.publish(ServerEvents.SOUND_DELETE, soundId);
-    return;
-  }
-
-  const sound = await getSoundById(soundId);
-
-  if (!sound) return;
-
-  const targetEvent =
-    type === 'create' ? ServerEvents.SOUND_CREATE : ServerEvents.SOUND_UPDATE;
-
-  pubsub.publish(targetEvent, sound);
-};
-
-const publishRole = async (
-  roleId: number | undefined,
-  type: 'create' | 'update' | 'delete'
-) => {
-  if (!roleId) return;
-
-  if (type === 'delete') {
-    pubsub.publish(ServerEvents.ROLE_DELETE, roleId);
-    return;
-  }
-
-  const role = await getRole(roleId);
-
-  if (!role) return;
-
-  const targetEvent =
-    type === 'create' ? ServerEvents.ROLE_CREATE : ServerEvents.ROLE_UPDATE;
-
-  pubsub.publish(targetEvent, role);
-};
-
-const publishUser = async (
-  userId: number | undefined,
-  type: 'create' | 'update'
-) => {
-  if (!userId) return;
-
-  const user = await getPublicUserById(userId);
-
-  if (!user) return;
-
-  const targetEvent =
-    type === 'create' ? ServerEvents.USER_CREATE : ServerEvents.USER_UPDATE;
-
-  // strip self-only flags at the broadcast boundary: these are per-user
-  // settings and must never reach peers. self-targeted updates use the
-  // respective mutation return values to refresh local own-user state.
-  const {
-    appearOffline,
-    allowMultipleSessions,
-    sendDmReadReceipts,
-    ...broadcastUser
-  } = user;
-  void appearOffline;
-  void allowMultipleSessions;
-  void sendDmReadReceipts;
-
-  pubsub.publish(targetEvent, broadcastUser);
-};
-
-const publishChannel = async (
-  channelId: number | undefined,
-  type: 'create' | 'update' | 'delete',
-  ensureUsersAccess = false
-) => {
-  if (!channelId) return;
-
-  if (type === 'delete') {
-    const affectedUserIds = await getAllUserIds();
-
-    pubsub.publishFor(affectedUserIds, ServerEvents.CHANNEL_DELETE, channelId);
-
-    return;
-  }
-
-  const channel = await db
-    .select()
-    .from(channels)
-    .where(eq(channels.id, channelId))
-    .get();
-
-  if (!channel) return;
-
-  const targetEvent =
-    type === 'create'
-      ? ServerEvents.CHANNEL_CREATE
-      : ServerEvents.CHANNEL_UPDATE;
-
-  const affectedUserIds = await getAffectedOnlineUserIdsForChannel(channel.id, {
-    permission: ChannelPermission.VIEW_CHANNEL
-  });
-
-  pubsub.publishFor(affectedUserIds, targetEvent, channel);
-
-  if (ensureUsersAccess) {
-    const allUsers = await db.select({ id: users.id }).from(users).all();
-    const allUserIds = allUsers.map((u) => u.id);
-
-    // ensureUsersAccess is set to true when the private setting changed
-    // was public -> private: we need to publish delete events to users who lost access
-    // was private -> public: we need to publish create events to users who gained access
-
-    if (type === 'update') {
-      if (channel.private) {
-        // channel is now private, so send delete events to users who lost access to it
-        const lostAccessUserIds = allUsers
-          .map((u) => u.id)
-          .filter((id) => !affectedUserIds.includes(id));
-
-        console.log('now private', { lostAccessUserIds });
-
-        if (lostAccessUserIds.length > 0) {
-          pubsub.publishFor(
-            lostAccessUserIds,
-            ServerEvents.CHANNEL_DELETE,
-            channel.id
-          );
-        }
-      } else {
-        console.log('now public', { allUserIds });
-
-        // channel is now public, so all users should have access to it
-        // send a create event
-        // if a user already has the channel in the state it will ignore the create event, so we don't need to worry about that
-        pubsub.publishFor(allUserIds, ServerEvents.CHANNEL_CREATE, channel);
+    // notify users who were @mentioned (and can see the channel), excluding the author
+    if (type === 'create' && message.content) {
+      const mentionedIds = extractMentionUserIds(message.content);
+      const affectedSet = new Set(affectedUserIds);
+      const mentionNotify = mentionedIds.filter(
+        (id) => id !== message.userId && affectedSet.has(id)
+      );
+      if (mentionNotify.length > 0) {
+        pubsub.publishFor(mentionNotify, ServerEvents.CHANNEL_MENTION, {
+          channelId
+        });
       }
     }
   }
-};
+);
 
-const publishSettings = async () => {
+const publishEmoji = logFailures(
+  'publishEmoji',
+  async (emojiId: number | undefined, type: 'create' | 'update' | 'delete') => {
+    if (!emojiId) return;
+
+    if (type === 'delete') {
+      pubsub.publish(ServerEvents.EMOJI_DELETE, emojiId);
+      return;
+    }
+
+    const emoji = await getEmojiById(emojiId);
+
+    if (!emoji) return;
+
+    const targetEvent =
+      type === 'create' ? ServerEvents.EMOJI_CREATE : ServerEvents.EMOJI_UPDATE;
+
+    pubsub.publish(targetEvent, emoji);
+  }
+);
+
+const publishSound = logFailures(
+  'publishSound',
+  async (soundId: number | undefined, type: 'create' | 'update' | 'delete') => {
+    if (!soundId) return;
+
+    if (type === 'delete') {
+      pubsub.publish(ServerEvents.SOUND_DELETE, soundId);
+      return;
+    }
+
+    const sound = await getSoundById(soundId);
+
+    if (!sound) return;
+
+    const targetEvent =
+      type === 'create' ? ServerEvents.SOUND_CREATE : ServerEvents.SOUND_UPDATE;
+
+    pubsub.publish(targetEvent, sound);
+  }
+);
+
+const publishRole = logFailures(
+  'publishRole',
+  async (roleId: number | undefined, type: 'create' | 'update' | 'delete') => {
+    if (!roleId) return;
+
+    if (type === 'delete') {
+      pubsub.publish(ServerEvents.ROLE_DELETE, roleId);
+      return;
+    }
+
+    const role = await getRole(roleId);
+
+    if (!role) return;
+
+    const targetEvent =
+      type === 'create' ? ServerEvents.ROLE_CREATE : ServerEvents.ROLE_UPDATE;
+
+    pubsub.publish(targetEvent, role);
+  }
+);
+
+const publishUser = logFailures(
+  'publishUser',
+  async (userId: number | undefined, type: 'create' | 'update') => {
+    if (!userId) return;
+
+    const user = await getPublicUserById(userId);
+
+    if (!user) return;
+
+    const targetEvent =
+      type === 'create' ? ServerEvents.USER_CREATE : ServerEvents.USER_UPDATE;
+
+    // strip self-only flags at the broadcast boundary: these are per-user
+    // settings and must never reach peers. self-targeted updates use the
+    // respective mutation return values to refresh local own-user state.
+    const {
+      appearOffline,
+      allowMultipleSessions,
+      sendDmReadReceipts,
+      ...broadcastUser
+    } = user;
+    void appearOffline;
+    void allowMultipleSessions;
+    void sendDmReadReceipts;
+
+    pubsub.publish(targetEvent, broadcastUser);
+  }
+);
+
+const publishChannel = logFailures(
+  'publishChannel',
+  async (
+    channelId: number | undefined,
+    type: 'create' | 'update' | 'delete',
+    ensureUsersAccess = false
+  ) => {
+    if (!channelId) return;
+
+    if (type === 'delete') {
+      const affectedUserIds = await getAllUserIds();
+
+      pubsub.publishFor(
+        affectedUserIds,
+        ServerEvents.CHANNEL_DELETE,
+        channelId
+      );
+
+      return;
+    }
+
+    const channel = await db
+      .select()
+      .from(channels)
+      .where(eq(channels.id, channelId))
+      .get();
+
+    if (!channel) return;
+
+    const targetEvent =
+      type === 'create'
+        ? ServerEvents.CHANNEL_CREATE
+        : ServerEvents.CHANNEL_UPDATE;
+
+    const affectedUserIds = await getAffectedOnlineUserIdsForChannel(
+      channel.id,
+      {
+        permission: ChannelPermission.VIEW_CHANNEL
+      }
+    );
+
+    pubsub.publishFor(affectedUserIds, targetEvent, channel);
+
+    if (ensureUsersAccess) {
+      const allUsers = await db.select({ id: users.id }).from(users).all();
+      const allUserIds = allUsers.map((u) => u.id);
+
+      // ensureUsersAccess is set to true when the private setting changed
+      // was public -> private: we need to publish delete events to users who lost access
+      // was private -> public: we need to publish create events to users who gained access
+
+      if (type === 'update') {
+        if (channel.private) {
+          // channel is now private, so send delete events to users who lost access to it
+          const lostAccessUserIds = allUsers
+            .map((u) => u.id)
+            .filter((id) => !affectedUserIds.includes(id));
+
+          console.log('now private', { lostAccessUserIds });
+
+          if (lostAccessUserIds.length > 0) {
+            pubsub.publishFor(
+              lostAccessUserIds,
+              ServerEvents.CHANNEL_DELETE,
+              channel.id
+            );
+          }
+        } else {
+          console.log('now public', { allUserIds });
+
+          // channel is now public, so all users should have access to it
+          // send a create event
+          // if a user already has the channel in the state it will ignore the create event, so we don't need to worry about that
+          pubsub.publishFor(allUserIds, ServerEvents.CHANNEL_CREATE, channel);
+        }
+      }
+    }
+  }
+);
+
+const publishSettings = logFailures('publishSettings', async () => {
   const settings = await getPublicSettings();
 
   pubsub.publish(ServerEvents.SERVER_SETTINGS_UPDATE, settings);
-};
+});
 
-const publishCategory = async (
-  categoryId: number | undefined,
-  type: 'create' | 'update' | 'delete'
-) => {
-  if (!categoryId) return;
+const publishCategory = logFailures(
+  'publishCategory',
+  async (
+    categoryId: number | undefined,
+    type: 'create' | 'update' | 'delete'
+  ) => {
+    if (!categoryId) return;
 
-  if (type === 'delete') {
-    pubsub.publish(ServerEvents.CATEGORY_DELETE, categoryId);
-    return;
+    if (type === 'delete') {
+      pubsub.publish(ServerEvents.CATEGORY_DELETE, categoryId);
+      return;
+    }
+
+    const category = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, categoryId))
+      .get();
+
+    if (!category) return;
+
+    const targetEvent =
+      type === 'create'
+        ? ServerEvents.CATEGORY_CREATE
+        : ServerEvents.CATEGORY_UPDATE;
+
+    pubsub.publish(targetEvent, category);
   }
-
-  const category = await db
-    .select()
-    .from(categories)
-    .where(eq(categories.id, categoryId))
-    .get();
-
-  if (!category) return;
-
-  const targetEvent =
-    type === 'create'
-      ? ServerEvents.CATEGORY_CREATE
-      : ServerEvents.CATEGORY_UPDATE;
-
-  pubsub.publish(targetEvent, category);
-};
+);
 
 const snapshotUserChannelAccess = async (
   userId: number
@@ -314,76 +352,81 @@ const snapshotUserChannelAccess = async (
 
 // Pushes CHANNEL_CREATE/DELETE for the channels whose visibility flipped
 // for this user, after a role or ACL change.
-const publishUserChannelAccessDiff = async (
-  userId: number,
-  before: Set<number>,
-  after: Set<number>
-) => {
-  const added: number[] = [];
-  for (const id of after) if (!before.has(id)) added.push(id);
+const publishUserChannelAccessDiff = logFailures(
+  'publishUserChannelAccessDiff',
+  async (userId: number, before: Set<number>, after: Set<number>) => {
+    const added: number[] = [];
+    for (const id of after) if (!before.has(id)) added.push(id);
 
-  const removed: number[] = [];
-  for (const id of before) if (!after.has(id)) removed.push(id);
+    const removed: number[] = [];
+    for (const id of before) if (!after.has(id)) removed.push(id);
 
-  for (const channelId of removed) {
-    pubsub.publishFor(userId, ServerEvents.CHANNEL_DELETE, channelId);
+    for (const channelId of removed) {
+      pubsub.publishFor(userId, ServerEvents.CHANNEL_DELETE, channelId);
+    }
+
+    if (added.length === 0) return;
+
+    const addedRows = await db
+      .select()
+      .from(channels)
+      .where(inArray(channels.id, added));
+
+    for (const row of addedRows) {
+      pubsub.publishFor(userId, ServerEvents.CHANNEL_CREATE, row);
+    }
   }
+);
 
-  if (added.length === 0) return;
+const publishChannelPermissions = logFailures(
+  'publishChannelPermissions',
+  async (affectedUserIds: number[]) => {
+    const permissionsMap = new Map<number, TChannelUserPermissionsMap>();
+    const promises = affectedUserIds.map(async (userId) => {
+      const updatedPermissions = await getAllChannelUserPermissions(userId);
 
-  const addedRows = await db
-    .select()
-    .from(channels)
-    .where(inArray(channels.id, added));
+      permissionsMap.set(userId, updatedPermissions);
+    });
 
-  for (const row of addedRows) {
-    pubsub.publishFor(userId, ServerEvents.CHANNEL_CREATE, row);
+    await Promise.all(promises);
+
+    for (const userId of affectedUserIds) {
+      const updatedPermissions = permissionsMap.get(userId);
+
+      if (!updatedPermissions) continue;
+
+      pubsub.publishFor(
+        userId,
+        ServerEvents.CHANNEL_PERMISSIONS_UPDATE,
+        updatedPermissions
+      );
+    }
   }
-};
+);
 
-const publishChannelPermissions = async (affectedUserIds: number[]) => {
-  const permissionsMap = new Map<number, TChannelUserPermissionsMap>();
-  const promises = affectedUserIds.map(async (userId) => {
-    const updatedPermissions = await getAllChannelUserPermissions(userId);
+const publishReplyCount = logFailures(
+  'publishReplyCount',
+  async (parentMessageId: number, channelId: number) => {
+    const replyCountRow = await db
+      .select({ count: count() })
+      .from(messages)
+      .where(eq(messages.parentMessageId, parentMessageId))
+      .get();
 
-    permissionsMap.set(userId, updatedPermissions);
-  });
-
-  await Promise.all(promises);
-
-  for (const userId of affectedUserIds) {
-    const updatedPermissions = permissionsMap.get(userId);
-
-    if (!updatedPermissions) continue;
-
-    pubsub.publishFor(
-      userId,
-      ServerEvents.CHANNEL_PERMISSIONS_UPDATE,
-      updatedPermissions
+    const affectedUserIds = await getAffectedOnlineUserIdsForChannel(
+      channelId,
+      {
+        permission: ChannelPermission.VIEW_CHANNEL
+      }
     );
+
+    pubsub.publishFor(affectedUserIds, ServerEvents.THREAD_REPLY_COUNT_UPDATE, {
+      messageId: parentMessageId,
+      channelId,
+      replyCount: replyCountRow?.count ?? 0
+    });
   }
-};
-
-const publishReplyCount = async (
-  parentMessageId: number,
-  channelId: number
-) => {
-  const replyCountRow = await db
-    .select({ count: count() })
-    .from(messages)
-    .where(eq(messages.parentMessageId, parentMessageId))
-    .get();
-
-  const affectedUserIds = await getAffectedOnlineUserIdsForChannel(channelId, {
-    permission: ChannelPermission.VIEW_CHANNEL
-  });
-
-  pubsub.publishFor(affectedUserIds, ServerEvents.THREAD_REPLY_COUNT_UPDATE, {
-    messageId: parentMessageId,
-    channelId,
-    replyCount: replyCountRow?.count ?? 0
-  });
-};
+);
 
 export {
   publishCategory,

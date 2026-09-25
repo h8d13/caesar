@@ -26,7 +26,12 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
       channelId: z.number(),
       cursor: z.number().nullish(),
       targetMessageId: z.number().nullish(),
-      limit: z.number().default(DEFAULT_MESSAGES_LIMIT)
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(DEFAULT_MESSAGES_LIMIT)
+        .default(DEFAULT_MESSAGES_LIMIT)
     })
   )
   .meta({ infinite: true })

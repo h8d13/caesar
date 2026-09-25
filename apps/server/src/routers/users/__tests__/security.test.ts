@@ -1,5 +1,6 @@
 import {
   DELETED_USER_IDENTITY_AND_NAME,
+  OWNER_ROLE_ID,
   Permission,
   sha256
 } from '@caesar/shared';
@@ -551,6 +552,85 @@ describe('role-assignment escalation', () => {
       .where(eq(userRoles.userId, targetId))
       .all();
     expect(assigned.map((r) => r.roleId)).toContain(adminRoleId);
+  });
+});
+
+// Invites and role edits hand out permissions too, so they share the
+// assignment guard: no path may grant what the actor lacks.
+describe('invite and role-edit escalation', () => {
+  test('a MANAGE_INVITES moderator cannot invite into the owner role', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: mod } = await makeModerator(owner, [
+      Permission.MANAGE_INVITES
+    ]);
+
+    await expect(mod.invites.add({ roleId: OWNER_ROLE_ID })).rejects.toThrow(
+      /owner role/i
+    );
+  });
+
+  test('a MANAGE_INVITES moderator cannot invite into a stronger role', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: mod } = await makeModerator(owner, [
+      Permission.MANAGE_INVITES
+    ]);
+
+    const adminRoleId = await owner.roles.add();
+    await owner.roles.update({
+      roleId: adminRoleId,
+      name: 'Admin',
+      color: '#abcdef',
+      permissions: [Permission.MANAGE_SETTINGS],
+      storageQuotaOverrideEnabled: false,
+      storageSpaceQuota: 0
+    });
+
+    await expect(mod.invites.add({ roleId: adminRoleId })).rejects.toThrow(
+      /permissions you do not have/i
+    );
+  });
+
+  test('a MANAGE_ROLES moderator cannot add a permission it lacks', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: mod } = await makeModerator(owner, [
+      Permission.MANAGE_ROLES
+    ]);
+
+    const roleId = await owner.roles.add();
+    const update = (permissions: Permission[]) =>
+      mod.roles.update({
+        roleId,
+        name: 'Edited',
+        color: '#abcdef',
+        permissions,
+        storageQuotaOverrideEnabled: false,
+        storageSpaceQuota: 0
+      });
+
+    await expect(update([Permission.MANAGE_SETTINGS])).rejects.toThrow(
+      /permissions you do not have/i
+    );
+
+    // passing on a held permission stays allowed
+    await update([Permission.MANAGE_ROLES]);
+  });
+
+  test('a MANAGE_ROLES moderator cannot edit the owner role', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: mod } = await makeModerator(owner, [
+      Permission.MANAGE_ROLES
+    ]);
+
+    await expect(
+      mod.roles.update({
+        roleId: OWNER_ROLE_ID,
+        name: 'Renamed',
+        color: '#abcdef',
+        permissions: [],
+        storageQuotaOverrideEnabled: false,
+        storageSpaceQuota: 0
+      })
+    ).rejects.toThrow(/owner role/i);
   });
 });
 

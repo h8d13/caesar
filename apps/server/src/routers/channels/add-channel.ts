@@ -57,7 +57,7 @@ const addChannelRoute = protectedProcedure
       await runtime.init();
     }
 
-    publishChannel(channel.id, 'create');
+    void publishChannel(channel.id, 'create');
     enqueueActivityLog({
       type: ActivityLogType.CREATED_CHANNEL,
       userId: ctx.user.id,

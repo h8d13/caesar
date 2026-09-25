@@ -37,7 +37,7 @@ const deleteRoleRoute = protectedProcedure
     await fallbackUsersToDefaultRole(role.id);
     await db.delete(roles).where(eq(roles.id, role.id));
 
-    publishRole(role.id, 'delete');
+    void publishRole(role.id, 'delete');
     enqueueActivityLog({
       type: ActivityLogType.DELETED_ROLE,
       userId: ctx.user.id,

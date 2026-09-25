@@ -11,7 +11,12 @@ export default defineConfig([
         extends: [js.configs.recommended, ...tseslint.configs.recommended],
         languageOptions: {
             ecmaVersion: 'latest',
-            globals: { ...globals.node, ...globals.commonjs }
+            globals: { ...globals.node, ...globals.commonjs },
+            // type info for no-floating-promises
+            parserOptions: {
+                projectService: true,
+                tsconfigRootDir: import.meta.dirname
+            }
         },
         plugins: {
             'unused-imports': unusedImports
@@ -30,6 +35,9 @@ export default defineConfig([
                 }
             ],
             '@typescript-eslint/no-explicit-any': 'warn',
+            // Node 24 exits on an unhandled rejection, so an un-awaited
+            // async call (e.g. a publisher whose DB query fails) is a crash.
+            '@typescript-eslint/no-floating-promises': 'error',
             'no-restricted-imports': [
                 'warn',
                 {

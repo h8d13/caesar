@@ -66,7 +66,7 @@ const toggleMessageReactionRoute = rateLimitedProcedure(protectedProcedure, {
         );
     }
 
-    publishMessage(input.messageId, message.channelId, 'update');
+    void publishMessage(input.messageId, message.channelId, 'update');
   });
 
 export { toggleMessageReactionRoute };

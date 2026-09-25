@@ -18,7 +18,7 @@ const pruneExpiredMessages = async () => {
 
   for (const m of expired) {
     await db.delete(messages).where(eq(messages.id, m.id));
-    publishMessage(m.id, m.channelId, 'delete');
+    void publishMessage(m.id, m.channelId, 'delete');
   }
 };
 

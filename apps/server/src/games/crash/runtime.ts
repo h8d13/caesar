@@ -8,7 +8,8 @@ import {
 } from '@caesar/shared/games/crash';
 import { db } from '@server/db';
 import { createHash } from 'crypto';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, isNotNull } from 'drizzle-orm';
+import { withBalanceLock } from '../shared-bindings';
 import {
   BETTING_PHASE_DURATION_MS,
   CASHOUT_GRACE_PERIOD_MS,
@@ -88,7 +89,7 @@ class CrashRuntime {
         createdAt: crashRounds.startedAt
       })
       .from(crashRounds)
-      .where(eq(crashRounds.endedAt, crashRounds.endedAt)) // just need non-null, use IS NOT NULL via raw
+      .where(isNotNull(crashRounds.endedAt))
       .orderBy(desc(crashRounds.id))
       .limit(limit)
       .all();
@@ -100,53 +101,56 @@ class CrashRuntime {
     userName: string,
     amount: number
   ): Promise<void> {
-    if (this.phase !== CrashPhase.BETTING) {
-      throw new Error('Bets can only be placed during the betting phase');
-    }
+    // Locked: the one-bet-per-round check only holds once the bet is pushed.
+    return withBalanceLock(userId, async () => {
+      if (this.phase !== CrashPhase.BETTING) {
+        throw new Error('Bets can only be placed during the betting phase');
+      }
 
-    if (amount < MIN_BET || amount > MAX_BET) {
-      throw new Error(`Bet must be between ${MIN_BET} and ${MAX_BET}`);
-    }
+      if (amount < MIN_BET || amount > MAX_BET) {
+        throw new Error(`Bet must be between ${MIN_BET} and ${MAX_BET}`);
+      }
 
-    if (this.activeBets.some((b) => b.userId === userId)) {
-      throw new Error('You already have a bet this round');
-    }
+      if (this.activeBets.some((b) => b.userId === userId)) {
+        throw new Error('You already have a bet this round');
+      }
 
-    const balance = await this.callbacks.getBalance(userId);
-    if (balance < amount) {
-      throw new Error('Insufficient balance');
-    }
+      const balance = await this.callbacks.getBalance(userId);
+      if (balance < amount) {
+        throw new Error('Insufficient balance');
+      }
 
-    const ledgerEntryId = await this.callbacks.createLedgerEntry(
-      userId,
-      -amount,
-      this.roundId
-    );
-
-    const bet = await db
-      .insert(crashBets)
-      .values({
-        roundId: this.roundId,
+      const ledgerEntryId = await this.callbacks.createLedgerEntry(
         userId,
+        -amount,
+        this.roundId
+      );
+
+      const bet = await db
+        .insert(crashBets)
+        .values({
+          roundId: this.roundId,
+          userId,
+          amount,
+          ledgerEntryId,
+          createdAt: Date.now()
+        })
+        .returning({ id: crashBets.id })
+        .get();
+
+      this.activeBets.push({
+        betId: bet.id,
+        userId,
+        userName,
         amount,
         ledgerEntryId,
-        createdAt: Date.now()
-      })
-      .returning({ id: crashBets.id })
-      .get();
+        cashedOutAt: null,
+        profit: null
+      });
 
-    this.activeBets.push({
-      betId: bet.id,
-      userId,
-      userName,
-      amount,
-      ledgerEntryId,
-      cashedOutAt: null,
-      profit: null
+      this.notifyStateSubscribers();
+      await this.callbacks.onUserBalanceChanged(userId);
     });
-
-    this.notifyStateSubscribers();
-    await this.callbacks.onUserBalanceChanged(userId);
   }
 
   async cashOut(userId: number): Promise<void> {

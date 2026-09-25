@@ -1,4 +1,4 @@
-import parse from 'html-react-parser';
+import parse, { type HTMLReactParserOptions } from 'html-react-parser';
 import { renderMarkdown } from './render-markdown';
 import { serializer } from './serializer';
 import type { TFoundMedia } from './types';
@@ -13,9 +13,13 @@ const renderMessageContent = (
     content: string,
     messageId: number,
     pushMedia: (media: TFoundMedia) => void = () => {}
-) =>
-    parse(renderMarkdown(content), {
-        replace: (domNode) => serializer(domNode, pushMedia, messageId)
-    });
+) => {
+    // self-referencing so sanitized elements recurse with the same overrides
+    const options: HTMLReactParserOptions = {
+        replace: (domNode) => serializer(domNode, pushMedia, messageId, options)
+    };
+
+    return parse(renderMarkdown(content), options);
+};
 
 export { renderMessageContent };

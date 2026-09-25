@@ -31,7 +31,7 @@ const deleteEmojiRoute = protectedProcedure
 
     await removeFile(removedEmoji.fileId);
 
-    publishEmoji(removedEmoji.id, 'delete');
+    void publishEmoji(removedEmoji.id, 'delete');
     enqueueActivityLog({
       type: ActivityLogType.DELETED_EMOJI,
       userId: ctx.user.id,

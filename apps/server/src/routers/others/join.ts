@@ -1,5 +1,6 @@
 import { ActivityLogType, ServerEvents, UserStatus } from '@caesar/shared';
 import { categories, users } from '@caesar/shared/db/schema';
+import { config } from '@server/config';
 import { db } from '@server/db';
 import {
   getAllChannelUserPermissions,
@@ -22,8 +23,8 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 const joinServerRoute = rateLimitedProcedure(t.procedure, {
-  maxRequests: 5,
-  windowMs: 60_000,
+  maxRequests: config.rateLimiters.joinServer.maxRequests,
+  windowMs: config.rateLimiters.joinServer.windowMs,
   logLabel: 'joinServer'
 })
   .input(

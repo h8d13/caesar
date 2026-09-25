@@ -3,8 +3,11 @@ import { channels, messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
-import { and, desc, eq, inArray, isNull, like, or } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
+
+// LIKE treats % and _ as wildcards; escape them so the query is literal.
+const escapeLike = (value: string) => value.replace(/[\\%_]/g, '\\$&');
 
 const searchMessagesRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: config.rateLimiters.searchMessages.maxRequests,
@@ -14,7 +17,7 @@ const searchMessagesRoute = rateLimitedProcedure(protectedProcedure, {
   .input(
     z.object({
       query: z.string().min(1).max(200),
-      limit: z.number().default(25),
+      limit: z.number().int().min(1).max(50).default(25),
       // when set, restricts the search to a single channel (DM or text).
       // permission is still verified per-channel via hasChannelPermission.
       channelId: z.number().optional()
@@ -82,7 +85,7 @@ const searchMessagesRoute = rateLimitedProcedure(protectedProcedure, {
       .where(
         and(
           inArray(messages.channelId, accessibleIds),
-          like(messages.content, `%${query}%`),
+          sql`${messages.content} LIKE ${`%${escapeLike(query)}%`} ESCAPE '\\'`,
           isNull(messages.parentMessageId)
         )
       )

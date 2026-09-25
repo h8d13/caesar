@@ -76,6 +76,16 @@ const getRequestPathname = (req: http.IncomingMessage): string | null => {
   }
 };
 
+// decodeURIComponent throws URIError on a malformed escape ("%zz"), which
+// otherwise surfaces as a 500 instead of a client error.
+const safeDecodeURIComponent = (value: string): string | null => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return null;
+  }
+};
+
 const sanitizeFileName = (name: string): string | null => {
   // reject null bytes which can truncate paths on some
   if (name.includes('\0')) {
@@ -95,6 +105,8 @@ const sanitizeFileName = (name: string): string | null => {
   return baseName;
 };
 
+// script-src keeps data: because Vite inlines small `?url` imports (the
+// audio worklet processors) as data: URLs under assetsInlineLimit.
 const buildCsp = (nonce?: string): string => {
   const scriptSrc = nonce
     ? `'self' blob: data: 'wasm-unsafe-eval' 'nonce-${nonce}'`
@@ -111,7 +123,12 @@ const buildCsp = (nonce?: string): string => {
     "media-src 'self' blob:",
     "font-src 'self'",
     'frame-src https://www.youtube-nocookie.com',
-    "frame-ancestors 'none'"
+    "frame-ancestors 'none'",
+    // not covered by default-src: an injected <base> would re-point every
+    // relative URL, a <form> could post anywhere, <object> loads plugins
+    "base-uri 'none'",
+    "form-action 'self'",
+    "object-src 'none'"
   ].join('; ');
 };
 
@@ -204,6 +221,7 @@ export {
   getJsonBody,
   getRequestPathname,
   hasPrefixPathSegment,
+  safeDecodeURIComponent,
   sanitizeFileName,
   sendNotModified
 };

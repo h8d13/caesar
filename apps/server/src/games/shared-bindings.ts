@@ -26,6 +26,30 @@ const gamesProcedure = protectedProcedure.use(
   })
 );
 
+// Per-user serialization for check-then-debit paths. Reading the balance
+// and inserting the debit are separate awaits, so parallel bets (same game
+// or across games) could all pass the check and overdraw. One map shared by
+// every game and the prediction pool closes that across all of them.
+const balanceLocks = new Map<number, Promise<unknown>>();
+
+const withBalanceLock = async <T>(
+  userId: number,
+  fn: () => Promise<T>
+): Promise<T> => {
+  const previous = balanceLocks.get(userId) ?? Promise.resolve();
+  const current = previous.then(fn);
+  // the chain must survive a rejected bet, or one error would wedge the user
+  const tail = current.catch(() => {});
+
+  balanceLocks.set(userId, tail);
+
+  try {
+    return await current;
+  } finally {
+    if (balanceLocks.get(userId) === tail) balanceLocks.delete(userId);
+  }
+};
+
 // The 4 social-credit-ledger touchpoints every game runtime needs:
 // debit/credit a bet, amend it on a settle, broadcast the resulting
 // balance, look up the current balance. Differs across games only in
@@ -72,4 +96,9 @@ const createGameLedgerBindings = (ledgerableType: string) => ({
   }
 });
 
-export { assertGamesEnabled, createGameLedgerBindings, gamesProcedure };
+export {
+  assertGamesEnabled,
+  createGameLedgerBindings,
+  gamesProcedure,
+  withBalanceLock
+};

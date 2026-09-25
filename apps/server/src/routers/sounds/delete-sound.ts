@@ -31,7 +31,7 @@ const deleteSoundRoute = protectedProcedure
 
     await removeFile(removedSound.fileId);
 
-    publishSound(removedSound.id, 'delete');
+    void publishSound(removedSound.id, 'delete');
     enqueueActivityLog({
       type: ActivityLogType.DELETED_SOUND,
       userId: ctx.user.id,

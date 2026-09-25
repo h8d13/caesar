@@ -1,4 +1,9 @@
-import { stripZalgo } from '@caesar/shared';
+import {
+  MESSAGE_ALLOWED_ATTRIBUTES,
+  MESSAGE_ALLOWED_SCHEMES,
+  MESSAGE_ALLOWED_TAGS,
+  stripZalgo
+} from '@caesar/shared';
 import sanitize from 'sanitize-html';
 
 const sanitizeMessageHtml = (html: string): string => {
@@ -9,55 +14,9 @@ const sanitizeMessageHtml = (html: string): string => {
 
   // then sanitize the HTML content
   input = sanitize(input, {
-    // this might need some tweaking in the future
-    allowedTags: [
-      // basic text structure
-      'p',
-      'br',
-      // headings
-      'h1',
-      'h2',
-      'h3',
-      'h4',
-      'h5',
-      'h6',
-      // inline formatting
-      'strong',
-      'em',
-      'code',
-      'pre',
-      's',
-      'i',
-      'u',
-      'hr',
-      'blockquote',
-      // lists
-      'ul',
-      'ol',
-      'li',
-      // links
-      'a',
-      // emoji (span wrapper + img fallback)
-      'span',
-      'img'
-    ],
-    allowedAttributes: {
-      a: ['href', 'target', 'rel'],
-      span: [
-        'data-type',
-        'data-name',
-        'data-user-id',
-        'data-channel-id',
-        'data-channel-type',
-        'class'
-      ],
-      img: ['src', 'alt', 'draggable', 'loading', 'align', 'class'],
-      code: ['class'],
-      pre: ['class'],
-      br: ['class'],
-      '*': []
-    },
-    allowedSchemes: ['http', 'https', 'mailto'],
+    allowedTags: MESSAGE_ALLOWED_TAGS,
+    allowedAttributes: { ...MESSAGE_ALLOWED_ATTRIBUTES, '*': [] },
+    allowedSchemes: MESSAGE_ALLOWED_SCHEMES,
     // disallow any script or event handler attributes globally
     disallowedTagsMode: 'discard'
   });

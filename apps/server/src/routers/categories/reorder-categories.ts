@@ -32,7 +32,7 @@ const reorderCategoriesRoute = protectedProcedure
     });
 
     input.categoryIds.forEach((categoryId) => {
-      publishCategory(categoryId, 'update');
+      void publishCategory(categoryId, 'update');
     });
 
     if (input.categoryIds.length > 0) {

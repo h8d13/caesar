@@ -1,12 +1,13 @@
 import { ActivityLogType, getRandomString, Permission } from '@caesar/shared';
-import { invites, roles } from '@caesar/shared/db/schema';
+import { invites } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { isAtUserCap } from '@server/helpers/user-cap';
 import { enqueueActivityLog } from '@server/queues/activity-log';
+import { assertCanAssignRole } from '@server/routers/users/assert-can-assign-role';
+import { assertCanModifyOwnerRole } from '@server/routers/users/assert-can-modify-owner-role';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
-import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 const addInviteRoute = rateLimitedProcedure(protectedProcedure, {
@@ -29,17 +30,11 @@ const addInviteRoute = rateLimitedProcedure(protectedProcedure, {
       message: 'Instance has reached its user limit. Cannot create new invites.'
     });
 
+    // An invite hands its role to whoever redeems it, so it is a role
+    // assignment and gets the same guards as users.addRole.
     if (input.roleId) {
-      const role = await db
-        .select()
-        .from(roles)
-        .where(eq(roles.id, input.roleId))
-        .get();
-
-      invariant(role, {
-        code: 'NOT_FOUND',
-        message: 'Role not found'
-      });
+      await assertCanModifyOwnerRole(ctx.userId, input.roleId, 'assign');
+      await assertCanAssignRole(ctx.userId, input.roleId);
     }
 
     const newCode = getRandomString(24);

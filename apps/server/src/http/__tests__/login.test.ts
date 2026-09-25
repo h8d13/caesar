@@ -83,6 +83,41 @@ describe('/login', () => {
       const data: any = await response.json();
       expect(data.errors?.identity).toMatch(/letters/);
     }
+
+    // rejected before the invite is touched, so no use was spent
+    const invite = await tdb
+      .select({ uses: invites.uses })
+      .from(invites)
+      .where(eq(invites.code, 'FORMATINVITE'))
+      .get();
+    expect(invite?.uses).toBe(0);
+  });
+
+  test('parallel signups cannot exceed an invite maxUses', async () => {
+    await tdb.insert(invites).values({
+      code: 'SINGLEUSE',
+      creatorId: 1,
+      maxUses: 1,
+      uses: 0,
+      expiresAt: Date.now() + 86400000,
+      createdAt: Date.now()
+    });
+
+    const responses = await Promise.all(
+      ['race-a', 'race-b', 'race-c'].map((identity) =>
+        login(identity, 'password123', 'SINGLEUSE')
+      )
+    );
+
+    const statuses = responses.map((r) => r.status);
+    expect(statuses.filter((s) => s === 200)).toHaveLength(1);
+
+    const invite = await tdb
+      .select({ uses: invites.uses })
+      .from(invites)
+      .where(eq(invites.code, 'SINGLEUSE'))
+      .get();
+    expect(invite?.uses).toBe(1);
   });
 
   test('signup accepts standard alphanumeric and _ / -', async () => {

@@ -9,13 +9,10 @@ import {
 import { logger } from '../logger';
 import { IS_DEVELOPMENT, IS_TEST } from '../utils/env';
 
-// On master (Bun era) this extracted zipped assets from `bun.embeddedFiles`,
-// shipping interface/drizzle/mediasoup-worker baked into the single
-// compiled executable. The Node migration replaces that with a static
-// staging dir baked into the Docker image at /app/static-prod-assets,
-// which we copy into the runtime data dir on each boot. Same effect: the
-// deploy artifact is the source of truth, the on-disk data volume is
-// kept in sync per restart.
+// Prod assets (interface, drizzle migrations, mediasoup-worker) are staged
+// in the Docker image at /app/static-prod-assets and copied into the data
+// dir on each boot: the deploy artifact is the source of truth, the data
+// volume is re-synced per restart.
 
 const STATIC_ASSETS_DIR = path.join(process.cwd(), 'static-prod-assets');
 

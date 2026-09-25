@@ -32,7 +32,7 @@ const addCategoryRoute = protectedProcedure
       .returning()
       .get();
 
-    publishCategory(created.id, 'create');
+    void publishCategory(created.id, 'create');
     enqueueActivityLog({
       type: ActivityLogType.CREATED_CATEGORY,
       userId: ctx.user.id,

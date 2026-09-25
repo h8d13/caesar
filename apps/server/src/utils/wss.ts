@@ -143,12 +143,15 @@ const createContext = async ({
     return permissionsSet.has(targetPermission);
   };
 
-  const hasChannelPermission = async (
+  // 'dm-outsider' is kept apart from 'denied' so needsChannelPermission can
+  // name the reason: callers run it in Promise.all next to assertDmChannel,
+  // and whichever rejects first must not change the error a client sees.
+  const resolveChannelAccess = async (
     channelId: number,
     targetPermission: ChannelPermission,
     // assertChannelAccess passes what it already looked up.
     opts?: TChannelPermissionHints
-  ) => {
+  ): Promise<'allowed' | 'denied' | 'dm-outsider'> => {
     const channel =
       opts?.channel ??
       (await db
@@ -161,27 +164,29 @@ const createContext = async ({
         .limit(1)
         .get());
 
-    if (!channel) return false;
+    if (!channel) return 'denied';
 
+    // DMs are decided by participation alone: the owner bypass below
+    // must never reach another pair's conversation.
     if (channel.isDm) {
       const isParticipant =
         opts?.isDmParticipant ??
         (await isUserDmParticipant(channelId, decodedUser.id));
 
-      if (isParticipant) return true;
+      return isParticipant ? 'allowed' : 'dm-outsider';
     }
 
-    if (!channel.private) return true;
+    if (!channel.private) return 'allowed';
 
     const user = await getUserById(decodedUser.id);
 
-    if (!user) return false;
+    if (!user) return 'denied';
 
     const roles = await getUserRoles(user.id);
 
     const hasOwnerRole = roles.some((r) => r.id === OWNER_ROLE_ID);
 
-    if (hasOwnerRole) return true; // owner always has all permissions
+    if (hasOwnerRole) return 'allowed'; // owner always has all permissions
 
     const userChannelPermissions = await getAllChannelUserPermissions(
       decodedUser.id
@@ -189,11 +194,22 @@ const createContext = async ({
 
     const channelInfo = userChannelPermissions[channelId];
 
-    if (!channelInfo) return false;
-    if (!channelInfo.permissions[ChannelPermission.VIEW_CHANNEL]) return false;
+    if (!channelInfo) return 'denied';
+    if (!channelInfo.permissions[ChannelPermission.VIEW_CHANNEL])
+      return 'denied';
 
-    return channelInfo.permissions[targetPermission] === true;
+    return channelInfo.permissions[targetPermission] === true
+      ? 'allowed'
+      : 'denied';
   };
+
+  const hasChannelPermission = async (
+    channelId: number,
+    targetPermission: ChannelPermission,
+    opts?: TChannelPermissionHints
+  ) =>
+    (await resolveChannelAccess(channelId, targetPermission, opts)) ===
+    'allowed';
 
   const getOwnWs = () => {
     if (!wss) return undefined;
@@ -255,7 +271,18 @@ const createContext = async ({
     targetPermission: ChannelPermission,
     opts?: TChannelPermissionHints
   ) => {
-    invariant(await hasChannelPermission(channelId, targetPermission, opts), {
+    const access = await resolveChannelAccess(
+      channelId,
+      targetPermission,
+      opts
+    );
+
+    invariant(access !== 'dm-outsider', {
+      code: 'FORBIDDEN',
+      message: 'You are not a participant in this DM channel'
+    });
+
+    invariant(access === 'allowed', {
       code: 'FORBIDDEN',
       message: 'Insufficient channel permissions'
     });
@@ -275,7 +302,7 @@ const createContext = async ({
     });
   };
 
-  const saveUserIp = async (userId: number, ip: string) => {
+  const saveUserIp = (userId: number, ip: string) => {
     usersIpMap.set(userId, ip);
   };
 

@@ -12,9 +12,8 @@ const TEST_HASH_OPTIONS = {
   parallelism: 1
 } as const;
 
-// Thin wrapper to keep callsites in the codebase argument-order-stable.
-// Bun.password.verify(password, hash) is reversed vs argon2.verify(hash, password);
-// centralizing here means call sites stay as hashPassword(plain) / verifyPassword(plain, hash).
+// Call sites read (plain, hash); argon2.verify takes (hash, plain). Tests
+// get cheap hashing params.
 const hashPassword = (password: string): Promise<string> =>
   IS_TEST ? argon2.hash(password, TEST_HASH_OPTIONS) : argon2.hash(password);
 

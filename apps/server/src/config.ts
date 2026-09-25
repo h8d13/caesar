@@ -79,106 +79,52 @@ const envConfig = zEnvConfig.parse(
 // in place (read -> merge with defaults -> validate -> write back), so adding
 // or removing a limiter never needs a manual config migration.
 // ---------------------------------------------------------------------------
+const zRateLimiter = z.object({
+  maxRequests: z.coerce.number().int().positive(),
+  windowMs: z.coerce.number().int().positive()
+});
+
+type TRateLimiter = z.infer<typeof zRateLimiter>;
+
+// One entry per limiter. The ini schema is derived from these keys, so a
+// new limiter is a single entry here.
+const rateLimiterDefaults = {
+  sendAndEditMessage: { maxRequests: 15, windowMs: 60_000 },
+  joinVoiceChannel: { maxRequests: 20, windowMs: 60_000 },
+  login: { maxRequests: 5, windowMs: 60_000 },
+  joinServer: { maxRequests: 5, windowMs: 60_000 },
+  signalTyping: { maxRequests: 40, windowMs: 5_000 },
+  getMessages: { maxRequests: 60, windowMs: 10_000 },
+  markAsRead: { maxRequests: 60, windowMs: 10_000 },
+  toggleMessageReaction: { maxRequests: 60, windowMs: 10_000 },
+  addEmoji: { maxRequests: 10, windowMs: 60_000 },
+  openDirectMessage: { maxRequests: 10, windowMs: 60_000 },
+  handshake: { maxRequests: 10, windowMs: 60_000 },
+  publicFile: { maxRequests: 120, windowMs: 60_000 },
+  updatePassword: { maxRequests: 5, windowMs: 60_000 },
+  resetPassword: { maxRequests: 5, windowMs: 60_000 },
+  uploadFile: { maxRequests: 20, windowMs: 60_000 },
+  searchMessages: { maxRequests: 20, windowMs: 60_000 },
+  deleteMessage: { maxRequests: 30, windowMs: 60_000 },
+  toggleMessagePin: { maxRequests: 30, windowMs: 60_000 },
+  toggleMessageScVote: { maxRequests: 30, windowMs: 60_000 },
+  voteSocialCredit: { maxRequests: 20, windowMs: 60_000 },
+  renameIdentity: { maxRequests: 5, windowMs: 60_000 },
+  addInvite: { maxRequests: 10, windowMs: 60_000 },
+  changeAvatar: { maxRequests: 10, windowMs: 60_000 },
+  changeBanner: { maxRequests: 10, windowMs: 60_000 },
+  playSoundboard: { maxRequests: 30, windowMs: 60_000 }
+} satisfies Record<string, TRateLimiter>;
+
+type TRateLimiterName = keyof typeof rateLimiterDefaults;
+
 const zIniConfig = z.object({
-  rateLimiters: z.object({
-    sendAndEditMessage: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    joinVoiceChannel: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    joinServer: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    signalTyping: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    getMessages: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    markAsRead: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    toggleMessageReaction: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    addEmoji: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    openDirectMessage: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    handshake: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    publicFile: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    updatePassword: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    resetPassword: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    uploadFile: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    searchMessages: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    deleteMessage: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    toggleMessagePin: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    toggleMessageScVote: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    voteSocialCredit: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    renameIdentity: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    addInvite: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    changeAvatar: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    changeBanner: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    }),
-    playSoundboard: z.object({
-      maxRequests: z.coerce.number().int().positive(),
-      windowMs: z.coerce.number().int().positive()
-    })
-  }),
-  // Failed-login lockout: escalating, IP-keyed, sits behind the joinServer
+  rateLimiters: z.object(
+    Object.fromEntries(
+      Object.keys(rateLimiterDefaults).map((name) => [name, zRateLimiter])
+    ) as Record<TRateLimiterName, typeof zRateLimiter>
+  ),
+  // Failed-login lockout: escalating, IP-keyed, sits behind the login
   // burst limiter. After maxFailures failures inside windowMs the IP is locked
   // for baseLockMs, doubling per extra failure up to maxLockMs.
   loginLockout: z.object({
@@ -192,104 +138,7 @@ const zIniConfig = z.object({
 type TIniConfig = z.infer<typeof zIniConfig>;
 
 const iniDefaults: TIniConfig = {
-  rateLimiters: {
-    sendAndEditMessage: {
-      maxRequests: 15,
-      windowMs: 60_000
-    },
-    joinVoiceChannel: {
-      maxRequests: 20,
-      windowMs: 60_000
-    },
-    joinServer: {
-      maxRequests: 5,
-      windowMs: 60_000
-    },
-    signalTyping: {
-      maxRequests: 40,
-      windowMs: 5_000
-    },
-    getMessages: {
-      maxRequests: 60,
-      windowMs: 10_000
-    },
-    markAsRead: {
-      maxRequests: 60,
-      windowMs: 10_000
-    },
-    toggleMessageReaction: {
-      maxRequests: 60,
-      windowMs: 10_000
-    },
-    addEmoji: {
-      maxRequests: 10,
-      windowMs: 60_000
-    },
-    openDirectMessage: {
-      maxRequests: 10,
-      windowMs: 60_000
-    },
-    handshake: {
-      maxRequests: 10,
-      windowMs: 60_000
-    },
-    publicFile: {
-      maxRequests: 120,
-      windowMs: 60_000
-    },
-    updatePassword: {
-      maxRequests: 5,
-      windowMs: 60_000
-    },
-    resetPassword: {
-      maxRequests: 5,
-      windowMs: 60_000
-    },
-    uploadFile: {
-      maxRequests: 20,
-      windowMs: 60_000
-    },
-    searchMessages: {
-      maxRequests: 20,
-      windowMs: 60_000
-    },
-    deleteMessage: {
-      maxRequests: 30,
-      windowMs: 60_000
-    },
-    toggleMessagePin: {
-      maxRequests: 30,
-      windowMs: 60_000
-    },
-    toggleMessageScVote: {
-      maxRequests: 30,
-      windowMs: 60_000
-    },
-    voteSocialCredit: {
-      maxRequests: 20,
-      windowMs: 60_000
-    },
-    renameIdentity: {
-      maxRequests: 5,
-      windowMs: 60_000
-    },
-    addInvite: {
-      maxRequests: 10,
-      windowMs: 60_000
-    },
-    changeAvatar: {
-      maxRequests: 10,
-      windowMs: 60_000
-    },
-    changeBanner: {
-      maxRequests: 10,
-      windowMs: 60_000
-    },
-    playSoundboard: {
-      maxRequests: 30,
-      windowMs: 60_000
-    }
-  },
+  rateLimiters: rateLimiterDefaults,
   loginLockout: {
     maxFailures: 10,
     windowMs: 15 * 60_000, // 15 minutes

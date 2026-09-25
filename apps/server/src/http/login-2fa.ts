@@ -6,13 +6,10 @@ import { getUserById } from '../db/queries/users';
 import { getWsInfo } from '../helpers/get-ws-info';
 import { logger } from '../logger';
 import { verifyJwt } from '../utils/jwt-secret';
-import {
-  createRateLimiter,
-  getClientRateLimitKey,
-  getRateLimitRetrySeconds
-} from '../utils/rate-limiters/rate-limiter';
+import { createRateLimiter } from '../utils/rate-limiters/rate-limiter';
 import { verifyLoginAssertion } from '../utils/webauthn';
 import { getJsonBody } from './helpers';
+import { enforceHttpRateLimit } from './rate-limit';
 import { issueSession } from './session';
 import { HttpValidationError } from './utils';
 
@@ -54,27 +51,19 @@ const login2faRouteHandler = async (
   const data = zBody.parse(
     await getJsonBody(req, config.server.maxRequestBodyBytes)
   );
-  const connectionInfo = getWsInfo(undefined, req);
-
-  if (connectionInfo?.ip) {
-    const key = getClientRateLimitKey(connectionInfo.ip);
-    const rateLimit = login2faRateLimiter.consume(key);
-
-    if (!rateLimit.allowed) {
-      res.setHeader(
-        'Retry-After',
-        getRateLimitRetrySeconds(rateLimit.retryAfterMs)
-      );
-      res.writeHead(429, { 'Content-Type': 'application/json' });
-      res.end(
-        JSON.stringify({
-          error: 'Too many 2FA attempts. Please try again shortly.'
-        })
-      );
-
-      return;
-    }
+  if (
+    !enforceHttpRateLimit(
+      req,
+      res,
+      login2faRateLimiter,
+      '/login/2fa',
+      'Too many 2FA attempts. Please try again shortly.'
+    )
+  ) {
+    return;
   }
+
+  const connectionInfo = getWsInfo(undefined, req);
 
   const claims = await verifyPreAuthToken(data.preAuthToken);
 

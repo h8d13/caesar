@@ -68,7 +68,7 @@ const changeBannerRoute = rateLimitedProcedure(protectedProcedure, {
         .where(eq(users.id, ctx.userId));
     }
 
-    publishUser(ctx.userId, 'update');
+    void publishUser(ctx.userId, 'update');
   });
 
 export { changeBannerRoute };

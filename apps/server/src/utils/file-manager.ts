@@ -112,7 +112,8 @@ class TemporaryFileManager {
     this.temporaryFiles.push(tempFile);
 
     this.timeouts[tempFile.id] = setTimeout(() => {
-      this.removeTemporaryFile(tempFile.id);
+      // already saved or deleted by the user: nothing left to expire
+      this.removeTemporaryFile(tempFile.id).catch(() => {});
     }, TEMP_FILE_TTL);
 
     return tempFile;

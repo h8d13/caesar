@@ -7,7 +7,12 @@ import zlib from 'zlib';
 import { INTERFACE_PATH } from '../helpers/paths';
 import { logger } from '../logger';
 import { IS_DEVELOPMENT, IS_TEST } from '../utils/env';
-import { buildCsp, buildEtag, sendNotModified } from './helpers';
+import {
+  buildCsp,
+  buildEtag,
+  safeDecodeURIComponent,
+  sendNotModified
+} from './helpers';
 
 const COMPRESSIBLE_TYPES = new Set([
   'text/html',
@@ -101,15 +106,27 @@ const interfaceRouteHandler = (
 
   const urlPart = subPath.split('?')[0];
 
-  subPath = urlPart ? decodeURIComponent(urlPart) : '/';
-  subPath = subPath === '/' ? 'index.html' : subPath;
+  const decoded = urlPart ? safeDecodeURIComponent(urlPart) : '/';
+
+  if (decoded === null) {
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Bad request' }));
+    return res;
+  }
+
+  subPath = decoded === '/' ? 'index.html' : decoded;
 
   const cleanSubPath = subPath.startsWith('/') ? subPath.slice(1) : subPath;
 
   const requestedPath = path.resolve(INTERFACE_PATH, cleanSubPath);
   const basePath = path.resolve(INTERFACE_PATH);
 
-  if (!requestedPath.startsWith(basePath)) {
+  // separator-anchored: a bare prefix test also admits sibling dirs such
+  // as "<interface>-old"
+  if (
+    requestedPath !== basePath &&
+    !requestedPath.startsWith(basePath + path.sep)
+  ) {
     res.writeHead(403, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Forbidden' }));
     return res;

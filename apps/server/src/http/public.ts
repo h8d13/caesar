@@ -10,15 +10,11 @@ import { getMessageByFileId } from '../db/queries/messages';
 import { getSettings } from '../db/queries/server';
 import { getUserByToken } from '../db/queries/users';
 import { verifyFileToken } from '../helpers/files-crypto';
-import { getWsInfo } from '../helpers/get-ws-info';
 import { PUBLIC_PATH } from '../helpers/paths';
 import { logger } from '../logger';
-import {
-  createRateLimiter,
-  getClientRateLimitKey,
-  getRateLimitRetrySeconds
-} from '../utils/rate-limiters/rate-limiter';
-import { buildEtag, sendNotModified } from './helpers';
+import { createRateLimiter } from '../utils/rate-limiters/rate-limiter';
+import { buildEtag, safeDecodeURIComponent, sendNotModified } from './helpers';
+import { enforceHttpRateLimit } from './rate-limit';
 
 const publicFileRateLimiter = createRateLimiter({
   maxRequests: config.rateLimiters.publicFile.maxRequests,
@@ -81,31 +77,18 @@ const publicRouteHandler = async (
   }
 
   // rate-limit by client IP before any DB work so unauth spam pays nothing
-  const connectionInfo = getWsInfo(undefined, req);
-
-  if (connectionInfo?.ip) {
-    const key = getClientRateLimitKey(connectionInfo.ip);
-    const rateLimit = publicFileRateLimiter.consume(key);
-
-    if (!rateLimit.allowed) {
-      logger.debug(`[Rate Limiter HTTP] /public rate limited for key "${key}"`);
-
-      res.setHeader(
-        'Retry-After',
-        getRateLimitRetrySeconds(rateLimit.retryAfterMs)
-      );
-      res.writeHead(429, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Too many requests' }));
-      return;
-    }
-  } else {
-    logger.warn(
-      '[Rate Limiter HTTP] Missing IP address in request info, skipping rate limiting for /public route.'
-    );
+  if (!enforceHttpRateLimit(req, res, publicFileRateLimiter, '/public')) {
+    return;
   }
 
   const url = new URL(req.url!, `http://${req.headers.host}`);
-  const fileName = decodeURIComponent(path.basename(url.pathname));
+  const fileName = safeDecodeURIComponent(path.basename(url.pathname));
+
+  if (fileName === null) {
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Bad request' }));
+    return;
+  }
 
   const dbFile = await db
     .select()

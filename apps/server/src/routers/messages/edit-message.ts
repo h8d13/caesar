@@ -89,7 +89,7 @@ const editMessageRoute = rateLimitedProcedure(protectedProcedure, {
       })
       .where(eq(messages.id, input.messageId));
 
-    publishMessage(input.messageId, message.channelId, 'update');
+    void publishMessage(input.messageId, message.channelId, 'update');
     enqueueProcessMetadata(finalContent, input.messageId);
   });
 

@@ -1382,7 +1382,7 @@ describe('messages router', () => {
         content: 'Intruding DM',
         files: []
       })
-    ).rejects.toThrow('Insufficient channel permissions');
+    ).rejects.toThrow('You are not a participant in this DM channel');
   });
 
   test('should throw when non-participant tries to signal typing in direct messages', async () => {
@@ -1686,5 +1686,19 @@ describe('messages router', () => {
     await expect(
       caller.messages.toggleScVote({ messageId: 999999, type: 'upvote' })
     ).rejects.toThrow('Too many requests. Please try again shortly.');
+  });
+
+  test('rejects unbounded page sizes', async () => {
+    const { caller } = await initTest(1);
+
+    for (const limit of [10_000, 0, -1]) {
+      await expect(
+        caller.messages.get({ channelId: 1, cursor: null, limit })
+      ).rejects.toThrow();
+    }
+
+    await expect(
+      caller.messages.search({ query: 'x', limit: 10_000 })
+    ).rejects.toThrow();
   });
 });

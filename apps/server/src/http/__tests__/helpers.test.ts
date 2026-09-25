@@ -2,6 +2,7 @@ import { EventEmitter } from 'events';
 import type http from 'http';
 import { describe, expect, test } from 'vitest';
 import {
+  buildCsp,
   getJsonBody,
   getRequestPathname,
   hasPrefixPathSegment
@@ -147,5 +148,15 @@ describe('http helpers', () => {
 
       expect(body.a).toBe('b');
     });
+  });
+});
+
+describe('buildCsp', () => {
+  test('pins directives default-src does not cover', () => {
+    const csp = buildCsp('nonce123');
+
+    expect(csp).toContain("base-uri 'none'");
+    expect(csp).toContain("form-action 'self'");
+    expect(csp).toContain("object-src 'none'");
   });
 });
