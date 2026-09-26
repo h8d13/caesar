@@ -16,17 +16,17 @@ importers:
         specifier: ^6.24.0
         version: 6.24.0
       prettier:
-        specifier: ^3.8.3
-        version: 3.8.3
+        specifier: ^3.9.9
+        version: 3.9.9
       prettier-plugin-organize-imports:
         specifier: ^4.3.0
-        version: 4.3.0(prettier@3.8.3)(typescript@6.0.3)
+        version: 4.3.0(prettier@3.9.9)(typescript@6.0.3)
 
   apps/client:
     dependencies:
       '@caesar/shared':
         specifier: workspace:*
-        version: file:packages/shared(@eslint/js@10.0.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0)))(@libsql/client@0.17.4)(@trpc/client@11.19.0(@trpc/server@11.19.0(typescript@6.0.3))(typescript@6.0.3))(@types/linkify-it@5.0.0)(@types/react@19.2.17)(eslint-plugin-unused-imports@4.4.1(@typescript-eslint/eslint-plugin@8.62.1(@typescript-eslint/parser@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0)))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(globals@17.7.0)(prettier-plugin-organize-imports@4.3.0(prettier@3.8.3)(typescript@6.0.3))(prettier@3.8.3)(typescript-eslint@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(typescript@6.0.3)
+        version: file:packages/shared(@eslint/js@10.0.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0)))(@libsql/client@0.17.4)(@trpc/client@11.19.0(@trpc/server@11.19.0(typescript@6.0.3))(typescript@6.0.3))(@types/linkify-it@5.0.0)(@types/react@19.2.17)(eslint-plugin-unused-imports@4.4.1(@typescript-eslint/eslint-plugin@8.62.1(@typescript-eslint/parser@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0)))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(globals@17.7.0)(prettier-plugin-organize-imports@4.3.0(prettier@3.9.9)(typescript@6.0.3))(prettier@3.9.9)(typescript-eslint@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(typescript@6.0.3)
       '@caesar/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -176,11 +176,11 @@ importers:
         specifier: ^17.7.0
         version: 17.7.0
       prettier:
-        specifier: ^3.8.3
-        version: 3.8.3
+        specifier: ^3.9.9
+        version: 3.9.9
       prettier-plugin-organize-imports:
         specifier: ^4.3.0
-        version: 4.3.0(prettier@3.8.3)(typescript@6.0.3)
+        version: 4.3.0(prettier@3.9.9)(typescript@6.0.3)
       tw-animate-css:
         specifier: ^1.4.0
         version: 1.4.0
@@ -201,7 +201,7 @@ importers:
     dependencies:
       '@caesar/shared':
         specifier: workspace:*
-        version: file:packages/shared(@eslint/js@10.0.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0)))(@libsql/client@0.17.4)(@trpc/client@11.19.0(@trpc/server@11.19.0(typescript@6.0.3))(typescript@6.0.3))(@types/linkify-it@5.0.0)(@types/react@19.2.17)(eslint-plugin-unused-imports@4.4.1(@typescript-eslint/eslint-plugin@8.62.1(@typescript-eslint/parser@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0)))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(globals@17.7.0)(prettier-plugin-organize-imports@4.3.0(prettier@3.8.3)(typescript@6.0.3))(prettier@3.8.3)(typescript-eslint@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(typescript@6.0.3)
+        version: file:packages/shared(@eslint/js@10.0.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0)))(@libsql/client@0.17.4)(@trpc/client@11.19.0(@trpc/server@11.19.0(typescript@6.0.3))(typescript@6.0.3))(@types/linkify-it@5.0.0)(@types/react@19.2.17)(eslint-plugin-unused-imports@4.4.1(@typescript-eslint/eslint-plugin@8.62.1(@typescript-eslint/parser@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0)))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(globals@17.7.0)(prettier-plugin-organize-imports@4.3.0(prettier@3.9.9)(typescript@6.0.3))(prettier@3.9.9)(typescript-eslint@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(typescript@6.0.3)
       '@libsql/client':
         specifier: 0.17.4
         version: 0.17.4
@@ -303,11 +303,11 @@ importers:
         specifier: ^1.0.0-alpha.6
         version: 1.0.0-alpha.6
       prettier:
-        specifier: ^3.8.3
-        version: 3.8.3
+        specifier: ^3.9.9
+        version: 3.9.9
       prettier-plugin-organize-imports:
         specifier: ^4.3.0
-        version: 4.3.0(prettier@3.8.3)(typescript@6.0.3)
+        version: 4.3.0(prettier@3.9.9)(typescript@6.0.3)
       tsx:
         specifier: ^4.22.5
         version: 4.23.0
@@ -354,11 +354,11 @@ importers:
         specifier: 3.27.1
         version: 3.27.1
       prettier:
-        specifier: ^3.8.3
-        version: 3.8.3
+        specifier: ^3.9.9
+        version: 3.9.9
       prettier-plugin-organize-imports:
         specifier: ^4.3.0
-        version: 4.3.0(prettier@3.8.3)(typescript@6.0.3)
+        version: 4.3.0(prettier@3.9.9)(typescript@6.0.3)
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
@@ -377,7 +377,7 @@ importers:
     dependencies:
       '@caesar/shared':
         specifier: workspace:*
-        version: file:packages/shared(@eslint/js@10.0.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0)))(@libsql/client@0.17.4)(@trpc/client@11.19.0(@trpc/server@11.19.0(typescript@6.0.3))(typescript@6.0.3))(@types/linkify-it@5.0.0)(@types/react@19.2.17)(eslint-plugin-unused-imports@4.4.1(@typescript-eslint/eslint-plugin@8.62.1(@typescript-eslint/parser@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0)))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(globals@17.7.0)(prettier-plugin-organize-imports@4.3.0(prettier@3.8.3)(typescript@6.0.3))(prettier@3.8.3)(typescript-eslint@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(typescript@6.0.3)
+        version: file:packages/shared(@eslint/js@10.0.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0)))(@libsql/client@0.17.4)(@trpc/client@11.19.0(@trpc/server@11.19.0(typescript@6.0.3))(typescript@6.0.3))(@types/linkify-it@5.0.0)(@types/react@19.2.17)(eslint-plugin-unused-imports@4.4.1(@typescript-eslint/eslint-plugin@8.62.1(@typescript-eslint/parser@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0)))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(globals@17.7.0)(prettier-plugin-organize-imports@4.3.0(prettier@3.9.9)(typescript@6.0.3))(prettier@3.9.9)(typescript-eslint@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(typescript@6.0.3)
       '@radix-ui/react-alert-dialog':
         specifier: ^1.1.23
         version: 1.1.23(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -473,11 +473,11 @@ importers:
         specifier: ^17.7.0
         version: 17.7.0
       prettier:
-        specifier: ^3.8.3
-        version: 3.8.3
+        specifier: ^3.9.9
+        version: 3.9.9
       prettier-plugin-organize-imports:
         specifier: ^4.3.0
-        version: 4.3.0(prettier@3.8.3)(typescript@6.0.3)
+        version: 4.3.0(prettier@3.9.9)(typescript@6.0.3)
       typescript:
         specifier: ~6.0.3
         version: 6.0.3
@@ -564,7 +564,7 @@ packages:
       eslint: ^10.6.0
       eslint-plugin-unused-imports: ^4.4.1
       globals: ^17.7.0
-      prettier: ^3.8.3
+      prettier: ^3.9.9
       prettier-plugin-organize-imports: ^4.3.0
       typescript: ~6.0.3
       typescript-eslint: ^8.62.1
@@ -3208,8 +3208,8 @@ packages:
       vue-tsc:
         optional: true
 
-  prettier@3.8.3:
-    resolution: {integrity: sha512-7igPTM53cGHMW8xWuVTydi2KO233VFiTNyF5hLJqpilHfmn8C8gPf+PS7dUT64YcXFbiMGZxS9pCSxL/Dxm/Jw==}
+  prettier@3.9.9:
+    resolution: {integrity: sha512-Z/CJHIkdujO/OtN7nXUii0Rf3VT5SRuhjBA82Xvu2XhBUgX3nhP67T0LHceBdQLex7OOFGTox+Q5Yg8Jk2Qivg==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -3846,7 +3846,7 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
 
-  '@caesar/shared@file:packages/shared(@eslint/js@10.0.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0)))(@libsql/client@0.17.4)(@trpc/client@11.19.0(@trpc/server@11.19.0(typescript@6.0.3))(typescript@6.0.3))(@types/linkify-it@5.0.0)(@types/react@19.2.17)(eslint-plugin-unused-imports@4.4.1(@typescript-eslint/eslint-plugin@8.62.1(@typescript-eslint/parser@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0)))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(globals@17.7.0)(prettier-plugin-organize-imports@4.3.0(prettier@3.8.3)(typescript@6.0.3))(prettier@3.8.3)(typescript-eslint@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(typescript@6.0.3)':
+  '@caesar/shared@file:packages/shared(@eslint/js@10.0.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0)))(@libsql/client@0.17.4)(@trpc/client@11.19.0(@trpc/server@11.19.0(typescript@6.0.3))(typescript@6.0.3))(@types/linkify-it@5.0.0)(@types/react@19.2.17)(eslint-plugin-unused-imports@4.4.1(@typescript-eslint/eslint-plugin@8.62.1(@typescript-eslint/parser@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0)))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(globals@17.7.0)(prettier-plugin-organize-imports@4.3.0(prettier@3.9.9)(typescript@6.0.3))(prettier@3.9.9)(typescript-eslint@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(typescript@6.0.3)':
     dependencies:
       '@eslint/js': 10.0.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))
       '@trpc/client': 11.19.0(@trpc/server@11.19.0(typescript@6.0.3))(typescript@6.0.3)
@@ -3859,8 +3859,8 @@ snapshots:
       js-sha256: 0.12.0
       linkify-it: 5.0.2
       mediasoup: 3.27.1
-      prettier: 3.8.3
-      prettier-plugin-organize-imports: 4.3.0(prettier@3.8.3)(typescript@6.0.3)
+      prettier: 3.9.9
+      prettier-plugin-organize-imports: 4.3.0(prettier@3.9.9)(typescript@6.0.3)
       typescript: 6.0.3
       typescript-eslint: 8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3)
     transitivePeerDependencies:
@@ -6341,12 +6341,12 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-organize-imports@4.3.0(prettier@3.8.3)(typescript@6.0.3):
+  prettier-plugin-organize-imports@4.3.0(prettier@3.9.9)(typescript@6.0.3):
     dependencies:
-      prettier: 3.8.3
+      prettier: 3.9.9
       typescript: 6.0.3
 
-  prettier@3.8.3: {}
+  prettier@3.9.9: {}
 
   promise-limit@2.7.0: {}
 
