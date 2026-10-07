@@ -16,7 +16,7 @@ catalog:
   '@types/react-dom': ^19.3.0
   clsx: ^2.1.1
   drizzle-orm: ^0.45.3
-  eslint: ^10.6.0
+  eslint: ^10.12.0
   eslint-plugin-unused-imports: ^4.4.1
   globals: ^17.7.0
   lucide-react: ^1.47.0
