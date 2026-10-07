@@ -1,28 +1,28 @@
 # syntax=docker/dockerfile:1.27@sha256:bde3983e9c939224420ddaf6b784cc30e09b035a4dea01f581230c50809f372e
 ARG CAESAR_BUILD_VERSION
 
-FROM node:24.18.0-slim@sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc AS builder
+# trixie = Debian 13, same glibc as the cc-debian13 runtime below. mediasoup's
+# postinstall self-tests its prebuilt worker here; the kernel7 build (picked
+# on kernel 7 hosts) needs glibc >= 2.38 and fails on bookworm.
+FROM node:24.18.0-trixie-slim@sha256:ae91dcc111a68c9d2d81ff2a17bda61be126426176fde6fe7d08ab13b7f50573 AS builder
 ARG CAESAR_BUILD_VERSION
 ENV CAESAR_BUILD_VERSION=${CAESAR_BUILD_VERSION}
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
-
-# Tells mediasoup-node's postinstall to skip its local build. We fetch
-# the kernel6 prebuilt below and copy it into the runtime data dir at
-# startup via embeds.ts.
-ENV MEDIASOUP_WORKER_BIN=/usr/local/bin/mediasoup-worker
+# Store = the BuildKit cache mount below. Being a separate mount it can't
+# hardlink into /app, so pnpm 12 would otherwise fall back to a fresh store in
+# node_modules and re-download every build; copying from the cache is cheaper.
+ENV pnpm_config_store_dir=/pnpm/store
 
 RUN corepack enable
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy only manifests first so the (slow) install + worker-fetch layers stay
-# cached across source edits. Previously `COPY . .` preceded install, so any
-# code change re-ran pnpm install and re-downloaded the worker, regenerating
-# ~500MB of build-cache layers every rebuild.
+# Copy only manifests first so the (slow) install layer, mediasoup worker
+# download included, stays cached across source edits.
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
 COPY apps/client/package.json ./apps/client/
 COPY apps/server/package.json ./apps/server/
@@ -38,14 +38,7 @@ COPY packages/ui ./packages/ui
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile
 
-# Worker fetch only needs the script + server manifest (already present), so
-# it caches until the pinned mediasoup version (or target arch) changes.
-# TARGETARCH (amd64/arm64) is auto-set by BuildKit; the script normalizes it.
-ARG TARGETARCH
-COPY scripts ./scripts
-RUN ARCH=${TARGETARCH} scripts/fetch-mediasoup-worker.sh /usr/local/bin
-
-# Now the source; edits below this line no longer bust install/fetch.
+# Now the source; edits below this line no longer bust the install.
 COPY . .
 
 RUN pnpm --filter @caesar/client build
@@ -53,8 +46,9 @@ RUN pnpm --filter @caesar/client build
 RUN pnpm --filter @caesar/server build:sea
 
 # Prod node_modules for the externalized deps (argon2 native bindings +
-# mediasoup JS wrapper). The SEA binary expects to find these at
-# /app/node_modules at runtime (process.cwd() == /app).
+# mediasoup, whose postinstall downloaded the prebuilt worker for this
+# arch/kernel). The SEA binary expects to find these at /app/node_modules at
+# runtime (process.cwd() == /app); mediasoup resolves its worker from there.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm --filter @caesar/server deploy --prod /deploy/server
 
@@ -66,7 +60,6 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 RUN mkdir -p /out/app/static-prod-assets /out/home/node/.config/caesar \
     && cp -r /app/apps/client/dist /out/app/static-prod-assets/interface \
     && cp -r /app/apps/server/src/db/migrations /out/app/static-prod-assets/drizzle \
-    && cp /usr/local/bin/mediasoup-worker /out/app/static-prod-assets/mediasoup-worker \
     && cp -r /deploy/server/node_modules /out/app/node_modules \
     && cp /app/apps/server/dist/caesar /out/caesar
 

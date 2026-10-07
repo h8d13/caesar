@@ -19,11 +19,7 @@ const TMP_PATH = path.join(DATA_PATH, 'tmp');
 const UPLOADS_PATH = path.join(DATA_PATH, 'uploads');
 const INTERFACE_PATH = path.resolve(DATA_PATH, 'interface', SERVER_VERSION);
 const DRIZZLE_PATH = path.resolve(DATA_PATH, 'drizzle');
-const MEDIASOUP_PATH = path.resolve(DATA_PATH, 'mediasoup');
 const CONFIG_INI_PATH = path.resolve(DATA_PATH, 'config.ini');
-const MEDIASOUP_BINARY_PATH = IS_DEVELOPMENT
-  ? undefined
-  : path.join(MEDIASOUP_PATH, 'mediasoup-worker');
 const SRC_MIGRATIONS_PATH = path.join(process.cwd(), 'src', 'db', 'migrations');
 
 // logs live with docker / operator, not persisted on disk.
@@ -34,8 +30,6 @@ export {
   DB_PATH,
   DRIZZLE_PATH,
   INTERFACE_PATH,
-  MEDIASOUP_BINARY_PATH,
-  MEDIASOUP_PATH,
   PUBLIC_PATH,
   SRC_MIGRATIONS_PATH,
   TMP_PATH,

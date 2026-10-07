@@ -1,0 +1,55 @@
+name: caesar-prod-dev
+
+# Prod-dev: the checkout built with Dockerfile.prod, served on
+# https://localhost:8443 by Caddy's internal CA. Own project name, ports and
+# container names, so it runs next to a real prod stack.
+#   docker compose -f compose.prod-dev.yaml up --build
+#   docker compose -f compose.prod-dev.yaml down     (wipes app data)
+# Set CAESAR_WEBRTC_ANNOUNCED_ADDRESS=<lan-ip> only when testing from
+# another device on the LAN; localhost-only works without it.
+
+services:
+  caesar:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      args:
+        CAESAR_BUILD_VERSION: ${CAESAR_BUILD_VERSION:-}
+    container_name: caesar-prod-dev
+    restart: "no"
+    stop_grace_period: 2s
+    # Same port inside and out: mediasoup announces its listen port in ICE
+    # candidates. 41000 stays clear of prod's 40000+ worker ranges.
+    ports:
+      - "41000:41000/tcp"
+      - "41000:41000/udp"
+    environment:
+      CAESAR_PORT: "4991"
+      CAESAR_WEBRTC_PORT: "41000"
+      CAESAR_WEBRTC_ANNOUNCED_ADDRESS: ${CAESAR_WEBRTC_ANNOUNCED_ADDRESS:-}
+      CAESAR_SITE: "localhost:8443"
+    # No data volume on purpose: data lives in the container, `down` starts
+    # the next run clean. The repo's config.ini applies, same as prod.
+    volumes:
+      - ./config.ini:/home/node/.config/caesar/config.ini:ro
+
+  caddy:
+    image: docker.io/library/caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
+    container_name: caesar-caddy-prod-dev
+    restart: "no"
+    depends_on:
+      - caesar
+    ports:
+      - "8443:8443/tcp"
+      - "8443:8443/udp" # HTTP/3
+    command: >-
+      caddy reverse-proxy --internal-certs
+      --from localhost:8443
+      --to caesar:4991
+    # Keeps the local CA stable so it only has to be trusted on the host once
+    # (service workers refuse untrusted certs), see wiki Dev#prod-dev-testing.
+    volumes:
+      - caddy_data:/data
+
+volumes:
+  caddy_data:

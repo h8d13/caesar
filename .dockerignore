@@ -5,8 +5,9 @@
 .direnv
 .idea
 .envrc
+.env
+.env.*
 
-data
 data-test
 experiments
 
@@ -20,7 +21,9 @@ apps/server/build/temp
 
 caddy
 docker-compose.yaml
+compose.*.yaml
 Dockerfile.*
+config.ini
 .dockerignore
 
 LICENSE

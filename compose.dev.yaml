@@ -1,0 +1,46 @@
+name: caesar-dev
+
+# Dev with nothing but a container engine on the host: the repo is
+# bind-mounted, edits hot-reload (vite HMR for the client, tsx watch for the
+# server). node_modules live in volumes so no host node/pnpm is involved.
+#   docker compose -f compose.dev.yaml up --build     http://localhost:5173
+#   docker compose -f compose.dev.yaml exec caesar pnpm test   (or magic, lint...)
+# Dev data: apps/server/data (gitignored), owner token useToken("dev").
+
+services:
+  caesar:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: caesar-dev
+    restart: "no"
+    stop_grace_period: 5s
+    # optional dev-only knobs (CAESAR_DEBUG, ...), gitignored like .env
+    env_file:
+      - path: .env.dev
+        required: false
+    # host loopback only: dev listens on 0.0.0.0 inside the container
+    ports:
+      - "127.0.0.1:5173:5173/tcp"
+      - "127.0.0.1:4991:4991/tcp"
+      - "127.0.0.1:40000:40000/tcp"
+      - "127.0.0.1:40000:40000/udp"
+    volumes:
+      - .:/app
+      # One volume per node_modules so the host tree never gets any; they
+      # shadow whatever node_modules dirs exist in the checkout.
+      - node_modules:/app/node_modules
+      - client_node_modules:/app/apps/client/node_modules
+      - server_node_modules:/app/apps/server/node_modules
+      - shared_node_modules:/app/packages/shared/node_modules
+      - ui_node_modules:/app/packages/ui/node_modules
+      # corepack's pnpm binary; the package store lives in node_modules
+      - pnpm:/pnpm
+
+volumes:
+  node_modules:
+  client_node_modules:
+  server_node_modules:
+  shared_node_modules:
+  ui_node_modules:
+  pnpm:

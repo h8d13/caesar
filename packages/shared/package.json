@@ -23,26 +23,23 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@types/node": "^24.13.2",
-    "vitest": "^4.1.9"
-  },
-  "peerDependencies": {
-    "@types/react": "^19.2.17",
-    "typescript": "~6.0.3",
+    "@eslint/js": "catalog:",
     "@types/linkify-it": "^5.0.0",
-    "@eslint/js": "^10.0.1",
-    "eslint": "^10.6.0",
-    "eslint-plugin-unused-imports": "^4.4.1",
-    "globals": "^17.7.0",
-    "prettier": "^3.8.3",
-    "prettier-plugin-organize-imports": "^4.3.0",
-    "typescript-eslint": "^8.62.1",
-    "@trpc/client": "^11.18.0"
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "eslint-plugin-unused-imports": "catalog:",
+    "globals": "catalog:",
+    "prettier": "catalog:",
+    "prettier-plugin-organize-imports": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:",
+    "vitest": "catalog:"
   },
   "dependencies": {
-    "drizzle-orm": "^0.45.3",
+    "@trpc/client": "catalog:",
+    "drizzle-orm": "catalog:",
     "js-sha256": "^0.12.0",
     "linkify-it": "^5.0.2",
-    "mediasoup": "3.27.1"
+    "mediasoup": "catalog:"
   }
 }

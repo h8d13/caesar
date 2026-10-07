@@ -1,41 +1,48 @@
 name: caesar
 
+# Production: published image + Caddy HTTPS. Works as a standalone download,
+# with docker compose or rootless podman-compose:
+#   docker compose up -d                          (first run / start)
+#   docker compose pull && docker compose up -d   (update)
+# Local builds of the checkout: compose.prod-dev.yaml. Settings: .env and
+# config.ini, see wiki Configuration. Aliases / extra instances: wiki Home#custom-caddyfile.
+
 services:
-  # assumes x86_64 mediasoup-worker prebuilt is fetched auto for linux-x64
   caesar:
-    # up.sh builds and tags locally; plain `up` pulls the published image
-    image: ghcr.io/h8d13/caesar:latest
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
-      args:
-        CAESAR_BUILD_VERSION: ${CAESAR_BUILD_VERSION:-}
+    # latest = newest release, x.y.z to pin, edge = master
+    image: ghcr.io/h8d13/caesar:${CAESAR_IMAGE_TAG:-latest}
     container_name: caesar
     restart: unless-stopped
     stop_grace_period: 2s
     cpus: "4"
-    profiles: ["prod"]
     ports:
       - "40000-40002:40000-40002/tcp"
       - "40000-40002:40000-40002/udp"
+    # Every knob from wiki Configuration goes in .env and reaches the server
+    # through env_file. `environment:` wins over it, so defaults that differ
+    # from the server's own (or that caddy shares) are `${VAR:-default}`.
+    env_file:
+      - path: .env
+        required: false
     environment:
       CAESAR_PORT: ${CAESAR_PORT:-4991}
-      CAESAR_WEBRTC_WORKERS: "3"
       CAESAR_SITE: ${CAESAR_SITE:-localhost}
-      # See wiki Configuration.
-      CAESAR_TRUSTED_PROXY_HOPS: "1"
+      # must match the published 40000+ range above
+      CAESAR_WEBRTC_WORKERS: ${CAESAR_WEBRTC_WORKERS:-3}
+    # Named volume: first mount copies the image's DATA_PATH, owned by uid
+    # 1000, so it is writable under any engine/userns without a host chown.
+    # config.ini (rate limits) must exist next to this file: a missing bind
+    # source gets created as a directory and the server refuses to boot.
     volumes:
-      - ./data:/home/node/.config/caesar
+      - caesar_data:/home/node/.config/caesar
+      - ./config.ini:/home/node/.config/caesar/config.ini:ro
 
-  # HTTPS reverse proxy. `caddy reverse-proxy` instead of a Caddyfile so the
-  # compose file alone runs the published image (podman-compose ignores
-  # top-level configs). Aliases / extra instances: wiki Home#custom-caddyfile
-  # (gitignored docker-compose.override.yaml + caddy/Caddyfile).
+  # `caddy reverse-proxy` instead of a Caddyfile so this file alone is enough
+  # (podman-compose ignores top-level configs).
   caddy:
     image: docker.io/library/caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
     container_name: caesar-caddy
     restart: unless-stopped
-    profiles: ["prod"]
     depends_on:
       - caesar
     ports:
@@ -51,78 +58,7 @@ services:
       - caddy_data:/data
       - caddy_config:/config
 
-  # Prod-dev: real prod binary + self-signed HTTPS on :8443, sibling of
-  # the prod stack. Coexists with the prod profile (different ports +
-  # container names + data volume). `up.sh --prod-dev` removes the
-  # caesar-prod-dev-data volume before each run so every test starts clean.
-  # Named volume, not a bind mount: ownership comes from the image (uid 1000)
-  # instead of the host, so rootless podman works without chown/unshare.
-  # Set CAESAR_WEBRTC_ANNOUNCED_ADDRESS=<lan-ip> only when testing from
-  # another device on the LAN; localhost-only works without it.
-  caesar-prod-dev:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
-      args:
-        CAESAR_BUILD_VERSION: ${CAESAR_BUILD_VERSION:-}
-    container_name: caesar-prod-dev
-    restart: "no"
-    stop_grace_period: 2s
-    profiles: ["prod-dev"]
-    ports:
-      - "40001:40000/tcp"
-      - "40001:40000/udp"
-    environment:
-      CAESAR_PORT: "4991"
-      CAESAR_WEBRTC_ANNOUNCED_ADDRESS: ${CAESAR_WEBRTC_ANNOUNCED_ADDRESS:-}
-      CAESAR_SITE: "localhost:8443"
-    volumes:
-      - caesar_prod_dev_data:/home/node/.config/caesar
-
-  caddy-prod-dev:
-    image: docker.io/library/caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
-    container_name: caesar-caddy-prod-dev
-    restart: "no"
-    profiles: ["prod-dev"]
-    depends_on:
-      - caesar-prod-dev
-    ports:
-      - "8443:8443/tcp"
-      - "8443:8443/udp" # HTTP/3
-    command: >-
-      caddy reverse-proxy --internal-certs
-      --from localhost:8443
-      --to caesar-prod-dev:4991
-    # Keeps the local CA stable so it only has to be trusted on the host once
-    # (service workers refuse untrusted certs), see wiki Dev#prod-dev-testing.
-    volumes:
-      - caddy_prod_dev_data:/data
-
-  # Dev: pnpm install + Vite + Node server
-  caesar-dev:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
-    container_name: caesar-dev
-    restart: unless-stopped
-    profiles: ["dev"]
-    ports:
-      - "4991:4991/tcp"
-      - "5173:5173/tcp"
-      - "40000:40000/tcp"
-      - "40000:40000/udp"
-    environment:
-      CAESAR_PORT: "4991"
-    volumes:
-      - ./data:/home/node/.config/caesar
-      # here named volume would be more appropriate
-
 volumes:
+  caesar_data:
   caddy_data:
   caddy_config:
-  caddy_prod_dev_data:
-  # fixed name so up.sh can wipe it without knowing the project prefix
-  caesar_prod_dev_data:
-    name: caesar-prod-dev-data
-
-#caesar_data:

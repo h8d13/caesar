@@ -1,11 +1,8 @@
-import { existsSync } from 'fs';
 import fs from 'fs/promises';
-import { parse, stringify } from 'ini';
 import z from 'zod';
 import { applyEnvOverrides } from './helpers/apply-env-overrides';
-import { deepMerge } from './helpers/deep-merge';
 import { ensureServerDirs } from './helpers/ensure-server-dirs';
-import { getErrorMessage } from './helpers/get-error-message';
+import { iniDefaults, parseIniConfig } from './helpers/ini-config';
 import { getPrivateIp, getPublicIp } from './helpers/network';
 import { CONFIG_INI_PATH } from './helpers/paths';
 import { IS_DEVELOPMENT } from './utils/env';
@@ -75,113 +72,30 @@ const envConfig = zEnvConfig.parse(
 );
 
 // ---------------------------------------------------------------------------
-// Ini-backed config: rate-limiter policy. Persisted to config.ini and migrated
-// in place (read -> merge with defaults -> validate -> write back), so adding
-// or removing a limiter never needs a manual config migration.
+// Ini-backed config: rate-limiter policy, see helpers/ini-config. Read-only:
+// absent file = defaults, bad file = boot error naming the keys.
 // ---------------------------------------------------------------------------
-const zRateLimiter = z.object({
-  maxRequests: z.coerce.number().int().positive(),
-  windowMs: z.coerce.number().int().positive()
-});
+const loadIniConfig = async () => {
+  const stat = await fs.stat(CONFIG_INI_PATH).catch(() => undefined);
 
-type TRateLimiter = z.infer<typeof zRateLimiter>;
+  if (!stat) return iniDefaults;
 
-// One entry per limiter. The ini schema is derived from these keys, so a
-// new limiter is a single entry here.
-const rateLimiterDefaults = {
-  sendAndEditMessage: { maxRequests: 15, windowMs: 60_000 },
-  joinVoiceChannel: { maxRequests: 20, windowMs: 60_000 },
-  login: { maxRequests: 5, windowMs: 60_000 },
-  joinServer: { maxRequests: 5, windowMs: 60_000 },
-  signalTyping: { maxRequests: 40, windowMs: 5_000 },
-  getMessages: { maxRequests: 60, windowMs: 10_000 },
-  markAsRead: { maxRequests: 60, windowMs: 10_000 },
-  toggleMessageReaction: { maxRequests: 60, windowMs: 10_000 },
-  addEmoji: { maxRequests: 10, windowMs: 60_000 },
-  openDirectMessage: { maxRequests: 10, windowMs: 60_000 },
-  handshake: { maxRequests: 10, windowMs: 60_000 },
-  publicFile: { maxRequests: 120, windowMs: 60_000 },
-  updatePassword: { maxRequests: 5, windowMs: 60_000 },
-  resetPassword: { maxRequests: 5, windowMs: 60_000 },
-  uploadFile: { maxRequests: 20, windowMs: 60_000 },
-  searchMessages: { maxRequests: 20, windowMs: 60_000 },
-  deleteMessage: { maxRequests: 30, windowMs: 60_000 },
-  toggleMessagePin: { maxRequests: 30, windowMs: 60_000 },
-  toggleMessageScVote: { maxRequests: 30, windowMs: 60_000 },
-  voteSocialCredit: { maxRequests: 20, windowMs: 60_000 },
-  renameIdentity: { maxRequests: 5, windowMs: 60_000 },
-  addInvite: { maxRequests: 10, windowMs: 60_000 },
-  changeAvatar: { maxRequests: 10, windowMs: 60_000 },
-  changeBanner: { maxRequests: 10, windowMs: 60_000 },
-  playSoundboard: { maxRequests: 30, windowMs: 60_000 }
-} satisfies Record<string, TRateLimiter>;
-
-type TRateLimiterName = keyof typeof rateLimiterDefaults;
-
-const zIniConfig = z.object({
-  rateLimiters: z.object(
-    Object.fromEntries(
-      Object.keys(rateLimiterDefaults).map((name) => [name, zRateLimiter])
-    ) as Record<TRateLimiterName, typeof zRateLimiter>
-  ),
-  // Failed-login lockout: escalating, IP-keyed, sits behind the login
-  // burst limiter. After maxFailures failures inside windowMs the IP is locked
-  // for baseLockMs, doubling per extra failure up to maxLockMs.
-  loginLockout: z.object({
-    maxFailures: z.coerce.number().int().positive(),
-    windowMs: z.coerce.number().int().positive(),
-    baseLockMs: z.coerce.number().int().positive(),
-    maxLockMs: z.coerce.number().int().positive()
-  })
-});
-
-type TIniConfig = z.infer<typeof zIniConfig>;
-
-const iniDefaults: TIniConfig = {
-  rateLimiters: rateLimiterDefaults,
-  loginLockout: {
-    maxFailures: 10,
-    windowMs: 15 * 60_000, // 15 minutes
-    baseLockMs: 5 * 60_000, // 5 minutes
-    maxLockMs: 60 * 60_000 // 1 hour
+  // A bind mount of a missing host file makes docker/podman create a
+  // directory in its place; say so instead of failing with EISDIR.
+  if (stat.isDirectory()) {
+    throw new Error(
+      `${CONFIG_INI_PATH} is a directory: config.ini was missing next to ` +
+        'docker-compose.yaml when the container was created. Download it, ' +
+        'remove the directory, then recreate the container.'
+    );
   }
-};
 
-let iniConfig: TIniConfig = structuredClone(iniDefaults);
+  return parseIniConfig(await fs.readFile(CONFIG_INI_PATH, 'utf-8'));
+};
 
 await ensureServerDirs();
 
-const configExists = existsSync(CONFIG_INI_PATH);
-
-if (!configExists) {
-  // config does not exist, create it with the default config
-  await fs.writeFile(CONFIG_INI_PATH, stringify(iniConfig));
-} else {
-  try {
-    // config exists, we need to make sure it is up to date with the schema
-    // to make this easy, we will read the existing config, merge it with the default config, and write it back to the file
-    // this way we don't have to worry about migrating old config files when we add/remove config options
-    const existingConfigText = await fs.readFile(CONFIG_INI_PATH, {
-      encoding: 'utf-8'
-    });
-
-    const existingConfig = parse(existingConfigText) as Partial<TIniConfig>;
-    const mergedConfig = deepMerge(iniConfig, existingConfig);
-
-    // parse strips unknown keys, so any legacy [server]/[webRtc]/[limits]
-    // sections left in an old config.ini are dropped on write-back.
-    iniConfig = zIniConfig.parse(mergedConfig);
-
-    await fs.writeFile(CONFIG_INI_PATH, stringify(iniConfig));
-  } catch (error) {
-    // something went wrong, just log the error and overwrite the config file with the default config
-    console.error(
-      `Error reading or parsing config.ini. Overwriting with default config. Error: ${getErrorMessage(error)}`
-    );
-
-    await fs.writeFile(CONFIG_INI_PATH, stringify(iniConfig));
-  }
-}
+const iniConfig = await loadIniConfig();
 
 const config = Object.freeze({ ...envConfig, ...iniConfig });
 

@@ -1,7 +1,6 @@
 import mediasoup from 'mediasoup';
 import { config, SERVER_PUBLIC_IP } from '../config.js';
 import { getErrorMessage } from '../helpers/get-error-message.js';
-import { MEDIASOUP_BINARY_PATH } from '../helpers/paths.js';
 import { logger } from '../logger.js';
 import { IS_PRODUCTION } from './env.js';
 
@@ -36,23 +35,21 @@ const resolveLogLevel = (): mediasoup.types.WorkerLogLevel => {
   return IS_PRODUCTION ? 'warn' : 'debug';
 };
 
+// Always 0.0.0.0: dev runs in a container too, where 127.0.0.1 is the
+// container's own loopback and unreachable through published ports. Dev
+// clients sit on the same host, so it announces 127.0.0.1 (compose.dev.yaml
+// publishes on host loopback only).
 const buildListenInfos = (port: number) => {
-  if (IS_PRODUCTION) {
-    const announcedAddress = config.webRtc.announcedAddress || SERVER_PUBLIC_IP;
-    return {
-      listenInfos: [
-        { protocol: 'udp' as const, ip: '0.0.0.0', announcedAddress, port },
-        { protocol: 'tcp' as const, ip: '0.0.0.0', announcedAddress, port }
-      ],
-      summary: { ip: '0.0.0.0', announcedAddress }
-    };
-  }
+  const announcedAddress =
+    config.webRtc.announcedAddress ||
+    (IS_PRODUCTION ? SERVER_PUBLIC_IP : '127.0.0.1');
+
   return {
     listenInfos: [
-      { protocol: 'udp' as const, ip: '127.0.0.1', port },
-      { protocol: 'tcp' as const, ip: '127.0.0.1', port }
+      { protocol: 'udp' as const, ip: '0.0.0.0', announcedAddress, port },
+      { protocol: 'tcp' as const, ip: '0.0.0.0', announcedAddress, port }
     ],
-    summary: { ip: '127.0.0.1' }
+    summary: { ip: '0.0.0.0', announcedAddress }
   };
 };
 
@@ -68,8 +65,7 @@ const loadMediasoup = async () => {
   for (let i = 0; i < count; i++) {
     const workerConfig = {
       logLevel,
-      disableLiburing: true,
-      workerBin: MEDIASOUP_BINARY_PATH
+      disableLiburing: true
     };
 
     let worker: mediasoup.types.Worker<mediasoup.types.AppData>;

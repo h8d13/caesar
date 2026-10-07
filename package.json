@@ -2,10 +2,10 @@
   "name": "caesar",
   "version": "0.0.0",
   "private": true,
-  "packageManager": "pnpm@11.17.0",
+  "packageManager": "pnpm@12.9.1",
   "engines": {
     "node": ">=24.18.0",
-    "pnpm": ">=11.17.0"
+    "pnpm": "^12.9.1"
   },
   "scripts": {
     "test": "pnpm -r --if-present test",
@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "knip": "^6.24.0",
-    "prettier": "^3.8.3",
-    "prettier-plugin-organize-imports": "^4.3.0"
+    "prettier": "catalog:",
+    "prettier-plugin-organize-imports": "catalog:"
   }
 }

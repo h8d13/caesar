@@ -2,12 +2,40 @@ packages:
   - 'apps/*'
   - 'packages/*'
 
-# Whitelist of native deps whose postinstall scripts we permit.
-# strictDepBuilds defaults to true as of pnpm 11; kept explicit so it also
-# fails closed on pnpm 10.
-# (mediasoup still requires python+pip to build the worker locally; ship a
-# prebuilt mediasoup-worker binary in deploy artifacts to skip that.)
-strictDepBuilds: true
+# One version per dep shared by several packages, so overlapping
+# packages resolve to a single copy. strict: `pnpm add` of a cataloged
+# dep must use `catalog:`, so ranges can't drift apart again.
+catalogMode: strict
+catalog:
+  '@eslint/js': ^10.0.1
+  # client and server must match
+  '@trpc/client': ^11.19.0
+  '@trpc/server': ^11.19.0
+  '@types/node': ^24.13.2
+  '@types/react': ^19.2.17
+  '@types/react-dom': ^19.2.3
+  clsx: ^2.1.1
+  drizzle-orm: ^0.45.3
+  eslint: ^10.6.0
+  eslint-plugin-unused-imports: ^4.4.1
+  globals: ^17.7.0
+  lucide-react: ^1.47.0
+  mediasoup: 3.27.1
+  prettier: ^3.8.3
+  prettier-plugin-organize-imports: ^4.3.0
+  react: ^19.3.0
+  react-dom: ^19.3.0
+  sonner: ^2.0.8
+  tailwind-merge: ^3.7.0
+  tailwindcss: ^4.3.3
+  typescript: ~6.0.3
+  typescript-eslint: ^8.62.1
+  vitest: ^4.1.9
+
+# Whitelist of native deps whose postinstall scripts we permit; anything
+# else with a build script fails the install (pnpm's default strictDepBuilds).
+# (mediasoup's postinstall downloads a prebuilt worker for linux x64/arm64,
+# kernel 6/7; it only falls back to a python+pip source build without one.)
 allowBuilds:
   argon2: true
   # drizzle-orm declares better-sqlite3 as a peer dep, so pnpm installs
@@ -31,13 +59,8 @@ minimumReleaseAge: 1440
 overrides:
   '@libsql/client': '0.17.4'
 
-# pnpm 10's `deploy` command requires workspace packages to be injected
+# `pnpm deploy` requires workspace packages to be injected
 # (hardlinked into the deploy node_modules) instead of symlinked, so the
 # deployed artifact is self-contained outside the monorepo. Without this
 # flag pnpm errors with ERR_PNPM_DEPLOY_NONINJECTED_WORKSPACE.
 injectWorkspacePackages: true
-
-# Bootstrap the pnpm version pinned by `packageManager` in package.json,
-# so contributors don't have to run corepack themselves. CI already
-# defers to packageManager (see .github/workflows/ci.yml).
-managePackageManagerVersions: true

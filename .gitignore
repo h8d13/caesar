@@ -1,5 +1,4 @@
 /node_modules
-/vendor
 .direnv/
 data/
 data-test/
@@ -9,6 +8,7 @@ data-test/
 .note**
 .env
 .env.*
+!.env.example
 .key
 .key.*
 

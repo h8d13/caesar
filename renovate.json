@@ -46,10 +46,10 @@
       "groupName": "node runtime"
     },
     {
-      "matchPackageNames": ["typescript", "@types/node", "mediasoup"],
+      "matchPackageNames": ["typescript", "@types/node", "mediasoup", "pnpm"],
       "matchUpdateTypes": ["major"],
       "dependencyDashboardApproval": true,
-      "description": "ts/node/mediasoup majors must be approved on the dashboard"
+      "description": "ts/node/mediasoup/pnpm majors must be approved on the dashboard"
     },
     {
       "matchPackageNames": ["mediasoup", "argon2", "better-sqlite3"],

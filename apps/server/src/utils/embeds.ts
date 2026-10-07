@@ -3,13 +3,12 @@ import path from 'path';
 import {
   DRIZZLE_PATH,
   INTERFACE_PATH,
-  MEDIASOUP_PATH,
   SRC_MIGRATIONS_PATH
 } from '../helpers/paths';
 import { logger } from '../logger';
 import { IS_DEVELOPMENT, IS_TEST } from '../utils/env';
 
-// Prod assets (interface, drizzle migrations, mediasoup-worker) are staged
+// Prod assets (interface, drizzle migrations) are staged
 // in the Docker image at /app/static-prod-assets and copied into the data
 // dir on each boot: the deploy artifact is the source of truth, the data
 // volume is re-synced per restart.
@@ -48,19 +47,6 @@ const loadEmbeds = async () => {
   } catch (error) {
     logger.error('Failed to copy drizzle migrations:', error);
     process.exit(1);
-  }
-
-  // mediasoup-worker binary. fs.cp preserves the executable bit.
-  try {
-    logger.debug('Extracting mediasoup-worker binary');
-    await fs.mkdir(MEDIASOUP_PATH, { recursive: true });
-    await fs.cp(
-      path.join(STATIC_ASSETS_DIR, 'mediasoup-worker'),
-      path.join(MEDIASOUP_PATH, 'mediasoup-worker')
-    );
-    await fs.chmod(path.join(MEDIASOUP_PATH, 'mediasoup-worker'), 0o755);
-  } catch (error) {
-    logger.error('Failed to copy mediasoup-worker:', error);
   }
 };
 

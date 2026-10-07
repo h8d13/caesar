@@ -1,31 +1,26 @@
 # syntax=docker/dockerfile:1.27@sha256:bde3983e9c939224420ddaf6b784cc30e09b035a4dea01f581230c50809f372e
-FROM node:24.18.0-slim@sha256:b31e7a42fdf8b8aa5f5ed477c72d694301273f1069c5a2f71d53c6482e99a2fc
+# Toolchain only: the source is bind-mounted at runtime (compose.dev.yaml),
+# node_modules and pnpm's home live in volumes, so the host needs no node.
+FROM node:24.18.0-trixie-slim@sha256:ae91dcc111a68c9d2d81ff2a17bda61be126426176fde6fe7d08ab13b7f50573
 
-ENV PNPM_HOME=/pnpm
+# corepack's pnpm binary cache lives in the /pnpm volume. The package store
+# defaults to node_modules/.pnpm-store (pnpm 12+, when the home dir can't
+# hardlink to the project): same volume as node_modules, so hardlinks work.
+ENV PNPM_HOME=/pnpm \
+    COREPACK_HOME=/pnpm/corepack \
+    COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 ENV PATH=$PNPM_HOME:$PATH
-ENV MEDIASOUP_WORKER_BIN=/usr/local/bin/mediasoup-worker
 
-# pnpm via corepack (bundled with Node 24).
 RUN corepack enable
 
 # argon2 still needs node-gyp (build-essential, python3). mediasoup's
-# build is skipped via MEDIASOUP_WORKER_BIN + the script below, so we
-# don't need python3-pip here.
+# postinstall downloads its prebuilt worker, so no python3-pip here.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential python3 ca-certificates curl \
+    build-essential python3 ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+COPY --chmod=755 scripts/dev-entry.sh /usr/local/bin/dev-entry
+
 WORKDIR /app
-
-COPY . .
-
-# Fetch the kernel6 prebuilt before install so mediasoup's postinstall
-# sees MEDIASOUP_WORKER_BIN and short-circuits.
-RUN scripts/fetch-mediasoup-worker.sh /usr/local/bin
-
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile
-
 EXPOSE 4991 5173 40000
-
-CMD ["sh", "-c", "cd apps/client && pnpm dev --host 0.0.0.0 & cd apps/server && pnpm dev"]
+CMD ["dev-entry"]

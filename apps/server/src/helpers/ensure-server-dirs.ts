@@ -4,10 +4,7 @@ import * as serverPaths from './paths';
 
 const ensureServerDirs = async () => {
   const pathsList = Object.values(serverPaths);
-  const IGNORE_LIST = [
-    serverPaths.SRC_MIGRATIONS_PATH,
-    serverPaths.MEDIASOUP_BINARY_PATH
-  ];
+  const IGNORE_LIST = [serverPaths.SRC_MIGRATIONS_PATH];
 
   const promises = pathsList.map(async (dir) => {
     if (!dir || typeof dir !== 'string') return;

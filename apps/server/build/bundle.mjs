@@ -4,7 +4,7 @@
 // Everything that loads a .node binding or spawns a worker must be
 // external; bundled JS cant resolve runtime `require('@scope/native')`.
 //   - argon2: native bindings via node-gyp-build.
-//   - mediasoup: native worker binary (MEDIASOUP_WORKER_BIN) + flatbuffers.
+//   - mediasoup: native worker binary (resolved from its package) + flatbuffers.
 //   - @libsql/client + libsql: native sqlite bindings under @libsql/*-*.
 
 import { execSync } from 'node:child_process';
