@@ -54,7 +54,7 @@
     "ini": "^7.0.0",
     "ipaddr.js": "^2.5.0",
     "jsonwebtoken": "^9.0.3",
-    "link-preview-js": "^4.0.4",
+    "link-preview-js": "^5.0.0",
     "mediasoup": "catalog:",
     "mime-types": "^3.0.2",
     "queue": "^7.0.0",
