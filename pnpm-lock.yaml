@@ -557,8 +557,8 @@ importers:
         specifier: 'catalog:'
         version: 0.45.3(@libsql/client@0.18.0)
       js-sha256:
-        specifier: ^0.12.0
-        version: 0.12.0
+        specifier: ^1.0.0
+        version: 1.0.0
       linkify-it:
         specifier: ^5.0.2
         version: 5.0.2
@@ -3085,8 +3085,8 @@ packages:
   js-base64@3.7.8:
     resolution: {integrity: sha512-hNngCeKxIUQiEUN3GPJOkz4wF/YvdUdbNL9hsBcMQTkKzboD7T/q3OYOuuPZLUE6dBxSGpwhk5mwuDud7JVAow==}
 
-  js-sha256@0.12.0:
-    resolution: {integrity: sha512-P2IyTRMIHCkLD9clcQST8wGP/wqOXjvDD7E3onloE/5LSQGscyrmk2Loa069YsdtLfQWN1EnMDiaomAs9AfP4w==}
+  js-sha256@1.0.0:
+    resolution: {integrity: sha512-Bqxf6ENUzYIMzuELCmRNrJOVbjKH1oMgbfYJBKVr/W1Xf9fazpahqCbb24v1pR7XV1isuqhM+w9KWpK7zCyUQw==}
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -6145,7 +6145,7 @@ snapshots:
 
   js-base64@3.7.8: {}
 
-  js-sha256@0.12.0: {}
+  js-sha256@1.0.0: {}
 
   js-tokens@4.0.0: {}
 
