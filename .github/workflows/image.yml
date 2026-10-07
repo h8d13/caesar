@@ -1,7 +1,14 @@
 name: Image
 
-# Publishes Dockerfile.prod to ghcr.io/<owner>/caesar.
+# Publishes Dockerfile.prod to ghcr.io/<owner>/caesar as one multi-arch tag.
 # master -> :edge, tag v1.2.3 -> :1.2.3 :1.2 :latest, every build -> :sha-<short>
+#
+# Each arch builds on its own native runner (no QEMU: the SEA copies the
+# running node binary and pnpm picks native addons for the host arch), pushes
+# an untagged image by digest, then `merge` tags both digests as one index.
+# Provenance lives in GitHub attestations, not the registry (buildx's in-index
+# attestations list as unknown/unknown on ghcr). Verify with:
+#   gh attestation verify oci://ghcr.io/<owner>/caesar:<tag> --owner <owner>
 
 on:
   push:
@@ -15,14 +22,29 @@ permissions:
   contents: read
   packages: write # GITHUB_TOKEN can push to ghcr, no PAT needed
 
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
 
-  image:
-    name: Build and push
+  build:
+    name: Build ${{ matrix.arch }}
     needs: ci
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+      id-token: write # sigstore signing for attestations
+      attestations: write
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
 
     steps:
       - name: Checkout repository
@@ -38,9 +60,77 @@ jobs:
             echo "value=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
           fi
 
-      # arm64 runs emulated; Dockerfile.prod resolves the worker via TARGETARCH
-      - name: Setup QEMU
-        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+
+      - name: Login to ghcr.io
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Labels only, tags are applied once in merge
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
+        with:
+          images: ${{ env.IMAGE }}
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: .
+          file: Dockerfile.prod
+          platforms: linux/${{ matrix.arch }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: CAESAR_BUILD_VERSION=${{ steps.version.outputs.value }}
+          provenance: false
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          # per-arch scope, otherwise the two runners evict each other's layers
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to: type=gha,scope=${{ matrix.arch }},mode=max
+
+      # Per-arch digest: what `podman/docker inspect` shows on a running host
+      - name: Attest provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+
+      - name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/digests"
+          touch "$RUNNER_TEMP/digests/${DIGEST#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: digest-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    name: Tag multi-arch image
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write # sigstore signing for attestations
+      attestations: write
+
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digest-*
+          merge-multiple: true
 
       - name: Setup Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
@@ -56,22 +146,39 @@ jobs:
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ${{ env.IMAGE }}
           tags: |
             type=edge,branch=master
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha
 
-      - name: Build and push
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+      # One index pointing at both per-arch digests, under every tag
+      - name: Create manifest list
+        working-directory: ${{ runner.temp }}/digests
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          args=()
+          for tag in $TAGS; do
+            args+=(-t "$tag")
+          done
+          for digest in *; do
+            args+=("$IMAGE@sha256:$digest")
+          done
+          docker buildx imagetools create "${args[@]}"
+
+      - name: Inspect
+        id: index
+        run: |
+          ref="$IMAGE:sha-${GITHUB_SHA::7}"
+          docker buildx imagetools inspect "$ref"
+          digest=$(docker buildx imagetools inspect "$ref" --format '{{json .Manifest}}' | jq -r .digest)
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+
+      # Index digest: what a tag resolves to for `gh attestation verify`
+      - name: Attest provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
         with:
-          context: .
-          file: Dockerfile.prod
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: CAESAR_BUILD_VERSION=${{ steps.version.outputs.value }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.index.outputs.digest }}
