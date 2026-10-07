@@ -57,7 +57,7 @@ minimumReleaseAge: 1440
 # per libsql version found in the graph), and TS sees them as different
 # types ("Type '...drizzle-orm@x/y/Column' is not assignable to ...").
 overrides:
-  '@libsql/client': '0.17.4'
+  '@libsql/client': '0.18.0'
 
 # `pnpm deploy` requires workspace packages to be injected
 # (hardlinked into the deploy node_modules) instead of symlinked, so the
