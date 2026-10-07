@@ -3,6 +3,8 @@ name: caesar
 services:
   # assumes x86_64 mediasoup-worker prebuilt is fetched auto for linux-x64
   caesar:
+    # up.sh builds and tags locally; plain `up` pulls the published image
+    image: ghcr.io/h8d13/caesar:latest
     build:
       context: .
       dockerfile: Dockerfile.prod
@@ -25,9 +27,12 @@ services:
     volumes:
       - ./data:/home/node/.config/caesar
 
-  # HTTPS reverse proxy see caddy/Caddyfile
+  # HTTPS reverse proxy. `caddy reverse-proxy` instead of a Caddyfile so the
+  # compose file alone runs the published image (podman-compose ignores
+  # top-level configs). Aliases / extra instances: wiki Home#custom-caddyfile
+  # (gitignored docker-compose.override.yaml + caddy/Caddyfile).
   caddy:
-    image: caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
+    image: docker.io/library/caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
     container_name: caesar-caddy
     restart: unless-stopped
     profiles: ["prod"]
@@ -37,14 +42,12 @@ services:
       - "80:80/tcp"
       - "443:443/tcp"
       - "443:443/udp"
-    environment:
-      CAESAR_SITE: ${CAESAR_SITE:-localhost}
-      # Caddy substitutes this at config load, so the proxy target follows
-      # CAESAR_PORT instead of the Caddyfile's hardcoded 4991 fallback.
-      # Same default as the caesar service above; changing one changes both.
-      CAESAR_UPSTREAM: caesar:${CAESAR_PORT:-4991}
+    # Same defaults as the caesar service above; changing one changes both.
+    command: >-
+      caddy reverse-proxy
+      --from ${CAESAR_SITE:-localhost}
+      --to caesar:${CAESAR_PORT:-4991}
     volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
 
@@ -76,7 +79,7 @@ services:
       - ./data-prod-dev:/home/node/.config/caesar
 
   caddy-prod-dev:
-    image: caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
+    image: docker.io/library/caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
     container_name: caesar-caddy-prod-dev
     restart: "no"
     profiles: ["prod-dev"]
@@ -84,12 +87,10 @@ services:
       - caesar-prod-dev
     ports:
       - "8443:8443"
-    environment:
-      CAESAR_SITE: "localhost:8443"
-      CAESAR_TLS_DIRECTIVE: "tls internal"
-      CAESAR_UPSTREAM: "caesar-prod-dev:4991"
-    volumes:
-      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+    command: >-
+      caddy reverse-proxy --internal-certs
+      --from localhost:8443
+      --to caesar-prod-dev:4991
 
   # Dev: pnpm install + Vite + Node server
   caesar-dev:

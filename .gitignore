@@ -13,3 +13,7 @@ data-test/
 .key
 .key.*
 
+
+# local deploy customization, see wiki Home#custom-caddyfile
+docker-compose.override.yaml
+caddy/Caddyfile

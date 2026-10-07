@@ -1,4 +1,4 @@
-// CAESAR_SITE does double duty: caddy/Caddyfile uses it as the site address
+// CAESAR_SITE does double duty: Caddy uses it as the site address
 // (cert name + Host matcher + listen port) while the server derives the
 // WebAuthn RP ID and expected origin from it. Caddy accepts several addresses
 // in one site block ("a.com, www.a.com"), so a multi-host value loads fine on
@@ -19,7 +19,7 @@ const parseSite = (caesarSite: string | undefined): TSite => {
     throw new Error(
       `CAESAR_SITE must be a single host, got "${site}". Point it at the ` +
         'canonical host and redirect the aliases with their own site block ' +
-        'in caddy/Caddyfile.'
+        'in the Caddyfile.'
     );
   }
 
