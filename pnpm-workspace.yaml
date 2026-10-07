@@ -11,7 +11,7 @@ catalog:
   # client and server must match
   '@trpc/client': ^11.19.0
   '@trpc/server': ^11.19.0
-  '@types/node': ^24.13.2
+  '@types/node': ^24.19.1
   '@types/react': ^19.3.0
   '@types/react-dom': ^19.3.0
   clsx: ^2.1.1

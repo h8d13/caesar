@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.27@sha256:bde3983e9c939224420ddaf6b784cc30e09b035a4dea01f581230c50809f372e
 # Toolchain only: the source is bind-mounted at runtime (compose.dev.yaml),
 # node_modules and pnpm's home live in volumes, so the host needs no node.
-FROM node:24.18.0-trixie-slim@sha256:ae91dcc111a68c9d2d81ff2a17bda61be126426176fde6fe7d08ab13b7f50573
+FROM node:24.20.0-trixie-slim@sha256:50c3b2f6988dfc307b86e5301d69611af31f4789bdf232863b07d3b02fe55ae0
 
 # corepack's pnpm binary cache lives in the /pnpm volume. The package store
 # defaults to node_modules/.pnpm-store (pnpm 12+, when the home dir can't
