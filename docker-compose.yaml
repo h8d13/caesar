@@ -53,9 +53,10 @@ services:
 
   # Prod-dev: real prod binary + self-signed HTTPS on :8443, sibling of
   # the prod stack. Coexists with the prod profile (different ports +
-  # container names + data dir). `up.sh --prod-dev` wipes ./data-prod-dev
-  # before each run so every test starts clean; the dir itself is the same
-  # shape as ./data so you can poke at it after a run if needed.
+  # container names + data volume). `up.sh --prod-dev` removes the
+  # caesar-prod-dev-data volume before each run so every test starts clean.
+  # Named volume, not a bind mount: ownership comes from the image (uid 1000)
+  # instead of the host, so rootless podman works without chown/unshare.
   # Set CAESAR_WEBRTC_ANNOUNCED_ADDRESS=<lan-ip> only when testing from
   # another device on the LAN; localhost-only works without it.
   caesar-prod-dev:
@@ -76,7 +77,7 @@ services:
       CAESAR_WEBRTC_ANNOUNCED_ADDRESS: ${CAESAR_WEBRTC_ANNOUNCED_ADDRESS:-}
       CAESAR_SITE: "localhost:8443"
     volumes:
-      - ./data-prod-dev:/home/node/.config/caesar
+      - caesar_prod_dev_data:/home/node/.config/caesar
 
   caddy-prod-dev:
     image: docker.io/library/caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
@@ -86,11 +87,16 @@ services:
     depends_on:
       - caesar-prod-dev
     ports:
-      - "8443:8443"
+      - "8443:8443/tcp"
+      - "8443:8443/udp" # HTTP/3
     command: >-
       caddy reverse-proxy --internal-certs
       --from localhost:8443
       --to caesar-prod-dev:4991
+    # Keeps the local CA stable so it only has to be trusted on the host once
+    # (service workers refuse untrusted certs), see wiki Dev#prod-dev-testing.
+    volumes:
+      - caddy_prod_dev_data:/data
 
   # Dev: pnpm install + Vite + Node server
   caesar-dev:
@@ -114,5 +120,9 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+  caddy_prod_dev_data:
+  # fixed name so up.sh can wipe it without knowing the project prefix
+  caesar_prod_dev_data:
+    name: caesar-prod-dev-data
 
 #caesar_data:

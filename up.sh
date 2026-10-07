@@ -37,7 +37,8 @@ export CAESAR_BUILD_VERSION=$(git rev-parse --short HEAD)
 # Prod-dev: hermetic test of the real prod binary on https://localhost:8443
 # (self-signed). Skips git pull / system prune / container nuke so it stays
 # safe to run alongside the real prod or while iterating on local commits.
-# Wipes ./data-prod-dev each invocation so every test starts clean
+# Wipes the caesar-prod-dev-data volume each invocation so every test starts
+# clean (the caddy CA volume is kept, it only needs trusting once).
 if [ "$PROD_DEV" = 1 ]; then
     echo ""
     echo "BUILDING CAESAR-PROD-DEV VERSION HASH: $CAESAR_BUILD_VERSION"
@@ -48,7 +49,7 @@ if [ "$PROD_DEV" = 1 ]; then
     # over network removal. --progress=plain keeps full build output.
     COMPOSE="docker compose -p caesar-prod-dev --profile prod-dev --progress=plain"
     $COMPOSE down
-    rm -rf ./data-prod-dev && mkdir -p ./data-prod-dev
+    docker volume rm -f caesar-prod-dev-data
     $COMPOSE build && $COMPOSE up
     exit $?
 fi

@@ -60,8 +60,10 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 
 # distroless has no shell/chown, so stage the whole tree under /out; the runtime
 # lays it down with COPY --chown. assets -> /app/static-prod-assets (loadEmbeds
-# reads process.cwd()/static-prod-assets), /home/node/.config -> DATA_PATH parent.
-RUN mkdir -p /out/app/static-prod-assets /out/home/node/.config \
+# reads process.cwd()/static-prod-assets), /home/node/.config/caesar = DATA_PATH.
+# DATA_PATH exists in the image so an empty named volume mounted there is
+# copied up owned by 1000, on any engine/userns (no host chown needed).
+RUN mkdir -p /out/app/static-prod-assets /out/home/node/.config/caesar \
     && cp -r /app/apps/client/dist /out/app/static-prod-assets/interface \
     && cp -r /app/apps/server/src/db/migrations /out/app/static-prod-assets/drizzle \
     && cp /usr/local/bin/mediasoup-worker /out/app/static-prod-assets/mediasoup-worker \

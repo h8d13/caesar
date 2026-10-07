@@ -2,7 +2,6 @@
 /vendor
 .direnv/
 data/
-data-prod-dev/
 data-test/
 .vite-devmaps/
 *.wiki/
