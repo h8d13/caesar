@@ -30,7 +30,7 @@ catalog:
   tailwindcss: ^4.3.3
   typescript: ~6.0.3
   typescript-eslint: ^8.62.1
-  vitest: ^4.1.9
+  vitest: ^4.1.11
 
 # Whitelist of native deps whose postinstall scripts we permit; anything
 # else with a build script fails the install (pnpm's default strictDepBuilds).
