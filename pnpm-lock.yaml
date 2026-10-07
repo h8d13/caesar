@@ -202,8 +202,8 @@ catalogs:
       specifier: ^1.52.0
       version: 1.52.0
     mediasoup:
-      specifier: 3.27.1
-      version: 3.27.1
+      specifier: 3.28.0
+      version: 3.28.0
     prettier:
       specifier: ^3.8.3
       version: 3.8.3
@@ -464,7 +464,7 @@ importers:
         version: 5.0.0
       mediasoup:
         specifier: 'catalog:'
-        version: 3.27.1
+        version: 3.28.0
       mime-types:
         specifier: ^3.0.2
         version: 3.0.2
@@ -564,7 +564,7 @@ importers:
         version: 5.0.2
       mediasoup:
         specifier: 'catalog:'
-        version: 3.27.1
+        version: 3.28.0
     devDependencies:
       '@eslint/js':
         specifier: 'catalog:'
@@ -3277,8 +3277,8 @@ packages:
     resolution: {integrity: sha512-26m/3EeNAnPoH8rT+uod90YWCn81stdkIpTZ6lvJGS8eNVC2GNIdNnGthM/VpIH7fzzsTEI3UTnugljulFEwcA==}
     engines: {node: '>=22'}
 
-  mediasoup@3.27.1:
-    resolution: {integrity: sha512-unjG0ihJFZmCXxtS5ay6iPp+ov1Rg/BhJuP1gGfw4ElX/K5Z0it3PCC7rKecWMK2FgbQ52kKmDgZBPm/ewYO6A==}
+  mediasoup@3.28.0:
+    resolution: {integrity: sha512-7KDjVeHOVCUGPDVjon3aBylwavPv9SB7Xbpi1srwNa5M5TJsL8oUJbs2Z7DuOSlXATd7NIbN8hr5uuRIW146EA==}
     engines: {node: '>=22'}
 
   mime-db@1.54.0:
@@ -6341,7 +6341,7 @@ snapshots:
       sdp-transform: 3.0.0
       supports-color: 11.0.0
 
-  mediasoup@3.27.1:
+  mediasoup@3.28.0:
     dependencies:
       debug: 4.4.3(supports-color@11.0.0)
       flatbuffers: 25.9.23
