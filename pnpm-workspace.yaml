@@ -29,7 +29,7 @@ catalog:
   tailwind-merge: ^3.7.0
   tailwindcss: ^4.3.3
   typescript: ~6.0.3
-  typescript-eslint: ^8.62.1
+  typescript-eslint: ^8.71.0
   vitest: ^5.0.3
 
 # Whitelist of native deps whose postinstall scripts we permit; anything
