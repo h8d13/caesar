@@ -196,8 +196,8 @@ catalogs:
       specifier: ^4.4.1
       version: 4.4.1
     globals:
-      specifier: ^17.7.0
-      version: 17.7.0
+      specifier: ^17.13.0
+      version: 17.13.0
     lucide-react:
       specifier: ^1.47.0
       version: 1.47.0
@@ -404,7 +404,7 @@ importers:
         version: 4.4.1(@typescript-eslint/eslint-plugin@8.62.1(@typescript-eslint/parser@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))
       globals:
         specifier: 'catalog:'
-        version: 17.7.0
+        version: 17.13.0
       prettier:
         specifier: 'catalog:'
         version: 3.8.3
@@ -528,7 +528,7 @@ importers:
         version: 4.4.1(@typescript-eslint/eslint-plugin@8.62.1(@typescript-eslint/parser@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))
       globals:
         specifier: 'catalog:'
-        version: 17.7.0
+        version: 17.13.0
       postject:
         specifier: ^1.0.0-alpha.6
         version: 1.0.0-alpha.6
@@ -583,7 +583,7 @@ importers:
         version: 4.4.1(@typescript-eslint/eslint-plugin@8.62.1(@typescript-eslint/parser@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))
       globals:
         specifier: 'catalog:'
-        version: 17.7.0
+        version: 17.13.0
       prettier:
         specifier: 'catalog:'
         version: 3.8.3
@@ -698,7 +698,7 @@ importers:
         version: 4.4.1(@typescript-eslint/eslint-plugin@8.62.1(@typescript-eslint/parser@8.62.1(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))(supports-color@11.0.0)(typescript@6.0.3))(eslint@10.6.0(jiti@2.7.0)(supports-color@11.0.0))
       globals:
         specifier: 'catalog:'
-        version: 17.7.0
+        version: 17.13.0
       prettier:
         specifier: 'catalog:'
         version: 3.8.3
@@ -2963,8 +2963,8 @@ packages:
     resolution: {integrity: sha512-c/c15i26VrJ4IRt5Z89DnIzCGDn9EcebibhAOjw5ibqEHsE1wLUgkPn9RDmNcUKyU87GeaL633nyJ+pplFR2ZQ==}
     engines: {node: '>=18'}
 
-  globals@17.7.0:
-    resolution: {integrity: sha512-Czmyns5dUsq4seFBR/Kdydhmo8y9kC79hiSkPn0YcGtNnYWnrgt0vjrSjx9tspoDGWm2CMarffRuLjM4xUz8xg==}
+  globals@17.13.0:
+    resolution: {integrity: sha512-RwMTC61u7hrG3ZJMkZQOK4JLJrKS8QtoTii63EmWvFXHqycY9FObBJQCbsLxSO8kjKhWE5kV1GC+Vb1g3RI0Zg==}
     engines: {node: '>=18'}
 
   graceful-fs@4.2.11:
@@ -6024,7 +6024,7 @@ snapshots:
 
   globals@16.5.0: {}
 
-  globals@17.7.0: {}
+  globals@17.13.0: {}
 
   graceful-fs@4.2.11: {}
 
