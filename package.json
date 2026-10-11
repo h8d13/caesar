@@ -18,7 +18,7 @@
     "magic": "pnpm format && pnpm check-types && pnpm lint"
   },
   "devDependencies": {
-    "knip": "^6.24.0",
+    "knip": "^6.40.0",
     "prettier": "catalog:",
     "prettier-plugin-organize-imports": "catalog:"
   }
