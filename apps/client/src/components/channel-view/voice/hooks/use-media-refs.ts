@@ -153,7 +153,6 @@ const useMediaRefs = (remoteId: number) => {
         if (screenShareAudioRef.current) {
             screenShareAudioRef.current.muted = ownVoiceState.soundMuted;
         }
-
     }, [
         ownVoiceState.soundMuted,
         audioRef,

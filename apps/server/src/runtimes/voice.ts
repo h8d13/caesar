@@ -1,5 +1,4 @@
 import {
-  ServerEvents,
   StreamKind,
   type TChannelState,
   type TPublicVoiceChannelState,
@@ -24,7 +23,6 @@ import {
   getListenInfo,
   getWorkerSlot
 } from '../utils/mediasoup';
-import { pubsub } from '../utils/pubsub';
 
 const voiceRuntimes = new Map<number, VoiceRuntime>();
 
