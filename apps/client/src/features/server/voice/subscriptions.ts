@@ -5,11 +5,8 @@ import { getTRPCClient } from '@/lib/trpc';
 import { currentVoiceChannelIdSelector } from '../channels/selectors';
 import { soundsSelector } from '../sounds/selectors';
 import {
-    addExternalStreamToVoiceChannel,
     addUserToVoiceChannel,
-    removeExternalStreamFromVoiceChannel,
     removeUserFromVoiceChannel,
-    updateExternalStreamInVoiceChannel,
     updateVoiceChannelState,
     updateVoiceUserState
 } from './actions';
@@ -61,56 +58,6 @@ const subscribeToVoice = () => {
         }
     );
 
-    const onVoiceAddExternalStreamSub =
-        trpc.voice.onAddExternalStream.subscribe(undefined, {
-            onData: ({ channelId, streamId, stream }) => {
-                logDebug('[EVENTS] voice.onAddExternalStream', {
-                    channelId,
-                    streamId,
-                    stream
-                });
-                addExternalStreamToVoiceChannel(channelId, streamId, stream);
-            },
-            onError: (err) =>
-                console.error(
-                    'onVoiceAddExternalStreamSub subscription error:',
-                    err
-                )
-        });
-
-    const onVoiceUpdateExternalStreamSub =
-        trpc.voice.onUpdateExternalStream.subscribe(undefined, {
-            onData: ({ channelId, streamId, stream }) => {
-                logDebug('[EVENTS] voice.onUpdateExternalStream', {
-                    channelId,
-                    streamId,
-                    stream
-                });
-                updateExternalStreamInVoiceChannel(channelId, streamId, stream);
-            },
-            onError: (err) =>
-                console.error(
-                    'onVoiceUpdateExternalStreamSub subscription error:',
-                    err
-                )
-        });
-
-    const onVoiceRemoveExternalStreamSub =
-        trpc.voice.onRemoveExternalStream.subscribe(undefined, {
-            onData: ({ channelId, streamId }) => {
-                logDebug('[EVENTS] voice.onRemoveExternalStream', {
-                    channelId,
-                    streamId
-                });
-                removeExternalStreamFromVoiceChannel(channelId, streamId);
-            },
-            onError: (err) =>
-                console.error(
-                    'onVoiceRemoveExternalStreamSub subscription error:',
-                    err
-                )
-        });
-
     const onSoundboardPlaySub = trpc.voice.onSoundboardPlay.subscribe(
         undefined,
         {
@@ -140,9 +87,6 @@ const subscribeToVoice = () => {
         onUserLeaveVoiceSub.unsubscribe();
         onUserUpdateVoiceSub.unsubscribe();
         onVoiceChannelStateSub.unsubscribe();
-        onVoiceAddExternalStreamSub.unsubscribe();
-        onVoiceUpdateExternalStreamSub.unsubscribe();
-        onVoiceRemoveExternalStreamSub.unsubscribe();
         onSoundboardPlaySub.unsubscribe();
     };
 };

@@ -17,8 +17,6 @@ type AudioVideoRefs = {
     audioRef: React.RefObject<HTMLAudioElement | null>;
     screenShareRef: React.RefObject<HTMLVideoElement | null>;
     screenShareAudioRef: React.RefObject<HTMLAudioElement | null>;
-    externalAudioRef: React.RefObject<HTMLAudioElement | null>;
-    externalVideoRef: React.RefObject<HTMLVideoElement | null>;
 };
 
 enum ConnectionStatus {
@@ -62,10 +60,7 @@ export type TMediaProvider = {
     | 'localScreenShareStream'
     | 'localScreenShareAudioStream'
 > &
-    Pick<
-        ReturnType<typeof useRemoteStreams>,
-        'remoteUserStreams' | 'externalStreams'
-    > &
+    Pick<ReturnType<typeof useRemoteStreams>, 'remoteUserStreams'> &
     ReturnType<typeof useVoiceControls>;
 
 const DEFAULT_TRANSPORT_STATS: TransportStatsData = {
@@ -93,9 +88,7 @@ const MediaProviderContext = createContext<TMediaProvider>({
         videoRef: { current: null },
         audioRef: { current: null },
         screenShareRef: { current: null },
-        screenShareAudioRef: { current: null },
-        externalAudioRef: { current: null },
-        externalVideoRef: { current: null }
+        screenShareAudioRef: { current: null }
     }),
     getConsumerCodec: () => undefined,
     isSimulcastConsumer: () => false,
@@ -120,8 +113,7 @@ const MediaProviderContext = createContext<TMediaProvider>({
     localScreenShareStream: undefined,
     localScreenShareAudioStream: undefined,
 
-    remoteUserStreams: {},
-    externalStreams: {}
+    remoteUserStreams: {}
 });
 
 export { ConnectionStatus, MediaProviderContext, MediaStatsContext };

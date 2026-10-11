@@ -1,5 +1,5 @@
 // Wrapper-div Tailwind classes shared by every voice card (user,
-// screen share, external stream). Each card composes its own additions
+// screen share). Each card composes its own additions
 // on top via cn(...voiceCardBaseClasses, ...extras).
 const voiceCardBaseClasses = [
     'relative bg-card rounded-lg overflow-hidden group',

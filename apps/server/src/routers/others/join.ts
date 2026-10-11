@@ -127,7 +127,6 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
     }
 
     const voiceMap = VoiceRuntime.getVoiceMap();
-    const externalStreamsMap = VoiceRuntime.getExternalStreamsMap();
 
     await db
       .update(users)
@@ -154,8 +153,7 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
       sounds,
       publicSettings,
       channelPermissions,
-      readStates,
-      externalStreamsMap
+      readStates
     };
   });
 

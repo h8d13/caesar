@@ -23,9 +23,6 @@ export enum ServerEvents {
   // channel. The recipient's client re-runs its join flow for the new channel.
   VOICE_FORCE_MOVE = 'voiceForceMove',
 
-  VOICE_ADD_EXTERNAL_STREAM = 'voiceAddExternalStream',
-  VOICE_UPDATE_EXTERNAL_STREAM = 'voiceUpdateExternalStream',
-  VOICE_REMOVE_EXTERNAL_STREAM = 'voiceRemoveExternalStream',
   VOICE_NEW_PRODUCER = 'voiceNewProducer',
   VOICE_PRODUCER_CLOSED = 'voiceProducerClosed',
 

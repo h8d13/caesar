@@ -12,7 +12,7 @@ import { memo, useMemo } from 'react';
 
 type TQualityButtonProps = {
     remoteId: number;
-    kind: StreamKind.VIDEO | StreamKind.SCREEN | StreamKind.EXTERNAL_VIDEO;
+    kind: StreamKind.VIDEO | StreamKind.SCREEN;
 };
 
 // Auto = SFU adaptive (top layer requested, server downshifts on congestion).

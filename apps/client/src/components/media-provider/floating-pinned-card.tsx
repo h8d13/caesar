@@ -10,13 +10,10 @@ import { IconButton } from '@caesar/ui';
 import { ArrowDownLeft, SendToBack, X } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CardControls } from '../channel-view/voice/card-controls';
-import { PinnedCardType } from '../channel-view/voice/hooks/use-pin-card-controller';
 import { useFloatingCard } from './hooks/use-floating-card';
-import type { TExternalStreamsMap } from './hooks/use-remote-streams';
 
 type TFloatingPinnedCardProps = {
     remoteUserStreams: TRemoteStreams;
-    externalStreams: TExternalStreamsMap;
     localVideoStream: MediaStream | undefined;
     localScreenShareStream: MediaStream | undefined;
 };
@@ -24,7 +21,6 @@ type TFloatingPinnedCardProps = {
 const FloatingPinnedCard = memo(
     ({
         remoteUserStreams,
-        externalStreams,
         localVideoStream,
         localScreenShareStream
     }: TFloatingPinnedCardProps) => {
@@ -44,17 +40,8 @@ const FloatingPinnedCard = memo(
             useIsCurrentVoiceChannelSelected();
         const pinnedUser = useUserById(pinnedCard?.userId || -1);
 
-        const isExternalStream =
-            pinnedCard?.type === PinnedCardType.EXTERNAL_STREAM;
-
         const pinnedCardVideoStream = useMemo(() => {
             if (!pinnedCard) return undefined;
-
-            if (isExternalStream) {
-                const externalStream = externalStreams[pinnedCard.userId];
-
-                return externalStream?.videoStream;
-            }
 
             if (pinnedCard.userId === ownUserId) {
                 return localScreenShareStream || localVideoStream || undefined;
@@ -68,11 +55,9 @@ const FloatingPinnedCard = memo(
         }, [
             pinnedCard,
             remoteUserStreams,
-            externalStreams,
             ownUserId,
             localVideoStream,
-            localScreenShareStream,
-            isExternalStream
+            localScreenShareStream
         ]);
 
         const onCloseClick = useCallback(() => {

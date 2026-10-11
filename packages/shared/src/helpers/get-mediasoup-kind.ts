@@ -5,12 +5,10 @@ import { StreamKind } from '../types';
 const getMediasoupKind = (kind: StreamKind): 'audio' | 'video' => {
   switch (kind) {
     case StreamKind.AUDIO:
-    case StreamKind.EXTERNAL_AUDIO:
     case StreamKind.SCREEN_AUDIO:
       return 'audio';
     case StreamKind.VIDEO:
     case StreamKind.SCREEN:
-    case StreamKind.EXTERNAL_VIDEO:
       return 'video';
   }
 };

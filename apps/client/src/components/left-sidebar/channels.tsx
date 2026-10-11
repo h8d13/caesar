@@ -14,7 +14,6 @@ import {
     useUnreadMessagesCount,
     useVoiceUsersByChannelId
 } from '@/features/server/hooks';
-import { useVoiceChannelExternalStreamsList } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
 import { ChannelPermission, Permission, type TChannel } from '@caesar/shared';
 import { useDroppable } from '@dnd-kit/core';
@@ -29,7 +28,6 @@ import { memo, useCallback, useMemo } from 'react';
 import { ChannelContextMenu } from '../context-menus/channel';
 import { UnreadCount } from '../unread-count';
 import { CallTime } from './call-time';
-import { ExternalStream } from './external-stream';
 import { useSelectChannel } from './hooks';
 import { VoiceUser } from './voice-user';
 import { Waveform } from './waveform';
@@ -40,13 +38,12 @@ type TVoiceProps = Omit<TItemWrapperProps, 'children'> & {
 
 const Voice = memo(({ channel, ...props }: TVoiceProps) => {
     const users = useVoiceUsersByChannelId(channel.id);
-    const externalStreams = useVoiceChannelExternalStreamsList(channel.id);
     const unreadCount = useUnreadMessagesCount(channel.id);
     const hasUnreadMention = useHasUnreadMention(channel.id);
     const currentVoiceChannelId = useCurrentVoiceChannelId();
     const hasSharingScreenUsers = useHasSharingScreenUsers(channel.id);
 
-    const isVoiceActive = users.length > 0 || externalStreams.length > 0;
+    const isVoiceActive = users.length > 0;
     const isOwnChannel = currentVoiceChannelId === channel.id;
 
     return (
@@ -85,14 +82,6 @@ const Voice = memo(({ channel, ...props }: TVoiceProps) => {
                             userId={user.id}
                             user={user}
                             channelId={channel.id}
-                        />
-                    ))}
-                    {externalStreams.map((stream) => (
-                        <ExternalStream
-                            key={stream.streamId}
-                            title={stream.title}
-                            tracks={stream.tracks}
-                            avatarUrl={stream.avatarUrl}
                         />
                     ))}
                 </div>

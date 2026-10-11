@@ -5,7 +5,6 @@ import {
 import { UserAvatar } from '@/components/user-avatar';
 import { useVoiceUsersByChannelId } from '@/features/server/hooks';
 import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
-import { useVoiceChannelAudioExternalStreams } from '@/features/server/voice/hooks';
 import {
     Button,
     Popover,
@@ -41,7 +40,6 @@ type MediaControllerProps = {
 
 enum AudioStreamType {
     Voice = 0,
-    External = 1,
     ScreenShare = 2,
     Soundboard = 3
 }
@@ -162,11 +160,9 @@ const AudioStreamControl = memo(
 
 const MediaController = memo(({ channelId }: MediaControllerProps) => {
     const voiceUsers = useVoiceUsersByChannelId(channelId);
-    const externalAudioStreams = useVoiceChannelAudioExternalStreams(channelId);
     const {
         getUserVolumeKey,
         getUserScreenVolumeKey,
-        getExternalVolumeKey,
         getUserVideoKey,
         getUserScreenVideoKey
     } = useMediaControl();
@@ -198,14 +194,6 @@ const MediaController = memo(({ channelId }: MediaControllerProps) => {
             }
         });
 
-        externalAudioStreams.forEach((stream) => {
-            streams.push({
-                volumeKey: getExternalVolumeKey(stream.sourceId, stream.key),
-                name: stream.title || 'External Audio',
-                type: AudioStreamType.External
-            });
-        });
-
         streams.push({
             volumeKey: SOUNDBOARD_VOLUME_KEY,
             name: 'Soundboard',
@@ -215,11 +203,9 @@ const MediaController = memo(({ channelId }: MediaControllerProps) => {
         return streams;
     }, [
         voiceUsers,
-        externalAudioStreams,
         ownUserId,
         getUserVolumeKey,
         getUserScreenVolumeKey,
-        getExternalVolumeKey,
         getUserVideoKey,
         getUserScreenVideoKey
     ]);

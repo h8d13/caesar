@@ -26,21 +26,11 @@ type TUseTransportParams = {
         userId: number,
         kind: TRemoteUserStreamKinds
     ) => void;
-    addExternalStreamTrack: (
-        streamId: number,
-        stream: MediaStream,
-        kind: StreamKind.EXTERNAL_AUDIO | StreamKind.EXTERNAL_VIDEO
-    ) => void;
-    removeExternalStreamTrack: (
-        streamId: number,
-        kind: StreamKind.EXTERNAL_AUDIO | StreamKind.EXTERNAL_VIDEO
-    ) => void;
 };
 
 const VIDEO_KINDS: Set<StreamKind> = new Set([
     StreamKind.VIDEO,
-    StreamKind.SCREEN,
-    StreamKind.EXTERNAL_VIDEO
+    StreamKind.SCREEN
 ]);
 
 const LOSS_CHECK_INTERVAL = 3000;
@@ -48,9 +38,7 @@ const LOSS_THRESHOLD = 5;
 
 const useTransports = ({
     addRemoteUserStream,
-    removeRemoteUserStream,
-    addExternalStreamTrack,
-    removeExternalStreamTrack
+    removeRemoteUserStream
 }: TUseTransportParams) => {
     const producerTransport = useRef<Transport<AppData> | undefined>(undefined);
     const consumerTransport = useRef<Transport<AppData> | undefined>(undefined);
@@ -389,14 +377,7 @@ const useTransports = ({
                             }
                         );
 
-                        if (
-                            kind === StreamKind.EXTERNAL_VIDEO ||
-                            kind === StreamKind.EXTERNAL_AUDIO
-                        ) {
-                            removeExternalStreamTrack(remoteId, kind);
-                        } else {
-                            removeRemoteUserStream(remoteId, kind);
-                        }
+                        removeRemoteUserStream(remoteId, kind);
 
                         if (consumers.current[remoteId]?.[consumerKind]) {
                             delete consumers.current[remoteId][consumerKind];
@@ -437,14 +418,7 @@ const useTransports = ({
 
                 stream.addTrack(newConsumer.track);
 
-                if (
-                    kind === StreamKind.EXTERNAL_VIDEO ||
-                    kind === StreamKind.EXTERNAL_AUDIO
-                ) {
-                    addExternalStreamTrack(remoteId, stream, kind);
-                } else {
-                    addRemoteUserStream(remoteId, stream, kind);
-                }
+                addRemoteUserStream(remoteId, stream, kind);
 
                 // Server creates consumers paused so RTP doesn't arrive
                 // before the receive consumer is wired. Resume here, then
@@ -467,20 +441,13 @@ const useTransports = ({
         [
             addRemoteUserStream,
             removeRemoteUserStream,
-            addExternalStreamTrack,
-            removeExternalStreamTrack,
             startPacketLossMonitor,
             stopPacketLossMonitor
         ]
     );
 
     const consumeExistingProducers = useCallback(
-        async (
-            routerRtpCapabilities: RtpCapabilities,
-            externalStreamTracks?: {
-                [streamId: number]: { audio?: boolean; video?: boolean };
-            }
-        ) => {
+        async (routerRtpCapabilities: RtpCapabilities) => {
             logVoice('Consuming existing producers', { routerRtpCapabilities });
 
             const trpc = getTRPCClient();
@@ -490,15 +457,13 @@ const useTransports = ({
                     remoteAudioIds,
                     remoteScreenIds,
                     remoteScreenAudioIds,
-                    remoteVideoIds,
-                    remoteExternalStreamIds
+                    remoteVideoIds
                 } = await trpc.voice.getProducers.query();
 
                 logVoice('Got existing producers', {
                     remoteAudioIds,
                     remoteScreenIds,
-                    remoteVideoIds,
-                    remoteExternalStreamIds
+                    remoteVideoIds
                 });
 
                 remoteAudioIds.forEach((remoteId) => {
@@ -519,25 +484,6 @@ const useTransports = ({
                         StreamKind.SCREEN_AUDIO,
                         routerRtpCapabilities
                     );
-                });
-
-                remoteExternalStreamIds.forEach((streamId: number) => {
-                    const tracks = externalStreamTracks?.[streamId];
-
-                    if (tracks?.audio !== false) {
-                        consume(
-                            streamId,
-                            StreamKind.EXTERNAL_AUDIO,
-                            routerRtpCapabilities
-                        );
-                    }
-                    if (tracks?.video !== false) {
-                        consume(
-                            streamId,
-                            StreamKind.EXTERNAL_VIDEO,
-                            routerRtpCapabilities
-                        );
-                    }
                 });
             } catch (error) {
                 logVoice('Error consuming existing producers', { error });

@@ -74,25 +74,6 @@ const onVoiceChannelStateUpdateRoute = protectedProcedure.subscription(
   }
 );
 
-// these events are broadcast to ALL users (for external stream UI in the sidebar)
-const onVoiceAddExternalStreamRoute = protectedProcedure.subscription(
-  async ({ ctx }) => {
-    return ctx.pubsub.subscribe(ServerEvents.VOICE_ADD_EXTERNAL_STREAM);
-  }
-);
-
-const onVoiceUpdateExternalStreamRoute = protectedProcedure.subscription(
-  async ({ ctx }) => {
-    return ctx.pubsub.subscribe(ServerEvents.VOICE_UPDATE_EXTERNAL_STREAM);
-  }
-);
-
-const onVoiceRemoveExternalStreamRoute = protectedProcedure.subscription(
-  async ({ ctx }) => {
-    return ctx.pubsub.subscribe(ServerEvents.VOICE_REMOVE_EXTERNAL_STREAM);
-  }
-);
-
 // these events are channel-scoped (only sent to users in the same voice channel)
 // they relate to actual media streaming, not UI state
 const onVoiceNewProducerRoute = protectedProcedure.subscription(
@@ -117,10 +98,7 @@ export {
   onUserJoinVoiceRoute,
   onUserLeaveVoiceRoute,
   onUserUpdateVoiceStateRoute,
-  onVoiceAddExternalStreamRoute,
   onVoiceChannelStateUpdateRoute,
   onVoiceNewProducerRoute,
-  onVoiceProducerClosedRoute,
-  onVoiceRemoveExternalStreamRoute,
-  onVoiceUpdateExternalStreamRoute
+  onVoiceProducerClosedRoute
 };

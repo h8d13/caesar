@@ -6,14 +6,9 @@ import { applyAudioOutputDevice } from '@/helpers/audio-output';
 import { StreamKind } from '@caesar/shared';
 import { useEffect, useMemo } from 'react';
 
-const useMediaRefs = (
-    remoteId: number,
-    sourceId?: string,
-    streamKey?: string
-) => {
+const useMediaRefs = (remoteId: number) => {
     const {
         remoteUserStreams,
-        externalStreams,
         localVideoStream,
         localScreenShareStream,
         ownVoiceState,
@@ -26,21 +21,14 @@ const useMediaRefs = (
         getVolume,
         getUserVolumeKey,
         getUserScreenVolumeKey,
-        getExternalVolumeKey,
         isStreamHidden,
         getUserVideoKey,
         getUserScreenVideoKey
     } = useMediaControl();
     const { devices } = useDevices();
 
-    const {
-        videoRef,
-        audioRef,
-        screenShareRef,
-        screenShareAudioRef,
-        externalAudioRef,
-        externalVideoRef
-    } = getOrCreateRefs(remoteId);
+    const { videoRef, audioRef, screenShareRef, screenShareAudioRef } =
+        getOrCreateRefs(remoteId);
 
     const videoHidden = isStreamHidden(getUserVideoKey(remoteId));
     const screenVideoHidden = isStreamHidden(getUserScreenVideoKey(remoteId));
@@ -50,7 +38,6 @@ const useMediaRefs = (
     // user's streams actually change. Using it in deps prevents the memos
     // below from invalidating when other users' streams update.
     const userStreams = remoteUserStreams[remoteId];
-    const externalStream = externalStreams[remoteId];
 
     const videoStream = useMemo(() => {
         if (isOwnUser) {
@@ -80,18 +67,6 @@ const useMediaRefs = (
         return userStreams?.[StreamKind.SCREEN_AUDIO];
     }, [userStreams, isOwnUser]);
 
-    const externalAudioStream = useMemo(() => {
-        if (isOwnUser) return undefined;
-
-        return externalStream?.audioStream;
-    }, [externalStream, isOwnUser]);
-
-    const externalVideoStream = useMemo(() => {
-        if (isOwnUser) return undefined;
-
-        return externalStream?.videoStream;
-    }, [externalStream, isOwnUser]);
-
     const userVolumeKey = getUserVolumeKey(remoteId);
     const userVolume = getVolume(userVolumeKey);
 
@@ -117,15 +92,6 @@ const useMediaRefs = (
             resumeConsumer(remoteId, StreamKind.SCREEN);
         }
     }, [screenVideoHidden, remoteId, isOwnUser, pauseConsumer, resumeConsumer]);
-
-    const externalVolumeKey =
-        sourceId && streamKey
-            ? getExternalVolumeKey(sourceId, streamKey)
-            : null;
-
-    const externalVolume = externalVolumeKey
-        ? getVolume(externalVolumeKey)
-        : 100;
 
     useEffect(() => {
         if (!videoStream || !videoRef.current) return;
@@ -180,33 +146,6 @@ const useMediaRefs = (
     }, [screenShareStream, screenShareRef, screenVideoHidden]);
 
     useEffect(() => {
-        if (!externalAudioStream || !externalAudioRef.current) return;
-
-        if (externalAudioRef.current.srcObject !== externalAudioStream) {
-            externalAudioRef.current.srcObject = externalAudioStream;
-        }
-
-        externalAudioRef.current.volume = externalVolume / 100;
-        externalAudioRef.current.muted = ownVoiceState.soundMuted;
-
-        applyAudioOutputDevice(externalAudioRef.current, devices.playbackId);
-    }, [
-        externalAudioStream,
-        externalAudioRef,
-        externalVolume,
-        devices.playbackId,
-        ownVoiceState.soundMuted
-    ]);
-
-    useEffect(() => {
-        if (!externalVideoStream || !externalVideoRef.current) return;
-
-        if (externalVideoRef.current.srcObject !== externalVideoStream) {
-            externalVideoRef.current.srcObject = externalVideoStream;
-        }
-    }, [externalVideoStream, externalVideoRef]);
-
-    useEffect(() => {
         if (audioRef.current) {
             audioRef.current.muted = ownVoiceState.soundMuted;
         }
@@ -215,28 +154,21 @@ const useMediaRefs = (
             screenShareAudioRef.current.muted = ownVoiceState.soundMuted;
         }
 
-        if (externalAudioRef.current) {
-            externalAudioRef.current.muted = ownVoiceState.soundMuted;
-        }
     }, [
         ownVoiceState.soundMuted,
         audioRef,
         screenShareAudioRef,
-        externalAudioRef,
         audioStream,
-        screenShareAudioStream,
-        externalAudioStream
+        screenShareAudioStream
     ]);
 
     const hasAudioStream = !!audioStream;
     const hasVideoStream = !!videoStream && !videoHidden;
     const hasScreenShareStream = !!screenShareStream && !screenVideoHidden;
     const hasScreenShareAudioStream = !!screenShareAudioStream;
-    const hasExternalAudioStream = !!externalAudioStream;
-    const hasExternalVideoStream = !!externalVideoStream;
 
     // Stabilize the return shape so memo'd consumers (voice-user-card,
-    // external-audio-streams) skip re-renders when nothing they care about
+    // voice-audio-streams) skip re-renders when nothing they care about
     // changed. Refs from getOrCreateRefs() are stable per-id.
     return useMemo(
         () => ({
@@ -244,28 +176,20 @@ const useMediaRefs = (
             audioRef,
             screenShareRef,
             screenShareAudioRef,
-            externalAudioRef,
-            externalVideoRef,
             hasAudioStream,
             hasVideoStream,
             hasScreenShareStream,
-            hasScreenShareAudioStream,
-            hasExternalAudioStream,
-            hasExternalVideoStream
+            hasScreenShareAudioStream
         }),
         [
             videoRef,
             audioRef,
             screenShareRef,
             screenShareAudioRef,
-            externalAudioRef,
-            externalVideoRef,
             hasAudioStream,
             hasVideoStream,
             hasScreenShareStream,
-            hasScreenShareAudioStream,
-            hasExternalAudioStream,
-            hasExternalVideoStream
+            hasScreenShareAudioStream
         ]
     );
 };

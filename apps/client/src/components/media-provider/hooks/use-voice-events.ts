@@ -3,7 +3,7 @@ import { useOwnUserId } from '@/features/server/users/hooks';
 import { logVoice } from '@/helpers/browser-logger';
 import { getTRPCClient } from '@/lib/trpc';
 import type { TRemoteUserStreamKinds } from '@/types';
-import { StreamKind } from '@caesar/shared';
+import type { StreamKind } from '@caesar/shared';
 import type { RtpCapabilities } from 'mediasoup-client/types';
 import { useEffect } from 'react';
 
@@ -17,11 +17,6 @@ type TEvents = {
         userId: number,
         kind: TRemoteUserStreamKinds
     ) => void;
-    removeExternalStreamTrack: (
-        streamId: number,
-        kind: StreamKind.EXTERNAL_AUDIO | StreamKind.EXTERNAL_VIDEO
-    ) => void;
-    removeExternalStream: (streamId: number) => void;
     clearRemoteUserStreamsForUser: (userId: number) => void;
     rtpCapabilities: RtpCapabilities | null | undefined;
 };
@@ -29,8 +24,6 @@ type TEvents = {
 const useVoiceEvents = ({
     consume,
     removeRemoteUserStream,
-    removeExternalStreamTrack,
-    removeExternalStream,
     clearRemoteUserStreamsForUser,
     rtpCapabilities
 }: TEvents) => {
@@ -109,14 +102,7 @@ const useVoiceEvents = ({
                     });
 
                     try {
-                        if (
-                            kind === StreamKind.EXTERNAL_VIDEO ||
-                            kind === StreamKind.EXTERNAL_AUDIO
-                        ) {
-                            removeExternalStreamTrack(remoteId, kind);
-                        } else {
-                            removeRemoteUserStream(remoteId, kind);
-                        }
+                        removeRemoteUserStream(remoteId, kind);
                     } catch (error) {
                         logVoice(
                             'Error removing remote stream for closed producer',
@@ -156,34 +142,6 @@ const useVoiceEvents = ({
             }
         });
 
-        const onVoiceRemoveExternalStreamSub =
-            trpc.voice.onRemoveExternalStream.subscribe(undefined, {
-                onData: ({ channelId, streamId }) => {
-                    if (currentVoiceChannelId !== channelId || isCleaningUp)
-                        return;
-
-                    logVoice('External stream removed event received', {
-                        streamId,
-                        channelId
-                    });
-
-                    try {
-                        removeExternalStream(streamId);
-                    } catch (error) {
-                        logVoice('Error removing external stream', {
-                            error,
-                            streamId,
-                            channelId
-                        });
-                    }
-                },
-                onError: (error) => {
-                    logVoice('onVoiceRemoveExternalStream subscription error', {
-                        error
-                    });
-                }
-            });
-
         return () => {
             logVoice('Cleaning up voice events');
 
@@ -192,15 +150,12 @@ const useVoiceEvents = ({
             onVoiceNewProducerSub.unsubscribe();
             onVoiceProducerClosedSub.unsubscribe();
             onVoiceUserLeaveSub.unsubscribe();
-            onVoiceRemoveExternalStreamSub.unsubscribe();
         };
     }, [
         currentVoiceChannelId,
         ownUserId,
         consume,
         removeRemoteUserStream,
-        removeExternalStreamTrack,
-        removeExternalStream,
         clearRemoteUserStreamsForUser,
         rtpCapabilities
     ]);

@@ -4,8 +4,6 @@ import type {
     TCategory,
     TChannel,
     TChannelUserPermissionsMap,
-    TExternalStream,
-    TExternalStreamsMap,
     TJoinedEmoji,
     TJoinedMessage,
     TJoinedPublicUser,
@@ -50,7 +48,6 @@ export interface IServerState {
         [parentMessageId: number]: number[];
     };
     voiceMap: TVoiceMap;
-    externalStreamsMap: TExternalStreamsMap;
     ownVoiceState: TVoiceUserState;
     pinnedCard: TPinnedCard | undefined;
     channelPermissions: TChannelUserPermissionsMap;
@@ -99,7 +96,6 @@ const initialState: IServerState = {
     typingMap: {},
     threadTypingMap: {},
     voiceMap: {},
-    externalStreamsMap: {},
     ownVoiceState: {
         micMuted: false,
         soundMuted: false,
@@ -178,7 +174,6 @@ export const serverSlice = createSlice({
                 sounds: TJoinedSound[];
                 publicSettings: TPublicServerSettings | undefined;
                 voiceMap: TVoiceMap;
-                externalStreamsMap: TExternalStreamsMap;
                 channelPermissions: TChannelUserPermissionsMap;
                 readStates: TReadStateMap;
             }>
@@ -193,7 +188,6 @@ export const serverSlice = createSlice({
             state.ownUserId = action.payload.ownUserId;
             state.publicSettings = action.payload.publicSettings;
             state.voiceMap = action.payload.voiceMap;
-            state.externalStreamsMap = action.payload.externalStreamsMap;
             state.serverId = action.payload.serverId;
             state.channelPermissions = action.payload.channelPermissions;
             state.readStatesMap = action.payload.readStates;
@@ -887,47 +881,6 @@ export const serverSlice = createSlice({
         },
         setShowUserBannersInVoice: (state, action: PayloadAction<boolean>) => {
             state.showUserBannersInVoice = action.payload;
-        },
-        addExternalStreamToChannel: (
-            state,
-            action: PayloadAction<{
-                channelId: number;
-                streamId: number;
-                stream: TExternalStream;
-            }>
-        ) => {
-            const { channelId, streamId, stream } = action.payload;
-
-            if (!state.externalStreamsMap[channelId]) {
-                state.externalStreamsMap[channelId] = {};
-            }
-
-            state.externalStreamsMap[channelId][streamId] = stream;
-        },
-        updateExternalStreamInChannel: (
-            state,
-            action: PayloadAction<{
-                channelId: number;
-                streamId: number;
-                stream: TExternalStream;
-            }>
-        ) => {
-            const { channelId, streamId, stream } = action.payload;
-
-            if (!state.externalStreamsMap[channelId]) return;
-            if (!state.externalStreamsMap[channelId][streamId]) return;
-
-            state.externalStreamsMap[channelId][streamId] = stream;
-        },
-        removeExternalStreamFromChannel: (
-            state,
-            action: PayloadAction<{ channelId: number; streamId: number }>
-        ) => {
-            const { channelId, streamId } = action.payload;
-
-            if (!state.externalStreamsMap[channelId]) return;
-
-            delete state.externalStreamsMap[channelId][streamId];
         }
     }
 });

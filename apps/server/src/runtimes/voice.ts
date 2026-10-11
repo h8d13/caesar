@@ -2,7 +2,6 @@ import {
   ServerEvents,
   StreamKind,
   type TChannelState,
-  type TExternalStreamsMap,
   type TPublicVoiceChannelState,
   type TRemoteProducerIds,
   type TStreamQualityLayer,
@@ -115,24 +114,10 @@ type TConsumerMap = {
   };
 };
 
-type TExternalStreamProducers = {
-  audioProducer?: Producer<AppData>;
-  videoProducer?: Producer<AppData>;
-};
-
-type TExternalStreamInternal = {
-  title: string;
-  key: string;
-  sourceId: string;
-  avatarUrl?: string;
-  producers: TExternalStreamProducers;
-};
-
 class VoiceRuntime {
   public readonly id: number;
   private state: TChannelState = {
     users: [],
-    externalStreams: {},
     activeSince: null
   };
   // one router per worker slot, keyed by worker index
@@ -156,11 +141,6 @@ class VoiceRuntime {
   private consumers: TConsumerMap = {};
   // producerId -> simulcast quality layers metadata (labels match producer encodings)
   private producerQualityLayers: Map<string, TStreamQualityLayer[]> = new Map();
-
-  private externalCounter = 0;
-  private externalStreamsInternal: {
-    [streamId: number]: TExternalStreamInternal;
-  } = {};
 
   constructor(channelId: number) {
     this.id = channelId;
@@ -203,20 +183,6 @@ class VoiceRuntime {
     return map;
   };
 
-  public static getExternalStreamsMap = (): TExternalStreamsMap => {
-    const map: TExternalStreamsMap = {};
-
-    voiceRuntimes.forEach((runtime, channelId) => {
-      if (map[channelId]) {
-        map[channelId] = [];
-      }
-
-      map[channelId] = runtime.getState().externalStreams;
-    });
-
-    return map;
-  };
-
   public init = async (): Promise<void> => {
     logger.debug(`Initializing voice runtime for channel ${this.id}`);
 
@@ -253,21 +219,6 @@ class VoiceRuntime {
 
     Object.values(this.audioProducers).forEach((producer) => {
       producer.close();
-    });
-
-    Object.values(this.externalStreamsInternal).forEach((stream) => {
-      if (
-        stream.producers.videoProducer &&
-        !stream.producers.videoProducer.closed
-      ) {
-        stream.producers.videoProducer.close();
-      }
-      if (
-        stream.producers.audioProducer &&
-        !stream.producers.audioProducer.closed
-      ) {
-        stream.producers.audioProducer.close();
-      }
     });
 
     Object.values(this.consumers).forEach((consumers) => {
@@ -557,10 +508,6 @@ class VoiceRuntime {
         return this.screenProducers[id];
       case StreamKind.SCREEN_AUDIO:
         return this.screenAudioProducers[id];
-      case StreamKind.EXTERNAL_VIDEO:
-        return this.externalStreamsInternal[id]?.producers.videoProducer;
-      case StreamKind.EXTERNAL_AUDIO:
-        return this.externalStreamsInternal[id]?.producers.audioProducer;
       default:
         return undefined;
     }
@@ -678,235 +625,6 @@ class VoiceRuntime {
     });
   };
 
-  public createExternalStream = (options: {
-    title: string;
-    key: string;
-    sourceId: string;
-    avatarUrl?: string;
-    producers: {
-      audio?: Producer;
-      video?: Producer;
-    };
-  }) => {
-    const streamId = this.externalCounter++;
-
-    const { title, key, sourceId, avatarUrl, producers } = options;
-
-    this.externalStreamsInternal[streamId] = {
-      title,
-      key,
-      sourceId,
-      avatarUrl,
-      producers: {
-        audioProducer: producers.audio,
-        videoProducer: producers.video
-      }
-    };
-
-    if (producers.audio) {
-      this.setupExternalProducerCloseHandler(
-        streamId,
-        'audio',
-        producers.audio
-      );
-    }
-
-    if (producers.video) {
-      this.setupExternalProducerCloseHandler(
-        streamId,
-        'video',
-        producers.video
-      );
-    }
-
-    this.state.externalStreams[streamId] = {
-      title,
-      key,
-      sourceId,
-      avatarUrl,
-      tracks: {
-        audio: !!producers.audio,
-        video: !!producers.video
-      }
-    };
-
-    return streamId;
-  };
-
-  private setupExternalProducerCloseHandler = (
-    streamId: number,
-    kind: 'audio' | 'video',
-    producer: Producer
-  ) => {
-    producer.observer.on('close', () => {
-      const internal = this.externalStreamsInternal[streamId];
-
-      if (!internal) return;
-
-      if (kind === 'audio') {
-        delete internal.producers.audioProducer;
-      } else {
-        delete internal.producers.videoProducer;
-      }
-
-      const hasProducers =
-        internal.producers.audioProducer || internal.producers.videoProducer;
-
-      if (!hasProducers) {
-        this.removeExternalStream(streamId);
-      } else {
-        const existingStream = this.state.externalStreams[streamId];
-
-        if (existingStream) {
-          existingStream.tracks = {
-            audio: !!internal.producers.audioProducer,
-            video: !!internal.producers.videoProducer
-          };
-
-          pubsub.publish(ServerEvents.VOICE_UPDATE_EXTERNAL_STREAM, {
-            channelId: this.id,
-            streamId,
-            stream: existingStream
-          });
-        }
-      }
-    });
-  };
-
-  public removeExternalStream = (streamId: number) => {
-    const internal = this.externalStreamsInternal[streamId];
-
-    if (!internal) return;
-
-    if (
-      internal.producers.audioProducer &&
-      !internal.producers.audioProducer.closed
-    ) {
-      internal.producers.audioProducer.close();
-    }
-    if (
-      internal.producers.videoProducer &&
-      !internal.producers.videoProducer.closed
-    ) {
-      internal.producers.videoProducer.close();
-    }
-
-    delete this.externalStreamsInternal[streamId];
-    delete this.state.externalStreams[streamId];
-
-    pubsub.publish(ServerEvents.VOICE_REMOVE_EXTERNAL_STREAM, {
-      channelId: this.id,
-      streamId
-    });
-  };
-
-  public updateExternalStream = (
-    streamId: number,
-    options: {
-      title?: string;
-      avatarUrl?: string;
-      producers?: {
-        audio?: Producer;
-        video?: Producer;
-      };
-    }
-  ) => {
-    const internal = this.externalStreamsInternal[streamId];
-
-    if (!internal) return;
-
-    const publicStream = this.state.externalStreams[streamId];
-
-    if (!publicStream) return;
-
-    if (options.title !== undefined) {
-      internal.title = options.title;
-      publicStream.title = options.title;
-    }
-
-    if (options.avatarUrl !== undefined) {
-      internal.avatarUrl = options.avatarUrl;
-      publicStream.avatarUrl = options.avatarUrl;
-    }
-
-    if (options.producers) {
-      if (options.producers.audio !== undefined) {
-        if (
-          internal.producers.audioProducer &&
-          !internal.producers.audioProducer.closed
-        ) {
-          internal.producers.audioProducer.close();
-        }
-
-        if (options.producers.audio) {
-          internal.producers.audioProducer = options.producers.audio;
-          this.setupExternalProducerCloseHandler(
-            streamId,
-            'audio',
-            options.producers.audio
-          );
-
-          pubsub.publishForChannel(this.id, ServerEvents.VOICE_NEW_PRODUCER, {
-            channelId: this.id,
-            remoteId: streamId,
-            kind: StreamKind.EXTERNAL_AUDIO
-          });
-        } else {
-          delete internal.producers.audioProducer;
-        }
-      }
-
-      if (options.producers.video !== undefined) {
-        if (
-          internal.producers.videoProducer &&
-          !internal.producers.videoProducer.closed
-        ) {
-          internal.producers.videoProducer.close();
-        }
-
-        if (options.producers.video) {
-          internal.producers.videoProducer = options.producers.video;
-          this.setupExternalProducerCloseHandler(
-            streamId,
-            'video',
-            options.producers.video
-          );
-
-          pubsub.publishForChannel(this.id, ServerEvents.VOICE_NEW_PRODUCER, {
-            channelId: this.id,
-            remoteId: streamId,
-            kind: StreamKind.EXTERNAL_VIDEO
-          });
-        } else {
-          delete internal.producers.videoProducer;
-        }
-      }
-
-      publicStream.tracks = {
-        audio: !!internal.producers.audioProducer,
-        video: !!internal.producers.videoProducer
-      };
-    }
-
-    pubsub.publish(ServerEvents.VOICE_UPDATE_EXTERNAL_STREAM, {
-      channelId: this.id,
-      streamId,
-      stream: publicStream
-    });
-  };
-
-  public getExternalStreamProducer = (
-    streamId: number,
-    kind: 'audio' | 'video'
-  ): Producer | undefined => {
-    const internal = this.externalStreamsInternal[streamId];
-    if (!internal) return undefined;
-
-    return kind === 'audio'
-      ? internal.producers.audioProducer
-      : internal.producers.videoProducer;
-  };
-
   public getRemoteIds = (userId: number): TRemoteProducerIds => {
     return {
       remoteVideoIds: Object.keys(this.videoProducers)
@@ -920,22 +638,7 @@ class VoiceRuntime {
         .map((id) => +id),
       remoteScreenAudioIds: Object.keys(this.screenAudioProducers)
         .filter((id) => +id !== userId)
-        .map((id) => +id),
-      remoteExternalStreamIds: Object.keys(this.externalStreamsInternal).map(
-        (id) => +id
-      )
-    };
-  };
-
-  public getExternalStreamTracks = (
-    streamId: number
-  ): { audio: boolean; video: boolean } => {
-    const internal = this.externalStreamsInternal[streamId];
-    if (!internal) return { audio: false, video: false };
-
-    return {
-      audio: !!internal.producers.audioProducer,
-      video: !!internal.producers.videoProducer
+        .map((id) => +id)
     };
   };
 

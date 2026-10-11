@@ -7,11 +7,7 @@ const setConsumerQualityRoute = voiceProcedure
   .input(
     z.object({
       remoteId: z.number(),
-      kind: z.enum([
-        StreamKind.VIDEO,
-        StreamKind.SCREEN,
-        StreamKind.EXTERNAL_VIDEO
-      ]),
+      kind: z.enum([StreamKind.VIDEO, StreamKind.SCREEN]),
       quality: z.discriminatedUnion('mode', [
         z.object({ mode: z.literal('auto') }),
         z.object({

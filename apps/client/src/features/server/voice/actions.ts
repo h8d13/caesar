@@ -7,11 +7,7 @@ import {
     setLocalStorageItemBool
 } from '@/helpers/storage';
 import { getTRPCClient } from '@/lib/trpc';
-import {
-    getTrpcError,
-    type TExternalStream,
-    type TVoiceUserState
-} from '@caesar/shared';
+import { getTrpcError, type TVoiceUserState } from '@caesar/shared';
 import type { RtpCapabilities } from 'mediasoup-client/types';
 import { toast } from 'sonner';
 import {
@@ -73,46 +69,6 @@ export const updateVoiceChannelState = (
 ): void => {
     store.dispatch(
         serverSliceActions.updateVoiceChannelState({ channelId, activeSince })
-    );
-};
-
-export const addExternalStreamToVoiceChannel = (
-    channelId: number,
-    streamId: number,
-    stream: TExternalStream
-): void => {
-    store.dispatch(
-        serverSliceActions.addExternalStreamToChannel({
-            channelId,
-            streamId,
-            stream
-        })
-    );
-};
-
-export const updateExternalStreamInVoiceChannel = (
-    channelId: number,
-    streamId: number,
-    stream: TExternalStream
-): void => {
-    store.dispatch(
-        serverSliceActions.updateExternalStreamInChannel({
-            channelId,
-            streamId,
-            stream
-        })
-    );
-};
-
-export const removeExternalStreamFromVoiceChannel = (
-    channelId: number,
-    streamId: number
-): void => {
-    store.dispatch(
-        serverSliceActions.removeExternalStreamFromChannel({
-            channelId,
-            streamId
-        })
     );
 };
 

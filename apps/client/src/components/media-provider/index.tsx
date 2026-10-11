@@ -169,9 +169,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                 videoRef: { current: null },
                 audioRef: { current: null },
                 screenShareRef: { current: null },
-                screenShareAudioRef: { current: null },
-                externalAudioRef: { current: null },
-                externalVideoRef: { current: null }
+                screenShareAudioRef: { current: null }
             });
         }
 
@@ -179,15 +177,10 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
     }, []);
 
     const {
-        addExternalStreamTrack,
-        removeExternalStreamTrack,
-        removeExternalStream,
-        clearExternalStreams,
         addRemoteUserStream,
         removeRemoteUserStream,
         clearRemoteUserStreamsForUser,
         clearRemoteUserStreams,
-        externalStreams,
         remoteUserStreams
     } = useRemoteStreams();
 
@@ -221,8 +214,6 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         pauseConsumer,
         resumeConsumer
     } = useTransports({
-        addExternalStreamTrack,
-        removeExternalStreamTrack,
         addRemoteUserStream,
         removeRemoteUserStream
     });
@@ -252,11 +243,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             setStreamQualities((prev) => ({ ...prev, [key]: quality }));
             // Only video-kind consumers support setPreferredLayers; the
             // server route enforces this too, but skip the round-trip.
-            if (
-                kind !== StreamKind.VIDEO &&
-                kind !== StreamKind.SCREEN &&
-                kind !== StreamKind.EXTERNAL_VIDEO
-            ) {
+            if (kind !== StreamKind.VIDEO && kind !== StreamKind.SCREEN) {
                 return;
             }
             getTRPCClient()
@@ -1163,7 +1150,6 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         cleanupMicProcessingResources();
         clearLocalStreams();
         clearRemoteUserStreams();
-        clearExternalStreams();
         cleanupTransports();
 
         setConnectionStatus(ConnectionStatus.DISCONNECTED);
@@ -1173,7 +1159,6 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         cleanupMicProcessingResources,
         clearLocalStreams,
         clearRemoteUserStreams,
-        clearExternalStreams,
         cleanupTransports
     ]);
 
@@ -1270,8 +1255,6 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
     useVoiceEvents({
         consume,
         removeRemoteUserStream,
-        removeExternalStreamTrack,
-        removeExternalStream,
         clearRemoteUserStreamsForUser,
         rtpCapabilities: routerRtpCapabilities.current
     });
@@ -1324,8 +1307,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             localScreenShareStream,
             localScreenShareAudioStream,
 
-            remoteUserStreams,
-            externalStreams
+            remoteUserStreams
         }),
         [
             loading,
@@ -1350,8 +1332,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             localVideoStream,
             localScreenShareStream,
             localScreenShareAudioStream,
-            remoteUserStreams,
-            externalStreams
+            remoteUserStreams
         ]
     );
 
@@ -1363,7 +1344,6 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                         <SpeakingDetector />
                         <FloatingPinnedCard
                             remoteUserStreams={remoteUserStreams}
-                            externalStreams={externalStreams}
                             localScreenShareStream={localScreenShareStream}
                             localVideoStream={localVideoStream}
                         />

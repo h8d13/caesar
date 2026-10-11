@@ -16,7 +16,6 @@ import {
 
 // volume keys are string-based for persistence
 // user volumes: "user-{userId}"
-// external stream volumes: "external-{sourceId}-{key}"
 type TVolumeKey = string;
 
 type TVolumeSettings = Record<TVolumeKey, number>;
@@ -28,7 +27,6 @@ type TMediaControlContext = {
     toggleMute: (key: TVolumeKey) => void;
     getUserVolumeKey: (userId: number) => TVolumeKey;
     getUserScreenVolumeKey: (userId: number) => TVolumeKey;
-    getExternalVolumeKey: (sourceId: string, key: string) => TVolumeKey;
     isStreamHidden: (key: string) => boolean;
     toggleStreamVisibility: (key: string) => void;
     getUserVideoKey: (userId: number) => string;
@@ -82,7 +80,7 @@ const saveHiddenStreamsToStorage = (hidden: Set<string>) => {
 };
 
 // Manages soundboard audio playback inside React so volume control
-// works the same way as voice/screen/external streams in use-media-refs.
+// works the same way as voice/screen streams in use-media-refs.
 const SoundboardPlayer = memo(() => {
     const { getVolume } = useMediaControl();
     const volume = getVolume('soundboard');
@@ -194,13 +192,6 @@ const MediaControlProvider = memo(
             []
         );
 
-        const getExternalVolumeKey = useCallback(
-            (sourceId: string, key: string): TVolumeKey => {
-                return `external-${sourceId}-${key}`;
-            },
-            []
-        );
-
         const isStreamHidden = useCallback(
             (key: string): boolean => {
                 return hiddenStreams.has(key);
@@ -238,7 +229,6 @@ const MediaControlProvider = memo(
                     toggleMute,
                     getUserVolumeKey,
                     getUserScreenVolumeKey,
-                    getExternalVolumeKey,
                     isStreamHidden,
                     toggleStreamVisibility,
                     getUserVideoKey,

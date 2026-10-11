@@ -3,7 +3,6 @@ import type {
   IceCandidate,
   IceParameters
 } from 'mediasoup/types';
-import type { TExternalStreamTracks } from './types';
 
 export type TVoiceUserState = {
   micMuted: boolean;
@@ -17,17 +16,8 @@ export type TVoiceUser = {
   state: TVoiceUserState;
 };
 
-export type TExternalStream = {
-  title: string;
-  key: string;
-  sourceId: string;
-  avatarUrl?: string;
-  tracks: TExternalStreamTracks;
-};
-
 export type TChannelState = {
   users: TVoiceUser[];
-  externalStreams: { [streamId: number]: TExternalStream };
   activeSince: number | null;
 };
 
@@ -47,12 +37,6 @@ export type TPublicVoiceChannelState = {
 
 export type TVoiceMap = {
   [channelId: number]: TPublicVoiceChannelState;
-};
-
-export type TExternalStreamsMap = {
-  [channelId: number]: {
-    [streamId: number]: TExternalStream;
-  };
 };
 
 export type TStreamQualityLayer = {
