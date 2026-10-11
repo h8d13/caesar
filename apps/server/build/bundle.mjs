@@ -54,10 +54,9 @@ await build({
   logLevel: 'info',
   external: ['argon2', 'mediasoup', '@libsql/client', 'libsql'],
   tsconfig: path.join(serverDir, 'tsconfig.json'),
-  // Bake the build version into the bundle at compile time. Master's bun
-  // pipeline relied on `--define` for this; esbuild leaves `process.env.X`
-  // alone by default, so without this the runtime sees undefined and
-  // falls back to '0.0.0-dev'.
+  // Bake the build version into the bundle at compile time. esbuild leaves
+  // `process.env.X` alone by default, so without this the runtime sees
+  // undefined and falls back to '0.0.0-dev'.
   define: {
     'process.env.CAESAR_BUILD_VERSION': JSON.stringify(buildVersion)
   },

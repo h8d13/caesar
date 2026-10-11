@@ -3,9 +3,6 @@
 import { ensureServerDirs } from './helpers/ensure-server-dirs';
 await ensureServerDirs();
 // ----------------------------------------
-import { loadEmbeds } from './utils/embeds';
-await loadEmbeds();
-// ----------------------------------------
 import { IS_PRODUCTION, SERVER_VERSION } from './utils/env';
 // ----------------------------------------
 import { ActivityLogType } from '@caesar/shared';

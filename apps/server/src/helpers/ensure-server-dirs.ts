@@ -4,7 +4,8 @@ import * as serverPaths from './paths';
 
 const ensureServerDirs = async () => {
   const pathsList = Object.values(serverPaths);
-  const IGNORE_LIST = [serverPaths.SRC_MIGRATIONS_PATH];
+  // build assets are read-only inputs, never created at runtime
+  const IGNORE_LIST = [serverPaths.DRIZZLE_PATH, serverPaths.INTERFACE_PATH];
 
   const promises = pathsList.map(async (dir) => {
     if (!dir || typeof dir !== 'string') return;

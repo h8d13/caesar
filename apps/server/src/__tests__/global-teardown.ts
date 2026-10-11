@@ -6,7 +6,7 @@ import path from 'path';
 // tempfile under one prefix, and the post-suite teardown sweeps both the
 // tempfiles and the per-fork data-test-<poolId> dirs in one pass.
 //
-// Per-fork dir prep (ensureServerDirs + loadEmbeds) lives in
+// Per-fork dir prep (ensureServerDirs) lives in
 // setupFiles/prepare.ts, since DATA_PATH is fork-specific.
 
 export default async function globalSetup() {

@@ -1,5 +1,5 @@
 import path from 'path';
-import { IS_DEVELOPMENT, IS_TEST, SERVER_VERSION } from '../utils/env';
+import { IS_DEVELOPMENT, IS_TEST } from '../utils/env';
 import { getAppDataPath } from './fs';
 
 // In test mode, each vitest fork gets its own data dir so parallel forks
@@ -17,10 +17,20 @@ const DB_PATH = path.join(DATA_PATH, 'db.sqlite');
 const PUBLIC_PATH = path.join(DATA_PATH, 'public');
 const TMP_PATH = path.join(DATA_PATH, 'tmp');
 const UPLOADS_PATH = path.join(DATA_PATH, 'uploads');
-const INTERFACE_PATH = path.resolve(DATA_PATH, 'interface', SERVER_VERSION);
-const DRIZZLE_PATH = path.resolve(DATA_PATH, 'drizzle');
 const CONFIG_INI_PATH = path.resolve(DATA_PATH, 'config.ini');
-const SRC_MIGRATIONS_PATH = path.join(process.cwd(), 'src', 'db', 'migrations');
+
+// Prod reads build assets in place from the image (Dockerfile.prod stages
+// them under /app/static-prod-assets). Dev/test migrate from src; tests
+// write a mock interface into their per-fork data dir.
+const STATIC_ASSETS_PATH = path.join(process.cwd(), 'static-prod-assets');
+const INTERFACE_PATH =
+  IS_TEST || IS_DEVELOPMENT
+    ? path.join(DATA_PATH, 'interface')
+    : path.join(STATIC_ASSETS_PATH, 'interface');
+const DRIZZLE_PATH =
+  IS_TEST || IS_DEVELOPMENT
+    ? path.join(process.cwd(), 'src', 'db', 'migrations')
+    : path.join(STATIC_ASSETS_PATH, 'drizzle');
 
 // logs live with docker / operator, not persisted on disk.
 
@@ -31,7 +41,6 @@ export {
   DRIZZLE_PATH,
   INTERFACE_PATH,
   PUBLIC_PATH,
-  SRC_MIGRATIONS_PATH,
   TMP_PATH,
   UPLOADS_PATH
 };

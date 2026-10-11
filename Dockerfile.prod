@@ -53,8 +53,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm --filter @caesar/server deploy --prod /deploy/server
 
 # distroless has no shell/chown, so stage the whole tree under /out; the runtime
-# lays it down with COPY --chown. assets -> /app/static-prod-assets (loadEmbeds
-# reads process.cwd()/static-prod-assets), /home/node/.config/caesar = DATA_PATH.
+# lays it down with COPY --chown. assets -> /app/static-prod-assets (served and
+# migrated in place, see helpers/paths.ts), /home/node/.config/caesar = DATA_PATH.
 # DATA_PATH exists in the image so an empty named volume mounted there is
 # copied up owned by 1000, on any engine/userns (no host chown needed).
 RUN mkdir -p /out/app/static-prod-assets /out/home/node/.config/caesar \

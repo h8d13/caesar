@@ -1,5 +1,5 @@
 // Cryptographically secure random alphanumeric string.
-// Uses Web Crypto (works in Node, Bun, and browsers).
+// Uses Web Crypto (works in Node and browsers).
 // Bias from modulo (256 % 62 != 0) is negligible for typical invite-code use:
 // the over-represented chars are ~0.4% more frequent, which doesn't meaningfully
 // reduce the entropy of a 24-char code (~142 bits effective vs 143 ideal).
