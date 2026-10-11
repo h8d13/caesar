@@ -5,6 +5,7 @@ on:
     branches: [master]
     paths-ignore:
       - '**.md' # do not trigger on docs changes
+      - 'readme'
   pull_request:
   workflow_dispatch:
   workflow_call:

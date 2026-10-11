@@ -16,6 +16,7 @@ on:
     tags: ['v*']
     paths-ignore:
       - '**.md'
+      - 'readme'
   workflow_dispatch:
 
 permissions:
