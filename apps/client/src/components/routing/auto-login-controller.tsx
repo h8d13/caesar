@@ -2,7 +2,6 @@ import { setIsAutoConnecting } from '@/features/app/actions';
 import { useIsAppLoading } from '@/features/app/hooks';
 import { connect } from '@/features/server/actions';
 import { useDisconnectInfo, useIsConnected } from '@/features/server/hooks';
-import { useIsPageVisible } from '@/hooks/use-is-page-visible';
 import {
     getLocalStorageItem,
     LocalStorageKey,
@@ -10,6 +9,7 @@ import {
     SessionStorageKey,
     setSessionStorageItem
 } from '@/helpers/storage';
+import { useIsPageVisible } from '@/hooks/use-is-page-visible';
 import { memo, useEffect, useRef } from 'react';
 
 const AutoLoginController = memo(() => {
