@@ -1,3 +1,4 @@
+import { Permission } from '@caesar/shared';
 import { removeFile } from '@server/db/mutations/files';
 import { updateSettings } from '@server/db/mutations/server';
 import { publishSettings } from '@server/db/publishers';
@@ -13,6 +14,8 @@ const changeLogoRoute = protectedProcedure
     })
   )
   .mutation(async ({ ctx, input }) => {
+    await ctx.needsPermission(Permission.MANAGE_SETTINGS);
+
     if (
       input.fileId &&
       !fileManager.temporaryFileHasMimeType(input.fileId, 'image/')
