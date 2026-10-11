@@ -24,7 +24,6 @@
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
-    "@types/linkify-it": "^5.0.0",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "eslint-plugin-unused-imports": "catalog:",

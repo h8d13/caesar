@@ -569,9 +569,6 @@ importers:
       '@eslint/js':
         specifier: 'catalog:'
         version: 10.0.1(eslint@10.12.0(jiti@2.7.0)(supports-color@11.0.0))
-      '@types/linkify-it':
-        specifier: ^5.0.0
-        version: 5.0.0
       '@types/node':
         specifier: 'catalog:'
         version: 24.19.1
@@ -2513,9 +2510,6 @@ packages:
 
   '@types/jsonwebtoken@9.0.10':
     resolution: {integrity: sha512-asx5hIG9Qmf/1oStypjanR7iKTv0gXQ1Ov/jfrX6kS/EO0OFni8orbmGCn0672NHR3kXHwpAwR+B368ZGN/2rA==}
-
-  '@types/linkify-it@5.0.0':
-    resolution: {integrity: sha512-sVDA58zAw4eWAffKOaQH5/5j3XeayukzDk+ewSsnv3p4yJEZHCCzMDiZM8e0OUrRvmpGZ85jf4yDHkHsgBNr9Q==}
 
   '@types/luxon@3.7.1':
     resolution: {integrity: sha512-H3iskjFIAn5SlJU7OuxUmTEpebK6TKB8rxZShDslBMZJ5u9S//KM1sbdAisiSrqwLQncVjnpi2OK2J51h+4lsg==}
@@ -5816,8 +5810,6 @@ snapshots:
     dependencies:
       '@types/ms': 2.1.0
       '@types/node': 24.19.1
-
-  '@types/linkify-it@5.0.0': {}
 
   '@types/luxon@3.7.1': {}
 
