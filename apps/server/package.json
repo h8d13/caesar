@@ -46,7 +46,7 @@
   "dependencies": {
     "@caesar/shared": "workspace:*",
     "@libsql/client": "0.18.0",
-    "@simplewebauthn/server": "^13.3.3",
+    "@simplewebauthn/server": "^14.0.3",
     "@trpc/server": "catalog:",
     "argon2": "^0.45.0",
     "cron": "^4.4.0",
