@@ -2,7 +2,6 @@ import { Toaster, TooltipProvider } from '@caesar/ui';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { setDefaultOptions } from 'date-fns';
 import { enGB } from 'date-fns/locale';
-import 'prosemirror-view/style/prosemirror.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
@@ -15,6 +14,7 @@ import { AutoLoginController } from './components/routing/auto-login-controller.
 import { Routing } from './components/routing/index.tsx';
 import { ServerScreensProvider } from './components/server-screens/index.tsx';
 import { ThemeProvider } from './components/theme-provider/index.tsx';
+import { loadApp } from './features/app/actions.ts';
 import { store } from './features/store.ts';
 import { LocalStorageKey } from './helpers/storage.ts';
 import './index.css';
@@ -22,6 +22,9 @@ import { registerServiceWorker } from './lib/push.ts';
 import { queryClient } from './lib/query-client.ts';
 
 registerServiceWorker();
+// once per page load, before render: tied to the loading screen it re-ran
+// (second /info) whenever that screen remounted
+void loadApp();
 
 // every date-fns P/p token app-wide renders european order + 24h clock
 // (24/05/2026, 16:26) instead of the en-US default (5/24/2026, 4:26 PM)

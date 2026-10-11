@@ -5,6 +5,9 @@ import type { TJoinedPublicUser } from '@caesar/shared';
 import type { Extension } from '@tiptap/core';
 import Emoji, { gitHubEmojis } from '@tiptap/extension-emoji';
 import StarterKit from '@tiptap/starter-kit';
+// imported here, not in main.tsx: the editor chunk group would otherwise
+// pull the whole tiptap stack into the entry's static deps
+import 'prosemirror-view/style/prosemirror.css';
 import { useMemo } from 'react';
 import { ChannelMention } from './commands/channel-mention-extension';
 import { ChannelMentionNode } from './commands/channel-mention-node';

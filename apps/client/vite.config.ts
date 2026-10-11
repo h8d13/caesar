@@ -44,9 +44,12 @@ export default defineConfig({
                         {
                             // the message editor stack (incl. the emoji
                             // dataset) changes far less often than app code,
-                            // so it stays cached across deploys
+                            // so it stays cached across deploys. Deps not
+                            // pulled in: they dragged react into this chunk,
+                            // making the entry preload the whole editor
                             name: 'editor',
-                            test: /node_modules[\\/](@tiptap|prosemirror-)/
+                            test: /node_modules[\\/](@tiptap|prosemirror-)/,
+                            includeDependenciesRecursively: false
                         }
                     ]
                 }
