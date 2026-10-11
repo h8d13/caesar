@@ -28,41 +28,31 @@ import { logVoice } from '@/helpers/browser-logger';
 import { parseKeyCombo } from '@/helpers/format-key-code';
 import { getResWidthHeight } from '@/helpers/get-res-with-height';
 import { getTRPCClient } from '@/lib/trpc';
-import {
-    NoiseSuppressionMode,
-    VideoCodec,
-    type TRemoteUserStreamKinds
-} from '@/types';
+import { NoiseSuppressionMode, VideoCodec } from '@/types';
 import {
     DEFAULT_BITRATE,
     DEFAULT_WEBCAM_BITRATE,
     StreamKind,
-    type TStreamQuality,
-    type TStreamQualityLayer,
-    type TVoiceUserState
+    type TStreamQuality
 } from '@caesar/shared';
 import type {
     RtpCapabilities,
     RtpCodecCapability
 } from 'mediasoup-client/types';
-import {
-    createContext,
-    memo,
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState
-} from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDevices } from '../devices-provider/hooks/use-devices';
 import { SpeakingDetector } from '../speaking-detector';
+import {
+    ConnectionStatus,
+    MediaProviderContext,
+    MediaStatsContext,
+    type AudioVideoRefs,
+    type TMediaProvider
+} from './context';
 import { FloatingPinnedCard } from './floating-pinned-card';
 import { useLocalStreams } from './hooks/use-local-streams';
 import { useRemoteStreams } from './hooks/use-remote-streams';
-import {
-    useTransportStats,
-    type TransportStatsData
-} from './hooks/use-transport-stats';
+import { useTransportStats } from './hooks/use-transport-stats';
 import { useTransports } from './hooks/use-transports';
 import { useVoiceControls } from './hooks/use-voice-controls';
 import { useVoiceEvents } from './hooks/use-voice-events';
@@ -157,120 +147,6 @@ const buildVideoEncodings = (opts: {
         }
     ];
 };
-
-type AudioVideoRefs = {
-    videoRef: React.RefObject<HTMLVideoElement | null>;
-    audioRef: React.RefObject<HTMLAudioElement | null>;
-    screenShareRef: React.RefObject<HTMLVideoElement | null>;
-    screenShareAudioRef: React.RefObject<HTMLAudioElement | null>;
-    externalAudioRef: React.RefObject<HTMLAudioElement | null>;
-    externalVideoRef: React.RefObject<HTMLVideoElement | null>;
-};
-
-export type { AudioVideoRefs };
-
-enum ConnectionStatus {
-    DISCONNECTED = 'disconnected',
-    CONNECTING = 'connecting',
-    CONNECTED = 'connected',
-    FAILED = 'failed'
-}
-
-export type TMediaProvider = {
-    loading: boolean;
-    connectionStatus: ConnectionStatus;
-    audioVideoRefsMap: Map<number, AudioVideoRefs>;
-    ownVoiceState: TVoiceUserState;
-    getOrCreateRefs: (remoteId: number) => AudioVideoRefs;
-    getConsumerCodec: (
-        remoteId: number,
-        kind: StreamKind
-    ) => string | undefined;
-    isSimulcastConsumer: (remoteId: number, kind: StreamKind) => boolean;
-    getStreamQualityLayers: (
-        remoteId: number,
-        kind: StreamKind
-    ) => TStreamQualityLayer[];
-    getStreamQuality: (remoteId: number, kind: StreamKind) => TStreamQuality;
-    setStreamQuality: (
-        remoteId: number,
-        kind: StreamKind,
-        quality: TStreamQuality
-    ) => void;
-    pauseConsumer: (remoteId: number, kind: TRemoteUserStreamKinds) => void;
-    resumeConsumer: (remoteId: number, kind: TRemoteUserStreamKinds) => void;
-    init: (
-        routerRtpCapabilities: RtpCapabilities,
-        channelId: number
-    ) => Promise<void>;
-} & Pick<
-    ReturnType<typeof useLocalStreams>,
-    | 'localAudioStream'
-    | 'localVideoStream'
-    | 'localScreenShareStream'
-    | 'localScreenShareAudioStream'
-> &
-    Pick<
-        ReturnType<typeof useRemoteStreams>,
-        'remoteUserStreams' | 'externalStreams'
-    > &
-    ReturnType<typeof useVoiceControls>;
-
-const DEFAULT_TRANSPORT_STATS: TransportStatsData = {
-    producer: null,
-    consumer: null,
-    screenShare: null,
-    totalBytesReceived: 0,
-    totalBytesSent: 0,
-    isMonitoring: false,
-    currentBitrateReceived: 0,
-    currentBitrateSent: 0,
-    averageBitrateReceived: 0,
-    averageBitrateSent: 0
-};
-
-const MediaStatsContext = createContext<TransportStatsData>(
-    DEFAULT_TRANSPORT_STATS
-);
-
-const MediaProviderContext = createContext<TMediaProvider>({
-    loading: false,
-    connectionStatus: ConnectionStatus.DISCONNECTED,
-    audioVideoRefsMap: new Map(),
-    getOrCreateRefs: () => ({
-        videoRef: { current: null },
-        audioRef: { current: null },
-        screenShareRef: { current: null },
-        screenShareAudioRef: { current: null },
-        externalAudioRef: { current: null },
-        externalVideoRef: { current: null }
-    }),
-    getConsumerCodec: () => undefined,
-    isSimulcastConsumer: () => false,
-    getStreamQualityLayers: () => [],
-    getStreamQuality: () => ({ mode: 'auto' }),
-    setStreamQuality: () => {},
-    pauseConsumer: () => {},
-    resumeConsumer: () => {},
-    init: () => Promise.resolve(),
-    toggleMic: () => Promise.resolve(),
-    toggleSound: () => Promise.resolve(),
-    toggleWebcam: () => Promise.resolve(),
-    toggleScreenShare: () => Promise.resolve(),
-    ownVoiceState: {
-        micMuted: false,
-        soundMuted: false,
-        webcamEnabled: false,
-        sharingScreen: false
-    },
-    localAudioStream: undefined,
-    localVideoStream: undefined,
-    localScreenShareStream: undefined,
-    localScreenShareAudioStream: undefined,
-
-    remoteUserStreams: {},
-    externalStreams: {}
-});
 
 type TMediaProviderProps = {
     children: React.ReactNode;
@@ -1499,4 +1375,4 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
     );
 });
 
-export { MediaProvider, MediaProviderContext, MediaStatsContext };
+export { MediaProvider };

@@ -1,7 +1,7 @@
 import {
     MediaProviderContext,
     MediaStatsContext
-} from '@/components/media-provider';
+} from '@/components/media-provider/context';
 import type { IRootState } from '@/features/store';
 import { useContext } from 'react';
 import { useSelector } from 'react-redux';
