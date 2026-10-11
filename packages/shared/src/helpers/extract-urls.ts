@@ -1,6 +1,7 @@
-import LinkifyIt from 'linkify-it';
+import { LinkifyIt } from 'linkify-it';
 
-const linkify = new LinkifyIt();
+// v6 turned fuzzyLink off; previews still pick up bare domains (example.com)
+const linkify = new LinkifyIt({ fuzzyLink: true });
 
 const extractUrls = (content: string): string[] => {
   try {

@@ -69,5 +69,4 @@ const LeftSidebar = memo(({ className, isOpen = true }: TLeftSidebarProps) => {
     );
 });
 
-export { UserControl } from './user-control';
 export { LeftSidebar };

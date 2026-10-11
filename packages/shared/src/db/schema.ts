@@ -196,16 +196,8 @@ const users = sqliteTable(
 );
 
 // WebAuthn credentials per user. `counter` must strictly increase per
-// assertion; a regress signals a cloned authenticator.
-type WebauthnTransport =
-  | 'ble'
-  | 'cable'
-  | 'hybrid'
-  | 'internal'
-  | 'nfc'
-  | 'smart-card'
-  | 'usb';
-
+// assertion; a regress signals a cloned authenticator. `transports` stays
+// plain strings, as @simplewebauthn types them (new transports appear over time).
 const userWebauthnCredentials = sqliteTable('user_webauthn_credentials', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   userId: integer('user_id')
@@ -214,7 +206,7 @@ const userWebauthnCredentials = sqliteTable('user_webauthn_credentials', {
   credentialId: text('credential_id').notNull().unique(),
   publicKey: blob('public_key', { mode: 'buffer' }).$type<Buffer>().notNull(),
   counter: integer('counter').notNull().default(0),
-  transports: text('transports', { mode: 'json' }).$type<WebauthnTransport[]>(),
+  transports: text('transports', { mode: 'json' }).$type<string[]>(),
   deviceType: text('device_type'),
   backedUp: integer('backed_up', { mode: 'boolean' }).notNull().default(false),
   name: text('name'),

@@ -126,4 +126,4 @@ const cleanup = () => {
     }, 100);
 };
 
-export { cleanup, connectToTRPC, getTRPCClient, type AppRouter };
+export { cleanup, connectToTRPC, getTRPCClient };
