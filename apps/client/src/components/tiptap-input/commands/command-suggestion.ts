@@ -99,8 +99,7 @@ export const CommandSuggestion = {
 
             onKeyDown(props: { event: KeyboardEvent }) {
                 const commandListRef = component?.ref as
-                    | CommandListRef
-                    | undefined;
+                    CommandListRef | undefined;
 
                 if (commandListRef?.onKeyDown) {
                     return commandListRef.onKeyDown(props.event);
