@@ -33,6 +33,7 @@ General
 - Removed hardcoded SharkordUser, identity used by default
 - CAESAR_MAX_USERS=N cap
 - Add manifest PWA for native Chrome installs + worker for push
+	- Fix PWA to properly keep logged-in when toggled.
 
 UX/UI
 -----
