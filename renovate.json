@@ -52,6 +52,11 @@
       "description": "ts/node/mediasoup/pnpm majors must be approved on the dashboard"
     },
     {
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7",
+      "description": "typescript-eslint crashes on TS 7, see typescript-eslint#10940"
+    },
+    {
       "matchPackageNames": ["mediasoup", "argon2", "better-sqlite3"],
       "rangeStrategy": "pin",
       "description": "native postinstall, pin exact so prebuilt-binary caches stay valid"

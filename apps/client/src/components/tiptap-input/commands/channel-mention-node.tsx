@@ -1,20 +1,6 @@
-import { ChannelChip } from '@/components/channel-chip';
 import { Node } from '@tiptap/core';
-import {
-    NodeViewWrapper,
-    ReactNodeViewRenderer,
-    type NodeViewProps
-} from '@tiptap/react';
-import { memo } from 'react';
-
-const ChannelMentionNodeView = memo(({ node }: NodeViewProps) => (
-    <NodeViewWrapper as="span" className="mention-inline">
-        <ChannelChip
-            channelId={Number(node.attrs.channelId)}
-            channelType={node.attrs.channelType}
-        />
-    </NodeViewWrapper>
-));
+import { ReactNodeViewRenderer } from '@tiptap/react';
+import { ChannelMentionNodeView } from './channel-mention-node-view';
 
 const ChannelMentionNode = Node.create({
     name: 'channelMention',

@@ -10,7 +10,10 @@ import {
     Group,
     Input
 } from '@caesar/ui';
-import { startRegistration } from '@simplewebauthn/browser';
+import {
+    startRegistration,
+    type PublicKeyCredentialCreationOptionsJSON
+} from '@simplewebauthn/browser';
 import { format } from 'date-fns';
 import { KeyRound, Trash2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
@@ -52,7 +55,11 @@ const SecurityKeys = memo(() => {
         setLoading(true);
         try {
             const options = await trpc.webauthn.registerStart.mutate();
-            const response = await startRegistration({ optionsJSON: options });
+            // server v14 types PRF buffers structurally, the wire format is
+            // JSON either way
+            const response = await startRegistration({
+                optionsJSON: options as PublicKeyCredentialCreationOptionsJSON
+            });
             await trpc.webauthn.registerFinish.mutate({
                 response,
                 name: newKeyName.trim() || undefined

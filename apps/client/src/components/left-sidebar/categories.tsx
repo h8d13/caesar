@@ -271,8 +271,7 @@ const Categories = memo(() => {
                     active.data.current?.userId ?? aId.slice(3)
                 );
                 const sourceChannelId = active.data.current?.channelId as
-                    | number
-                    | undefined;
+                    number | undefined;
                 const destChannelId = Number(oId.slice(3));
 
                 if (destChannelId === sourceChannelId) return;
