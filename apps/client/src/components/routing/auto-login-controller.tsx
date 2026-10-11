@@ -9,12 +9,14 @@ import {
     SessionStorageKey,
     setSessionStorageItem
 } from '@/helpers/storage';
+import { useIsPageVisible } from '@/hooks/use-is-page-visible';
 import { memo, useEffect, useRef } from 'react';
 
 const AutoLoginController = memo(() => {
     const isConnected = useIsConnected();
     const isAppLoading = useIsAppLoading();
     const disconnectInfo = useDisconnectInfo();
+    const isPageVisible = useIsPageVisible();
     const autoLoginAttempted = useRef(false);
 
     useEffect(() => {
@@ -22,9 +24,11 @@ const AutoLoginController = memo(() => {
             isAppLoading ||
             isConnected ||
             disconnectInfo ||
+            !isPageVisible ||
             autoLoginAttempted.current
         ) {
             // ignore if the app is not done loading, if we're already connected or in the process of connecting
+            // hidden: a close while backgrounded resumes once the page is back
             return;
         }
 
@@ -55,7 +59,7 @@ const AutoLoginController = memo(() => {
                 autoLoginAttempted.current = false;
                 setIsAutoConnecting(false);
             });
-    }, [isAppLoading, isConnected, disconnectInfo]);
+    }, [isAppLoading, isConnected, disconnectInfo, isPageVisible]);
 
     return null;
 });
