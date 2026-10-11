@@ -293,14 +293,29 @@ describe('dms router', () => {
     expect(global.some((m) => m.channelId === channelId)).toBe(false);
   });
 
-  test('search treats LIKE wildcards literally', async () => {
+  test('search treats wildcards literally', async () => {
     const { caller } = await initTest(1);
     const { channelId } = await caller.dms.open({ userId: 2 });
 
     await caller.messages.send({ channelId, content: 'plain', files: [] });
 
-    const results = await caller.messages.search({ query: '_', channelId });
+    for (const query of ['_', '%', '*', '?', '[a-z]']) {
+      const results = await caller.messages.search({ query, channelId });
 
-    expect(results).toEqual([]);
+      expect(results).toEqual([]);
+    }
+  });
+
+  test('search folds case beyond ASCII', async () => {
+    const { caller } = await initTest(1);
+    const { channelId } = await caller.dms.open({ userId: 2 });
+
+    await caller.messages.send({ channelId, content: 'École', files: [] });
+
+    for (const query of ['école', 'ÉCOLE', 'cOl']) {
+      const results = await caller.messages.search({ query, channelId });
+
+      expect(results).toHaveLength(1);
+    }
   });
 });

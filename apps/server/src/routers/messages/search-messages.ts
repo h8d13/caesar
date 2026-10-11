@@ -6,8 +6,32 @@ import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { and, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
-// LIKE treats % and _ as wildcards; escape them so the query is literal.
-const escapeLike = (value: string) => value.replace(/[\\%_]/g, '\\$&');
+const GLOB_SPECIAL_CHARS = new Set(['*', '?', '[']);
+
+// SQLite LIKE only folds ASCII case, so build a GLOB with a [xX] class per
+// cased char instead (é matches É). Bracketing the glob specials keeps the
+// query literal.
+const buildCaseInsensitiveGlob = (value: string) => {
+  let pattern = '';
+
+  for (const char of value) {
+    const lower = char.toLowerCase();
+    const upper = char.toUpperCase();
+    // skip folds that change length (ß -> SS): a class matches one char
+    const isCased =
+      lower !== upper && [...lower].length === 1 && [...upper].length === 1;
+
+    if (isCased) {
+      pattern += `[${lower}${upper}]`;
+    } else if (GLOB_SPECIAL_CHARS.has(char)) {
+      pattern += `[${char}]`;
+    } else {
+      pattern += char;
+    }
+  }
+
+  return `*${pattern}*`;
+};
 
 const searchMessagesRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: config.rateLimiters.searchMessages.maxRequests,
@@ -85,7 +109,7 @@ const searchMessagesRoute = rateLimitedProcedure(protectedProcedure, {
       .where(
         and(
           inArray(messages.channelId, accessibleIds),
-          sql`${messages.content} LIKE ${`%${escapeLike(query)}%`} ESCAPE '\\'`,
+          sql`${messages.content} GLOB ${buildCaseInsensitiveGlob(query)}`,
           isNull(messages.parentMessageId)
         )
       )
