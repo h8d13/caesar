@@ -2,6 +2,7 @@ import { setIsAutoConnecting } from '@/features/app/actions';
 import { useIsAppLoading } from '@/features/app/hooks';
 import { connect } from '@/features/server/actions';
 import { useDisconnectInfo, useIsConnected } from '@/features/server/hooks';
+import { useIsPageVisible } from '@/hooks/use-is-page-visible';
 import {
     getLocalStorageItem,
     LocalStorageKey,
@@ -15,6 +16,7 @@ const AutoLoginController = memo(() => {
     const isConnected = useIsConnected();
     const isAppLoading = useIsAppLoading();
     const disconnectInfo = useDisconnectInfo();
+    const isPageVisible = useIsPageVisible();
     const autoLoginAttempted = useRef(false);
 
     useEffect(() => {
@@ -22,9 +24,11 @@ const AutoLoginController = memo(() => {
             isAppLoading ||
             isConnected ||
             disconnectInfo ||
+            !isPageVisible ||
             autoLoginAttempted.current
         ) {
             // ignore if the app is not done loading, if we're already connected or in the process of connecting
+            // hidden: a close while backgrounded resumes once the page is back
             return;
         }
 
@@ -55,7 +59,7 @@ const AutoLoginController = memo(() => {
                 autoLoginAttempted.current = false;
                 setIsAutoConnecting(false);
             });
-    }, [isAppLoading, isConnected, disconnectInfo]);
+    }, [isAppLoading, isConnected, disconnectInfo, isPageVisible]);
 
     return null;
 });
