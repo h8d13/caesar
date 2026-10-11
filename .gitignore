@@ -8,7 +8,6 @@ data-test/
 .note**
 .env
 .env.*
-!.env.example
 .key
 .key.*
 

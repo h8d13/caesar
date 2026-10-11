@@ -11,8 +11,9 @@ name: caesar
 
 services:
   caesar:
-    # latest = newest release, x.y.z to pin, edge = master
-    image: ghcr.io/h8d13/caesar:${CAESAR_IMAGE_TAG:-latest}
+    # edge = master (default until the first release), sha-<short> = exact
+    # commit, latest / x.y / x.y.z = releases
+    image: ghcr.io/h8d13/caesar:${CAESAR_IMAGE_TAG:-edge}
     container_name: caesar
     restart: unless-stopped
     stop_grace_period: 2s
