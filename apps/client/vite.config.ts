@@ -3,10 +3,10 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
 // lives in public/ so it ships to dist and /manifest.json resolves in prod
-import pkg from './package.json';
-import manifest from './public/manifest.json';
-import dumpDevMaps from './vite-plugin-dump-dev-maps';
-import precompress from './vite-plugin-precompress';
+import pkg from './package.json' with { type: 'json' };
+import manifest from './public/manifest.json' with { type: 'json' };
+import dumpDevMaps from './vite-plugin-dump-dev-maps.ts';
+import precompress from './vite-plugin-precompress.ts';
 
 // https://vite.dev/config/
 export default defineConfig({
