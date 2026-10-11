@@ -11,16 +11,18 @@
 - Links show an external-navigation warning
 - Audio / video preview
 - Client-side embeds for links
+- `GIPHY` support
 - Add support for YT shorts / lives / etc. to preview
 - Add ability to mention channels using `#` and `@` for user mentions + notifications
 - Watch party: share a YouTube stream synced live to every connected client
   - Prediction pools: stake social credit on outcomes; optional timed challenge
 - Casino and hookers
-- Image statuses 24h story style 
+  - Reset balances, fixed roulette odds
+- Image statuses 24h story style
 
 ## Messaging & DMs
 
-- Search messages (DMs and global)
+- Search messages (DMs and global, scoped to channels the user can access)
 - DMs / mentions fixes / direct reply
 - Added 1:1 calls in DMs
   - Fix on 1:1 call: focus DM panel + top-bar voice controls
@@ -35,7 +37,8 @@
 
 ## Voice & streams
 
-- Added voice indicator in left bar
+- Added voice indicator and sound / stream controls in left bar
+- Optional push-to-talk with key combos (default **OFF**)
 - Allow "hide own stream" option
 - 2 streams in view split horizontally instead of vertically
 - Optional simulcast toggle in settings (spatial quality layers)
@@ -90,6 +93,7 @@
   - Per-IP burst limiter on `/login`
   - Rate-limit the `/public` file endpoint
   - Failed-login lockout: escalating per-IP lock after repeated failures (#371)
+- Login sets an `HttpOnly` `SameSite=Strict` cookie; `public.ts` reads header or cookie
 
 ## Permissions & moderation (ACL)
 
@@ -97,6 +101,7 @@
 - Move members with drag and drop across categories / channels
 - Allow dragging users into a different channel
 - Owner role is not editable: removed from ACL controls
+- Admin password reset from mod view (one-shot generated credential, sessions revoked)
 - Add red banner for permission warnings
 - Various ACL fixes
 
@@ -113,7 +118,13 @@
 - Remove per-voice-channel chat (redundant)
 - Lazy-load most things / chunk
 - Fix cache ETag on images (stops re-downloading same assets)
-- Mobile layout fixes
+- Mobile / half-screen (< 1024px) layout fixes
+- PWA manifest for native Chrome installs + service worker for push
+  - Fix PWA to keep the session across transient WS drops
+- Respect system theme preference
+- Default `enGB` locale (`HH:MM` times)
+- Fix stream placeholder breaking flexbox layout when deactivating
+- Fix error codes (RFC 6455 close codes)
 - Social credit (reward 1 per 15 min active, capped at 50/day)
 - Online-count pill in server view
 - Fix thread reply count not updating live
@@ -123,6 +134,7 @@
 ## Build, deps & repo
 
 - Full switch from `bun` to `pnpm`
+- CI: `knip` added to the git workflow
 - Switch prod image to distroless
 - Wire up ARM builds (multi-arch)
 - Target Linux only
