@@ -1,10 +1,13 @@
-import { TiptapInput } from '@/components/tiptap-input';
+import {
+    TiptapInput,
+    TiptapInputFallback
+} from '@/components/tiptap-input/lazy';
 import { dmKey, E2EE_LOCKED_MESSAGE, hasPriv, seal } from '@/lib/e2ee';
 import { getTRPCClient } from '@/lib/trpc';
 import type { TE2eeWriteContext } from '@/lib/use-decrypted-message';
 import { type TJoinedMessage, isEmptyMessage } from '@caesar/shared';
 import { AutoFocus } from '@caesar/ui';
-import { memo, useCallback, useState } from 'react';
+import { memo, Suspense, useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
 type TMessageEditInlineProps = {
@@ -76,14 +79,18 @@ const MessageEditInline = memo(
 
         return (
             <div className="flex flex-col gap-2">
-                <AutoFocus>
-                    <TiptapInput
-                        value={value}
-                        onChange={setValue}
-                        onSubmit={() => onSubmit(value)}
-                        onCancel={onBlur}
-                    />
-                </AutoFocus>
+                {/* AutoFocus inside: it focuses once on mount, so it must
+                    mount with the loaded editor, not the fallback */}
+                <Suspense fallback={<TiptapInputFallback />}>
+                    <AutoFocus>
+                        <TiptapInput
+                            value={value}
+                            onChange={setValue}
+                            onSubmit={() => onSubmit(value)}
+                            onCancel={onBlur}
+                        />
+                    </AutoFocus>
+                </Suspense>
                 <span className="text-xs text-primary/60">
                     Press Ctrl + Enter to save, Esc to cancel
                 </span>

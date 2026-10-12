@@ -1,4 +1,7 @@
-import { TiptapInput } from '@/components/tiptap-input';
+import {
+    TiptapInput,
+    TiptapInputFallback
+} from '@/components/tiptap-input/lazy';
 import { useChannelById } from '@/features/server/channels/hooks';
 import {
     useCan,
@@ -13,12 +16,14 @@ import { useUploadFiles } from '@/hooks/use-upload-files';
 import { useVoiceRecorder } from '@/hooks/use-voice-recorder';
 import { getTRPCClient } from '@/lib/trpc';
 import type { TJoinedPublicUser, TTempFile } from '@caesar/shared';
-import { ChannelPermission, Permission, isEmptyMessage } from '@caesar/shared';
+import { ChannelPermission, isEmptyMessage, Permission } from '@caesar/shared';
 import { Button, Spinner } from '@caesar/ui';
 import { filesize } from 'filesize';
 import { Mic, Paperclip, Send, Square, X } from 'lucide-react';
 import {
+    lazy,
     memo,
+    Suspense,
     useCallback,
     useImperativeHandle,
     useMemo,
@@ -28,7 +33,13 @@ import {
 } from 'react';
 import { PreviewFile } from '../channel-view/text/preview-file';
 import { UsersTypingIndicator } from '../channel-view/text/users-typing';
-import { MessageEditorFullscreen } from '../message-editor-fullscreen';
+
+// only mounted while open, and pulls the whole editor stack
+const MessageEditorFullscreen = lazy(() =>
+    import('../message-editor-fullscreen').then((m) => ({
+        default: m.MessageEditorFullscreen
+    }))
+);
 
 type TMessageComposeProps = {
     channelId: number;
@@ -227,23 +238,25 @@ const MessageCompose = memo(
                 )}
                 <UsersTypingIndicator typingUsers={typingUsers} />
                 <div className="flex items-center gap-2 rounded-lg">
-                    <TiptapInput
-                        value={message}
-                        onChange={onMessageChange}
-                        onSubmit={handleSend}
-                        onTyping={onTyping}
-                        onPopOut={
-                            canSendMessages
-                                ? () => setFullEditorOpen(true)
-                                : undefined
-                        }
-                        onGifSelect={
-                            canSendMessages ? handleGifSelect : undefined
-                        }
-                        disabled={uploading || !canSendMessages}
-                        readOnly={sending}
-                        users={users}
-                    />
+                    <Suspense fallback={<TiptapInputFallback />}>
+                        <TiptapInput
+                            value={message}
+                            onChange={onMessageChange}
+                            onSubmit={handleSend}
+                            onTyping={onTyping}
+                            onPopOut={
+                                canSendMessages
+                                    ? () => setFullEditorOpen(true)
+                                    : undefined
+                            }
+                            onGifSelect={
+                                canSendMessages ? handleGifSelect : undefined
+                            }
+                            disabled={uploading || !canSendMessages}
+                            readOnly={sending}
+                            users={users}
+                        />
+                    </Suspense>
                     <input {...fileInputProps} />
                     <Button
                         size="icon"
@@ -308,12 +321,14 @@ const MessageCompose = memo(
                 </div>
 
                 {fullEditorOpen && (
-                    <MessageEditorFullscreen
-                        initialValue={message}
-                        users={users}
-                        onSave={handleFullEditorSave}
-                        onClose={() => setFullEditorOpen(false)}
-                    />
+                    <Suspense fallback={null}>
+                        <MessageEditorFullscreen
+                            initialValue={message}
+                            users={users}
+                            onSave={handleFullEditorSave}
+                            onClose={() => setFullEditorOpen(false)}
+                        />
+                    </Suspense>
                 )}
             </div>
         );

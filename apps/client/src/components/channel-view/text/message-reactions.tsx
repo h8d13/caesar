@@ -1,3 +1,4 @@
+import { useGitHubEmojis } from '@/components/emoji-picker/use-github-emojis';
 import { isTextPresentation } from '@/components/tiptap-input/helpers';
 import { useOwnUserId, useUsernames } from '@/features/server/users/hooks';
 import { getFileUrl } from '@/helpers/get-file-url';
@@ -9,7 +10,6 @@ import {
     type TJoinedMessageReaction
 } from '@caesar/shared';
 import { Button, Tooltip } from '@caesar/ui';
-import { gitHubEmojis } from '@tiptap/extension-emoji';
 import { memo, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 
@@ -44,12 +44,13 @@ type TEmojiProps = {
 
 const Emoji = memo(
     ({ emoji, file, className, nativeEmojiClassName }: TEmojiProps) => {
+        const gitHubEmojis = useGitHubEmojis();
         const gitHubEmoji = useMemo(
             () =>
-                gitHubEmojis.find(
+                gitHubEmojis?.find(
                     (e) => e.name === emoji || e.shortcodes.includes(emoji)
                 ),
-            [emoji]
+            [gitHubEmojis, emoji]
         );
 
         const onError = useCallback(
@@ -65,6 +66,14 @@ const Emoji = memo(
             () => gitHubEmoji?.fallbackImage ?? getFileUrl(file),
             [gitHubEmoji, file]
         );
+
+        // until the dataset loads only custom emojis (file) can render; the
+        // text form avoids a broken <img> that onError would rewrite
+        if (!gitHubEmojis && !file) {
+            return (
+                <span className="text-xs text-muted-foreground">:{emoji}:</span>
+            );
+        }
 
         if (gitHubEmoji?.emoji && !isTextPresentation(gitHubEmoji.emoji)) {
             return (
