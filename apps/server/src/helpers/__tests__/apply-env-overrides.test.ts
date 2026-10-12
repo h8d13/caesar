@@ -146,26 +146,26 @@ describe('applyEnvOverrides', () => {
     setEnv('CAESAR_WEBRTC_PORT_TEST', '50000');
 
     const config = {
-      server: { port: 4991, debug: true, autoupdate: false },
-      http: { maxFiles: 40, maxFileSize: 100 },
-      mediasoup: { webrtcPort: 40000, announcedAddress: '' }
+      server: { port: 4991, debug: true, maxRequestBodyBytes: 65536 },
+      webRtc: { port: 40000, announcedAddress: '', workers: 1 },
+      limits: { maxUsers: 0 }
     };
 
     const overridesMap = {
       'server.port': 'CAESAR_PORT_TEST',
       'server.debug': 'CAESAR_DEBUG_TEST',
-      'mediasoup.webrtcPort': 'CAESAR_WEBRTC_PORT_TEST',
-      'mediasoup.announcedAddress': 'CAESAR_ANNOUNCED_ADDRESS_TEST'
+      'webRtc.port': 'CAESAR_WEBRTC_PORT_TEST',
+      'webRtc.announcedAddress': 'CAESAR_WEBRTC_ANNOUNCED_ADDRESS_TEST'
     };
 
     const result = applyEnvOverrides(config, overridesMap);
 
     expect(result.server.port).toBe(5000);
     expect(result.server.debug).toBe(false);
-    expect(result.server.autoupdate).toBe(false);
-    expect(result.http.maxFiles).toBe(40);
-    expect(result.http.maxFileSize).toBe(100);
-    expect(result.mediasoup.webrtcPort).toBe(50000);
-    expect(result.mediasoup.announcedAddress).toBe('');
+    expect(result.server.maxRequestBodyBytes).toBe(65536);
+    expect(result.webRtc.port).toBe(50000);
+    expect(result.webRtc.announcedAddress).toBe('');
+    expect(result.webRtc.workers).toBe(1);
+    expect(result.limits.maxUsers).toBe(0);
   });
 });
