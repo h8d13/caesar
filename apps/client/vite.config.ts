@@ -6,6 +6,7 @@ import { defineConfig } from 'vite';
 import pkg from './package.json' with { type: 'json' };
 import manifest from './public/manifest.json' with { type: 'json' };
 import dumpDevMaps from './vite-plugin-dump-dev-maps.ts';
+import noChunkCycles from './vite-plugin-no-chunk-cycles.ts';
 import precompress from './vite-plugin-precompress.ts';
 
 // https://vite.dev/config/
@@ -14,6 +15,7 @@ export default defineConfig({
         react(),
         tailwindcss(),
         dumpDevMaps({ outDir: '.vite-devmaps' }),
+        noChunkCycles(),
         precompress(),
         {
             name: 'inject-app-name',
@@ -36,25 +38,7 @@ export default defineConfig({
     assetsInclude: ['**/*.wasm'],
     build: {
         target: 'esnext',
-        chunkSizeWarningLimit: 1000,
-        rolldownOptions: {
-            output: {
-                codeSplitting: {
-                    groups: [
-                        {
-                            // the message editor stack (incl. the emoji
-                            // dataset) changes far less often than app code,
-                            // so it stays cached across deploys. Deps not
-                            // pulled in: they dragged react into this chunk,
-                            // making the entry preload the whole editor
-                            name: 'editor',
-                            test: /node_modules[\\/](@tiptap|prosemirror-)/,
-                            includeDependenciesRecursively: false
-                        }
-                    ]
-                }
-            }
-        }
+        chunkSizeWarningLimit: 1000
     },
     resolve: {
         alias: {
