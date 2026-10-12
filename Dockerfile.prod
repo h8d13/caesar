@@ -23,7 +23,7 @@ WORKDIR /app
 
 # Copy only manifests first so the (slow) install layer, mediasoup worker
 # download included, stays cached across source edits.
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/client/package.json ./apps/client/
 COPY apps/server/package.json ./apps/server/
 # Full directories (not just package.json) for the two library packages:

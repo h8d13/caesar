@@ -52,6 +52,11 @@ allowBuilds:
 # that would fail this check at install time.
 minimumReleaseAge: 1440
 
+# Fail install when node is below package.json "engines" (Dockerfiles, CI
+# and dev all install through here). pnpm 12 reads it only from this file:
+# an `engine-strict` in .npmrc is silently ignored.
+engineStrict: true
+
 # Force a single @libsql/client version repo-wide. drizzle-orm's peer-dep
 # resolution otherwise instantiates two drizzle copies (one parametrized
 # per libsql version found in the graph), and TS sees them as different
