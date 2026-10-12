@@ -243,7 +243,7 @@ importers:
   .:
     devDependencies:
       knip:
-        specifier: ^6.40.0
+        specifier: ^6.41.0
         version: 6.41.0
       prettier:
         specifier: 'catalog:'
