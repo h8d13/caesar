@@ -4,13 +4,22 @@ import { useAccessibleChannels } from '@/features/server/hooks';
 import type { TChannel, TJoinedPublicUser } from '@caesar/shared';
 import { Button } from '@caesar/ui';
 import { gitHubEmojis } from '@tiptap/extension-emoji';
-import { EditorContent, useEditor } from '@tiptap/react';
+import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import { ChevronDown, ChevronUp, Maximize2, Smile } from 'lucide-react';
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CHANNEL_MENTION_STORAGE_KEY } from './commands/channel-mention-suggestion';
 import { USER_MENTION_STORAGE_KEY } from './commands/user-mention-suggestion';
 import type { TEmojiItem } from './helpers';
 import { useMessageEditorExtensions } from './use-message-editor-extensions';
+
+// useEditor destroys its first instance 1ms after render unless mounted by
+// then; a deferred commit (Suspense reveal of the lazy input) loses that
+// race. The hook re-renders with a fresh instance, but effects first run
+// with the dead one (schema null: getHTML throws). Only valid inside
+// effects: during render an unmounted editor has no view and reads as
+// destroyed too.
+const isLive = (editor: Editor | null): editor is Editor =>
+    !!editor && !editor.isDestroyed;
 
 type TTiptapInputProps = {
     disabled?: boolean;
@@ -169,7 +178,7 @@ const TiptapInput = memo(
         // keep emoji storage in sync with custom emojis from the store
         // this ensures newly added emojis appear in autocomplete without refreshing the app
         useEffect(() => {
-            if (editor && editor.storage.emoji) {
+            if (isLive(editor) && editor.storage.emoji) {
                 editor.storage.emoji.emojis = [
                     ...gitHubEmojis,
                     ...customEmojis
@@ -179,7 +188,7 @@ const TiptapInput = memo(
 
         // keep mention storage in sync with users from the store
         useEffect(() => {
-            if (editor && users) {
+            if (isLive(editor) && users) {
                 const slot = (
                     editor.storage as unknown as Record<
                         string,
@@ -192,7 +201,7 @@ const TiptapInput = memo(
 
         // keep channel-mention storage in sync with accessible channels
         useEffect(() => {
-            if (editor) {
+            if (isLive(editor)) {
                 const slot = (
                     editor.storage as unknown as Record<
                         string,
@@ -204,7 +213,7 @@ const TiptapInput = memo(
         }, [editor, channels]);
 
         useEffect(() => {
-            if (editor && value !== undefined) {
+            if (isLive(editor) && value !== undefined) {
                 const currentContent = editor.getHTML();
 
                 // only update if content is actually different to avoid cursor jumping
@@ -215,7 +224,7 @@ const TiptapInput = memo(
         }, [editor, value]);
 
         useEffect(() => {
-            if (editor) {
+            if (isLive(editor)) {
                 editor.setEditable(!disabled);
             }
         }, [editor, disabled]);
