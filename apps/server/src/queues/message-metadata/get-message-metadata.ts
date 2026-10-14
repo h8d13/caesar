@@ -2,7 +2,7 @@ import { extractUrls, type TMessageMetadata } from '@caesar/shared';
 import { messages } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import dns from 'dns';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNotNull } from 'drizzle-orm';
 import { getLinkPreview } from 'link-preview-js';
 import { isFetchableUrl, isPrivateIP } from './url-guard';
 
@@ -98,13 +98,22 @@ export const processMessageMetadata = async (
 ) => {
   const metadata = await urlMetadataParser(content);
 
+  // Without previews only a row that still holds old ones (an edit that
+  // dropped its links) needs the write. Every plain send used to rewrite
+  // its row here, and the caller re-broadcast the whole message to every
+  // viewer of the channel.
+  const target =
+    metadata.length > 0
+      ? eq(messages.id, messageId)
+      : and(eq(messages.id, messageId), isNotNull(messages.metadata));
+
   return await db
     .update(messages)
     .set({
       metadata,
       updatedAt: Date.now()
     })
-    .where(eq(messages.id, messageId))
+    .where(target)
     .returning()
     .get();
 };
