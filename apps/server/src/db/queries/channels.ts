@@ -318,13 +318,10 @@ const getAffectedOnlineUserIdsForChannel = async (
     channelId,
     options
   );
-  const onlineUserIds = getOnlineUserIds();
+  // runs per published message: a Set keeps it linear in users
+  const onlineUserIds = new Set(getOnlineUserIds());
 
-  const onlineAffectedUserIds = affectedUserIds.filter((userId) =>
-    onlineUserIds.includes(userId)
-  );
-
-  return onlineAffectedUserIds;
+  return affectedUserIds.filter((userId) => onlineUserIds.has(userId));
 };
 
 // Unread counts for channels the caller has already cleared for this user:
