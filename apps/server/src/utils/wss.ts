@@ -325,17 +325,11 @@ const createContext = async ({
 const createWsServer = async (server: http.Server) => {
   return new Promise<WebSocketServer>((resolve) => {
     // The client uses a single wsLink, so every tRPC call rides this socket.
-    // threshold is below ws's 1024 default on purpose: context takeover means
-    // small repetitive frames (typing, presence) are almost entirely
-    // back-references, so they compress nearly free. Cost is ~52us of
-    // threadpool deflate per frame, paid once per recipient on a broadcast:
-    // raise it if this ever serves thousands of concurrent users.
+    // No permessage-deflate: compressing every broadcast per recipient
+    // capped a 200-user room at ~1.5s send p95 (85ms without).
     wss = new WebSocketServer({
       server,
-      perMessageDeflate: {
-        threshold: 64,
-        concurrencyLimit: 10
-      }
+      perMessageDeflate: false
     });
 
     wss.on('connection', (incoming) => {
