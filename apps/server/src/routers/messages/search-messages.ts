@@ -1,9 +1,10 @@
-import { ChannelPermission, ChannelType } from '@caesar/shared';
-import { channels, messages } from '@caesar/shared/db/schema';
+import { ChannelType } from '@caesar/shared';
+import { messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
+import { getChannelsForUser } from '@server/db/queries/channels';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
-import { and, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
+import { and, desc, inArray, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 const GLOB_SPECIAL_CHARS = new Set(['*', '?', '[']);
@@ -43,59 +44,32 @@ const searchMessagesRoute = rateLimitedProcedure(protectedProcedure, {
       query: z.string().min(1).max(200),
       limit: z.number().int().min(1).max(50).default(25),
       // when set, restricts the search to a single channel (DM or text).
-      // permission is still verified per-channel via hasChannelPermission.
+      // still limited to the channels the user can view.
       channelId: z.number().optional()
     })
   )
   .query(async ({ ctx, input }) => {
     const { query, limit, channelId } = input;
 
-    // determine which channels to search
-    let candidates: { id: number; isDm: boolean | null }[];
-
     // DMs are stored as ChannelType.VOICE with `isDm=true` (the same channel
     // also hosts the optional voice call), so the message-bearing channels
-    // are the union of TEXT channels and DMs.
-    if (channelId !== undefined) {
-      const channel = await db
-        .select({ id: channels.id, type: channels.type, isDm: channels.isDm })
-        .from(channels)
-        .where(eq(channels.id, channelId))
-        .get();
+    // are the union of TEXT channels and DMs. getChannelsForUser applies
+    // VIEW_CHANNEL (DM participation included) in one batch instead of a
+    // permission check per channel on the server.
+    const searchable = (await getChannelsForUser(ctx.userId)).filter(
+      (c) =>
+        (c.type === ChannelType.TEXT || c.isDm) &&
+        (channelId === undefined || c.id === channelId)
+    );
 
-      if (!channel) return [];
-      if (channel.type !== ChannelType.TEXT && !channel.isDm) return [];
-
-      candidates = [{ id: channel.id, isDm: channel.isDm }];
-    } else {
-      candidates = await db
-        .select({ id: channels.id, isDm: channels.isDm })
-        .from(channels)
-        .where(
-          or(eq(channels.type, ChannelType.TEXT), eq(channels.isDm, true))
-        );
-    }
-
-    // filter to channels the user can view (DM participation is handled
-    // inside hasChannelPermission)
-    const accessibleIds: number[] = [];
-    const isDmByChannelId = new Map<number, boolean>();
-
-    for (const channel of candidates) {
-      const canView = await ctx.hasChannelPermission(
-        channel.id,
-        ChannelPermission.VIEW_CHANNEL
-      );
-
-      if (canView) {
-        accessibleIds.push(channel.id);
-        isDmByChannelId.set(channel.id, channel.isDm === true);
-      }
-    }
-
-    if (accessibleIds.length === 0) {
+    if (searchable.length === 0) {
       return [];
     }
+
+    const accessibleIds = searchable.map((c) => c.id);
+    const isDmByChannelId = new Map(
+      searchable.map((c) => [c.id, c.isDm === true])
+    );
 
     const rows = await db
       .select({
