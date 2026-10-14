@@ -26,6 +26,7 @@ import { enqueueActivityLog } from '../queues/activity-log';
 import { appRouter } from '../routers';
 import { getUserRoles } from '../routers/users/get-user-roles';
 import { VoiceRuntime } from '../runtimes/voice';
+import type { TConnectionInfo } from '../types';
 import { invariant } from './invariant';
 import { pubsub } from './pubsub';
 import type { Context, TChannelPermissionHints } from './trpc';
@@ -101,7 +102,8 @@ const getOnlineUserIds = (): number[] => {
 
 const createContext = async ({
   info,
-  req
+  req,
+  res
 }: CreateWSSContextFnOptions): Promise<Context> => {
   const { token } = info.connectionParams as TConnectionParams;
 
@@ -205,10 +207,11 @@ const createContext = async ({
     (await resolveChannelAccess(channelId, targetPermission, opts)) ===
     'allowed';
 
-  const getOwnWs = () => {
-    if (!wss) return undefined;
-    return Array.from(authedClients()).find((client) => client.token === token);
-  };
+  // tRPC passes the connection's own socket; a token lookup scanned every
+  // client and could match another tab sharing the token.
+  const ownWs = wss ? (res as AuthedWebSocket) : undefined;
+
+  const getOwnWs = () => ownWs;
 
   const getUserWs = (userId: number) => {
     if (!wss) return undefined;
@@ -228,28 +231,13 @@ const createContext = async ({
   };
 
   const setWsUserId = (userId: number) => {
-    if (!wss) return;
-
-    const ws = Array.from(authedClients()).find(
-      (client) => client.token === token
-    );
-
-    if (ws) {
-      ws.userId = userId;
-    }
+    if (ownWs) ownWs.userId = userId;
   };
 
-  const getConnectionInfo = () => {
-    if (!wss) return getWsInfo(undefined, req);
+  // fixed per connection, parsed once instead of per rate-limited call
+  let connectionInfo: TConnectionInfo | undefined;
 
-    const ws = Array.from(authedClients()).find(
-      (client) => client.token === token
-    );
-
-    if (!ws) return undefined;
-
-    return getWsInfo(ws, req);
-  };
+  const getConnectionInfo = () => (connectionInfo ??= getWsInfo(ownWs, req));
 
   const needsPermission = async (
     targetPermission: Permission | Permission[]
