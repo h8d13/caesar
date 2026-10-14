@@ -18,7 +18,7 @@ import { enqueueLogin } from '@server/queues/logins';
 import { VoiceRuntime } from '@server/runtimes/voice';
 import { invariant } from '@server/utils/invariant';
 import { rateLimitedProcedure, t } from '@server/utils/trpc';
-import { trackUserConnect } from '@server/utils/wss';
+import { getOnlineUserIds, trackUserConnect } from '@server/utils/wss';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -94,9 +94,13 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
     //   truth.
     // - peers see masked status when their `appearOffline` is true, and
     //   the flag itself is stripped so it never leaves the server.
+    // one pass over the sockets, not one per user
+    const onlineUserIds = new Set(getOnlineUserIds());
     const processedPublicUsers = publicUsers.map((u) => {
       const isSelf = u.id === ctx.user.id;
-      const realStatus = ctx.getStatusById(u.id);
+      const realStatus = onlineUserIds.has(u.id)
+        ? UserStatus.ONLINE
+        : UserStatus.OFFLINE;
       const status = u.appearOffline ? UserStatus.OFFLINE : realStatus;
 
       return {
