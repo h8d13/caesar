@@ -16,7 +16,7 @@ import {
   rateLimitedProcedure,
   t
 } from '@server/utils/trpc';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, countDistinct, desc, eq, sql } from 'drizzle-orm';
 import z from 'zod';
 
 const LEDGER_TYPE = 'prediction_pool';
@@ -56,17 +56,26 @@ const getCurrentPool = () =>
     .limit(1)
     .get();
 
+// Totals per option in SQL: the pool can hold any number of bets.
 const buildPublic = async (pool: TPoolRow): Promise<TPublicPool> => {
-  const options = await db
-    .select()
-    .from(predictionOptions)
-    .where(eq(predictionOptions.poolId, pool.id))
-    .all();
-  const bets = await db
-    .select()
-    .from(predictionBets)
-    .where(eq(predictionBets.poolId, pool.id))
-    .all();
+  const [options, totals] = await Promise.all([
+    db
+      .select({ id: predictionOptions.id, label: predictionOptions.label })
+      .from(predictionOptions)
+      .where(eq(predictionOptions.poolId, pool.id))
+      .all(),
+    db
+      .select({
+        optionId: predictionBets.optionId,
+        total: sql<number>`sum(${predictionBets.amount})`,
+        backers: countDistinct(predictionBets.userId)
+      })
+      .from(predictionBets)
+      .where(eq(predictionBets.poolId, pool.id))
+      .groupBy(predictionBets.optionId)
+      .all()
+  ]);
+  const byOption = new Map(totals.map((t) => [t.optionId, t]));
 
   return {
     id: pool.id,
@@ -77,56 +86,54 @@ const buildPublic = async (pool: TPoolRow): Promise<TPublicPool> => {
     challengeEndsAt: challengeEndsAtById.get(pool.id) ?? null,
     winningOptionId: pool.winningOptionId,
     createdAt: pool.createdAt,
-    totalPot: bets.reduce((sum, b) => sum + b.amount, 0),
-    options: options.map((o) => {
-      const onOption = bets.filter((b) => b.optionId === o.id);
-      return {
-        id: o.id,
-        label: o.label,
-        total: onOption.reduce((sum, b) => sum + b.amount, 0),
-        backers: new Set(onOption.map((b) => b.userId)).size
-      };
-    })
-  };
-};
-
-type TYourStake = { optionId: number; amount: number };
-
-const stateFor = async (userId: number) => {
-  const pool = await getCurrentPool();
-  if (!pool) {
-    return { pool: null, yourStakes: [] as TYourStake[] };
-  }
-
-  const publicPool = await buildPublic(pool);
-  const myBets = await db
-    .select()
-    .from(predictionBets)
-    .where(
-      and(eq(predictionBets.poolId, pool.id), eq(predictionBets.userId, userId))
-    )
-    .all();
-
-  const byOption = new Map<number, number>();
-  for (const b of myBets) {
-    byOption.set(b.optionId, (byOption.get(b.optionId) ?? 0) + b.amount);
-  }
-
-  return {
-    pool: publicPool,
-    yourStakes: [...byOption].map(([optionId, amount]) => ({
-      optionId,
-      amount
+    totalPot: totals.reduce((sum, t) => sum + t.total, 0),
+    options: options.map((o) => ({
+      id: o.id,
+      label: o.label,
+      total: byOption.get(o.id)?.total ?? 0,
+      backers: byOption.get(o.id)?.backers ?? 0
     }))
   };
 };
 
+const getPublicPool = async () => {
+  const pool = await getCurrentPool();
+
+  return pool ? buildPublic(pool) : null;
+};
+
+type TYourStake = { optionId: number; amount: number };
+
+// publicPool: pass what broadcast() just built instead of building it again
+const stateFor = async (userId: number, publicPool?: TPublicPool | null) => {
+  const pool = publicPool === undefined ? await getPublicPool() : publicPool;
+
+  if (!pool) {
+    return { pool: null, yourStakes: [] as TYourStake[] };
+  }
+
+  const yourStakes = await db
+    .select({
+      optionId: predictionBets.optionId,
+      amount: sql<number>`sum(${predictionBets.amount})`
+    })
+    .from(predictionBets)
+    .where(
+      and(eq(predictionBets.poolId, pool.id), eq(predictionBets.userId, userId))
+    )
+    .groupBy(predictionBets.optionId)
+    .all();
+
+  return { pool, yourStakes };
+};
+
 // Server-wide pool, so broadcast the freshly-built public state to everyone.
 const broadcast = async () => {
-  const pool = await getCurrentPool();
-  pubsub.publish(ServerEvents.PREDICTION_POOL_UPDATE, {
-    pool: pool ? await buildPublic(pool) : null
-  });
+  const pool = await getPublicPool();
+
+  pubsub.publish(ServerEvents.PREDICTION_POOL_UPDATE, { pool });
+
+  return pool;
 };
 
 const getStateRoute = protectedProcedure.query(({ ctx }) =>
@@ -180,8 +187,7 @@ const createPoolRoute = protectedProcedure
       );
     }
 
-    await broadcast();
-    return stateFor(ctx.userId);
+    return stateFor(ctx.userId, await broadcast());
   });
 
 const stakeRoute = rateLimitedProcedure(protectedProcedure, {
@@ -265,8 +271,7 @@ const stakeRoute = rateLimitedProcedure(protectedProcedure, {
     });
 
     await publishUser(ctx.userId, 'update');
-    await broadcast();
-    return stateFor(ctx.userId);
+    return stateFor(ctx.userId, await broadcast());
   });
 
 const resolveRoute = protectedProcedure
@@ -347,8 +352,7 @@ const resolveRoute = protectedProcedure
     for (const userId of new Set(bets.map((b) => b.userId))) {
       await publishUser(userId, 'update');
     }
-    await broadcast();
-    return stateFor(ctx.userId);
+    return stateFor(ctx.userId, await broadcast());
   });
 
 const cancelRoute = protectedProcedure.mutation(async ({ ctx }) => {
@@ -384,8 +388,7 @@ const cancelRoute = protectedProcedure.mutation(async ({ ctx }) => {
   for (const userId of new Set(bets.map((b) => b.userId))) {
     await publishUser(userId, 'update');
   }
-  await broadcast();
-  return stateFor(ctx.userId);
+  return stateFor(ctx.userId, await broadcast());
 });
 
 // Server-wide pool, so the global publish/subscribe pair: every client listens.
