@@ -117,12 +117,10 @@ const createContext = async ({
     message: 'User is banned'
   });
 
+  // Roles alone decide: a deleted user has none, so the full user row
+  // (avatar/banner joins, social credit SUM) is not worth loading per check.
   const hasPermission = async (targetPermission: Permission | Permission[]) => {
-    const user = await getUserById(decodedUser.id);
-
-    if (!user) return false;
-
-    const roles = await getUserRoles(user.id);
+    const roles = await getUserRoles(decodedUser.id);
 
     const hasOwnerRole = roles.some((r) => r.id === OWNER_ROLE_ID);
 
@@ -178,11 +176,7 @@ const createContext = async ({
 
     if (!channel.private) return 'allowed';
 
-    const user = await getUserById(decodedUser.id);
-
-    if (!user) return 'denied';
-
-    const roles = await getUserRoles(user.id);
+    const roles = await getUserRoles(decodedUser.id);
 
     const hasOwnerRole = roles.some((r) => r.id === OWNER_ROLE_ID);
 
