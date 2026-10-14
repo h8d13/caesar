@@ -15,7 +15,7 @@ import {
 } from '@caesar/shared/db/schema';
 import { invariant } from '@server/utils/invariant';
 import { getOnlineUserIds } from '@server/utils/wss';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, exists, inArray, sql, type SQL } from 'drizzle-orm';
 import { db } from '..';
 import {
   getDirectMessageChannelIdsForUser,
@@ -326,47 +326,59 @@ const getAffectedOnlineUserIdsForChannel = async (
 
 // Unread counts for channels the caller has already cleared for this user:
 // a count for a private channel (or another pair's DM) would reveal its
-// activity to a non-member.
+// activity to a non-member. Channels without any message get no entry.
+//
+// Three read states, and they must stay distinguishable. A live pointer
+// counts by id. A row whose pointer was nulled by ON DELETE SET NULL (the
+// read message was deleted or expired) falls back to lastReadAt, otherwise
+// losing the pointer would resurrect the whole channel as unread. No row
+// means never opened, so everything counts. Each case is its own count so
+// it stays an index range over the unread tail, (channel_id, id) or
+// (channel_id, created_at), instead of a scan of the channel's history.
 const getUnreadCounts = async (
   userId: number,
   channelIds: number[]
 ): Promise<TReadStateMap> => {
   if (channelIds.length === 0) return {};
 
+  const unread = (range?: SQL) => sql<number>`(
+    SELECT COUNT(*) FROM ${messages}
+    WHERE ${messages.channelId} = ${channels.id}
+      AND ${messages.parentMessageId} IS NULL
+      AND ${messages.userId} != ${userId}
+      ${range ? sql`AND ${range}` : sql``}
+  )`;
+
   const results = await db
     .select({
-      channelId: messages.channelId,
-      // Three read states, and they must stay distinguishable. No joined
-      // row (lastReadAt NULL) means never opened, so everything counts.
-      // A live pointer counts by id. A row whose pointer was nulled by
-      // ON DELETE SET NULL (the read message was deleted or expired)
-      // falls back to lastReadAt, otherwise losing the pointer would
-      // resurrect the whole channel as unread.
-      unreadCount: sql<number>`
-        COUNT(CASE
-          WHEN ${messages.userId} != ${userId}
-            AND ${messages.parentMessageId} IS NULL
-            AND (
-              ${channelReadStates.lastReadAt} IS NULL
-              OR (${channelReadStates.lastReadMessageId} IS NOT NULL
-                AND ${messages.id} > ${channelReadStates.lastReadMessageId})
-              OR (${channelReadStates.lastReadMessageId} IS NULL
-                AND ${messages.createdAt} > ${channelReadStates.lastReadAt})
-            )
-          THEN 1
-        END)
-      `.as('unread_count')
+      channelId: channels.id,
+      unreadCount: sql<number>`CASE
+        WHEN ${channelReadStates.lastReadMessageId} IS NOT NULL
+          THEN ${unread(sql`${messages.id} > ${channelReadStates.lastReadMessageId}`)}
+        WHEN ${channelReadStates.lastReadAt} IS NOT NULL
+          THEN ${unread(sql`${messages.createdAt} > ${channelReadStates.lastReadAt}`)}
+        ELSE ${unread()}
+      END`
     })
-    .from(messages)
+    .from(channels)
     .leftJoin(
       channelReadStates,
       and(
-        eq(channelReadStates.channelId, messages.channelId),
+        eq(channelReadStates.channelId, channels.id),
         eq(channelReadStates.userId, userId)
       )
     )
-    .where(inArray(messages.channelId, channelIds))
-    .groupBy(messages.channelId);
+    .where(
+      and(
+        inArray(channels.id, channelIds),
+        exists(
+          db
+            .select({ id: messages.id })
+            .from(messages)
+            .where(eq(messages.channelId, channels.id))
+        )
+      )
+    );
 
   const readStateMap: TReadStateMap = {};
 

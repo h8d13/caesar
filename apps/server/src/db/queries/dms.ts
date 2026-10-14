@@ -3,7 +3,7 @@ import { channels, directMessages, messages } from '@caesar/shared/db/schema';
 import { TRPCError } from '@trpc/server';
 import { and, eq, inArray, max, or } from 'drizzle-orm';
 import { db } from '..';
-import { getChannelsReadStatesForUser } from './channels';
+import { getUnreadCounts } from './channels';
 import { getSettings } from './server';
 
 const normalizePair = (a: number, b: number): [number, number] =>
@@ -74,7 +74,8 @@ const getDirectMessageConversations = async (
       .from(messages)
       .where(inArray(messages.channelId, channelIds))
       .groupBy(messages.channelId),
-    getChannelsReadStatesForUser(userId)
+    // rows are this user's own conversations, already cleared
+    getUnreadCounts(userId, channelIds)
   ]);
 
   const lastMessageMap = new Map<number, number>();
