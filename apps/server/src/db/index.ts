@@ -1,8 +1,9 @@
-import { createClient, type Client } from '@libsql/client';
+import { type Client } from '@libsql/client';
 import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql';
 import { migrate } from 'drizzle-orm/libsql/migrator';
 import { DB_PATH, DRIZZLE_PATH } from '../helpers/paths';
 import { IS_PRODUCTION } from '../utils/env';
+import { createDbClient } from './connection';
 import { getServerToken } from './queries/server';
 import { seedDatabase } from './seed';
 
@@ -10,13 +11,13 @@ let db: LibSQLDatabase;
 let sqlite: Client;
 
 const loadDb = async () => {
-  sqlite = createClient({ url: `file:${DB_PATH}` });
-
-  await sqlite.execute('PRAGMA journal_mode = WAL;');
-  await sqlite.execute('PRAGMA synchronous = NORMAL;');
-  await sqlite.execute('PRAGMA busy_timeout = 5000;');
-  await sqlite.execute('PRAGMA cache_size = -32000;');
-  await sqlite.execute('PRAGMA foreign_keys = ON;');
+  sqlite = await createDbClient(`file:${DB_PATH}`, [
+    'PRAGMA journal_mode = WAL;',
+    'PRAGMA synchronous = NORMAL;',
+    'PRAGMA busy_timeout = 5000;',
+    'PRAGMA cache_size = -32000;',
+    'PRAGMA foreign_keys = ON;'
+  ]);
 
   db = drizzle(sqlite);
 

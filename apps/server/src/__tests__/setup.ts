@@ -1,10 +1,11 @@
-import { createClient, type Client } from '@libsql/client';
+import { type Client } from '@libsql/client';
 import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql';
 import { migrate } from 'drizzle-orm/libsql/migrator';
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
+import { createDbClient } from '../db/connection';
 import { getServerToken } from '../db/queries/server';
 import { DATA_PATH, DRIZZLE_PATH } from '../helpers/paths';
 import { createHttpServer } from '../http';
@@ -90,15 +91,16 @@ beforeAll(async () => {
       `caesar-test-${runId}-${process.pid}.sqlite`
     );
     g.__caesarTmpDbPath = tmpDbPath;
-    const sqlite = createClient({ url: `file:${tmpDbPath}` });
-    await sqlite.execute('PRAGMA foreign_keys = ON;');
     // The test DB is a disposable per-fork tempfile, so durability is
     // irrelevant: drop fsync-on-every-write (synchronous=FULL) and the
     // on-disk journal. Each test's beforeEach does ~20 DELETEs + 17 seed
     // inserts, and at synchronous=FULL every one fsyncs. This is the fixed
     // per-test cost paid by every test, unit tests included.
-    await sqlite.execute('PRAGMA journal_mode = MEMORY;');
-    await sqlite.execute('PRAGMA synchronous = OFF;');
+    const sqlite = await createDbClient(`file:${tmpDbPath}`, [
+      'PRAGMA journal_mode = MEMORY;',
+      'PRAGMA foreign_keys = ON;',
+      'PRAGMA synchronous = OFF;'
+    ]);
     const localTdb = drizzle(sqlite);
     await migrate(localTdb, { migrationsFolder: DRIZZLE_PATH });
     const tablesRes = await sqlite.execute(
