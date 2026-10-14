@@ -5,7 +5,7 @@ import { db } from '@server/db';
 import {
   getAllChannelUserPermissions,
   getChannelsForUser,
-  getChannelsReadStatesForUser
+  getUnreadCounts
 } from '@server/db/queries/channels';
 import { getEmojis } from '@server/db/queries/emojis';
 import { getRoles } from '@server/db/queries/roles';
@@ -55,6 +55,10 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
     ctx.setWsUserId(ctx.user.id);
     trackUserConnect(ctx.user.id);
 
+    // filter channels based on permissions and DM participation; the
+    // unread counts reuse it instead of resolving visibility again
+    const channelsPromise = getChannelsForUser(ctx.user.id);
+
     const [
       allCategories,
       channelsForUser,
@@ -67,13 +71,18 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
       publicSettings
     ] = await Promise.all([
       db.select().from(categories),
-      getChannelsForUser(ctx.user.id), // filter channels based on permissions and DM participation
+      channelsPromise,
       getPublicUsers(),
       getRoles(),
       getEmojis(),
       getSounds(),
       getAllChannelUserPermissions(ctx.user.id),
-      getChannelsReadStatesForUser(ctx.user.id),
+      channelsPromise.then((visible) =>
+        getUnreadCounts(
+          ctx.user.id,
+          visible.map((c) => c.id)
+        )
+      ),
       getPublicSettings()
     ]);
 

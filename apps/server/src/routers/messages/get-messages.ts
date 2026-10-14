@@ -2,7 +2,7 @@ import { DEFAULT_MESSAGES_LIMIT, ServerEvents } from '@caesar/shared';
 import { channelReadStates, messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
-import { getChannelsReadStatesForUser } from '@server/db/queries/channels';
+import { getUnreadCounts } from '@server/db/queries/channels';
 import {
   joinMessagesWithRelations,
   messageColumns,
@@ -191,10 +191,8 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
           }
         });
 
-      const updatedReadStates = await getChannelsReadStatesForUser(
-        ctx.userId,
-        channelId
-      );
+      // assertChannelAccess above already cleared the channel
+      const updatedReadStates = await getUnreadCounts(ctx.userId, [channelId]);
 
       pubsub.publishFor(ctx.userId, ServerEvents.CHANNEL_READ_STATES_UPDATE, {
         channelId,

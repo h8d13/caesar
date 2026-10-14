@@ -327,21 +327,14 @@ const getAffectedOnlineUserIdsForChannel = async (
   return onlineAffectedUserIds;
 };
 
-const getChannelsReadStatesForUser = async (
+// Unread counts for channels the caller has already cleared for this user:
+// a count for a private channel (or another pair's DM) would reveal its
+// activity to a non-member.
+const getUnreadCounts = async (
   userId: number,
-  channelId?: number
+  channelIds: number[]
 ): Promise<TReadStateMap> => {
-  // Only channels the user can view: a count for a private channel (or
-  // another pair's DM) would reveal its activity to a non-member.
-  const accessibleIds = (await getChannelsForUser(userId)).map((c) => c.id);
-
-  if (accessibleIds.length === 0) return {};
-
-  const conditions = [inArray(messages.channelId, accessibleIds)];
-
-  if (channelId) {
-    conditions.push(eq(messages.channelId, channelId));
-  }
+  if (channelIds.length === 0) return {};
 
   const results = await db
     .select({
@@ -375,7 +368,7 @@ const getChannelsReadStatesForUser = async (
         eq(channelReadStates.userId, userId)
       )
     )
-    .where(and(...conditions))
+    .where(inArray(messages.channelId, channelIds))
     .groupBy(messages.channelId);
 
   const readStateMap: TReadStateMap = {};
@@ -385,6 +378,14 @@ const getChannelsReadStatesForUser = async (
   }
 
   return readStateMap;
+};
+
+const getChannelsReadStatesForUser = async (
+  userId: number
+): Promise<TReadStateMap> => {
+  const accessibleIds = (await getChannelsForUser(userId)).map((c) => c.id);
+
+  return getUnreadCounts(userId, accessibleIds);
 };
 
 // Fetch a channel row by id or throw NOT_FOUND. Use only when the
@@ -411,5 +412,6 @@ export {
   getAllChannelUserPermissions,
   getChannelByIdOrThrow,
   getChannelsForUser,
-  getChannelsReadStatesForUser
+  getChannelsReadStatesForUser,
+  getUnreadCounts
 };

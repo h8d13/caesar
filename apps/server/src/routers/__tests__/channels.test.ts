@@ -427,7 +427,7 @@ describe('channels router', () => {
     const { caller: caller1 } = await initTest(1);
     const { caller: caller2 } = await initTest(2);
 
-    const beforeMsgSendReadStates = await getChannelsReadStatesForUser(2, 2);
+    const beforeMsgSendReadStates = await getChannelsReadStatesForUser(2);
 
     // before sending any messages, there should be no read state
     expect(beforeMsgSendReadStates[2]).toBeUndefined();
@@ -438,7 +438,7 @@ describe('channels router', () => {
       files: []
     });
 
-    const beforeReadStates = await getChannelsReadStatesForUser(2, 2);
+    const beforeReadStates = await getChannelsReadStatesForUser(2);
 
     // message has been sent, there should be 1 unread message
     expect(beforeReadStates[2]).toBeDefined();
@@ -448,7 +448,7 @@ describe('channels router', () => {
       channelId: 2
     });
 
-    const afterReadStates = await getChannelsReadStatesForUser(2, 2);
+    const afterReadStates = await getChannelsReadStatesForUser(2);
 
     // after marking as read, there should be 0 unread messages
     expect(afterReadStates[2]).toBeDefined();
@@ -470,7 +470,7 @@ describe('channels router', () => {
 
     await caller2.channels.markAsRead({ channelId: 2 });
 
-    expect((await getChannelsReadStatesForUser(2, 2))[2]).toBe(0);
+    expect((await getChannelsReadStatesForUser(2))[2]).toBe(0);
 
     const newest = await tdb
       .select()
@@ -482,7 +482,7 @@ describe('channels router', () => {
 
     await caller1.messages.delete({ messageId: newest!.id });
 
-    const afterDelete = await getChannelsReadStatesForUser(2, 2);
+    const afterDelete = await getChannelsReadStatesForUser(2);
 
     expect(afterDelete[2]).toBe(0);
   });
@@ -514,7 +514,7 @@ describe('channels router', () => {
       files: []
     });
 
-    expect((await getChannelsReadStatesForUser(2, 2))[2]).toBe(1);
+    expect((await getChannelsReadStatesForUser(2))[2]).toBe(1);
   });
 
   test('should mark channel as read with no messages', async () => {
@@ -525,7 +525,7 @@ describe('channels router', () => {
       channelId: 2
     });
 
-    const readStates = await getChannelsReadStatesForUser(1, 2);
+    const readStates = await getChannelsReadStatesForUser(1);
 
     // should not create a read state for empty channel
     expect(readStates[2]).toBeUndefined();
@@ -547,7 +547,7 @@ describe('channels router', () => {
       channelId: 2
     });
 
-    const firstReadStates = await getChannelsReadStatesForUser(2, 2);
+    const firstReadStates = await getChannelsReadStatesForUser(2);
 
     expect(firstReadStates[2]).toBe(0);
 
@@ -558,7 +558,7 @@ describe('channels router', () => {
       files: []
     });
 
-    const beforeSecondMark = await getChannelsReadStatesForUser(2, 2);
+    const beforeSecondMark = await getChannelsReadStatesForUser(2);
 
     expect(beforeSecondMark[2]).toBe(1);
 
@@ -567,7 +567,7 @@ describe('channels router', () => {
       channelId: 2
     });
 
-    const afterSecondMark = await getChannelsReadStatesForUser(2, 2);
+    const afterSecondMark = await getChannelsReadStatesForUser(2);
 
     expect(afterSecondMark[2]).toBe(0);
   });
@@ -595,7 +595,7 @@ describe('channels router', () => {
       files: []
     });
 
-    const readStates = await getChannelsReadStatesForUser(2, 2);
+    const readStates = await getChannelsReadStatesForUser(2);
 
     // user 2 should have 3 unread messages
     expect(readStates[2]).toBe(3);
@@ -605,7 +605,7 @@ describe('channels router', () => {
       channelId: 2
     });
 
-    const afterMark = await getChannelsReadStatesForUser(2, 2);
+    const afterMark = await getChannelsReadStatesForUser(2);
 
     expect(afterMark[2]).toBe(0);
   });
@@ -626,7 +626,7 @@ describe('channels router', () => {
       files: []
     });
 
-    const readStates = await getChannelsReadStatesForUser(1, 2);
+    const readStates = await getChannelsReadStatesForUser(1);
 
     // should have 0 unread messages since user sent them themselves
     expect(readStates[2]).toBe(0);
@@ -646,7 +646,7 @@ describe('channels router', () => {
     // user 2 marks as read so baseline is 0
     await caller2.channels.markAsRead({ channelId: 2 });
 
-    const afterMarkRead = await getChannelsReadStatesForUser(2, 2);
+    const afterMarkRead = await getChannelsReadStatesForUser(2);
 
     expect(afterMarkRead[2]).toBe(0);
 
@@ -665,7 +665,7 @@ describe('channels router', () => {
       parentMessageId: parentId
     });
 
-    const afterReplies = await getChannelsReadStatesForUser(2, 2);
+    const afterReplies = await getChannelsReadStatesForUser(2);
 
     // thread replies should NOT increment the unread count
     expect(afterReplies[2]).toBe(0);
@@ -696,7 +696,7 @@ describe('channels router', () => {
       files: []
     });
 
-    const readStates = await getChannelsReadStatesForUser(2, 2);
+    const readStates = await getChannelsReadStatesForUser(2);
 
     // should be 2 (two root messages), NOT 3 (which would include the thread reply)
     expect(readStates[2]).toBe(2);
@@ -725,14 +725,14 @@ describe('channels router', () => {
       files: []
     });
 
-    const beforeMark = await getChannelsReadStatesForUser(2, 2);
+    const beforeMark = await getChannelsReadStatesForUser(2);
 
     // 2 root messages unread
     expect(beforeMark[2]).toBe(2);
 
     await caller2.channels.markAsRead({ channelId: 2 });
 
-    const afterMark = await getChannelsReadStatesForUser(2, 2);
+    const afterMark = await getChannelsReadStatesForUser(2);
 
     expect(afterMark[2]).toBe(0);
   });
