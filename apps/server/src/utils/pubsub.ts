@@ -213,7 +213,10 @@ class PubSub {
   constructor() {
     this.ee = new EventEmitter();
 
-    this.ee.setMaxListeners(50);
+    // One listener per connected socket per global topic (users.onJoin,
+    // emojis.onCreate, ...): the count tracks online users, so any finite
+    // cap only turns the 51st connection into a leak warning.
+    this.ee.setMaxListeners(0);
   }
 
   public publish<TTopic extends keyof Events>(
