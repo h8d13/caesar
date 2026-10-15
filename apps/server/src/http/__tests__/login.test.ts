@@ -350,6 +350,39 @@ describe('/login', () => {
     expect(role?.isDefault).toBe(true);
   });
 
+  test('should assign the invite role on top of the default role', async () => {
+    const guest = await tdb
+      .select({ id: roles.id })
+      .from(roles)
+      .where(eq(roles.name, 'Guest'))
+      .get();
+
+    await tdb.insert(invites).values({
+      code: 'GUESTINVITE',
+      creatorId: 1,
+      roleId: guest!.id,
+      createdAt: Date.now()
+    });
+
+    const response = await login('guestuser', 'password123', 'GUESTINVITE');
+
+    expect(response.status).toBe(200);
+
+    const newUser = await tdb
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.identity, 'guestuser'))
+      .get();
+
+    const assigned = await tdb
+      .select({ roleId: userRoles.roleId })
+      .from(userRoles)
+      .where(eq(userRoles.userId, newUser!.id));
+
+    expect(assigned.map((r) => r.roleId)).toContain(guest!.id);
+    expect(assigned).toHaveLength(2);
+  });
+
   test('should rate limit excessive login attempts', async () => {
     for (let i = 0; i < 5; i++) {
       const response = await login('testowner', 'wrongpassword');

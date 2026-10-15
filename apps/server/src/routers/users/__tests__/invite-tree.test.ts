@@ -83,6 +83,18 @@ const getInvitedBy = async (userId: number) =>
       .get()
   )?.invitedBy;
 
+const getPlaceholderId = async () => {
+  const placeholder = await tdb
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.identity, DELETED_USER_IDENTITY_AND_NAME))
+    .get();
+
+  expect(placeholder).toBeDefined();
+
+  return placeholder!.id;
+};
+
 describe('invite provenance', () => {
   test('signup through an invite records inviter and code', async () => {
     const user = await signupVia(2, 'invitee');
@@ -115,16 +127,18 @@ describe('invite provenance', () => {
 
       await caller.users.delete({ userId: 2, wipe });
 
-      const placeholder = await tdb
-        .select({ id: users.id })
-        .from(users)
-        .where(eq(users.identity, DELETED_USER_IDENTITY_AND_NAME))
-        .get();
-
-      expect(placeholder).toBeDefined();
-      expect(await getInvitedBy(user.id)).toBe(placeholder!.id);
+      expect(await getInvitedBy(user.id)).toBe(await getPlaceholderId());
     }
   );
+
+  test('deleteSelf by the inviter re-points invitees too', async () => {
+    const user = await signupVia(2, 'invitee');
+    const { caller } = await initTest(2);
+
+    await caller.users.deleteSelf({});
+
+    expect(await getInvitedBy(user.id)).toBe(await getPlaceholderId());
+  });
 });
 
 describe('users.getInviteTree', () => {
@@ -181,6 +195,48 @@ describe('users.getInviteTree', () => {
 
     expect(nodes.map((n) => n.depth)).toEqual([1, 2]);
     expect(nodes.at(-1)!.id).toBe(b.id);
+  });
+
+  test('deleting a middle user cuts the branch at the placeholder', async () => {
+    const { caller } = await initTest();
+    const { a, b, c } = await seedChain();
+
+    await caller.users.delete({ userId: b.id });
+
+    const placeholderId = await getPlaceholderId();
+
+    const up = await caller.users.getInviteTree({
+      userId: c.id,
+      direction: 'up'
+    });
+
+    expect(up.map((n) => n.id)).toEqual([placeholderId]);
+
+    const down = await caller.users.getInviteTree({
+      userId: a.id,
+      direction: 'down'
+    });
+
+    expect(down).toEqual([]);
+  });
+
+  test('invitees of several deleted inviters merge under the placeholder', async () => {
+    const { caller } = await initTest();
+    const { a, b, c } = await seedChain();
+    const other = await signupVia(2, 'other');
+
+    await caller.users.delete({ userId: b.id });
+    await caller.users.delete({ userId: 2 });
+
+    const down = await caller.users.getInviteTree({
+      userId: await getPlaceholderId(),
+      direction: 'down',
+      maxDepth: 1
+    });
+
+    expect(down.map((n) => n.id)).toEqual([c.id, other.id]);
+    // a's inviter (owner) is alive: a stays on its own branch
+    expect(await getInvitedBy(a.id)).toBe(1);
   });
 
   test('strips identity and codes without their permissions', async () => {
