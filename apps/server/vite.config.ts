@@ -12,6 +12,19 @@ const { dependencies } = JSON.parse(
   readFileSync(new URL('./package.json', import.meta.url), 'utf8')
 ) as { dependencies: Record<string, string> };
 
+// Compile for the oldest Node we run: root engines.node, which renovate
+// keeps at the minimum the images ship ('>=26.11.1' -> 'node26.11.1').
+const { engines } = JSON.parse(
+  readFileSync(new URL('../../package.json', import.meta.url), 'utf8')
+) as { engines: { node: string } };
+const minimumNode = /^>=\s*(\d+(?:\.\d+){0,2})$/.exec(engines.node)?.[1];
+
+if (!minimumNode) {
+  throw new Error(
+    `engines.node must be '>=x.y.z' to derive the build target, got '${engines.node}'`
+  );
+}
+
 const isProduction = process.env.NODE_ENV === 'production';
 
 // set in the Docker builder stage; local builds fall back to the git sha.
@@ -36,7 +49,7 @@ export default defineConfig({
     entry: { server: 'src/index.ts' },
     format: 'esm',
     platform: 'node',
-    target: 'node26',
+    target: `node${minimumNode}`,
     dts: false,
     shims: true,
     minify: isProduction,
