@@ -1,9 +1,9 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore Vite resolves ?url imports from node_modules
-import lightThemeUrl from 'highlight.js/styles/github.min.css?url';
+import darkThemeUrl from 'highlight.js/styles/github-dark.min.css?url';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore Vite resolves ?url imports from node_modules
-import darkThemeUrl from 'highlight.js/styles/github-dark.min.css?url';
+import lightThemeUrl from 'highlight.js/styles/github.min.css?url';
 
 const LINK_ID = 'hljs-theme';
 

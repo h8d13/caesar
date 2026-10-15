@@ -6,7 +6,7 @@ import { TMP_PATH } from '@server/helpers/paths';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
-import { afterAll, beforeEach, describe, expect, test } from 'vitest';
+import { afterAll, beforeEach, describe, expect, test } from 'vite-plus/test';
 import { sanitizeFileName } from '../helpers';
 
 const getMockFile = (content: string): File => {

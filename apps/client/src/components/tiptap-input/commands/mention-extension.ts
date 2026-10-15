@@ -15,6 +15,14 @@ type TMentionOptions = {
     suggestion: typeof UserMentionSuggestion;
 };
 
+declare module '@tiptap/core' {
+    interface Commands<ReturnType> {
+        mentionUsers: {
+            setMentionUsers: (users: TJoinedPublicUser[]) => ReturnType;
+        };
+    }
+}
+
 const Mention = Extension.create<TMentionOptions>({
     name: USER_MENTION_STORAGE_KEY,
     addOptions() {
@@ -26,6 +34,14 @@ const Mention = Extension.create<TMentionOptions>({
     addStorage() {
         return {
             users: this.options.users
+        };
+    },
+    addCommands() {
+        return {
+            setMentionUsers: (users) => () => {
+                this.storage.users = users;
+                return true;
+            }
         };
     },
     addProseMirrorPlugins() {

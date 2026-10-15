@@ -137,7 +137,7 @@ const createHttpServer = async (port: number = config.server.port) => {
 
           // fallback to interface route handler for GET requests
           if (method === 'GET') {
-            return await interfaceRouteHandler(req, res);
+            return interfaceRouteHandler(req, res);
           }
         } catch (error) {
           const errorsMap: Record<string, string> = {};

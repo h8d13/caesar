@@ -111,7 +111,7 @@ const useAudioLevel = (audioStream: MediaStream | undefined) => {
             }
 
             if (audioContextRef.current) {
-                audioContextRef.current.close();
+                void audioContextRef.current.close();
             }
 
             setSpeakingIntensity(SpeakingIntensity.Silent);

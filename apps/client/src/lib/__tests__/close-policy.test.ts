@@ -1,5 +1,5 @@
 import { DisconnectCode } from '@caesar/shared';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 import { isTransientClose } from '../close-policy';
 
 describe('isTransientClose', () => {

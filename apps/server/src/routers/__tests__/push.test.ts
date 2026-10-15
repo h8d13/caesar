@@ -2,7 +2,7 @@ import { pushSubscriptions } from '@caesar/shared/db/schema';
 import { initTest } from '@server/__tests__/helpers';
 import { db } from '@server/db';
 import { eq } from 'drizzle-orm';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const SUB = {
   endpoint: 'https://push.example.com/sub/abc123',

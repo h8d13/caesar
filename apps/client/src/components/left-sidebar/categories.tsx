@@ -34,7 +34,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ChevronDown, ChevronRight, Hash, Plus, Volume2 } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { CategoryContextMenu } from '../context-menus/category';
 import { Dialog } from '../dialogs/dialogs';
@@ -153,27 +153,29 @@ const Categories = memo(() => {
     // Optimistic state during drag. onDragOver mutates it so the destination
     // SortableContext sees the dragged channel and verticalListSortingStrategy
     // can animate its items to make space (the insertion preview). Kept until
-    // redux catches up (then cleared by the effect below) to avoid snap-back.
+    // redux catches up (then cleared during render below) to avoid snap-back.
     const [override, setOverride] = useState<Record<number, number[]> | null>(
         null
     );
     const [activeId, setActiveId] = useState<string | null>(null);
 
-    const byCat = override ?? baseByCat;
+    // baseByCat omits categories with zero channels (loop skips them),
+    // override can hold `[sCat]: []` after a cross-cat drag drains the
+    // source. Strip empties before comparing so the override clears
+    // instead of lingering forever and shadowing future drags.
+    if (
+        activeId === null &&
+        override &&
+        JSON.stringify(
+            Object.fromEntries(
+                Object.entries(override).filter(([, ids]) => ids.length > 0)
+            )
+        ) === JSON.stringify(baseByCat)
+    ) {
+        setOverride(null);
+    }
 
-    useEffect(() => {
-        if (activeId !== null || !override) return;
-        // baseByCat omits categories with zero channels (loop skips them),
-        // override can hold `[sCat]: []` after a cross-cat drag drains the
-        // source. Strip empties before comparing so the override clears
-        // instead of lingering forever and shadowing future drags.
-        const normalized = Object.fromEntries(
-            Object.entries(override).filter(([, ids]) => ids.length > 0)
-        );
-        if (JSON.stringify(normalized) === JSON.stringify(baseByCat)) {
-            setOverride(null);
-        }
-    }, [baseByCat, override, activeId]);
+    const byCat = override ?? baseByCat;
 
     const findCat = useCallback(
         (sortableId: string): number | null => {
@@ -271,7 +273,8 @@ const Categories = memo(() => {
                     active.data.current?.userId ?? aId.slice(3)
                 );
                 const sourceChannelId = active.data.current?.channelId as
-                    number | undefined;
+                    | number
+                    | undefined;
                 const destChannelId = Number(oId.slice(3));
 
                 if (destChannelId === sourceChannelId) return;

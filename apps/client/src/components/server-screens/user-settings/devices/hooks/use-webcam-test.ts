@@ -201,11 +201,11 @@ const useWebcamTest = ({
             window.setTimeout(() => {
                 if (isCancelled) return;
 
-                tryAttach();
+                void tryAttach();
             }, 120);
         };
 
-        tryAttach();
+        void tryAttach();
 
         return () => {
             isCancelled = true;
@@ -220,7 +220,7 @@ const useWebcamTest = ({
 
         if (previousSignature === settingsSignature || !isTesting) return;
 
-        startTest();
+        void startTest();
     }, [webcamId, webcamResolution, webcamFramerate, isTesting, startTest]);
 
     useEffect(() => {

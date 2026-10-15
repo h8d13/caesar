@@ -395,7 +395,7 @@ const useTransportStats = () => {
             }
 
             if (producerTransport || consumerTransport) {
-                collectStats();
+                void collectStats();
                 intervalRef.current = setInterval(collectStats, intervalMs);
             }
         },

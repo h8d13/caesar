@@ -1,12 +1,6 @@
 import { ChannelType, type TChannel } from '@caesar/shared';
 import { Hash, Volume2 } from 'lucide-react';
-import {
-    forwardRef,
-    useCallback,
-    useEffect,
-    useImperativeHandle,
-    useState
-} from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
 
 type TChannelListProps = {
     items: TChannel[];
@@ -20,7 +14,13 @@ type TChannelListRef = {
 const ChannelList = forwardRef<TChannelListRef, TChannelListProps>(
     ({ items, onSelect }, ref) => {
         const [selectedIndex, setSelectedIndex] = useState(0);
-        useEffect(() => setSelectedIndex(0), [items]);
+        // new items start the selection over at the top
+        const [prevItems, setPrevItems] = useState(items);
+
+        if (items !== prevItems) {
+            setPrevItems(items);
+            setSelectedIndex(0);
+        }
 
         const selectItem = useCallback(
             (index: number) => items[index] && onSelect(items[index]),

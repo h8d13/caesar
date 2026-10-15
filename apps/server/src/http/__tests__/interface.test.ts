@@ -2,7 +2,7 @@ import { testsBaseUrl } from '@server/__tests__/setup';
 import { INTERFACE_PATH } from '@server/helpers/paths';
 import fs from 'fs';
 import path from 'path';
-import { beforeAll, describe, expect, test } from 'vitest';
+import { beforeAll, describe, expect, test } from 'vite-plus/test';
 import zlib from 'zlib';
 
 describe('/interface', () => {

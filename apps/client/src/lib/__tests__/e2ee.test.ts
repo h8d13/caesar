@@ -6,7 +6,7 @@
 // exchange swap it with setPriv() between calls. clearPriv() in beforeEach
 // keeps tests independent.
 
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vite-plus/test';
 import {
     clearPriv,
     derivePriv,

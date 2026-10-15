@@ -45,7 +45,7 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
       }
 
       if (data.type === 'wasm-binary') {
-        this._initWasm(data.binary);
+        void this._initWasm(data.binary);
       }
 
       if (data.type === 'cleanup') {
@@ -109,7 +109,7 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
               self._cachedHeapBuffer = null;
               self._cachedHeapF32 = null;
               return 1;
-            } catch (e) {
+            } catch {
               return 0;
             }
           },

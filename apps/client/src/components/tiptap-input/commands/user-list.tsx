@@ -1,13 +1,7 @@
 import { UserAvatar } from '@/components/user-avatar';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
 import type { TJoinedPublicUser } from '@caesar/shared';
-import {
-    forwardRef,
-    useCallback,
-    useEffect,
-    useImperativeHandle,
-    useState
-} from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
 
 type TUserListProps = {
     items: TJoinedPublicUser[];
@@ -21,7 +15,13 @@ type TUserListRef = {
 const UserList = forwardRef<TUserListRef, TUserListProps>(
     ({ items, onSelect }, ref) => {
         const [selectedIndex, setSelectedIndex] = useState(0);
-        useEffect(() => setSelectedIndex(0), [items]);
+        // new items start the selection over at the top
+        const [prevItems, setPrevItems] = useState(items);
+
+        if (items !== prevItems) {
+            setPrevItems(items);
+            setSelectedIndex(0);
+        }
 
         const selectItem = useCallback(
             (index: number) => items[index] && onSelect(items[index]),

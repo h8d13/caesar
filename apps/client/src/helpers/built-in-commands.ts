@@ -1,6 +1,7 @@
 import { addMessages } from '@/features/server/messages/actions';
 import { store } from '@/features/store';
-import type { TJoinedMessage } from '@caesar/shared';
+import { getTrpcError, type TJoinedMessage } from '@caesar/shared';
+import { toast } from 'sonner';
 
 let localMessageId = -1;
 
@@ -67,6 +68,11 @@ export const handleBuiltInCommand = (
     if (!command) return false;
 
     const args = text.slice(1 + commandName.length).trim();
-    command.handler(args, channelId);
+
+    // handlers may be async; a failure surfaces like any other send error
+    Promise.resolve(command.handler(args, channelId)).catch((error) => {
+        toast.error(getTrpcError(error, `/${commandName} failed`));
+    });
+
     return true;
 };

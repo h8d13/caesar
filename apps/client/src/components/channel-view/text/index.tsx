@@ -133,9 +133,12 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
     }, []);
 
     // Clear reply state on channel change
-    useEffect(() => {
+    const [replyChannelId, setReplyChannelId] = useState(channelId);
+
+    if (channelId !== replyChannelId) {
+        setReplyChannelId(channelId);
         setReplyingTo(null);
-    }, [channelId]);
+    }
 
     const pendingScroll = usePendingScrollTarget();
 
@@ -145,7 +148,7 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
 
         const target = consumePendingScrollTarget();
         if (target) {
-            scrollToMessage(target);
+            void scrollToMessage(target);
         }
     }, [loading, pendingScroll, scrollToMessage]);
 

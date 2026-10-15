@@ -7,11 +7,9 @@ type TEmojiItem = {
 
 // checks if the emoji is likely to be rendered as a text presentation emoji, which often look worse and less consistent across platforms than image presentation emojis
 const isTextPresentation = (emoji: string): boolean => {
-    const codepoints = [...emoji];
+    const cp = emoji.codePointAt(0);
 
-    if (codepoints.length !== 1) return false;
-
-    const cp = codepoints[0].codePointAt(0)!;
+    if (cp === undefined || String.fromCodePoint(cp) !== emoji) return false;
 
     return (
         cp <= 0x00ae ||

@@ -12,12 +12,7 @@
     }
   },
   "scripts": {
-    "format": "prettier --write \"**/*.ts*\" --config ./.prettierrc.json",
-    "format:check": "prettier --check \"**/*.ts*\" --config ./.prettierrc.json",
-    "lint": "eslint ./src --report-unused-disable-directives",
-    "lint:fix": "eslint ./src --report-unused-disable-directives --fix",
-    "check-types": "tsc --noEmit",
-    "magic": "pnpm lint:fix && pnpm format && pnpm check-types"
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.24",
@@ -50,13 +45,6 @@
   "devDependencies": {
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "typescript": "catalog:",
-    "@eslint/js": "catalog:",
-    "eslint": "catalog:",
-    "eslint-plugin-unused-imports": "catalog:",
-    "globals": "catalog:",
-    "prettier": "catalog:",
-    "prettier-plugin-organize-imports": "catalog:",
-    "typescript-eslint": "catalog:"
+    "typescript": "catalog:"
   }
 }

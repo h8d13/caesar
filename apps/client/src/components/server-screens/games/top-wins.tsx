@@ -13,41 +13,54 @@ type GameHistoryItem = {
 
 const PAGE_SIZE = 10;
 
+const fetchGameHistory = (p: number) =>
+    getTRPCClient().others.getGameHistory.query({ page: p });
+
+type TGameHistoryPage = Awaited<ReturnType<typeof fetchGameHistory>>;
+
 const TopWins = memo(() => {
     const [items, setItems] = useState<GameHistoryItem[]>([]);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    const fetchPage = useCallback(async (p: number) => {
-        try {
-            setLoading(true);
-            const trpc = getTRPCClient();
-            const result = await trpc.others.getGameHistory.query({ page: p });
-            setItems(result.items);
-            setHasMore(result.hasMore);
-            setPage(result.page);
-        } catch {
-            // silently fail
-        } finally {
-            setLoading(false);
-        }
+    const applyPage = useCallback((result: TGameHistoryPage) => {
+        setItems(result.items);
+        setHasMore(result.hasMore);
+        setPage(result.page);
     }, []);
 
+    // background refresh of the first page; failures keep the last page
     useEffect(() => {
-        fetchPage(0);
-        const interval = setInterval(() => fetchPage(0), 15_000);
+        const load = () =>
+            fetchGameHistory(0)
+                .then(applyPage)
+                .catch(() => {});
+
+        void load();
+        const interval = setInterval(load, 15_000);
         return () => clearInterval(interval);
-    }, [fetchPage]);
+    }, [applyPage]);
+
+    // user paging: buttons stay disabled until the page arrives
+    const goTo = useCallback(
+        (p: number) => {
+            setLoading(true);
+            fetchGameHistory(p)
+                .then(applyPage)
+                .catch(() => {})
+                .finally(() => setLoading(false));
+        },
+        [applyPage]
+    );
 
     const goBack = useCallback(() => {
-        const p = Math.max(0, page - 1);
-        fetchPage(p);
-    }, [page, fetchPage]);
+        goTo(Math.max(0, page - 1));
+    }, [page, goTo]);
 
     const goForward = useCallback(() => {
-        fetchPage(page + 1);
-    }, [page, fetchPage]);
+        goTo(page + 1);
+    }, [page, goTo]);
 
     if (items.length === 0 && page === 0) return null;
 

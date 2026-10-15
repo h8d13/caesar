@@ -1,6 +1,6 @@
 import { LayerType, type Layer } from '@caesar/shared';
 import { WhiteboardRuntime } from '@server/runtimes/whiteboard';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 const createLayer = (x = 0): Layer => ({
   type: LayerType.Rectangle,

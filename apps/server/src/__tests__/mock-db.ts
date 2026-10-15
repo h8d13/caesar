@@ -1,5 +1,5 @@
 import { type LibSQLDatabase } from 'drizzle-orm/libsql';
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
 
 /**
  * This file is preloaded FIRST (via vitest.config.ts setupFiles) to mock

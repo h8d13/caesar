@@ -57,7 +57,7 @@ const setLocalStorageItemBool = (
 
 const getLocalStorageItemAsJSON = <T>(
     key: LocalStorageKey,
-    defaultValue: T | undefined = undefined
+    defaultValue?: T
 ): T | undefined => {
     const item = localStorage.getItem(key);
 

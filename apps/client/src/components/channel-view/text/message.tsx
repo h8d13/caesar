@@ -100,11 +100,12 @@ const Message = memo(
             onReply?.(message);
         }, [onReply, message]);
 
+        const replyToId = message.replyTo?.id;
         const handleReplyPreviewClick = useCallback(() => {
-            if (message.replyTo?.id && onScrollToMessage) {
-                onScrollToMessage(message.replyTo.id);
+            if (replyToId && onScrollToMessage) {
+                onScrollToMessage(replyToId);
             }
-        }, [message.replyTo?.id, onScrollToMessage]);
+        }, [replyToId, onScrollToMessage]);
 
         return (
             <div

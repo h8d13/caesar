@@ -29,7 +29,7 @@ const VoiceControl = memo(() => {
     const transportStats = useMediaStats();
 
     const handleDisconnect = useCallback(() => {
-        leaveVoice({ reason: 'user_disconnect_button' });
+        void leaveVoice({ reason: 'user_disconnect_button' });
     }, []);
 
     const connectionInfo = useMemo(() => {

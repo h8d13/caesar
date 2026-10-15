@@ -8,7 +8,7 @@ import {
   verifyFileToken
 } from '@server/helpers/files-crypto';
 import { desc, eq } from 'drizzle-orm';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 describe('channels router', () => {
   test('should throw when user lacks permissions (add)', async () => {

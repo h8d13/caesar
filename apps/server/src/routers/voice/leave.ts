@@ -40,7 +40,7 @@ const leaveVoiceRoute = voiceProcedure.mutation(async ({ ctx }) => {
       });
     }
     if (channelState.users.length === 0) {
-      await ctx.voiceRuntime.destroy();
+      ctx.voiceRuntime.destroy();
     }
   }
 

@@ -452,6 +452,7 @@ export const useAdminUserInfo = (userId: number) => {
 export const useAdminInvites = () => {
     const {
         data: invites = [],
+        dataUpdatedAt: fetchedAt,
         isPending: loading,
         refetch
     } = useQuery({
@@ -470,6 +471,8 @@ export const useAdminInvites = () => {
 
     return {
         invites,
+        // expiry is judged as of this fetch, not re-read from the clock
+        fetchedAt,
         limits,
         refetch: refetchAll,
         loading

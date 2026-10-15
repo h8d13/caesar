@@ -11,7 +11,7 @@ import { getJwtSecret } from '@server/utils/jwt-secret';
 import { verifyPassword } from '@server/utils/password';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 // Stand up a non-owner moderator: user 2 gets a fresh role carrying only the
 // listed permissions, then acts via their own caller. `initTest(2)` must run

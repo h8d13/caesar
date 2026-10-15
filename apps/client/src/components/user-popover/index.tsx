@@ -96,7 +96,7 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
     );
 
     useEffect(() => {
-        fetchVotesToday().then(() => {
+        void fetchVotesToday().then(() => {
             setHasVotedToday(votedTodaySet.has(userId));
         });
     }, [userId]);

@@ -7,7 +7,7 @@ type HttpRouteHandler<TContext = undefined> = (
   req: http.IncomingMessage,
   res: http.ServerResponse,
   ctx: TContext
-) => Promise<unknown> | unknown;
+) => unknown;
 
 // Fallback cap when a caller doesn't pass one. Callers should pass
 // config.server.maxRequestBodyBytes; this keeps helpers.ts config-free (and

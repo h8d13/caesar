@@ -429,7 +429,7 @@ const Devices = memo(() => {
                             ) : (
                                 <Button
                                     variant="secondary"
-                                    onClick={() => void stopTest()}
+                                    onClick={() => stopTest()}
                                 >
                                     Stop Test
                                 </Button>

@@ -1,6 +1,6 @@
 import { login } from '@server/__tests__/helpers';
 import { testsBaseUrl } from '@server/__tests__/setup';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 describe('/logout', () => {
   test('returns 200 with clearing cookie when token is valid', async () => {

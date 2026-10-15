@@ -24,7 +24,7 @@ import { pruneExpiredStatuses } from '@server/crons/prune-expired-statuses';
 import { getOrphanedFileIds } from '@server/db/queries/files';
 import { verifyPassword } from '@server/utils/password';
 import { and, eq } from 'drizzle-orm';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 describe('users router', () => {
   test('should throw when user lacks permissions (getAll)', async () => {

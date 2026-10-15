@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useNow } from './use-now';
 
 const formatElapsed = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -12,17 +13,7 @@ const formatElapsed = (ms: number) => {
 };
 
 export const useElapsedTime = (startTime: number | null) => {
-    const [now, setNow] = useState(() => Date.now());
-
-    useEffect(() => {
-        if (!startTime) return;
-
-        const interval = setInterval(() => {
-            setNow(Date.now());
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [startTime]);
+    const now = useNow(1000, Boolean(startTime));
 
     return useMemo(() => {
         if (!startTime) return '0:00';

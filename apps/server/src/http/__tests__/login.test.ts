@@ -5,7 +5,7 @@ import { getJwtSecret } from '@server/utils/jwt-secret';
 import { setRateLimitingDisabled } from '@server/utils/rate-limiters';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vite-plus/test';
 
 describe('/login', () => {
   test('should successfully login with valid credentials', async () => {

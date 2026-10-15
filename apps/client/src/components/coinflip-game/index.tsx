@@ -1,12 +1,16 @@
 import { fetchCoinflipState } from '@/features/server/coinflip/actions';
 import { subscribeToCoinflip } from '@/features/server/coinflip/subscriptions';
 import { memo, useEffect } from 'react';
+import { toast } from 'sonner';
 import { ChallengeList } from './challenge-list';
 import { CreateChallenge } from './create-challenge';
 
 const CoinflipGameContent = memo(() => {
     useEffect(() => {
-        fetchCoinflipState();
+        // the subscription keeps state live; a failed first load is surfaced
+        fetchCoinflipState().catch(() => {
+            toast.error('Could not load coinflip challenges');
+        });
         const unsubscribe = subscribeToCoinflip();
         return unsubscribe;
     }, []);

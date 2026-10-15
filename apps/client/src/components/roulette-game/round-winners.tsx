@@ -29,11 +29,10 @@ const RoundWinners = memo(() => {
             }));
     }, [phase, bets]);
 
-    useEffect(() => {
-        if (currentWinners.length > 0) {
-            setWinners(currentWinners);
-        }
-    }, [currentWinners]);
+    // winners outlive the RESULT phase until the clear below
+    if (currentWinners.length > 0 && currentWinners !== winners) {
+        setWinners(currentWinners);
+    }
 
     // Clear winners when betting phase starts
     useEffect(() => {

@@ -3,7 +3,7 @@ import { initTest } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { pruneExpiredMessages } from '@server/crons/prune-expired';
 import { eq } from 'drizzle-orm';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 describe('dms router', () => {
   test('wipeConversation removes all messages for both participants', async () => {

@@ -74,9 +74,14 @@ const FloatingPinnedCard = memo(
             }
         }, [pinnedCardVideoStream, isCurrentVoiceChannelSelected]);
 
-        useEffect(() => {
+        // a new pinned card, or leaving/entering the voice channel, reopens
+        const openKey = `${pinnedCard?.id}:${isCurrentVoiceChannelSelected}`;
+        const [prevOpenKey, setPrevOpenKey] = useState(openKey);
+
+        if (openKey !== prevOpenKey) {
+            setPrevOpenKey(openKey);
             setOpen(true);
-        }, [pinnedCard?.id, isCurrentVoiceChannelSelected]);
+        }
 
         if (!pinnedCardVideoStream || isCurrentVoiceChannelSelected || !open) {
             return null;

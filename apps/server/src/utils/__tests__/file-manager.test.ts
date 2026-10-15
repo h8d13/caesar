@@ -6,7 +6,7 @@ import { eq } from 'drizzle-orm';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test } from 'vite-plus/test';
 import { fileManager } from '../file-manager';
 
 describe('file manager', () => {

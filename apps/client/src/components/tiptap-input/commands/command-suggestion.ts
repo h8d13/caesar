@@ -41,7 +41,7 @@ export const CommandSuggestion = {
 
             const virtualElement = { getBoundingClientRect: () => clientRect };
 
-            computePosition(virtualElement, component.element, {
+            void computePosition(virtualElement, component.element, {
                 placement: 'top-start',
                 strategy: 'fixed',
                 middleware: [flip(), shift({ padding: 8 })]
@@ -99,7 +99,8 @@ export const CommandSuggestion = {
 
             onKeyDown(props: { event: KeyboardEvent }) {
                 const commandListRef = component?.ref as
-                    CommandListRef | undefined;
+                    | CommandListRef
+                    | undefined;
 
                 if (commandListRef?.onKeyDown) {
                     return commandListRef.onKeyDown(props.event);

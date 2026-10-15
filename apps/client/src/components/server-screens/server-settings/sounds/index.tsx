@@ -37,7 +37,7 @@ const Sounds = memo(() => {
                 }))
             );
 
-            refetch();
+            void refetch();
             toast.success('Sound uploaded');
         } catch (error) {
             console.error('Error uploading sound:', error);

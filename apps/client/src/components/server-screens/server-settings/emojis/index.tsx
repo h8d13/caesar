@@ -37,7 +37,7 @@ const Emojis = memo(() => {
                 }))
             );
 
-            refetch();
+            void refetch();
             toast.success('Emoji created');
         } catch (error) {
             console.error('Error uploading emoji:', error);

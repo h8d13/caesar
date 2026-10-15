@@ -12,10 +12,11 @@ import {
 } from 'lucide-react';
 import getStroke from 'perfect-freehand';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Cursors } from './Cursors';
+import { LayerPreview } from './objects/LayerPreview';
 import { SelectionBox } from './SelectionBox';
 import { Toolbar } from './Toolbar';
-import { LayerPreview } from './objects/LayerPreview';
 import { useWhiteboard } from './use-whiteboard';
 import {
     colorToCss,
@@ -52,9 +53,13 @@ const WhiteboardPanel = memo(({ channelId, onClose }: WhiteboardPanelProps) => {
     const toggleFullscreen = useCallback(() => {
         if (!containerRef.current) return;
         if (document.fullscreenElement === containerRef.current) {
-            document.exitFullscreen();
+            // only rejects when nothing is fullscreen, ruled out above
+            void document.exitFullscreen();
         } else {
-            containerRef.current.requestFullscreen();
+            // refused without a user gesture or by a permissions policy
+            containerRef.current.requestFullscreen().catch(() => {
+                toast.error('Fullscreen is not available');
+            });
         }
     }, []);
 

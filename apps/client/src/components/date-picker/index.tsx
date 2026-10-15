@@ -10,7 +10,7 @@ import {
 } from '@caesar/ui';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 
 type TDatePickerProps = {
     value: number | undefined;
@@ -65,13 +65,17 @@ const DatePicker = memo(
             formatDate(dateFromValue)
         );
 
-        useEffect(() => {
+        // external value changes overwrite what was typed
+        const [prevValue, setPrevValue] = useState(value);
+
+        if (value !== prevValue) {
+            setPrevValue(value);
             setInputValue(formatDate(dateFromValue));
 
             if (dateFromValue) {
                 setMonth(dateFromValue);
             }
-        }, [dateFromValue]);
+        }
 
         const handleInputChange = useCallback(
             (e: React.ChangeEvent<HTMLInputElement>) => {

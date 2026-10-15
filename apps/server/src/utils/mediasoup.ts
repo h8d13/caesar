@@ -22,7 +22,8 @@ const resolveWorkerCount = (): number => {
 
 const resolveLogLevel = (): mediasoup.types.WorkerLogLevel => {
   const fromEnv = process.env.CAESAR_WEBRTC_LOG_LEVEL as
-    mediasoup.types.WorkerLogLevel | undefined;
+    | mediasoup.types.WorkerLogLevel
+    | undefined;
   if (
     fromEnv === 'debug' ||
     fromEnv === 'warn' ||

@@ -154,7 +154,7 @@ const useMicrophoneTest = ({
         }
 
         if (audioContextRef.current) {
-            audioContextRef.current.close();
+            void audioContextRef.current.close();
             audioContextRef.current = null;
         }
 
@@ -242,7 +242,7 @@ const useMicrophoneTest = ({
                 }
 
                 if (audioContext) {
-                    audioContext.close();
+                    void audioContext.close();
                 }
             };
 
@@ -531,7 +531,7 @@ const useMicrophoneTest = ({
         if (!isTestRequestedRef.current) return;
 
         testRequestIdRef.current += 1;
-        startTestPipeline(testRequestIdRef.current);
+        void startTestPipeline(testRequestIdRef.current);
     }, [startTestPipeline]);
 
     useEffect(() => {

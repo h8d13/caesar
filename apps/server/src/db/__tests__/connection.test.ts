@@ -2,7 +2,7 @@ import { type Client } from '@libsql/client';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test } from 'vite-plus/test';
 import { createDbClient } from '../connection';
 
 const dbPath = path.join(os.tmpdir(), `caesar-conn-${process.pid}.sqlite`);

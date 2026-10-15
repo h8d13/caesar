@@ -1,7 +1,7 @@
 import * as schema from '@caesar/shared/db/schema';
 import { is } from 'drizzle-orm';
 import { getTableConfig, SQLiteTable } from 'drizzle-orm/sqlite-core';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 import { FILE_REFERENCES } from '../files';
 
 const columnKey = (table: SQLiteTable, column: string) =>

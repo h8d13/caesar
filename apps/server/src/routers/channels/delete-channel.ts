@@ -40,7 +40,7 @@ const deleteChannelRoute = protectedProcedure
     const runtime = VoiceRuntime.findById(removedChannel.id);
 
     if (runtime) {
-      void runtime.destroy();
+      runtime.destroy();
     }
 
     void publishChannel(removedChannel.id, 'delete');

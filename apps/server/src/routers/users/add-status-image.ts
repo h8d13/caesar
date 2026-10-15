@@ -37,7 +37,7 @@ const addStatusImageRoute = rateLimitedProcedure(protectedProcedure, {
       message: `You can have at most ${MAX_ACTIVE_STATUS_IMAGES} active statuses.`
     });
 
-    const tempFile = await fileManager.getTemporaryFile(input.fileId);
+    const tempFile = fileManager.getTemporaryFile(input.fileId);
 
     invariant(tempFile, {
       code: 'NOT_FOUND',

@@ -8,7 +8,8 @@ const ZALGO_RE =
 
 const stripZalgo = (text: string): string => {
   return text.replace(ZALGO_RE, (_match, base: string, combiners: string) => {
-    const kept = [...combiners].slice(0, MAX_COMBINING_PER_CHAR).join('');
+    // every mark in ZALGO_RE is a single UTF-16 unit, so slice by unit
+    const kept = combiners.slice(0, MAX_COMBINING_PER_CHAR);
 
     return base + kept;
   });

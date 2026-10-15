@@ -64,28 +64,31 @@ type TGifGridProps = {
 };
 
 const GifGrid = memo(({ search, onSelect }: TGifGridProps) => {
-    const [gifs, setGifs] = useState<TGif[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(false);
+    // The response for whichever search it answers: loading and error are
+    // derived from whether that is still the current search.
+    const [result, setResult] = useState<{
+        search: string;
+        gifs: TGif[];
+        error: boolean;
+    } | null>(null);
+    const loading = result?.search !== search;
+    const error = !loading && result.error;
+    const gifs = loading ? [] : result.gifs;
 
     // Debounced fetch; empty search falls back to trending.
     useEffect(() => {
         const controller = new AbortController();
-        setLoading(true);
-        setError(false);
 
         const timeout = setTimeout(
             () => {
                 fetchGifs(search.trim(), controller.signal)
-                    .then((results) => {
-                        setGifs(results);
-                        setLoading(false);
-                    })
+                    .then((results) =>
+                        setResult({ search, gifs: results, error: false })
+                    )
                     .catch((e) => {
                         if (controller.signal.aborted) return;
                         console.warn('gif fetch failed', e);
-                        setError(true);
-                        setLoading(false);
+                        setResult({ search, gifs: [], error: true });
                     });
             },
             search.trim() ? SEARCH_DEBOUNCE_MS : 0

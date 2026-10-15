@@ -13,26 +13,14 @@
     "./games/coinflip": "./src/games/coinflip.ts"
   },
   "scripts": {
-    "format": "prettier --write \"**/*.ts*\" --config ./.prettierrc.json",
-    "format:check": "prettier --check \"**/*.ts*\" --config ./.prettierrc.json",
-    "lint": "eslint ./src --report-unused-disable-directives",
-    "lint:fix": "eslint ./src --report-unused-disable-directives --fix",
     "check-types": "tsc --noEmit",
-    "magic": "pnpm lint:fix && pnpm format && pnpm check-types",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "vp test run",
+    "test:watch": "vp test"
   },
   "devDependencies": {
-    "@eslint/js": "catalog:",
     "@types/node": "catalog:",
-    "eslint": "catalog:",
-    "eslint-plugin-unused-imports": "catalog:",
-    "globals": "catalog:",
-    "prettier": "catalog:",
-    "prettier-plugin-organize-imports": "catalog:",
     "typescript": "catalog:",
-    "typescript-eslint": "catalog:",
-    "vitest": "catalog:"
+    "vite-plus": "catalog:"
   },
   "dependencies": {
     "@trpc/client": "catalog:",

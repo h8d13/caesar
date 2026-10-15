@@ -45,7 +45,7 @@ export const connect = async () => {
     }
 
     const host = getHostFromServer();
-    const trpc = await connectToTRPC(host);
+    const trpc = connectToTRPC(host);
 
     const { handshakeHash } = await trpc.others.handshake.query();
 

@@ -187,9 +187,9 @@ class VoiceRuntime {
     await this.createRouters();
   };
 
-  public destroy = async () => {
+  public destroy = () => {
     for (const router of this.routers.values()) {
-      await router.close();
+      router.close();
     }
     this.routers.clear();
     this.pipedProducers.clear();

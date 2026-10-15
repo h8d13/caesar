@@ -10,18 +10,12 @@
     "build": "node build/bundle.mjs",
     "build:prod": "NODE_ENV=production node build/bundle.mjs",
     "build:sea": "NODE_ENV=production node build/bundle.mjs && node build/sea.mjs",
-    "format": "prettier --write \"**/*.ts*\" --config ./.prettierrc.json",
-    "format:check": "prettier --check \"**/*.ts*\" --config ./.prettierrc.json",
-    "lint": "eslint ./src --report-unused-disable-directives",
-    "lint:fix": "eslint ./src --report-unused-disable-directives --fix",
     "check-types": "tsc --noEmit",
-    "magic": "pnpm lint:fix && pnpm format && pnpm check-types",
-    "test": "vitest run",
-    "test:fast": "SKIP_MEDIASOUP=1 vitest run",
-    "test:watch": "vitest"
+    "test": "vp test run",
+    "test:fast": "SKIP_MEDIASOUP=1 vp test run",
+    "test:watch": "vp test"
   },
   "devDependencies": {
-    "@eslint/js": "catalog:",
     "@types/ini": "^4.1.1",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/mime-types": "^3.0.1",
@@ -30,15 +24,9 @@
     "@types/web-push": "^3.6.4",
     "@types/ws": "^8.18.2",
     "esbuild": "^0.28.2",
-    "eslint": "catalog:",
-    "eslint-plugin-unused-imports": "catalog:",
-    "globals": "catalog:",
     "postject": "^1.0.0-alpha.6",
-    "prettier": "catalog:",
-    "prettier-plugin-organize-imports": "catalog:",
     "tsx": "^4.23.15",
-    "typescript-eslint": "catalog:",
-    "vitest": "catalog:"
+    "vite-plus": "catalog:"
   },
   "peerDependencies": {
     "typescript": "catalog:"

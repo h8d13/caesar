@@ -4,7 +4,7 @@ import {
     setLocalStorageItemAsJSON
 } from '@/helpers/storage';
 import { NoiseSuppressionMode, type TDeviceSettings } from '@/types';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import {
     DEFAULT_DEVICE_SETTINGS,
     DevicesProviderContext,
@@ -16,85 +16,79 @@ type TDevicesProviderProps = {
     children: React.ReactNode;
 };
 
+type TAvailableDevices = ReturnType<typeof useAvailableDevices>;
+
+const defaultDeviceId = (list: TAvailableDevices['inputDevices']) =>
+    list.find((d) => d?.deviceId === 'default')?.deviceId ?? list[0]?.deviceId;
+
+// Saved settings with missing device ids filled from what is plugged in.
+const resolveInitialDevices = ({
+    inputDevices,
+    playbackDevices,
+    videoDevices
+}: TAvailableDevices): TDeviceSettings => {
+    const savedSettings = getLocalStorageItemAsJSON<
+        TDeviceSettings & {
+            rnnoiseEnabled?: boolean;
+            dtlnEnabled?: boolean;
+        }
+    >(LocalStorageKey.DEVICES_SETTINGS);
+
+    const autoMicrophoneId = defaultDeviceId(inputDevices);
+    const autoPlaybackId = defaultDeviceId(playbackDevices);
+    const autoWebcamId = defaultDeviceId(videoDevices);
+
+    if (!savedSettings) {
+        return {
+            ...DEFAULT_DEVICE_SETTINGS,
+            microphoneId: autoMicrophoneId,
+            playbackId: autoPlaybackId,
+            webcamId: autoWebcamId
+        };
+    }
+
+    const { rnnoiseEnabled, dtlnEnabled, ...rest } = savedSettings;
+
+    // migrate legacy boolean flags to the enum mode. dtln wins if both
+    // were on. explicit rnnoiseEnabled=false => NONE.
+    const migratedMode: NoiseSuppressionMode =
+        savedSettings.noiseSuppressionMode ??
+        (dtlnEnabled
+            ? NoiseSuppressionMode.DTLN
+            : rnnoiseEnabled === false
+              ? NoiseSuppressionMode.NONE
+              : NoiseSuppressionMode.RNNOISE);
+
+    return {
+        ...DEFAULT_DEVICE_SETTINGS,
+        ...rest,
+        noiseSuppressionMode: migratedMode,
+        microphoneId: savedSettings.microphoneId ?? autoMicrophoneId,
+        playbackId: savedSettings.playbackId ?? autoPlaybackId,
+        webcamId: savedSettings.webcamId ?? autoWebcamId
+    };
+};
+
 const DevicesProvider = memo(({ children }: TDevicesProviderProps) => {
-    const [loading, setLoading] = useState<boolean>(true);
-    const [devices, setDevices] = useState<TDeviceSettings>(
-        DEFAULT_DEVICE_SETTINGS
-    );
-    const initializedRef = useRef(false);
-    const {
-        loading: devicesLoading,
-        inputDevices,
-        playbackDevices,
-        videoDevices
-    } = useAvailableDevices();
+    // null until the first device enumeration; resolved once, so devices
+    // plugged in later never override the user's choice
+    const [resolved, setResolved] = useState<TDeviceSettings | null>(null);
+    const availableDevices = useAvailableDevices();
+
+    if (resolved === null && !availableDevices.loading) {
+        setResolved(resolveInitialDevices(availableDevices));
+    }
+
+    const loading = resolved === null;
+    const devices = resolved ?? DEFAULT_DEVICE_SETTINGS;
 
     const saveDevices = useCallback((newDevices: TDeviceSettings) => {
-        setDevices(newDevices);
+        setResolved(newDevices);
         setLocalStorageItemAsJSON<TDeviceSettings>(
             LocalStorageKey.DEVICES_SETTINGS,
             newDevices
         );
     }, []);
-
-    useEffect(() => {
-        if (devicesLoading || initializedRef.current) return;
-
-        initializedRef.current = true;
-
-        const savedSettings = getLocalStorageItemAsJSON<
-            TDeviceSettings & {
-                rnnoiseEnabled?: boolean;
-                dtlnEnabled?: boolean;
-            }
-        >(LocalStorageKey.DEVICES_SETTINGS);
-
-        // migrate legacy boolean flags to the enum mode. dtln wins if both
-        // were on. explicit rnnoiseEnabled=false => NONE.
-        const migratedMode: NoiseSuppressionMode =
-            savedSettings?.noiseSuppressionMode ??
-            (savedSettings?.dtlnEnabled
-                ? NoiseSuppressionMode.DTLN
-                : savedSettings?.rnnoiseEnabled === false
-                  ? NoiseSuppressionMode.NONE
-                  : NoiseSuppressionMode.RNNOISE);
-
-        const autoMicrophoneId =
-            inputDevices.find((d) => d?.deviceId === 'default')?.deviceId ??
-            inputDevices[0]?.deviceId;
-
-        const autoPlaybackId =
-            playbackDevices.find((d) => d?.deviceId === 'default')?.deviceId ??
-            playbackDevices[0]?.deviceId;
-
-        const autoWebcamId =
-            videoDevices.find((d) => d?.deviceId === 'default')?.deviceId ??
-            videoDevices[0]?.deviceId;
-
-        if (savedSettings) {
-            const { rnnoiseEnabled, dtlnEnabled, ...rest } = savedSettings;
-            void rnnoiseEnabled;
-            void dtlnEnabled;
-
-            setDevices({
-                ...DEFAULT_DEVICE_SETTINGS,
-                ...rest,
-                noiseSuppressionMode: migratedMode,
-                microphoneId: savedSettings.microphoneId ?? autoMicrophoneId,
-                playbackId: savedSettings.playbackId ?? autoPlaybackId,
-                webcamId: savedSettings.webcamId ?? autoWebcamId
-            });
-        } else {
-            setDevices({
-                ...DEFAULT_DEVICE_SETTINGS,
-                microphoneId: autoMicrophoneId,
-                playbackId: autoPlaybackId,
-                webcamId: autoWebcamId
-            });
-        }
-
-        setLoading(false);
-    }, [devicesLoading, inputDevices, playbackDevices, videoDevices]);
 
     const contextValue = useMemo<TDevicesProvider>(
         () => ({

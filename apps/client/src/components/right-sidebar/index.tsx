@@ -86,24 +86,41 @@ const RightSidebar = memo(
         const selectedChannelType = useSelectedChannelType();
         const selectedChannel = useChannelById(selectedChannelId ?? -1);
 
-        const [channelMemberIds, setChannelMemberIds] = useState<Set<number>>(
-            new Set()
-        );
+        // members are fetched per private channel; any other channel, or one
+        // whose fetch has not landed yet, has none
+        const [members, setMembers] = useState<{
+            channelId: number;
+            ids: Set<number>;
+        } | null>(null);
 
         const isVoiceChannel = selectedChannelType === ChannelType.VOICE;
         const isPrivateChannel = selectedChannel?.private === true;
 
+        const channelMemberIds = useMemo(
+            () =>
+                isPrivateChannel &&
+                members &&
+                members.channelId === selectedChannelId
+                    ? members.ids
+                    : new Set<number>(),
+            [isPrivateChannel, members, selectedChannelId]
+        );
+
         useEffect(() => {
-            if (!selectedChannelId || !isPrivateChannel) {
-                setChannelMemberIds(new Set());
-                return;
-            }
+            if (!selectedChannelId || !isPrivateChannel) return;
 
             const trpc = getTRPCClient();
             trpc.channels.getMembers
                 .query({ channelId: selectedChannelId })
-                .then((ids) => setChannelMemberIds(new Set(ids)))
-                .catch(() => setChannelMemberIds(new Set()));
+                .then((ids) =>
+                    setMembers({
+                        channelId: selectedChannelId,
+                        ids: new Set(ids)
+                    })
+                )
+                .catch(() =>
+                    setMembers({ channelId: selectedChannelId, ids: new Set() })
+                );
         }, [selectedChannelId, isPrivateChannel]);
 
         const { usersToShow, usersCount } = useMemo(() => {

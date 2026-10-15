@@ -1,6 +1,7 @@
+import { useNow } from '@/hooks/use-now';
 import { format } from 'date-fns';
 import { Lock } from 'lucide-react';
-import { memo, useEffect, useState } from 'react';
+import { memo } from 'react';
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -18,12 +19,7 @@ type TExpiresBadgeProps = {
 };
 
 const ExpiresBadge = memo(({ expiresAt }: TExpiresBadgeProps) => {
-    const [now, setNow] = useState(() => Date.now());
-
-    useEffect(() => {
-        const id = setInterval(() => setNow(Date.now()), MINUTE);
-        return () => clearInterval(id);
-    }, []);
+    const now = useNow(MINUTE);
 
     const remaining = expiresAt - now;
 

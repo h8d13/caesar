@@ -138,7 +138,7 @@ const SearchDialog = ({ open, onClose }: TSearchDialogProps) => {
             }
 
             debounceRef.current = setTimeout(() => {
-                doSearch(value);
+                void doSearch(value);
             }, 300);
         },
         [doSearch]

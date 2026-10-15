@@ -5,6 +5,7 @@ import {
     type ArrowLayer,
     CanvasMode,
     type Color,
+    getTrpcError,
     type Layer,
     LayerType,
     type LineLayer,
@@ -14,6 +15,7 @@ import {
     type XYWH
 } from '@caesar/shared';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import {
     constrainAngle,
     findIntersectingLayersWithRectangle,
@@ -23,6 +25,14 @@ import {
     snapPointToGrid,
     snapToGrid
 } from './utils';
+
+// Edits apply locally first; a rejected commit means the server copy (and
+// every peer) diverged, so surface it. One toast id so a burst collapses.
+const reportCommitError = (error: unknown) => {
+    toast.error(getTrpcError(error, 'Failed to save whiteboard change'), {
+        id: 'whiteboard-commit-error'
+    });
+};
 
 type HistoryEntry = {
     layers: Record<string, Layer>;
@@ -136,11 +146,16 @@ export function useWhiteboard(
 
     // --- Fetch initial state ---
     useEffect(() => {
-        trpc.whiteboard.getState.query({ channelId }).then((state) => {
-            setLayers(state.layers);
-            setLayerIds(state.layerIds);
-            pushToHistory(state.layers, state.layerIds);
-        });
+        trpc.whiteboard.getState
+            .query({ channelId })
+            .then((state) => {
+                setLayers(state.layers);
+                setLayerIds(state.layerIds);
+                pushToHistory(state.layers, state.layerIds);
+            })
+            .catch((error) => {
+                toast.error(getTrpcError(error, 'Failed to load whiteboard'));
+            });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [channelId, trpc]);
 
@@ -254,7 +269,11 @@ export function useWhiteboard(
     const broadcastCursor = useMemo(
         () =>
             throttle((x: number, y: number) => {
-                trpc.whiteboard.cursorUpdate.mutate({ channelId, x, y });
+                trpc.whiteboard.cursorUpdate
+                    .mutate({ channelId, x, y })
+                    // only rejects when the socket is down, which the
+                    // connection state already reports; the next move resends
+                    .catch(() => {});
             }, 50),
         [channelId, trpc]
     );
@@ -400,11 +419,13 @@ export function useWhiteboard(
         setLayers(newLayers);
 
         // Commit to server + history
-        trpc.whiteboard.addLayer.mutate({
-            channelId,
-            layerId: drag.layerId,
-            layer: finalLayer
-        });
+        trpc.whiteboard.addLayer
+            .mutate({
+                channelId,
+                layerId: drag.layerId,
+                layer: finalLayer
+            })
+            .catch(reportCommitError);
         pushToHistory(newLayers, newLayerIds);
 
         // Auto-focus text layers
@@ -426,7 +447,9 @@ export function useWhiteboard(
         setLayerIds(newLayerIds);
         setSelection([]);
 
-        trpc.whiteboard.deleteLayer.mutate({ channelId, layerIds: selection });
+        trpc.whiteboard.deleteLayer
+            .mutate({ channelId, layerIds: selection })
+            .catch(reportCommitError);
         pushToHistory(newLayers, newLayerIds);
     }, [channelId, layers, layerIds, selection, trpc, pushToHistory]);
 
@@ -435,7 +458,7 @@ export function useWhiteboard(
         setLayers({});
         setLayerIds([]);
         setSelection([]);
-        trpc.whiteboard.clear.mutate({ channelId });
+        trpc.whiteboard.clear.mutate({ channelId }).catch(reportCommitError);
         pushToHistory({}, []);
     }, [channelId, trpc, pushToHistory]);
 
@@ -451,11 +474,13 @@ export function useWhiteboard(
                     const layer = prev[id];
                     if (!layer) continue;
                     next[id] = { ...layer, fill: color } as Layer;
-                    trpc.whiteboard.updateLayer.mutate({
-                        channelId,
-                        layerId: id,
-                        layer: { fill: color }
-                    });
+                    trpc.whiteboard.updateLayer
+                        .mutate({
+                            channelId,
+                            layerId: id,
+                            layer: { fill: color }
+                        })
+                        .catch(reportCommitError);
                 }
                 return next;
             });
@@ -471,11 +496,13 @@ export function useWhiteboard(
                 if (!layer) return prev;
                 return { ...prev, [layerId]: { ...layer, value } as Layer };
             });
-            trpc.whiteboard.updateLayer.mutate({
-                channelId,
-                layerId,
-                layer: { value } as Partial<Layer>
-            });
+            trpc.whiteboard.updateLayer
+                .mutate({
+                    channelId,
+                    layerId,
+                    layer: { value } as Partial<Layer>
+                })
+                .catch(reportCommitError);
         },
         [channelId, trpc]
     );
@@ -775,11 +802,13 @@ export function useWhiteboard(
                 setLayerIds((prev) => [...prev, layerId]);
                 setPencilDraft(null);
 
-                trpc.whiteboard.addLayer.mutate({
-                    channelId,
-                    layerId,
-                    layer: pathLayer
-                });
+                trpc.whiteboard.addLayer
+                    .mutate({
+                        channelId,
+                        layerId,
+                        layer: pathLayer
+                    })
+                    .catch(reportCommitError);
                 pushToHistory({ ...layers, [layerId]: pathLayer }, [
                     ...layerIds,
                     layerId
@@ -811,11 +840,13 @@ export function useWhiteboard(
                             update.x2 = line.x2;
                             update.y2 = line.y2;
                         }
-                        trpc.whiteboard.updateLayer.mutate({
-                            channelId,
-                            layerId: id,
-                            layer: update
-                        });
+                        trpc.whiteboard.updateLayer
+                            .mutate({
+                                channelId,
+                                layerId: id,
+                                layer: update
+                            })
+                            .catch(reportCommitError);
                     }
                 }
                 setCanvasMode(CanvasMode.None);
@@ -827,16 +858,18 @@ export function useWhiteboard(
             if (canvasMode === CanvasMode.Resizing && selection.length === 1) {
                 const layer = layers[selection[0]];
                 if (layer) {
-                    trpc.whiteboard.updateLayer.mutate({
-                        channelId,
-                        layerId: selection[0],
-                        layer: {
-                            x: layer.x,
-                            y: layer.y,
-                            width: layer.width,
-                            height: layer.height
-                        }
-                    });
+                    trpc.whiteboard.updateLayer
+                        .mutate({
+                            channelId,
+                            layerId: selection[0],
+                            layer: {
+                                x: layer.x,
+                                y: layer.y,
+                                width: layer.width,
+                                height: layer.height
+                            }
+                        })
+                        .catch(reportCommitError);
                 }
                 setCanvasMode(CanvasMode.None);
                 setResizeCorner(null);
@@ -1014,11 +1047,13 @@ export function useWhiteboard(
 
         // Commit to server
         for (const id of addedIds) {
-            trpc.whiteboard.addLayer.mutate({
-                channelId,
-                layerId: id,
-                layer: addedLayers[id]
-            });
+            trpc.whiteboard.addLayer
+                .mutate({
+                    channelId,
+                    layerId: id,
+                    layer: addedLayers[id]
+                })
+                .catch(reportCommitError);
         }
 
         const allLayers = { ...layersRef.current, ...addedLayers };

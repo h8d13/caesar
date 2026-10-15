@@ -23,7 +23,14 @@ import {
     Underline,
     X
 } from 'lucide-react';
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import {
+    memo,
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState
+} from 'react';
 import { createPortal } from 'react-dom';
 
 type TMessageEditorFullscreenProps = {
@@ -53,10 +60,13 @@ const MessageEditorFullscreen = memo(
 
         // read latest callbacks/editor inside the static editorProps closure
         const onSaveRef = useRef(onSave);
-        onSaveRef.current = onSave;
         const onCloseRef = useRef(onClose);
-        onCloseRef.current = onClose;
         const editorRef = useRef<Editor | null>(null);
+
+        useLayoutEffect(() => {
+            onSaveRef.current = onSave;
+            onCloseRef.current = onClose;
+        }, [onSave, onClose]);
 
         const editor = useEditor({
             extensions,

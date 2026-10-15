@@ -103,7 +103,7 @@ const PinnedMessagesPopover = memo(
         const handleScrollToMessage = useCallback(
             (messageId: number) => {
                 setIsOpen(false);
-                onScrollToMessage(messageId);
+                void onScrollToMessage(messageId);
             },
             [onScrollToMessage]
         );
@@ -142,7 +142,7 @@ const PinnedMessagesPopover = memo(
                 }
             };
 
-            loadPinnedMessages();
+            void loadPinnedMessages();
 
             return () => {
                 isCancelled = true;

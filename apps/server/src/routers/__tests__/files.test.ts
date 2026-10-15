@@ -3,7 +3,7 @@ import { initTest, login, uploadFile } from '@server/__tests__/helpers';
 import { fileManager } from '@server/utils/file-manager';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vite-plus/test';
 
 describe('files router', () => {
   let tempFile: TTempFile;
@@ -25,7 +25,7 @@ describe('files router', () => {
     expect(tempFile).toBeDefined();
     expect(tempFile.id).toBeDefined();
 
-    const file = await fileManager.getTemporaryFile(tempFile.id);
+    const file = fileManager.getTemporaryFile(tempFile.id);
 
     expect(file).toBeDefined();
     expect(file?.path).toBe(tempFile.path);

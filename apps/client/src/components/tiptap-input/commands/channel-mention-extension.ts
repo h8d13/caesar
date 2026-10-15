@@ -14,6 +14,14 @@ type TChannelMentionOptions = {
     suggestion: typeof ChannelMentionSuggestion;
 };
 
+declare module '@tiptap/core' {
+    interface Commands<ReturnType> {
+        mentionChannels: {
+            setMentionChannels: (channels: TChannel[]) => ReturnType;
+        };
+    }
+}
+
 const ChannelMention = Extension.create<TChannelMentionOptions>({
     name: CHANNEL_MENTION_STORAGE_KEY,
     addOptions() {
@@ -25,6 +33,14 @@ const ChannelMention = Extension.create<TChannelMentionOptions>({
     addStorage() {
         return {
             channels: this.options.channels
+        };
+    },
+    addCommands() {
+        return {
+            setMentionChannels: (channels) => () => {
+                this.storage.channels = channels;
+                return true;
+            }
         };
     },
     addProseMirrorPlugins() {

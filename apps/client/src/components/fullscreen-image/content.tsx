@@ -29,20 +29,22 @@ const FullScreenImage = memo((props: TFullScreenImageProps) => {
     const onOpenClick = useCallback(() => {
         scaleRef.current = 0.8;
         posRef.current = { x: 0, y: 0 };
+        applyTransform();
 
         setOpen(true);
 
         setTimeout(() => setVisible(true), 10);
-    }, []);
+    }, [applyTransform]);
 
     const onCloseClick = useCallback(() => {
         setVisible(false);
 
         scaleRef.current = 1;
         posRef.current = { x: 0, y: 0 };
+        applyTransform();
 
         setTimeout(() => setOpen(false), 300);
-    }, []);
+    }, [applyTransform]);
 
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
         draggingRef.current = true;
@@ -134,10 +136,9 @@ const FullScreenImage = memo((props: TFullScreenImageProps) => {
                 <img
                     {...props}
                     ref={imgRef}
-                    style={{
-                        transform: `scale(${scaleRef.current}) translate(${posRef.current.x}px, ${posRef.current.y}px)`,
-                        cursor: 'grab'
-                    }}
+                    // transform is owned by applyTransform: zoom and pan
+                    // write the element directly instead of re-rendering
+                    style={{ cursor: 'grab' }}
                     className="p-4 max-w-full max-h-full object-contain"
                     onMouseDown={handleMouseDown}
                     draggable={false}

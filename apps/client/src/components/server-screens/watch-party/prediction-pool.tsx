@@ -1,4 +1,5 @@
 import { useOwnUser } from '@/features/server/users/hooks';
+import { useNow } from '@/hooks/use-now';
 import { getTRPCClient } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
 import { Button, Input } from '@caesar/ui';
@@ -156,20 +157,26 @@ const PredictionPool = memo(({ className }: { className?: string }) => {
     const balance = ownUser?.socialCredit ?? 0;
 
     const [state, setState] = useState<TState>({ pool: null, yourStakes: [] });
-    const [now, setNow] = useState(Date.now());
     const [amount, setAmount] = useState(10);
     const [creating, setCreating] = useState(false);
 
     const { pool, yourStakes } = state;
+    // ticks while a pool is open so the countdown + lock update live
+    const now = useNow(1000, pool?.status === 'open');
 
     // Load current pool on open, then stay in sync via the broadcast.
     useEffect(() => {
         const trpc = getTRPCClient();
         let active = true;
 
-        trpc.prediction.getState.query().then((s) => {
-            if (active) setState(s);
-        });
+        trpc.prediction.getState
+            .query()
+            .then((s) => {
+                if (active) setState(s);
+            })
+            .catch(() => {
+                if (active) toast.error('Could not load the prediction pool');
+            });
 
         const sub = trpc.prediction.onUpdate.subscribe(undefined, {
             // own per-option stakes only change on our own actions, so keep them
@@ -182,13 +189,6 @@ const PredictionPool = memo(({ className }: { className?: string }) => {
             sub.unsubscribe();
         };
     }, []);
-
-    // Tick the clock while a pool is open so the countdown + lock update live.
-    useEffect(() => {
-        if (pool?.status !== 'open') return;
-        const id = setInterval(() => setNow(Date.now()), 1000);
-        return () => clearInterval(id);
-    }, [pool?.status]);
 
     const handleStake = useCallback(
         async (optionId: number) => {

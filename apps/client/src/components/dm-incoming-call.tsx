@@ -22,7 +22,7 @@ const DmIncomingCall = memo(() => {
     const onAccept = useCallback(
         (channelId: number) => {
             dismiss();
-            (async () => {
+            void (async () => {
                 try {
                     await getTRPCClient().dms.acceptCall.mutate({ channelId });
                     const caps = await joinVoice(channelId);

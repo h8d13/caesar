@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import type http from 'http';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 import {
   buildCsp,
   getJsonBody,
