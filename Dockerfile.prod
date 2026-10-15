@@ -43,7 +43,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 COPY . .
 
 RUN pnpm --filter @caesar/client build
-# Bundle (esbuild) + SEA (postject) -> apps/server/dist/caesar.
+# Bundle (vp pack, Rolldown) + SEA (postject) -> apps/server/dist/caesar.
 RUN pnpm --filter @caesar/server build:sea
 
 # Prod node_modules for the externalized deps (argon2 native bindings +
