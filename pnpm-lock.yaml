@@ -482,9 +482,6 @@ importers:
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.4(@libsql/client@0.18.0)
-      js-sha256:
-        specifier: ^1.0.0
-        version: 1.0.0
       linkify-it:
         specifier: ^6.1.0
         version: 6.1.0
@@ -3136,9 +3133,6 @@ packages:
 
   js-base64@3.9.4:
     resolution: {integrity: sha512-PtOMXpEGuP0RRiRXsjzHzl44dMHxSu2CPvAhinupR1tBa88me+1DPqsobl7eupn5UukjLkln1ZnAOAOXOrYG0Q==}
-
-  js-sha256@1.0.0:
-    resolution: {integrity: sha512-Bqxf6ENUzYIMzuELCmRNrJOVbjKH1oMgbfYJBKVr/W1Xf9fazpahqCbb24v1pR7XV1isuqhM+w9KWpK7zCyUQw==}
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -6106,8 +6100,6 @@ snapshots:
   jiti@2.7.0: {}
 
   js-base64@3.9.4: {}
-
-  js-sha256@1.0.0: {}
 
   js-tokens@4.0.0: {}
 
