@@ -6,72 +6,77 @@ import {
 import { files, userRoles, users } from '@caesar/shared/db/schema';
 import type { TTokenPayload } from '@server/types';
 import { verifyJwt } from '@server/utils/jwt-secret';
-import { count, eq, sum } from 'drizzle-orm';
-import { alias } from 'drizzle-orm/sqlite-core';
+import { count, eq, sql, sum, type SQL } from 'drizzle-orm';
 import { db } from '..';
-import { getAllUserRoleIdsMap } from './roles';
+import {
+  fileByIdJson,
+  jsonArrayOf,
+  jsonObject,
+  parseJson,
+  precompile
+} from './json-sql';
 import {
   joinedUserBaseFields,
   publicUserBaseFields,
   socialCreditSubquery
 } from './user-fields';
 
+const userRelationsJson = {
+  avatar: fileByIdJson('avatar_file', users.avatarId),
+  banner: fileByIdJson('banner_file', users.bannerId),
+  socialCredit: socialCreditSubquery,
+  roleIds: jsonArrayOf(
+    sql`${userRoles.roleId} ORDER BY ${userRoles.roleId}`,
+    sql`FROM ${userRoles} WHERE ${userRoles.userId} = ${users.id}`
+  )
+};
+
+const publicUserJson = precompile(
+  jsonObject({
+    ...publicUserBaseFields,
+    ...userRelationsJson
+  })
+);
+
+// password stays server-side unless a caller verifies it (login)
+const joinedUserJson = precompile(
+  jsonObject({
+    ...joinedUserBaseFields,
+    ...userRelationsJson,
+    password: sql`''`
+  })
+);
+
+const joinedUserWithPasswordJson = precompile(
+  jsonObject({
+    ...joinedUserBaseFields,
+    ...userRelationsJson,
+    password: users.password
+  })
+);
+
+const selectUsersJson = async <T>(json: SQL, where?: SQL): Promise<T[]> => {
+  const rows = await db.all<{ user: string }>(
+    sql`SELECT ${json} AS user FROM ${users}
+      ${where ? sql`WHERE ${where}` : sql``}`
+  );
+
+  return rows.map((row) => parseJson<T>(row.user));
+};
+
 const getPublicUserById = async (
   userId: number
 ): Promise<TJoinedPublicUser | undefined> => {
-  const avatarFiles = alias(files, 'avatarFiles');
-  const bannerFiles = alias(files, 'bannerFiles');
+  const [user] = await selectUsersJson<TJoinedPublicUser>(
+    publicUserJson,
+    eq(users.id, userId)
+  );
 
-  const results = await db
-    .select({
-      ...publicUserBaseFields,
-      avatar: avatarFiles,
-      banner: bannerFiles,
-      socialCredit: socialCreditSubquery
-    })
-    .from(users)
-    .leftJoin(avatarFiles, eq(users.avatarId, avatarFiles.id))
-    .leftJoin(bannerFiles, eq(users.bannerId, bannerFiles.id))
-    .where(eq(users.id, userId))
-    .get();
-
-  if (!results) return undefined;
-
-  const roles = await db
-    .select({ roleId: userRoles.roleId })
-    .from(userRoles)
-    .where(eq(userRoles.userId, userId))
-    .all();
-
-  return {
-    ...results,
-    roleIds: roles.map((r) => r.roleId)
-  };
+  return user;
 };
 
-const getPublicUsers = async (): Promise<TJoinedPublicUser[]> => {
-  const avatarFiles = alias(files, 'avatarFiles');
-  const bannerFiles = alias(files, 'bannerFiles');
-
-  const results = await db
-    .select({
-      ...publicUserBaseFields,
-      avatar: avatarFiles,
-      banner: bannerFiles,
-      socialCredit: socialCreditSubquery
-    })
-    .from(users)
-    .leftJoin(avatarFiles, eq(users.avatarId, avatarFiles.id))
-    .leftJoin(bannerFiles, eq(users.bannerId, bannerFiles.id))
-    .all();
-
-  const rolesMap = await getAllUserRoleIdsMap();
-
-  return results.map((result) => ({
-    ...result,
-    roleIds: rolesMap[result.id] ?? []
-  }));
-};
+const getPublicUsers = async (): Promise<TJoinedPublicUser[]> =>
+  selectUsersJson<TJoinedPublicUser>(publicUserJson);
 
 const getStorageUsageByUserId = async (
   userId: number
@@ -95,73 +100,23 @@ const getStorageUsageByUserId = async (
 const getUserById = async (
   userId: number
 ): Promise<TJoinedUser | undefined> => {
-  const avatarFiles = alias(files, 'avatarFiles');
-  const bannerFiles = alias(files, 'bannerFiles');
+  const [user] = await selectUsersJson<TJoinedUser>(
+    joinedUserJson,
+    eq(users.id, userId)
+  );
 
-  const user = await db
-    .select({
-      ...joinedUserBaseFields,
-      socialCredit: socialCreditSubquery,
-      avatar: avatarFiles,
-      banner: bannerFiles
-    })
-    .from(users)
-    .leftJoin(avatarFiles, eq(users.avatarId, avatarFiles.id))
-    .leftJoin(bannerFiles, eq(users.bannerId, bannerFiles.id))
-    .where(eq(users.id, userId))
-    .get();
-
-  if (!user) return undefined;
-
-  const roles = await db
-    .select({ roleId: userRoles.roleId })
-    .from(userRoles)
-    .where(eq(userRoles.userId, userId))
-    .all();
-
-  return {
-    ...user,
-    password: '',
-    avatar: user.avatar,
-    banner: user.banner,
-    roleIds: roles.map((r) => r.roleId)
-  };
+  return user;
 };
 
 const getUserByIdentity = async (
   identity: string
 ): Promise<TJoinedUser | undefined> => {
-  const avatarFiles = alias(files, 'avatarFiles');
-  const bannerFiles = alias(files, 'bannerFiles');
+  const [user] = await selectUsersJson<TJoinedUser>(
+    joinedUserWithPasswordJson,
+    eq(users.identity, identity)
+  );
 
-  const user = await db
-    .select({
-      ...joinedUserBaseFields,
-      password: users.password,
-      socialCredit: socialCreditSubquery,
-      avatar: avatarFiles,
-      banner: bannerFiles
-    })
-    .from(users)
-    .leftJoin(avatarFiles, eq(users.avatarId, avatarFiles.id))
-    .leftJoin(bannerFiles, eq(users.bannerId, bannerFiles.id))
-    .where(eq(users.identity, identity))
-    .get();
-
-  if (!user) return undefined;
-
-  const roles = await db
-    .select({ roleId: userRoles.roleId })
-    .from(userRoles)
-    .where(eq(userRoles.userId, user.id))
-    .all();
-
-  return {
-    ...user,
-    avatar: user.avatar,
-    banner: user.banner,
-    roleIds: roles.map((r) => r.roleId)
-  };
+  return user;
 };
 
 const getUserByToken = async (token: string | undefined) => {
@@ -193,30 +148,8 @@ const getUserByToken = async (token: string | undefined) => {
   }
 };
 
-const getUsers = async (): Promise<TJoinedUser[]> => {
-  const avatarFiles = alias(files, 'avatarFiles');
-  const bannerFiles = alias(files, 'bannerFiles');
-
-  const results = await db
-    .select({
-      ...joinedUserBaseFields,
-      socialCredit: socialCreditSubquery,
-      avatar: avatarFiles,
-      banner: bannerFiles
-    })
-    .from(users)
-    .leftJoin(avatarFiles, eq(users.avatarId, avatarFiles.id))
-    .leftJoin(bannerFiles, eq(users.bannerId, bannerFiles.id))
-    .all();
-
-  const rolesMap = await getAllUserRoleIdsMap();
-
-  return results.map((result) => ({
-    ...result,
-    password: '',
-    roleIds: rolesMap[result.id] ?? []
-  }));
-};
+const getUsers = async (): Promise<TJoinedUser[]> =>
+  selectUsersJson<TJoinedUser>(joinedUserJson);
 
 const getAllUserIds = async (): Promise<number[]> => {
   const results = await db.select({ id: users.id }).from(users);

@@ -1,10 +1,7 @@
 import type {
-  TFile,
   TJoinedMessage,
-  TJoinedMessageReaction,
   TMessage,
-  TMessageReaction,
-  TMessageScVote
+  TMessageReaction
 } from '@caesar/shared';
 import {
   channels,
@@ -16,31 +13,144 @@ import {
   socialCreditLedger
 } from '@caesar/shared/db/schema';
 import { generateFileToken } from '@server/helpers/files-crypto';
-import { and, count, desc, eq, inArray, notExists } from 'drizzle-orm';
+import {
+  and,
+  desc,
+  eq,
+  getTableColumns,
+  notExists,
+  sql,
+  type SQL
+} from 'drizzle-orm';
+import { alias } from 'drizzle-orm/sqlite-core';
 import { db } from '..';
+import {
+  fileByIdJson,
+  fileJson,
+  jsonArrayOf,
+  jsonObject,
+  jsonOneOf,
+  parseJson,
+  precompile
+} from './json-sql';
 
-// The columns that leave the server, plus replyToMessageId, which is only
-// used to resolve `replyTo` and is stripped before the row goes out. A bare
-// select() would also ship updatedAt, which nothing reads.
-const messageColumns = {
-  id: messages.id,
-  content: messages.content,
-  userId: messages.userId,
-  channelId: messages.channelId,
-  parentMessageId: messages.parentMessageId,
-  replyToMessageId: messages.replyToMessageId,
-  editable: messages.editable,
-  metadata: messages.metadata,
-  expiresAt: messages.expiresAt,
-  createdAt: messages.createdAt,
-  pinned: messages.pinned,
-  pinnedAt: messages.pinnedAt,
-  pinnedBy: messages.pinnedBy,
-  editedAt: messages.editedAt,
-  editedBy: messages.editedBy
+type TChannelAccess = { private: boolean; fileAccessToken: string };
+
+// Wire columns: TJoinedMessage omits these two, so a new column ships
+// without touching this file. replyToMessageId only resolves `replyTo`.
+const {
+  updatedAt: _updatedAt,
+  replyToMessageId: _replyToMessageId,
+  ...messageWireColumns
+} = getTableColumns(messages);
+
+const replyTo = alias(messages, 'reply_to');
+const replies = alias(messages, 'replies');
+
+const messageRelationsJson = {
+  files: jsonArrayOf(
+    fileJson(files),
+    sql`FROM ${messageFiles}
+      INNER JOIN ${files} ON ${files.id} = ${messageFiles.fileId}
+      WHERE ${messageFiles.messageId} = ${messages.id}`
+  ),
+  reactions: jsonArrayOf(
+    jsonObject({
+      messageId: messageReactions.messageId,
+      userId: messageReactions.userId,
+      emoji: messageReactions.emoji,
+      createdAt: messageReactions.createdAt,
+      fileId: messageReactions.fileId,
+      file: fileByIdJson('reaction_file', messageReactions.fileId)
+    }),
+    sql`FROM ${messageReactions}
+      WHERE ${messageReactions.messageId} = ${messages.id}`
+  ),
+  scVotes: jsonArrayOf(
+    jsonObject({
+      voterId: socialCreditLedger.voterId,
+      value: socialCreditLedger.amount
+    }),
+    sql`FROM ${socialCreditLedger}
+      WHERE ${socialCreditLedger.ledgerableType} = 'message_vote'
+        AND ${socialCreditLedger.ledgerableId} = ${messages.id}
+        AND ${socialCreditLedger.voterId} IS NOT NULL`
+  ),
+  replyTo: jsonOneOf(
+    jsonObject({
+      id: replyTo.id,
+      content: replyTo.content,
+      userId: replyTo.userId,
+      expiresAt: replyTo.expiresAt
+    }),
+    sql`FROM ${messages} AS ${sql.identifier('reply_to')}
+      WHERE ${replyTo.id} = ${messages.replyToMessageId}`
+  )
 };
 
-export type TMessageRow = Omit<TMessage, 'updatedAt'>;
+// thread replies have no threads of their own
+const replyCountSql = sql`CASE WHEN ${messages.parentMessageId} IS NULL
+  THEN (SELECT count(*) FROM ${messages} AS ${sql.identifier('replies')}
+    WHERE ${replies.parentMessageId} = ${messages.id})
+  ELSE 0 END`;
+
+const joinedMessageJson = precompile(
+  jsonObject({
+    ...messageWireColumns,
+    ...messageRelationsJson
+  })
+);
+
+const joinedMessageWithReplyCountJson = precompile(
+  jsonObject({
+    ...messageWireColumns,
+    ...messageRelationsJson,
+    replyCount: replyCountSql
+  })
+);
+
+// File tokens are an HMAC over the server secret, so SQL cannot mint them.
+// Only message attachments carry one; custom emoji files are public.
+const withFileTokens = (
+  joined: TJoinedMessage[],
+  channel: TChannelAccess
+): TJoinedMessage[] => {
+  if (!channel.private) return joined;
+
+  for (const message of joined) {
+    for (const file of message.files) {
+      file._accessToken = generateFileToken(file.id, channel.fileAccessToken);
+    }
+  }
+
+  return joined;
+};
+
+const getJoinedMessages = async (
+  channel: TChannelAccess,
+  query: {
+    where: SQL | undefined;
+    orderBy: SQL;
+    limit?: number;
+    withReplyCount?: boolean;
+  }
+): Promise<TJoinedMessage[]> => {
+  const json = query.withReplyCount
+    ? joinedMessageWithReplyCountJson
+    : joinedMessageJson;
+
+  const rows = await db.all<{ message: string }>(
+    sql`SELECT ${json} AS message FROM ${messages}
+      WHERE ${query.where ?? sql`1`}
+      ORDER BY ${query.orderBy}
+      ${query.limit === undefined ? sql`` : sql`LIMIT ${query.limit}`}`
+  );
+
+  return withFileTokens(
+    rows.map((row) => parseJson<TJoinedMessage>(row.message)),
+    channel
+  );
+};
 
 const getMessageByFileId = async (
   fileId: number
@@ -58,133 +168,25 @@ const getMessageByFileId = async (
 const getMessage = async (
   messageId: number
 ): Promise<TJoinedMessage | undefined> => {
-  const message = await db
-    .select(messageColumns)
-    .from(messages)
-    .where(eq(messages.id, messageId))
-    .limit(1)
-    .get();
+  const row = await db.get<
+    { message: string; private: number; fileAccessToken: string } | undefined
+  >(
+    sql`SELECT ${joinedMessageWithReplyCountJson} AS message,
+        ${channels.private} AS private,
+        ${channels.fileAccessToken} AS fileAccessToken
+      FROM ${messages}
+      INNER JOIN ${channels} ON ${channels.id} = ${messages.channelId}
+      WHERE ${messages.id} = ${messageId}`
+  );
 
-  if (!message) return undefined;
+  if (!row) return undefined;
 
-  const channel = await db
-    .select({
-      fileAccessToken: channels.fileAccessToken,
-      private: channels.private
-    })
-    .from(channels)
-    .where(eq(channels.id, message.channelId))
-    .limit(1)
-    .get();
-
-  if (!channel) return undefined;
-
-  const fileRows = await db
-    .select({
-      file: files
-    })
-    .from(messageFiles)
-    .innerJoin(files, eq(messageFiles.fileId, files.id))
-    .where(eq(messageFiles.messageId, messageId));
-
-  const filesForMessage: TFile[] = fileRows.map((r) => {
-    if (channel.private) {
-      return {
-        ...r.file,
-        _accessToken: generateFileToken(r.file.id, channel.fileAccessToken)
-      };
-    }
-
-    return r.file;
+  const [message] = withFileTokens([parseJson(row.message)], {
+    private: Boolean(row.private),
+    fileAccessToken: row.fileAccessToken
   });
 
-  const reactionRows = await db
-    .select({
-      messageId: messageReactions.messageId,
-      userId: messageReactions.userId,
-      emoji: messageReactions.emoji,
-      createdAt: messageReactions.createdAt,
-      fileId: messageReactions.fileId,
-      file: files
-    })
-    .from(messageReactions)
-    .leftJoin(files, eq(messageReactions.fileId, files.id))
-    .where(eq(messageReactions.messageId, messageId));
-
-  const reactions: TJoinedMessageReaction[] = reactionRows.map((r) => ({
-    messageId: r.messageId,
-    userId: r.userId,
-    emoji: r.emoji,
-    createdAt: r.createdAt,
-    fileId: r.fileId,
-    file: r.file
-  }));
-
-  const scVoteRows = await db
-    .select({
-      voterId: socialCreditLedger.voterId,
-      amount: socialCreditLedger.amount
-    })
-    .from(socialCreditLedger)
-    .where(
-      and(
-        eq(socialCreditLedger.ledgerableType, 'message_vote'),
-        eq(socialCreditLedger.ledgerableId, messageId)
-      )
-    );
-
-  const scVotes: TMessageScVote[] = scVoteRows
-    .filter((r): r is typeof r & { voterId: number } => r.voterId !== null)
-    .map((r) => ({
-      voterId: r.voterId,
-      value: r.amount
-    }));
-
-  let replyCount = 0;
-
-  if (!message.parentMessageId) {
-    const replyCountRow = await db
-      .select({ count: count() })
-      .from(messages)
-      .where(eq(messages.parentMessageId, messageId))
-      .get();
-
-    replyCount = replyCountRow?.count ?? 0;
-  }
-
-  let replyTo: {
-    id: number;
-    content: string | null;
-    userId: number;
-    expiresAt: number | null;
-  } | null = null;
-
-  if (message.replyToMessageId) {
-    const replyToRow = await db
-      .select({
-        id: messages.id,
-        content: messages.content,
-        userId: messages.userId,
-        expiresAt: messages.expiresAt
-      })
-      .from(messages)
-      .where(eq(messages.id, message.replyToMessageId))
-      .limit(1)
-      .get();
-
-    replyTo = replyToRow ?? null;
-  }
-
-  const { replyToMessageId: _replyToMessageId, ...wireMessage } = message;
-
-  return {
-    ...wireMessage,
-    files: filesForMessage ?? [],
-    reactions: reactions ?? [],
-    scVotes,
-    replyCount,
-    replyTo
-  };
+  return message;
 };
 
 const getNonDirectMessagesFromUserId = async (
@@ -223,164 +225,10 @@ const getReaction = async (
     )
     .get();
 
-const joinMessagesWithRelations = async (
-  rows: TMessageRow[],
-  channel: {
-    private: boolean;
-    fileAccessToken: string;
-  }
-): Promise<TJoinedMessage[]> => {
-  if (rows.length === 0) return [];
-
-  const messageIds = rows.map((m) => m.id);
-
-  const [fileRows, reactionRows, scVoteRows] = await Promise.all([
-    db
-      .select({
-        messageId: messageFiles.messageId,
-        file: files
-      })
-      .from(messageFiles)
-      .innerJoin(files, eq(messageFiles.fileId, files.id))
-      .where(inArray(messageFiles.messageId, messageIds)),
-    db
-      .select({
-        messageId: messageReactions.messageId,
-        userId: messageReactions.userId,
-        emoji: messageReactions.emoji,
-        createdAt: messageReactions.createdAt,
-        fileId: messageReactions.fileId,
-        file: files
-      })
-      .from(messageReactions)
-      .leftJoin(files, eq(messageReactions.fileId, files.id))
-      .where(inArray(messageReactions.messageId, messageIds)),
-    db
-      .select({
-        ledgerableId: socialCreditLedger.ledgerableId,
-        voterId: socialCreditLedger.voterId,
-        amount: socialCreditLedger.amount
-      })
-      .from(socialCreditLedger)
-      .where(
-        and(
-          eq(socialCreditLedger.ledgerableType, 'message_vote'),
-          inArray(socialCreditLedger.ledgerableId, messageIds)
-        )
-      )
-  ]);
-
-  const filesByMessage = fileRows.reduce<Record<number, TFile[]>>(
-    (acc, row) => {
-      if (!acc[row.messageId]) {
-        acc[row.messageId] = [];
-      }
-
-      const rowCopy: TFile = { ...row.file };
-
-      if (channel.private) {
-        rowCopy._accessToken = generateFileToken(
-          row.file.id,
-          channel.fileAccessToken
-        );
-      }
-
-      acc[row.messageId]!.push(rowCopy);
-
-      return acc;
-    },
-    {}
-  );
-
-  const reactionsByMessage = reactionRows.reduce<
-    Record<number, TJoinedMessageReaction[]>
-  >((acc, r) => {
-    const reaction: TJoinedMessageReaction = {
-      messageId: r.messageId,
-      userId: r.userId,
-      emoji: r.emoji,
-      createdAt: r.createdAt,
-      fileId: r.fileId,
-      file: r.file
-    };
-
-    if (!acc[r.messageId]) {
-      acc[r.messageId] = [];
-    }
-
-    acc[r.messageId]!.push(reaction);
-
-    return acc;
-  }, {});
-
-  const scVotesByMessage = scVoteRows.reduce<Record<number, TMessageScVote[]>>(
-    (acc, r) => {
-      if (r.ledgerableId == null || r.voterId == null) return acc;
-
-      if (!acc[r.ledgerableId]) {
-        acc[r.ledgerableId] = [];
-      }
-
-      acc[r.ledgerableId]!.push({
-        voterId: r.voterId,
-        value: r.amount
-      });
-
-      return acc;
-    },
-    {}
-  );
-
-  const replyToIds = rows
-    .map((m) => m.replyToMessageId)
-    .filter((id): id is number => id != null);
-
-  let replyToByMessage: Record<
-    number,
-    {
-      id: number;
-      content: string | null;
-      userId: number;
-      expiresAt: number | null;
-    }
-  > = {};
-
-  if (replyToIds.length > 0) {
-    const replyToRows = await db
-      .select({
-        id: messages.id,
-        content: messages.content,
-        userId: messages.userId,
-        expiresAt: messages.expiresAt
-      })
-      .from(messages)
-      .where(inArray(messages.id, replyToIds));
-
-    replyToByMessage = replyToRows.reduce<typeof replyToByMessage>(
-      (acc, row) => {
-        acc[row.id] = row;
-        return acc;
-      },
-      {}
-    );
-  }
-
-  return rows.map(({ replyToMessageId, ...msg }) => ({
-    ...msg,
-    files: filesByMessage[msg.id] ?? [],
-    reactions: reactionsByMessage[msg.id] ?? [],
-    scVotes: scVotesByMessage[msg.id] ?? [],
-    replyTo: replyToMessageId
-      ? (replyToByMessage[replyToMessageId] ?? null)
-      : null
-  }));
-};
-
 export {
+  getJoinedMessages,
   getMessage,
   getMessageByFileId,
   getNonDirectMessagesFromUserId,
-  getReaction,
-  joinMessagesWithRelations,
-  messageColumns
+  getReaction
 };

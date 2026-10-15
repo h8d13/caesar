@@ -3,6 +3,7 @@
 data/
 data-test/
 .vite-devmaps/
+
 *.wiki/
 .idea**
 .note**
@@ -10,6 +11,7 @@ data-test/
 .env.*
 .key
 .key.*
+**/**.log
 
 
 # local deploy customization, see wiki Home#custom-caddyfile

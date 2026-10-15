@@ -4,11 +4,13 @@
 FROM node:24.20.0-trixie-slim@sha256:50c3b2f6988dfc307b86e5301d69611af31f4789bdf232863b07d3b02fe55ae0
 
 # corepack's pnpm binary cache lives in the /pnpm volume. The package store
-# defaults to node_modules/.pnpm-store (pnpm 12+, when the home dir can't
-# hardlink to the project): same volume as node_modules, so hardlinks work.
+# is pinned to the root node_modules volume so hardlinks work. Left to its
+# default, pnpm run from a package dir (apps/server, own volume) picks
+# /app/.pnpm-store instead: the bind-mounted checkout on the host.
 ENV PNPM_HOME=/pnpm \
     COREPACK_HOME=/pnpm/corepack \
-    COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+    COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
+    pnpm_config_store_dir=/app/node_modules/.pnpm-store
 ENV PATH=$PNPM_HOME:$PATH
 
 RUN corepack enable

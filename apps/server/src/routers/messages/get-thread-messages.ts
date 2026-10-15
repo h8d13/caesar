@@ -1,11 +1,7 @@
 import { DEFAULT_MESSAGES_LIMIT } from '@caesar/shared';
 import { messages } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import {
-  joinMessagesWithRelations,
-  messageColumns,
-  type TMessageRow
-} from '@server/db/queries/messages';
+import { getJoinedMessages } from '@server/db/queries/messages';
 import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
@@ -56,19 +52,16 @@ const getThreadMessagesRoute = protectedProcedure
       message: 'Channel not found'
     });
 
-    const rows: TMessageRow[] = await db
-      .select(messageColumns)
-      .from(messages)
-      .where(
-        cursor
-          ? and(
-              eq(messages.parentMessageId, parentMessageId),
-              gt(messages.createdAt, cursor)
-            )
-          : eq(messages.parentMessageId, parentMessageId)
-      )
-      .orderBy(asc(messages.createdAt))
-      .limit(limit + 1);
+    const rows = await getJoinedMessages(channel, {
+      where: cursor
+        ? and(
+            eq(messages.parentMessageId, parentMessageId),
+            gt(messages.createdAt, cursor)
+          )
+        : eq(messages.parentMessageId, parentMessageId),
+      orderBy: asc(messages.createdAt),
+      limit: limit + 1
+    });
 
     let nextCursor: number | null = null;
 
@@ -78,16 +71,7 @@ const getThreadMessagesRoute = protectedProcedure
       nextCursor = next ? next.createdAt : null;
     }
 
-    if (rows.length === 0) {
-      return { messages: [], nextCursor };
-    }
-
-    const messagesWithRelations = await joinMessagesWithRelations(
-      rows,
-      channel
-    );
-
-    return { messages: messagesWithRelations, nextCursor };
+    return { messages: rows, nextCursor };
   });
 
 export { getThreadMessagesRoute };

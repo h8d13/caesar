@@ -1,9 +1,5 @@
 import { messages } from '@caesar/shared/db/schema';
-import { db } from '@server/db';
-import {
-  joinMessagesWithRelations,
-  messageColumns
-} from '@server/db/queries/messages';
+import { getJoinedMessages } from '@server/db/queries/messages';
 import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
@@ -24,15 +20,13 @@ const getPinnedRoute = protectedProcedure
       message: 'Channel not found'
     });
 
-    const rows = await db
-      .select(messageColumns)
-      .from(messages)
-      .where(
-        and(eq(messages.channelId, input.channelId), eq(messages.pinned, true))
-      )
-      .orderBy(desc(messages.createdAt));
-
-    return joinMessagesWithRelations(rows, channel);
+    return getJoinedMessages(channel, {
+      where: and(
+        eq(messages.channelId, input.channelId),
+        eq(messages.pinned, true)
+      ),
+      orderBy: desc(messages.createdAt)
+    });
   });
 
 export { getPinnedRoute };

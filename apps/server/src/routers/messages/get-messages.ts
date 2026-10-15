@@ -1,19 +1,18 @@
-import { DEFAULT_MESSAGES_LIMIT, ServerEvents } from '@caesar/shared';
+import {
+  DEFAULT_MESSAGES_LIMIT,
+  ServerEvents,
+  type TJoinedMessage
+} from '@caesar/shared';
 import { channelReadStates, messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { getUnreadCounts } from '@server/db/queries/channels';
-import {
-  joinMessagesWithRelations,
-  messageColumns,
-  type TMessageRow
-} from '@server/db/queries/messages';
+import { getJoinedMessages } from '@server/db/queries/messages';
 import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { pubsub } from '@server/utils/pubsub';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
-import { and, count, desc, eq, gte, inArray, isNull, lt } from 'drizzle-orm';
-import { alias } from 'drizzle-orm/sqlite-core';
+import { and, desc, eq, gte, isNull, lt } from 'drizzle-orm';
 import { z } from 'zod';
 
 const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
@@ -52,7 +51,7 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
       isNull(messages.parentMessageId)
     );
 
-    let rows: TMessageRow[];
+    let rows: TJoinedMessage[];
     let nextCursor: number | null = null;
 
     if (targetMessageId) {
@@ -84,30 +83,30 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
 
       // fetch everything from newest down to the target, plus 20 older messages
       // for context around the target
-      const olderMessages = await db
-        .select(messageColumns)
-        .from(messages)
-        .where(and(baseWhere, lt(messages.createdAt, targetMessage.createdAt)))
-        .orderBy(desc(messages.createdAt))
-        .limit(20);
+      const olderMessages = await getJoinedMessages(channel, {
+        where: and(baseWhere, lt(messages.createdAt, targetMessage.createdAt)),
+        orderBy: desc(messages.createdAt),
+        limit: 20,
+        withReplyCount: true
+      });
 
-      const newerMessages = await db
-        .select(messageColumns)
-        .from(messages)
-        .where(and(baseWhere, gte(messages.createdAt, targetMessage.createdAt)))
-        .orderBy(desc(messages.createdAt));
+      const newerMessages = await getJoinedMessages(channel, {
+        where: and(baseWhere, gte(messages.createdAt, targetMessage.createdAt)),
+        orderBy: desc(messages.createdAt),
+        withReplyCount: true
+      });
 
       rows = [...newerMessages, ...olderMessages];
     } else {
       // standard cursor-based pagination
-      rows = await db
-        .select(messageColumns)
-        .from(messages)
-        .where(
-          cursor ? and(baseWhere, lt(messages.createdAt, cursor)) : baseWhere
-        )
-        .orderBy(desc(messages.createdAt))
-        .limit(limit + 1);
+      rows = await getJoinedMessages(channel, {
+        where: cursor
+          ? and(baseWhere, lt(messages.createdAt, cursor))
+          : baseWhere,
+        orderBy: desc(messages.createdAt),
+        limit: limit + 1,
+        withReplyCount: true
+      });
 
       if (rows.length > limit) {
         const next = rows.pop();
@@ -119,38 +118,6 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
     if (rows.length === 0) {
       return { messages: [], nextCursor };
     }
-
-    const messagesWithRelations = await joinMessagesWithRelations(
-      rows,
-      channel
-    );
-
-    const messageIds = rows.map((m) => m.id);
-    const replies = alias(messages, 'replies');
-
-    const replyCountRows = await db
-      .select({
-        parentMessageId: replies.parentMessageId,
-        count: count()
-      })
-      .from(replies)
-      .where(inArray(replies.parentMessageId, messageIds))
-      .groupBy(replies.parentMessageId);
-
-    const replyCountByMessage = replyCountRows.reduce<Record<number, number>>(
-      (acc, r) => {
-        if (r.parentMessageId !== null) {
-          acc[r.parentMessageId] = r.count;
-        }
-        return acc;
-      },
-      {}
-    );
-
-    const messagesWithReplyCounts = messagesWithRelations.map((msg) => ({
-      ...msg,
-      replyCount: replyCountByMessage[msg.id] ?? 0
-    }));
 
     // Read state tracks the channel's newest message rather than the newest
     // in this batch, so scrolling back through history does not mark the
@@ -200,7 +167,7 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
       });
     }
 
-    return { messages: messagesWithReplyCounts, nextCursor };
+    return { messages: rows, nextCursor };
   });
 
 export { getMessagesRoute };
