@@ -1,4 +1,4 @@
-import { sha256 } from '@caesar/shared';
+import { sha256 } from '@server/helpers/sha256';
 import { getLastLogins } from '@server/db/queries/logins';
 import { protectedProcedure } from '@server/utils/trpc';
 import z from 'zod';

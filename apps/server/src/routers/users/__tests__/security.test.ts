@@ -1,12 +1,12 @@
 import {
   DELETED_USER_IDENTITY_AND_NAME,
   OWNER_ROLE_ID,
-  Permission,
-  sha256
+  Permission
 } from '@caesar/shared';
 import { logins, userRoles, users } from '@caesar/shared/db/schema';
 import { initTest, login } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
+import { sha256 } from '@server/helpers/sha256';
 import { getJwtSecret } from '@server/utils/jwt-secret';
 import { verifyPassword } from '@server/utils/password';
 import { eq } from 'drizzle-orm';

@@ -3,7 +3,6 @@ import {
   DEFAULT_ROLE_PERMISSIONS,
   OWNER_ROLE_ID,
   Permission,
-  sha256,
   STORAGE_DEFAULT_MAX_AVATAR_SIZE,
   STORAGE_DEFAULT_MAX_BANNER_SIZE,
   STORAGE_DEFAULT_MAX_FILES_PER_MESSAGE,
@@ -31,6 +30,7 @@ import {
   users
 } from '@caesar/shared/db/schema';
 import { type LibSQLDatabase } from 'drizzle-orm/libsql';
+import { sha256 } from '../helpers/sha256';
 import { hashPassword } from '../utils/password';
 import { randomUUIDv7 } from '../utils/uuid';
 

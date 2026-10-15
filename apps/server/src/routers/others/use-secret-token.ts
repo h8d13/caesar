@@ -1,8 +1,9 @@
-import { OWNER_ROLE_ID, sha256 } from '@caesar/shared';
+import { OWNER_ROLE_ID } from '@caesar/shared';
 import { userRoles } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
 import { getSettings } from '@server/db/queries/server';
+import { sha256 } from '@server/helpers/sha256';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { z } from 'zod';

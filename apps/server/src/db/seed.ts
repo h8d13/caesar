@@ -2,7 +2,6 @@ import {
   ChannelType,
   DEFAULT_ROLE_PERMISSIONS,
   Permission,
-  sha256,
   STORAGE_DEFAULT_MAX_AVATAR_SIZE,
   STORAGE_DEFAULT_MAX_BANNER_SIZE,
   STORAGE_DEFAULT_MAX_FILES_PER_MESSAGE,
@@ -22,6 +21,7 @@ import {
   roles,
   settings
 } from '@caesar/shared/db/schema';
+import { sha256 } from '../helpers/sha256';
 import { logger } from '../logger';
 import { IS_DEVELOPMENT } from '../utils/env';
 import { randomUUIDv7 } from '../utils/uuid';

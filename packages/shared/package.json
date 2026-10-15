@@ -25,7 +25,6 @@
   "dependencies": {
     "@trpc/client": "catalog:",
     "drizzle-orm": "catalog:",
-    "js-sha256": "^1.0.0",
     "linkify-it": "^6.1.0",
     "mediasoup": "catalog:"
   }
