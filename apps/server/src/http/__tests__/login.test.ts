@@ -1,12 +1,42 @@
 import { OWNER_ROLE_ID } from '@caesar/shared';
 import { invites, roles, userRoles, users } from '@caesar/shared/db/schema';
-import { login } from '@server/__tests__/helpers';
+import { getRoleIdByName, login } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { getJwtSecret } from '@server/utils/jwt-secret';
 import { setRateLimitingDisabled } from '@server/utils/rate-limiters';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import { afterEach, describe, expect, test } from 'vite-plus/test';
+
+// Inserts an invite carrying roleId, signs identity up with it and returns
+// the role ids the new user ended up with.
+const signupWithRoleInvite = async (identity: string, roleId: number) => {
+  const code = `INV-${identity}`;
+
+  await tdb.insert(invites).values({
+    code,
+    creatorId: 1,
+    roleId,
+    createdAt: Date.now()
+  });
+
+  const response = await login(identity, 'password123', code);
+
+  expect(response.status).toBe(200);
+
+  const user = await tdb
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.identity, identity))
+    .get();
+
+  const assigned = await tdb
+    .select({ roleId: userRoles.roleId })
+    .from(userRoles)
+    .where(eq(userRoles.userId, user!.id));
+
+  return assigned.map((r) => r.roleId);
+};
 
 describe('/login', () => {
   test('should successfully login with valid credentials', async () => {
@@ -352,64 +382,19 @@ describe('/login', () => {
   });
 
   test('should assign the invite role on top of the default role', async () => {
-    const guest = await tdb
-      .select({ id: roles.id })
-      .from(roles)
-      .where(eq(roles.name, 'Guest'))
-      .get();
+    const guestId = await getRoleIdByName('Guest');
+    const roleIds = await signupWithRoleInvite('guestuser', guestId);
 
-    await tdb.insert(invites).values({
-      code: 'GUESTINVITE',
-      creatorId: 1,
-      roleId: guest!.id,
-      createdAt: Date.now()
-    });
-
-    const response = await login('guestuser', 'password123', 'GUESTINVITE');
-
-    expect(response.status).toBe(200);
-
-    const newUser = await tdb
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.identity, 'guestuser'))
-      .get();
-
-    const assigned = await tdb
-      .select({ roleId: userRoles.roleId })
-      .from(userRoles)
-      .where(eq(userRoles.userId, newUser!.id));
-
-    expect(assigned.map((r) => r.roleId)).toContain(guest!.id);
-    expect(assigned).toHaveLength(2);
+    expect(roleIds).toContain(guestId);
+    expect(roleIds).toHaveLength(2);
   });
 
   test('should never grant the owner role from an invite row', async () => {
-    // add-invite refuses this; insert directly like a pre-guard row
-    await tdb.insert(invites).values({
-      code: 'OWNERINVITE',
-      creatorId: 1,
-      roleId: OWNER_ROLE_ID,
-      createdAt: Date.now()
-    });
+    // add-invite refuses this; a direct insert stands in for a pre-guard row
+    const roleIds = await signupWithRoleInvite('owneruser', OWNER_ROLE_ID);
 
-    const response = await login('owneruser', 'password123', 'OWNERINVITE');
-
-    expect(response.status).toBe(200);
-
-    const newUser = await tdb
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.identity, 'owneruser'))
-      .get();
-
-    const assigned = await tdb
-      .select({ roleId: userRoles.roleId })
-      .from(userRoles)
-      .where(eq(userRoles.userId, newUser!.id));
-
-    expect(assigned.map((r) => r.roleId)).not.toContain(OWNER_ROLE_ID);
-    expect(assigned).toHaveLength(1);
+    expect(roleIds).not.toContain(OWNER_ROLE_ID);
+    expect(roleIds).toHaveLength(1);
   });
 
   test('should rate limit excessive login attempts', async () => {

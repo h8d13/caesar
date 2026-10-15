@@ -1,36 +1,31 @@
-import type { Permission, TRole } from '@caesar/shared';
-import { rolePermissions, roles } from '@caesar/shared/db/schema';
+import type { Permission } from '@caesar/shared';
+import { rolePermissions } from '@caesar/shared/db/schema';
 import { eq } from 'drizzle-orm';
 import { db } from '..';
 
+type TTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+// Replaces a role's permission set. Runs in the caller's transaction so a
+// role row and its permissions are written together.
 const syncRolePermissions = async (
+  tx: TTransaction,
   roleId: number,
   permissions: Permission[]
-): Promise<TRole | undefined> => {
-  return await db.transaction(async (tx) => {
-    await tx.delete(rolePermissions).where(eq(rolePermissions.roleId, roleId));
+) => {
+  await tx.delete(rolePermissions).where(eq(rolePermissions.roleId, roleId));
 
-    if (permissions.length > 0) {
-      const now = Date.now();
-      const permissionInserts = permissions.map((permission) => ({
-        roleId,
-        permission,
-        createdAt: now,
-        updatedAt: now
-      }));
+  if (permissions.length === 0) return;
 
-      await tx.insert(rolePermissions).values(permissionInserts);
-    }
+  const now = Date.now();
 
-    const updatedRole = await tx
-      .select()
-      .from(roles)
-      .where(eq(roles.id, roleId))
-      .limit(1)
-      .get();
-
-    return updatedRole;
-  });
+  await tx.insert(rolePermissions).values(
+    permissions.map((permission) => ({
+      roleId,
+      permission,
+      createdAt: now,
+      updatedAt: now
+    }))
+  );
 };
 
 export { syncRolePermissions };

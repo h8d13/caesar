@@ -17,6 +17,7 @@ type TModViewContext = {
     userId: number;
     user: TJoinedUser;
     lastLoginIp: string | null;
+    inviteeIds: number[];
     files: TFile[];
     storage: TStorageData & { quota: number };
     messages: TMessage[];
@@ -29,6 +30,7 @@ const ModViewContext = createContext<TModViewContext>({
     refetch: () => {},
     userId: -1,
     lastLoginIp: null,
+    inviteeIds: [],
     files: [],
     storage: {
         userId: -1,

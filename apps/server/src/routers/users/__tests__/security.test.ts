@@ -4,7 +4,7 @@ import {
   Permission
 } from '@caesar/shared';
 import { logins, userRoles, users } from '@caesar/shared/db/schema';
-import { initTest, login } from '@server/__tests__/helpers';
+import { initTest, login, makeModerator } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { sha256 } from '@server/helpers/sha256';
 import { getJwtSecret } from '@server/utils/jwt-secret';
@@ -12,29 +12,6 @@ import { verifyPassword } from '@server/utils/password';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import { describe, expect, test } from 'vite-plus/test';
-
-// Stand up a non-owner moderator: user 2 gets a fresh role carrying only the
-// listed permissions, then acts via their own caller. `initTest(2)` must run
-// AFTER the role is assigned so the permission middleware sees it live.
-const makeModerator = async (
-  ownerCaller: Awaited<ReturnType<typeof initTest>>['caller'],
-  permissions: Permission[] = [Permission.MANAGE_USERS]
-) => {
-  const roleId = await ownerCaller.roles.add();
-
-  await ownerCaller.roles.update({
-    roleId,
-    name: 'Moderator',
-    color: '#123456',
-    permissions,
-    storageQuotaOverrideEnabled: false,
-    storageSpaceQuota: 0
-  });
-
-  await ownerCaller.users.addRole({ userId: 2, roleId });
-
-  return initTest(2);
-};
 
 const insertUser = async (identity: string): Promise<number> => {
   const row = await tdb

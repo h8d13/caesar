@@ -1,20 +1,9 @@
 import { ActivityLogType, OWNER_ROLE_ID } from '@caesar/shared';
-import { roles, users } from '@caesar/shared/db/schema';
-import { initTest, login } from '@server/__tests__/helpers';
+import { users } from '@caesar/shared/db/schema';
+import { getRoleIdByName, initTest, login } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { eq } from 'drizzle-orm';
 import { describe, expect, test, vi } from 'vite-plus/test';
-
-// seeded non-persistent role, safe to hand out by invite
-const getGuestRoleId = async () => {
-  const guest = await tdb
-    .select({ id: roles.id })
-    .from(roles)
-    .where(eq(roles.name, 'Guest'))
-    .get();
-
-  return guest!.id;
-};
 
 describe('invites router', () => {
   test('should throw when user lacks permissions (getAll)', async () => {
@@ -161,7 +150,7 @@ describe('invites router', () => {
 
   test('should create invite with a valid roleId', async () => {
     const { caller } = await initTest();
-    const guestId = await getGuestRoleId();
+    const guestId = await getRoleIdByName('Guest');
 
     const invite = await caller.invites.add({
       roleId: guestId
@@ -192,7 +181,7 @@ describe('invites router', () => {
   test('should return role info in getAll for invite with roleId', async () => {
     const { caller } = await initTest();
 
-    const guestId = await getGuestRoleId();
+    const guestId = await getRoleIdByName('Guest');
     const created = await caller.invites.add({
       roleId: guestId
     });
@@ -271,7 +260,7 @@ describe('invites router', () => {
           expect.objectContaining({
             type: ActivityLogType.USED_INVITE,
             userId: newUser!.id,
-            details: { code: invite.code, inviterId: 1 }
+            details: { code: invite.code }
           }),
           expect.objectContaining({
             type: ActivityLogType.DELETED_INVITE,

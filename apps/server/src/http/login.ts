@@ -160,7 +160,7 @@ const registerUser = async (
     enqueueActivityLog({
       type: ActivityLogType.USED_INVITE,
       userId: registeredUser.id,
-      details: { code: invite.code, inviterId: invite.creatorId },
+      details: { code: invite.code },
       ip
     });
   }

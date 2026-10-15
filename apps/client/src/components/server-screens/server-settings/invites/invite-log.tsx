@@ -1,12 +1,9 @@
 import { PaginatedTable } from '@/components/paginated-table';
 import { UserAvatar } from '@/components/user-avatar';
-import type { useAdminInvites } from '@/features/server/admin/hooks';
-import { ActivityLogType } from '@caesar/shared';
+import { ActivityLogType, type TActivityLogEntry } from '@caesar/shared';
 import { Badge } from '@caesar/ui';
 import { format, formatDistanceToNow } from 'date-fns';
 import { memo, useCallback } from 'react';
-
-type TInviteLogEntry = ReturnType<typeof useAdminInvites>['log'][number];
 
 const eventLabels: Record<string, string> = {
     [ActivityLogType.CREATED_INVITE]: 'Created',
@@ -14,12 +11,12 @@ const eventLabels: Record<string, string> = {
     [ActivityLogType.DELETED_INVITE]: 'Deleted'
 };
 
-const getCode = (entry: TInviteLogEntry) =>
+const getCode = (entry: TActivityLogEntry) =>
     entry.details && 'code' in entry.details ? String(entry.details.code) : '';
 
-const InviteLog = memo(({ log }: { log: TInviteLogEntry[] }) => {
+const InviteLog = memo(({ log }: { log: TActivityLogEntry[] }) => {
     const searchFilter = useCallback(
-        (entry: TInviteLogEntry, searchTerm: string) => {
+        (entry: TActivityLogEntry, searchTerm: string) => {
             const query = searchTerm.toLowerCase();
 
             return (

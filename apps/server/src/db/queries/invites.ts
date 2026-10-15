@@ -1,4 +1,8 @@
-import { ActivityLogType, type TJoinedInvite } from '@caesar/shared';
+import {
+  ActivityLogType,
+  type TActivityLogEntry,
+  type TJoinedInvite
+} from '@caesar/shared';
 import {
   activityLog,
   files,
@@ -59,7 +63,7 @@ const INVITE_LOG_TYPES = [
 
 // Newest first. ip stays server-side; rows of deleted users are gone with
 // them (activity_log cascades on user delete).
-const getInviteLog = async (limit: number) =>
+const getInviteLog = async (limit: number): Promise<TActivityLogEntry[]> =>
   db
     .select({
       id: activityLog.id,

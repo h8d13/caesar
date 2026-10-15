@@ -37,21 +37,25 @@ const duplicateRoleRoute = protectedProcedure
     // the copy hands out every permission of the source
     await assertCanGrantPermissions(ctx.userId, source.permissions);
 
-    const role = await db
-      .insert(roles)
-      .values({
-        name: `${source.name} copy`.slice(0, MAX_ROLE_NAME),
-        color: source.color,
-        isDefault: false,
-        isPersistent: false,
-        storageQuotaOverrideEnabled: source.storageQuotaOverrideEnabled,
-        storageSpaceQuota: source.storageSpaceQuota,
-        createdAt: Date.now()
-      })
-      .returning()
-      .get();
+    const role = await db.transaction(async (tx) => {
+      const copy = await tx
+        .insert(roles)
+        .values({
+          name: `${source.name} copy`.slice(0, MAX_ROLE_NAME),
+          color: source.color,
+          isDefault: false,
+          isPersistent: false,
+          storageQuotaOverrideEnabled: source.storageQuotaOverrideEnabled,
+          storageSpaceQuota: source.storageSpaceQuota,
+          createdAt: Date.now()
+        })
+        .returning()
+        .get();
 
-    await syncRolePermissions(role.id, source.permissions);
+      await syncRolePermissions(tx, copy.id, source.permissions);
+
+      return copy;
+    });
 
     void publishRole(role.id, 'create');
     enqueueActivityLog({

@@ -6,6 +6,10 @@
     <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>%APP_NAME%</title>
+    <!-- linked, not imported from main.tsx: a JS-injected sheet only lands
+         once the whole module graph has loaded, so the static shell below
+         painted unstyled (white, tiny spinner) in dev until then -->
+    <link rel="stylesheet" href="/src/index.css" />
     <script>
       // mirrors ThemeProvider so the static shell below paints in the right
       // theme before the bundle arrives (no light flash on slow links)

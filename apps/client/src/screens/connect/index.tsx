@@ -13,6 +13,7 @@ import {
 } from '@/helpers/storage';
 import { useForm } from '@/hooks/use-form';
 import { derivePrivAsync, setPriv } from '@/lib/e2ee';
+import { cn } from '@/lib/utils';
 import { TestId } from '@caesar/shared';
 import {
     Alert,
@@ -25,24 +26,92 @@ import {
     CardTitle,
     Group,
     Input,
-    Switch
+    Switch,
+    Tabs,
+    TabsList,
+    TabsTrigger
 } from '@caesar/ui';
 import type { PublicKeyCredentialRequestOptionsJSON } from '@simplewebauthn/browser';
 import { startAuthentication } from '@simplewebauthn/browser';
-import { KeyRound, ShieldAlert, ShieldCheck } from 'lucide-react';
-import { memo, useCallback, useMemo, useState } from 'react';
+import {
+    Eye,
+    EyeClosed,
+    KeyRound,
+    ShieldAlert,
+    ShieldCheck
+} from 'lucide-react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+type TConnectMode = 'sign-in' | 'sign-up';
+
+// An invite link (/?invite=CODE) only seeds the Sign up form. The param is
+// dropped from the address bar once read, so a bookmark of this page is
+// plain Sign in and nobody signs up again from a saved invite.
+const readInviteParam = () =>
+    new URLSearchParams(window.location.search).get('invite') ?? '';
+
+type TSecretInputProps = React.ComponentProps<typeof Input> & {
+    // aria label noun: "Show <label>" / "Hide <label>"
+    label: string;
+    // invite code: a plain field masked with CSS, since type=password would
+    // make password managers save or fill it as the account password
+    maskWithCss?: boolean;
+};
+
+// Hidden by default (streams, screenshares), revealed on demand.
+const SecretInput = memo(
+    ({ label, maskWithCss, className, ...props }: TSecretInputProps) => {
+        const [shown, setShown] = useState(false);
+
+        return (
+            // toggle sits inside the field: pinned to the input's own h-9 row
+            // so a validation message below doesn't shift it
+            <div className="relative">
+                <Input
+                    {...props}
+                    type={maskWithCss || shown ? 'text' : 'password'}
+                    className={cn(
+                        'pr-9',
+                        maskWithCss && !shown && '[-webkit-text-security:disc]',
+                        className
+                    )}
+                />
+                <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="absolute right-0 top-0 h-9 w-9 text-muted-foreground hover:bg-transparent"
+                    aria-label={`${shown ? 'Hide' : 'Show'} ${label}`}
+                    onClick={() => setShown(!shown)}
+                >
+                    {shown ? (
+                        <EyeClosed className="h-4 w-4" />
+                    ) : (
+                        <Eye className="h-4 w-4" />
+                    )}
+                </Button>
+            </div>
+        );
+    }
+);
+
 const Connect = memo(() => {
+    const [linkInvite] = useState(readInviteParam);
+    const [mode, setMode] = useState<TConnectMode>(
+        linkInvite ? 'sign-up' : 'sign-in'
+    );
     const { values, r, setErrors, onChange } = useForm<{
         identity: string;
         password: string;
         confirmPassword: string;
+        invite: string;
         autoLogin: boolean;
     }>({
         identity: '',
         password: '',
         confirmPassword: '',
+        invite: linkInvite,
         autoLogin: getLocalStorageItemBool(LocalStorageKey.AUTO_LOGIN)
     });
 
@@ -53,17 +122,30 @@ const Connect = memo(() => {
     } | null>(null);
     const info = useInfo();
 
-    const inviteCode = useMemo(() => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const invite = urlParams.get('invite');
-        return invite || undefined;
-    }, []);
-
-    // Invite-only server: signup happens iff an invite code is in the URL.
-    // Otherwise this is a login form for existing users.
-    const isSignup = !!inviteCode;
+    // Invite-only server: the server signs up an unknown identity only when
+    // an invite comes along, so Sign in never sends one.
+    const isSignup = mode === 'sign-up';
+    const inviteCode = isSignup ? values.invite.trim() : '';
     const passwordMismatch =
         isSignup && values.confirmPassword !== values.password;
+
+    useEffect(() => {
+        if (!linkInvite) return;
+
+        const url = new URL(window.location.href);
+
+        url.searchParams.delete('invite');
+        window.history.replaceState(window.history.state, '', url);
+    }, [linkInvite]);
+
+    const onModeChange = useCallback(
+        (value: string) => {
+            setMode(value as TConnectMode);
+            // errors from the other mode's submit don't apply after a switch
+            setErrors({});
+        },
+        [setErrors]
+    );
 
     // Runs once we hold the final session token (password-only OR 2FA).
     const completeLogin = useCallback(
@@ -128,7 +210,7 @@ const Connect = memo(() => {
                 body: JSON.stringify({
                     identity: values.identity,
                     password: values.password,
-                    invite: inviteCode,
+                    invite: inviteCode || undefined,
                     autoLogin: values.autoLogin || undefined
                 })
             });
@@ -285,6 +367,23 @@ const Connect = memo(() => {
                         </div>
                     ) : (
                         <>
+                            <Tabs value={mode} onValueChange={onModeChange}>
+                                <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger
+                                        value="sign-in"
+                                        data-testid={TestId.CONNECT_SIGN_IN_TAB}
+                                    >
+                                        Sign in
+                                    </TabsTrigger>
+                                    <TabsTrigger
+                                        value="sign-up"
+                                        data-testid={TestId.CONNECT_SIGN_UP_TAB}
+                                    >
+                                        Sign up
+                                    </TabsTrigger>
+                                </TabsList>
+                            </Tabs>
+
                             <form
                                 className="flex flex-col gap-2"
                                 onSubmit={(e) => {
@@ -292,6 +391,24 @@ const Connect = memo(() => {
                                     void onConnectClick();
                                 }}
                             >
+                                {isSignup && (
+                                    <Group
+                                        label="Invite code"
+                                        help="Ask a member of this server for one."
+                                    >
+                                        <SecretInput
+                                            {...r('invite')}
+                                            label="invite code"
+                                            maskWithCss
+                                            autoComplete="off"
+                                            spellCheck={false}
+                                            onEnter={onConnectClick}
+                                            data-testid={
+                                                TestId.CONNECT_INVITE_INPUT
+                                            }
+                                        />
+                                    </Group>
+                                )}
                                 <Group
                                     label="Identity"
                                     help="A username you would like to login with. You can edit your display name later."
@@ -306,9 +423,9 @@ const Connect = memo(() => {
                                     />
                                 </Group>
                                 <Group label="Password">
-                                    <Input
+                                    <SecretInput
                                         {...r('password')}
-                                        type="password"
+                                        label="password"
                                         autoComplete={
                                             isSignup
                                                 ? 'new-password'
@@ -325,9 +442,9 @@ const Connect = memo(() => {
                                         label="Confirm password"
                                         help="Type your password again so you don't lock yourself out."
                                     >
-                                        <Input
+                                        <SecretInput
                                             {...r('confirmPassword')}
-                                            type="password"
+                                            label="confirm password"
                                             autoComplete="new-password"
                                             onEnter={onConnectClick}
                                         />
@@ -396,32 +513,19 @@ const Connect = memo(() => {
                                         loading ||
                                         !values.identity ||
                                         !values.password ||
-                                        passwordMismatch
+                                        passwordMismatch ||
+                                        (isSignup && !inviteCode)
                                     }
                                     data-testid={TestId.CONNECT_BUTTON}
                                 >
-                                    {isSignup ? 'Create account' : 'Connect'}
+                                    {isSignup ? 'Create account' : 'Sign in'}
                                 </Button>
 
-                                {!isSignup && (
-                                    <span className="text-xs text-muted-foreground text-center">
-                                        Sign in with an existing account. Or ask
-                                        for an invite.
-                                    </span>
-                                )}
-
-                                {isSignup && (
-                                    <Alert variant="info">
-                                        <AlertTitle>
-                                            You were invited to join this server
-                                        </AlertTitle>
-                                        <AlertDescription>
-                                            <span className="font-mono text-xs">
-                                                Invite code: {inviteCode}
-                                            </span>
-                                        </AlertDescription>
-                                    </Alert>
-                                )}
+                                <span className="text-xs text-muted-foreground text-center">
+                                    {isSignup
+                                        ? 'Already have an account? Use Sign in.'
+                                        : 'New here? Use Sign up with an invite code.'}
+                                </span>
                             </div>
                         </>
                     )}

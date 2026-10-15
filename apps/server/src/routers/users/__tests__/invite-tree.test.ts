@@ -1,12 +1,6 @@
 import { DELETED_USER_IDENTITY_AND_NAME, Permission } from '@caesar/shared';
-import {
-  invites,
-  rolePermissions,
-  roles,
-  userRoles,
-  users
-} from '@caesar/shared/db/schema';
-import { initTest, login } from '@server/__tests__/helpers';
+import { invites, users } from '@caesar/shared/db/schema';
+import { initTest, login, makeModerator } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { eq } from 'drizzle-orm';
 import { describe, expect, test } from 'vite-plus/test';
@@ -44,33 +38,6 @@ const seedChain = async () => {
   const c = await signupVia(b.id, 'chainc');
 
   return { a, b, c };
-};
-
-const grantRole = async (userId: number, permissions: Permission[]) => {
-  const [role] = await tdb
-    .insert(roles)
-    .values({
-      name: 'Moderator',
-      color: '#00ff00',
-      isPersistent: false,
-      isDefault: false,
-      createdAt: Date.now()
-    })
-    .returning();
-
-  await tdb.insert(rolePermissions).values(
-    permissions.map((permission) => ({
-      roleId: role!.id,
-      permission,
-      createdAt: Date.now()
-    }))
-  );
-
-  await tdb.insert(userRoles).values({
-    userId,
-    roleId: role!.id,
-    createdAt: Date.now()
-  });
 };
 
 const getInvitedBy = async (userId: number) =>
@@ -237,9 +204,8 @@ describe('users.getInviteTree', () => {
   });
 
   test('strips identity without VIEW_USER_SENSITIVE_DATA', async () => {
-    await grantRole(2, [Permission.MANAGE_USERS]);
-
-    const { caller } = await initTest(2);
+    const { caller: owner } = await initTest(1);
+    const { caller } = await makeModerator(owner, [Permission.MANAGE_USERS]);
     const { a } = await seedChain();
 
     const nodes = await caller.users.getInviteTree({

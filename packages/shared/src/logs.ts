@@ -142,8 +142,6 @@ export type TActivityLogDetailsMap = {
   };
   [ActivityLogType.USED_INVITE]: {
     code: string;
-    // optional: rows logged before invite provenance lack it
-    inviterId?: number;
   };
   // -------------------- EMOJIS --------------------
   [ActivityLogType.CREATED_EMOJI]: {
