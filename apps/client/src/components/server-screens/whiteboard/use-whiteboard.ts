@@ -159,81 +159,66 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
     // --- Subscribe to remote events ---
     useEffect(() => {
         const subs = [
-            trpc.whiteboard.onLayerAdd.subscribe(
-                undefined,
-                {
-                    onData: (data) => {
-                        setLayers((prev) => ({
+            trpc.whiteboard.onLayerAdd.subscribe(undefined, {
+                onData: (data) => {
+                    setLayers((prev) => ({
+                        ...prev,
+                        [data.layerId]: data.layer as Layer
+                    }));
+                    setLayerIds((prev) =>
+                        prev.includes(data.layerId)
+                            ? prev
+                            : [...prev, data.layerId]
+                    );
+                }
+            }),
+            trpc.whiteboard.onLayerUpdate.subscribe(undefined, {
+                onData: (data) => {
+                    setLayers((prev) => {
+                        const existing = prev[data.layerId];
+                        if (!existing) return prev;
+                        return {
                             ...prev,
-                            [data.layerId]: data.layer as Layer
-                        }));
-                        setLayerIds((prev) =>
-                            prev.includes(data.layerId)
-                                ? prev
-                                : [...prev, data.layerId]
-                        );
-                    }
+                            [data.layerId]: {
+                                ...existing,
+                                ...data.layer
+                            } as Layer
+                        };
+                    });
                 }
-            ),
-            trpc.whiteboard.onLayerUpdate.subscribe(
-                undefined,
-                {
-                    onData: (data) => {
-                        setLayers((prev) => {
-                            const existing = prev[data.layerId];
-                            if (!existing) return prev;
-                            return {
-                                ...prev,
-                                [data.layerId]: {
-                                    ...existing,
-                                    ...data.layer
-                                } as Layer
-                            };
-                        });
-                    }
+            }),
+            trpc.whiteboard.onLayerDelete.subscribe(undefined, {
+                onData: (data) => {
+                    const deletedSet = new Set(data.layerIds);
+                    setLayers((prev) => {
+                        const next = { ...prev };
+                        for (const id of data.layerIds) delete next[id];
+                        return next;
+                    });
+                    setLayerIds((prev) =>
+                        prev.filter((id) => !deletedSet.has(id))
+                    );
+                    setSelection((prev) =>
+                        prev.filter((id) => !deletedSet.has(id))
+                    );
                 }
-            ),
-            trpc.whiteboard.onLayerDelete.subscribe(
-                undefined,
-                {
-                    onData: (data) => {
-                        const deletedSet = new Set(data.layerIds);
-                        setLayers((prev) => {
-                            const next = { ...prev };
-                            for (const id of data.layerIds) delete next[id];
-                            return next;
-                        });
-                        setLayerIds((prev) =>
-                            prev.filter((id) => !deletedSet.has(id))
-                        );
-                        setSelection((prev) =>
-                            prev.filter((id) => !deletedSet.has(id))
-                        );
-                    }
+            }),
+            trpc.whiteboard.onCursorUpdate.subscribe(undefined, {
+                onData: (data) => {
+                    setCursors((prev) => {
+                        const next = new Map(prev);
+                        next.set(data.cursor.userId, data.cursor);
+                        return next;
+                    });
                 }
-            ),
-            trpc.whiteboard.onCursorUpdate.subscribe(
-                undefined,
-                {
-                    onData: (data) => {
-                        setCursors((prev) => {
-                            const next = new Map(prev);
-                            next.set(data.cursor.userId, data.cursor);
-                            return next;
-                        });
-                    }
+            }),
+            trpc.whiteboard.onClear.subscribe(undefined, {
+                onData: () => {
+                    setLayers({});
+                    setLayerIds([]);
+                    setSelection([]);
                 }
-            ),
-            trpc.whiteboard.onClear.subscribe(
-                undefined,
-                {
-                    onData: () => {
-                        setLayers({});
-                        setLayerIds([]);
-                        setSelection([]);
-                    }
-                }
-            )
+            })
         ];
 
         return () => subs.forEach((s) => s.unsubscribe());
