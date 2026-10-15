@@ -127,6 +127,12 @@ const performUserDeletion = async ({
       // cascade will handle deleting all related data
     }
 
+    // invitees are other people: even a wipe keeps them in the tree
+    await tx
+      .update(users)
+      .set({ invitedBy: deletedUserId })
+      .where(eq(users.invitedBy, targetUserId));
+
     await tx.delete(users).where(eq(users.id, targetUserId));
   });
 

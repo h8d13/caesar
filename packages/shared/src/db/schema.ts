@@ -10,7 +10,8 @@ import {
   real,
   sqliteTable,
   text,
-  uniqueIndex
+  uniqueIndex,
+  type AnySQLiteColumn
 } from 'drizzle-orm/sqlite-core';
 
 const files = sqliteTable(
@@ -184,6 +185,15 @@ const users = sqliteTable(
     // unless the user has allowMultipleSessions set. JWTs carry the epoch
     // they were minted at and are rejected on mismatch.
     sessionEpoch: integer('session_epoch').notNull().default(0),
+    // invite provenance: who vouched for this user. null for the bootstrap
+    // owner (genesis). delete-user re-points children to the deleted-user
+    // placeholder; set null is only a safety net. inviteCode is a copy
+    // since invite rows get deleted.
+    invitedBy: integer('invited_by').references(
+      (): AnySQLiteColumn => users.id,
+      { onDelete: 'set null' }
+    ),
+    inviteCode: text('invite_code'),
     createdAt: integer('created_at').notNull(),
     updatedAt: integer('updated_at')
   },
@@ -191,7 +201,8 @@ const users = sqliteTable(
     uniqueIndex('users_identity_idx').on(t.identity),
     index('users_name_idx').on(t.name),
     index('users_banned_idx').on(t.banned),
-    index('users_last_login_idx').on(t.lastLoginAt)
+    index('users_last_login_idx').on(t.lastLoginAt),
+    index('users_invited_by_idx').on(t.invitedBy)
   ]
 );
 
