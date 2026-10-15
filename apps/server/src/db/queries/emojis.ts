@@ -1,49 +1,38 @@
 import type { TJoinedEmoji } from '@caesar/shared';
 import { emojis, files, users } from '@caesar/shared/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, getTableColumns, sql, type SQL } from 'drizzle-orm';
 import { db } from '..';
+import { fileJson, jsonObject, parseJson, precompile } from './json-sql';
 import { publicUserBaseFields } from './user-fields';
 
-const emojiSelectFields = {
-  emoji: emojis,
-  file: files,
-  user: publicUserBaseFields
-};
+// The uploader ships as its public base columns only (no avatar/banner),
+// which is all the client reads for emoji and sound attribution.
+const joinedEmojiJson = precompile(
+  jsonObject({
+    ...getTableColumns(emojis),
+    file: fileJson(files),
+    user: jsonObject(publicUserBaseFields)
+  })
+);
 
-// row shape from select(emojiSelectFields). user lacks avatar/banner/socialCredit
-// that TPublicUser nominally requires; the wire shape mirrors this and callers
-// only touch the columns we actually project.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const parseEmoji = (row: any): TJoinedEmoji => ({
-  ...row.emoji,
-  file: row.file,
-  user: row.user
-});
+const selectJoinedEmojis = async (where?: SQL): Promise<TJoinedEmoji[]> => {
+  const rows = await db.all<{ emoji: string }>(
+    sql`SELECT ${joinedEmojiJson} AS emoji FROM ${emojis}
+      INNER JOIN ${files} ON ${files.id} = ${emojis.fileId}
+      INNER JOIN ${users} ON ${users.id} = ${emojis.userId}
+      ${where ? sql`WHERE ${where}` : sql``}`
+  );
+
+  return rows.map((row) => parseJson<TJoinedEmoji>(row.emoji));
+};
 
 const getEmojiById = async (id: number): Promise<TJoinedEmoji | undefined> => {
-  const row = await db
-    .select(emojiSelectFields)
-    .from(emojis)
-    .innerJoin(files, eq(emojis.fileId, files.id))
-    .innerJoin(users, eq(emojis.userId, users.id))
-    .where(eq(emojis.id, id))
-    .limit(1)
-    .get();
+  const [emoji] = await selectJoinedEmojis(eq(emojis.id, id));
 
-  if (!row) return undefined;
-
-  return parseEmoji(row);
+  return emoji;
 };
 
-const getEmojis = async (): Promise<TJoinedEmoji[]> => {
-  const rows = await db
-    .select(emojiSelectFields)
-    .from(emojis)
-    .innerJoin(files, eq(emojis.fileId, files.id))
-    .innerJoin(users, eq(emojis.userId, users.id));
-
-  return rows.map(parseEmoji);
-};
+const getEmojis = async (): Promise<TJoinedEmoji[]> => selectJoinedEmojis();
 
 const emojiExists = async (name: string): Promise<boolean> => {
   const emoji = await db

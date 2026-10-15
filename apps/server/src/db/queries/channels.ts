@@ -225,103 +225,81 @@ const getAllChannelUserPermissions = async (
   return channelPermissions;
 };
 
-const getAffectedUserIdsForChannel = async (
-  channelId: number,
-  options?: {
-    forceAllUsers?: boolean;
-    permission?: ChannelPermission;
-  }
-): Promise<number[]> => {
-  const [channel] = await db
-    .select()
-    .from(channels)
-    .where(eq(channels.id, channelId))
-    .limit(1);
-
-  if (!channel) {
-    return [];
-  }
-
-  if (channel.isDm) {
-    // for DM channels we need to get the two participants and return them as the affected users
-    return getDirectMessageChannelParticipantIds(channelId);
-  }
-
-  // if channel is public, return all user IDs
-  if (!channel.private || options?.forceAllUsers) {
-    return getAllUserIds();
-  }
-
-  // if a specific permission is required, filter by it
-  const permission = options?.permission;
-
-  const usersWithDirectPerms = await db
-    .select({ userId: channelUserPermissions.userId })
-    .from(channelUserPermissions)
-    .where(
-      and(
-        eq(channelUserPermissions.channelId, channelId),
-        permission
-          ? eq(channelUserPermissions.permission, permission)
-          : undefined,
-        permission ? eq(channelUserPermissions.allow, true) : undefined
-      )
-    );
-
-  const rolesWithPerms = await db
-    .select({ roleId: channelRolePermissions.roleId })
-    .from(channelRolePermissions)
-    .where(
-      and(
-        eq(channelRolePermissions.channelId, channelId),
-        permission
-          ? eq(channelRolePermissions.permission, permission)
-          : undefined,
-        permission ? eq(channelRolePermissions.allow, true) : undefined
-      )
-    );
-
-  const roleIds = rolesWithPerms.map((r) => r.roleId);
-
-  let usersWithRoles: { userId: number }[] = [];
-
-  if (roleIds.length > 0) {
-    usersWithRoles = await db
-      .select({ userId: userRoles.userId })
-      .from(userRoles)
-      .where(inArray(userRoles.roleId, roleIds));
-  }
-
-  // get users with the owner role because they have access to everything all the time
-  const owners = await db
-    .select({ userId: userRoles.userId })
-    .from(userRoles)
-    .where(eq(userRoles.roleId, OWNER_ROLE_ID));
-
-  const userIdSet = new Set<number>();
-
-  usersWithDirectPerms.forEach((u) => userIdSet.add(u.userId));
-  usersWithRoles.forEach((u) => userIdSet.add(u.userId));
-  owners.forEach((u) => userIdSet.add(u.userId));
-
-  return Array.from(userIdSet);
+type TAudienceOptions = {
+  forceAllUsers?: boolean;
+  permission?: ChannelPermission;
 };
 
+// Who a channel's events reach: every user, or an explicit id list.
+// "everyone" stays symbolic so the online variant can answer it from the
+// socket list instead of scanning the users table on every typing event.
+const getChannelAudience = async (
+  channelId: number,
+  options?: TAudienceOptions
+): Promise<'everyone' | number[]> => {
+  const channel = await db
+    .select({ isDm: channels.isDm, private: channels.private })
+    .from(channels)
+    .where(eq(channels.id, channelId))
+    .get();
+
+  if (!channel) return [];
+
+  if (channel.isDm) return getDirectMessageChannelParticipantIds(channelId);
+
+  if (!channel.private || options?.forceAllUsers) return 'everyone';
+
+  // Without a permission, any override row counts, deny included: callers
+  // asking for members want everyone the channel was configured for.
+  const permission = options?.permission;
+  const granted = (
+    table: typeof channelUserPermissions | typeof channelRolePermissions
+  ) =>
+    permission
+      ? sql`AND ${table.permission} = ${permission} AND ${table.allow} = 1`
+      : sql``;
+
+  // direct overrides, members of granted roles, and owners (who see all)
+  const rows = await db.all<{ userId: number }>(sql`
+    SELECT ${channelUserPermissions.userId} AS userId
+      FROM ${channelUserPermissions}
+      WHERE ${channelUserPermissions.channelId} = ${channelId}
+        ${granted(channelUserPermissions)}
+    UNION
+    SELECT ${userRoles.userId} FROM ${userRoles}
+      WHERE ${userRoles.roleId} IN (
+        SELECT ${channelRolePermissions.roleId} FROM ${channelRolePermissions}
+          WHERE ${channelRolePermissions.channelId} = ${channelId}
+            ${granted(channelRolePermissions)})
+        OR ${userRoles.roleId} = ${OWNER_ROLE_ID}
+    ORDER BY 1`);
+
+  return rows.map((row) => row.userId);
+};
+
+const getAffectedUserIdsForChannel = async (
+  channelId: number,
+  options?: TAudienceOptions
+): Promise<number[]> => {
+  const audience = await getChannelAudience(channelId, options);
+
+  return audience === 'everyone' ? getAllUserIds() : audience;
+};
+
+// Runs per published message and typing event. An online socket implies an
+// existing user, so "everyone" needs no table scan.
 const getAffectedOnlineUserIdsForChannel = async (
   channelId: number,
-  options?: {
-    forceAllUsers?: boolean;
-    permission?: ChannelPermission;
-  }
+  options?: TAudienceOptions
 ): Promise<number[]> => {
-  const affectedUserIds = await getAffectedUserIdsForChannel(
-    channelId,
-    options
-  );
-  // runs per published message: a Set keeps it linear in users
-  const onlineUserIds = new Set(getOnlineUserIds());
+  const audience = await getChannelAudience(channelId, options);
+  const onlineUserIds = getOnlineUserIds();
 
-  return affectedUserIds.filter((userId) => onlineUserIds.has(userId));
+  if (audience === 'everyone') return onlineUserIds;
+
+  const online = new Set(onlineUserIds);
+
+  return audience.filter((userId) => online.has(userId));
 };
 
 // Unread counts for channels the caller has already cleared for this user:

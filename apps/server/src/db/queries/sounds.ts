@@ -1,49 +1,38 @@
 import type { TJoinedSound } from '@caesar/shared';
 import { files, sounds, users } from '@caesar/shared/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, getTableColumns, sql, type SQL } from 'drizzle-orm';
 import { db } from '..';
+import { fileJson, jsonObject, parseJson, precompile } from './json-sql';
 import { publicUserBaseFields } from './user-fields';
 
-const soundSelectFields = {
-  sound: sounds,
-  file: files,
-  user: publicUserBaseFields
-};
+// The uploader ships as its public base columns only (no avatar/banner),
+// which is all the client reads for emoji and sound attribution.
+const joinedSoundJson = precompile(
+  jsonObject({
+    ...getTableColumns(sounds),
+    file: fileJson(files),
+    user: jsonObject(publicUserBaseFields)
+  })
+);
 
-// row shape from select(soundSelectFields). user lacks avatar/banner/socialCredit
-// that TPublicUser nominally requires; the wire shape mirrors this and callers
-// only touch the columns we actually project.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const parseSound = (row: any): TJoinedSound => ({
-  ...row.sound,
-  file: row.file,
-  user: row.user
-});
+const selectJoinedSounds = async (where?: SQL): Promise<TJoinedSound[]> => {
+  const rows = await db.all<{ sound: string }>(
+    sql`SELECT ${joinedSoundJson} AS sound FROM ${sounds}
+      INNER JOIN ${files} ON ${files.id} = ${sounds.fileId}
+      INNER JOIN ${users} ON ${users.id} = ${sounds.userId}
+      ${where ? sql`WHERE ${where}` : sql``}`
+  );
+
+  return rows.map((row) => parseJson<TJoinedSound>(row.sound));
+};
 
 const getSoundById = async (id: number): Promise<TJoinedSound | undefined> => {
-  const row = await db
-    .select(soundSelectFields)
-    .from(sounds)
-    .innerJoin(files, eq(sounds.fileId, files.id))
-    .innerJoin(users, eq(sounds.userId, users.id))
-    .where(eq(sounds.id, id))
-    .limit(1)
-    .get();
+  const [sound] = await selectJoinedSounds(eq(sounds.id, id));
 
-  if (!row) return undefined;
-
-  return parseSound(row);
+  return sound;
 };
 
-const getSounds = async (): Promise<TJoinedSound[]> => {
-  const rows = await db
-    .select(soundSelectFields)
-    .from(sounds)
-    .innerJoin(files, eq(sounds.fileId, files.id))
-    .innerJoin(users, eq(sounds.userId, users.id));
-
-  return rows.map(parseSound);
-};
+const getSounds = async (): Promise<TJoinedSound[]> => selectJoinedSounds();
 
 const soundExists = async (name: string): Promise<boolean> => {
   const sound = await db
