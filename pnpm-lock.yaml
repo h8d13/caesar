@@ -425,9 +425,6 @@ importers:
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.4(@libsql/client@0.18.0)
-      esbuild:
-        specifier: ^0.28.2
-        version: 0.28.2
       ini:
         specifier: ^7.0.0
         version: 7.0.0
