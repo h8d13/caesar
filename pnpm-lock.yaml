@@ -383,7 +383,7 @@ importers:
         specifier: 0.18.0
         version: 0.18.0
       argon2:
-        specifier: ^0.45.0
+        specifier: 0.45.1
         version: 0.45.1
       mediasoup:
         specifier: 'catalog:'
