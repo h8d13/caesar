@@ -50,6 +50,9 @@ export type TSound = InferSelectModel<typeof sounds>;
 export type TMessageReaction = InferSelectModel<typeof messageReactions>;
 export type TInvite = InferSelectModel<typeof invites>;
 export type TActivityLog = InferSelectModel<typeof activityLog>;
+
+// activity_log row as served to clients: no ip
+export type TActivityLogEntry = Omit<TActivityLog, 'ip'>;
 export type TStatusImage = InferSelectModel<typeof statusImages>;
 export type TUserRole = InferSelectModel<typeof userRoles>;
 export type TChannelRolePermission = InferSelectModel<

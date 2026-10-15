@@ -12,10 +12,12 @@ import {
 } from '@caesar/ui';
 import { Plus } from 'lucide-react';
 import { memo } from 'react';
+import { InviteLog } from './invite-log';
 import { InvitesTable } from './invites-table';
 
 const Invites = memo(() => {
-    const { invites, fetchedAt, limits, loading, refetch } = useAdminInvites();
+    const { invites, log, fetchedAt, limits, loading, refetch } =
+        useAdminInvites();
 
     if (loading) {
         return <LoadingCard className="h-[600px]" />;
@@ -25,47 +27,61 @@ const Invites = memo(() => {
     const atCap = hasCap && limits.users >= limits.maxUsers;
 
     return (
-        <Card>
-            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <CardTitle>Server Invites</CardTitle>
+        <div className="space-y-4">
+            <Card>
+                <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <CardTitle>Server Invites</CardTitle>
+                        <CardDescription>
+                            Manage invitation links for users to join the
+                            server.
+                            {hasCap && (
+                                <>
+                                    {' '}
+                                    Users: {limits.users} / {limits.maxUsers}
+                                    {atCap && ' (cap reached)'}
+                                </>
+                            )}
+                        </CardDescription>
+                    </div>
+                    <Button
+                        onClick={() =>
+                            openDialog(Dialog.CREATE_INVITE, {
+                                refetch
+                            })
+                        }
+                        className="gap-2"
+                        disabled={atCap}
+                        title={
+                            atCap
+                                ? 'Instance has reached its user limit'
+                                : undefined
+                        }
+                    >
+                        <Plus className="h-4 w-4" />
+                        Create Invite
+                    </Button>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <InvitesTable
+                        invites={invites}
+                        fetchedAt={fetchedAt}
+                        refetch={refetch}
+                    />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Invite Log</CardTitle>
                     <CardDescription>
-                        Manage invitation links for users to join the server.
-                        {hasCap && (
-                            <>
-                                {' '}
-                                Users: {limits.users} / {limits.maxUsers}
-                                {atCap && ' (cap reached)'}
-                            </>
-                        )}
+                        Who created, used and deleted which invite.
                     </CardDescription>
-                </div>
-                <Button
-                    onClick={() =>
-                        openDialog(Dialog.CREATE_INVITE, {
-                            refetch
-                        })
-                    }
-                    className="gap-2"
-                    disabled={atCap}
-                    title={
-                        atCap
-                            ? 'Instance has reached its user limit'
-                            : undefined
-                    }
-                >
-                    <Plus className="h-4 w-4" />
-                    Create Invite
-                </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <InvitesTable
-                    invites={invites}
-                    fetchedAt={fetchedAt}
-                    refetch={refetch}
-                />
-            </CardContent>
-        </Card>
+                </CardHeader>
+                <CardContent>
+                    <InviteLog log={log} />
+                </CardContent>
+            </Card>
+        </div>
     );
 });
 

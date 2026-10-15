@@ -10,7 +10,7 @@ pnpm install --frozen-lockfile --config.confirmModulesPurge=false
 
 # Direct binary invocation. Skipping the `pnpm dev` wrapper avoids pnpm's
 # ELIFECYCLE message when tsx exits non-zero on stop.
-(cd apps/client && exec ./node_modules/.bin/vite --host 0.0.0.0) &
+(cd apps/client && exec ./node_modules/.bin/vp dev --host 0.0.0.0) &
 CLIENT_PID=$!
 (cd apps/server && exec ./node_modules/.bin/tsx watch ./src/index.ts) &
 SERVER_PID=$!

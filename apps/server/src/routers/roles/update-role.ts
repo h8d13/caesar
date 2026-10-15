@@ -50,21 +50,25 @@ const updateRoleRoute = protectedProcedure
 
     await assertCanGrantPermissions(ctx.userId, addedPermissions);
 
-    const updatedRole = await db
-      .update(roles)
-      .set({
-        name: input.name,
-        color: input.color,
-        storageQuotaOverrideEnabled: input.storageQuotaOverrideEnabled,
-        storageSpaceQuota: input.storageSpaceQuota
-      })
-      .where(eq(roles.id, input.roleId))
-      .returning()
-      .get();
+    const updatedRole = await db.transaction(async (tx) => {
+      const role = await tx
+        .update(roles)
+        .set({
+          name: input.name,
+          color: input.color,
+          storageQuotaOverrideEnabled: input.storageQuotaOverrideEnabled,
+          storageSpaceQuota: input.storageSpaceQuota
+        })
+        .where(eq(roles.id, input.roleId))
+        .returning()
+        .get();
 
-    if (updatedRole.id !== OWNER_ROLE_ID) {
-      await syncRolePermissions(updatedRole.id, input.permissions);
-    }
+      if (role.id !== OWNER_ROLE_ID) {
+        await syncRolePermissions(tx, role.id, input.permissions);
+      }
+
+      return role;
+    });
 
     void publishRole(updatedRole.id, 'update');
     enqueueActivityLog({

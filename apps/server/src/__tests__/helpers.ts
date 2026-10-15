@@ -1,5 +1,5 @@
-import { UploadHeaders } from '@caesar/shared';
-import { users } from '@caesar/shared/db/schema';
+import { Permission, UploadHeaders } from '@caesar/shared';
+import { roles, users } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { getJwtSecret } from '@server/utils/jwt-secret';
 import { eq } from 'drizzle-orm';
@@ -77,4 +77,45 @@ const uploadFile = async (file: File, token: string) =>
     body: file
   });
 
-export { getCaller, getMockedToken, initTest, login, uploadFile };
+// Stand up a non-owner moderator: user 2 gets a fresh role carrying only the
+// listed permissions, then acts via their own caller. `initTest(2)` must run
+// AFTER the role is assigned so the permission middleware sees it live.
+const makeModerator = async (
+  ownerCaller: Awaited<ReturnType<typeof initTest>>['caller'],
+  permissions: Permission[] = [Permission.MANAGE_USERS]
+) => {
+  const roleId = await ownerCaller.roles.add();
+
+  await ownerCaller.roles.update({
+    roleId,
+    name: 'Moderator',
+    color: '#123456',
+    permissions,
+    storageQuotaOverrideEnabled: false,
+    storageSpaceQuota: 0
+  });
+
+  await ownerCaller.users.addRole({ userId: 2, roleId });
+
+  return initTest(2);
+};
+
+const getRoleIdByName = async (name: string) => {
+  const role = await db
+    .select({ id: roles.id })
+    .from(roles)
+    .where(eq(roles.name, name))
+    .get();
+
+  return role!.id;
+};
+
+export {
+  getCaller,
+  getMockedToken,
+  getRoleIdByName,
+  initTest,
+  login,
+  makeModerator,
+  uploadFile
+};

@@ -1,6 +1,16 @@
-import type { TJoinedInvite } from '@caesar/shared';
-import { files, invites, roles, users } from '@caesar/shared/db/schema';
-import { eq } from 'drizzle-orm';
+import {
+  ActivityLogType,
+  type TActivityLogEntry,
+  type TJoinedInvite
+} from '@caesar/shared';
+import {
+  activityLog,
+  files,
+  invites,
+  roles,
+  users
+} from '@caesar/shared/db/schema';
+import { desc, eq, inArray } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { db } from '..';
 import { getAllUserRoleIdsMap } from './roles';
@@ -45,4 +55,26 @@ const getInvites = async (): Promise<TJoinedInvite[]> => {
   }));
 };
 
-export { getInvites };
+const INVITE_LOG_TYPES = [
+  ActivityLogType.CREATED_INVITE,
+  ActivityLogType.DELETED_INVITE,
+  ActivityLogType.USED_INVITE
+];
+
+// Newest first. ip stays server-side; rows of deleted users are gone with
+// them (activity_log cascades on user delete).
+const getInviteLog = async (limit: number): Promise<TActivityLogEntry[]> =>
+  db
+    .select({
+      id: activityLog.id,
+      type: activityLog.type,
+      userId: activityLog.userId,
+      details: activityLog.details,
+      createdAt: activityLog.createdAt
+    })
+    .from(activityLog)
+    .where(inArray(activityLog.type, INVITE_LOG_TYPES))
+    .orderBy(desc(activityLog.createdAt), desc(activityLog.id))
+    .limit(limit);
+
+export { getInviteLog, getInvites };

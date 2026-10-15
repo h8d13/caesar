@@ -1,7 +1,8 @@
 import { DatePicker } from '@/components/date-picker';
-import { useRoles } from '@/features/server/roles/hooks';
+import { useDefaultRole, useRoles } from '@/features/server/roles/hooks';
 import { useForm } from '@/hooks/use-form';
 import { getTRPCClient } from '@/lib/trpc';
+import { OWNER_ROLE_ID } from '@caesar/shared';
 import {
     Group,
     Input,
@@ -23,6 +24,7 @@ type TCreateInviteDialogProps = TDialogBaseProps & {
 const CreateInviteDialog = memo(
     ({ refetch, close, isOpen }: TCreateInviteDialogProps) => {
         const roles = useRoles();
+        const defaultRole = useDefaultRole();
         // earliest pickable expiry: the moment the dialog opened
         const [openedAt] = useState(() => Date.now());
         const { r, rrn, values, setTrpcErrors, onChange } = useForm({
@@ -92,15 +94,25 @@ const CreateInviteDialog = memo(
                                 <SelectValue placeholder="Select a role" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="0">Default</SelectItem>
-                                {roles.map((role) => (
-                                    <SelectItem
-                                        key={role.id}
-                                        value={role.id.toString()}
-                                    >
-                                        {role.name}
-                                    </SelectItem>
-                                ))}
+                                {/* 0 sends no roleId: every signup gets the
+                                    default role anyway, so it isn't listed twice */}
+                                <SelectItem value="0">
+                                    {defaultRole?.name ?? 'Default role'}
+                                </SelectItem>
+                                {roles
+                                    .filter(
+                                        (role) =>
+                                            !role.isDefault &&
+                                            role.id !== OWNER_ROLE_ID
+                                    )
+                                    .map((role) => (
+                                        <SelectItem
+                                            key={role.id}
+                                            value={role.id.toString()}
+                                        >
+                                            {role.name}
+                                        </SelectItem>
+                                    ))}
                             </SelectContent>
                         </Select>
                     </Group>

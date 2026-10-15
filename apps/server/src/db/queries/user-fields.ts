@@ -39,7 +39,8 @@ const joinedUserBaseFields = {
   lastLoginAt: users.lastLoginAt,
   sessionEpoch: users.sessionEpoch,
   banReason: users.banReason,
-  bannedAt: users.bannedAt
+  bannedAt: users.bannedAt,
+  invitedBy: users.invitedBy
 };
 
 const socialCreditSubquery = sql<number>`(SELECT COALESCE(SUM(amount), 0) FROM social_credit_ledger WHERE target_id = ${users.id})`;

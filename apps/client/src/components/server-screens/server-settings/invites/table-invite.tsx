@@ -1,6 +1,7 @@
 import { RoleBadge } from '@/components/role-badge';
 import { UserAvatar } from '@/components/user-avatar';
 import { requestConfirmation } from '@/features/dialogs/actions';
+import { useDefaultRole } from '@/features/server/roles/hooks';
 import { getUrlFromServer } from '@/helpers/get-file-url';
 import { getTRPCClient } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
@@ -27,6 +28,9 @@ type TTableInviteProps = {
 
 const TableInvite = memo(
     ({ invite, fetchedAt, refetch }: TTableInviteProps) => {
+        // no role on the invite: the signup only gets the default role
+        const defaultRole = useDefaultRole();
+        const shownRole = invite.role ?? defaultRole;
         const isExpired = invite.expiresAt && invite.expiresAt < fetchedAt;
         const isMaxUsesReached =
             invite.maxUses && invite.uses >= invite.maxUses;
@@ -122,13 +126,7 @@ const TableInvite = memo(
                 </div>
 
                 <div className="flex items-center">
-                    {invite.role ? (
-                        <RoleBadge role={invite.role} />
-                    ) : (
-                        <span className="text-xs text-muted-foreground">
-                            Default
-                        </span>
-                    )}
+                    {shownRole && <RoleBadge role={shownRole} />}
                 </div>
 
                 <div className="flex items-center gap-2 min-w-0">

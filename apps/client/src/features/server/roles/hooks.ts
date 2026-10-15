@@ -1,6 +1,12 @@
 import type { IRootState } from '@/features/store';
 import { useSelector } from 'react-redux';
-import { roleByIdSelector, rolesSelector } from './selectors';
+import {
+    defaultRoleSelector,
+    roleByIdSelector,
+    rolesSelector
+} from './selectors';
+
+export const useDefaultRole = () => useSelector(defaultRoleSelector);
 
 export const useRoleById = (roleId: number) =>
     useSelector((state: IRootState) => roleByIdSelector(state, roleId));

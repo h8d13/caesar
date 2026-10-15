@@ -3,6 +3,8 @@ import {
   canonicalIdentity,
   DELETED_USER_IDENTITY_AND_NAME,
   IDENTITY_REGEX,
+  OWNER_ROLE_ID,
+  type TInvite,
   type TJoinedUser
 } from '@caesar/shared';
 import {
@@ -101,8 +103,7 @@ const burnTimingBudget = async (): Promise<void> => {
 const registerUser = async (
   identity: string,
   password: string,
-  inviteCode?: string,
-  inviteRoleId?: number | null,
+  invite?: TInvite,
   ip?: string
 ): Promise<TJoinedUser> => {
   const hashedPassword = await hashPassword(password);
@@ -120,7 +121,8 @@ const registerUser = async (
       name: identity,
       identity,
       createdAt: Date.now(),
-      password: hashedPassword
+      password: hashedPassword,
+      invitedBy: invite?.creatorId
     })
     .returning()
     .get();
@@ -131,10 +133,16 @@ const registerUser = async (
     createdAt: Date.now()
   });
 
-  // If the invite has a specific role and it's different from the default, assign it too
-  if (inviteRoleId && inviteRoleId !== defaultRole.id) {
+  // If the invite has a specific role and it's different from the default,
+  // assign it too. Never owner: add-invite refuses it, this covers any row
+  // that predates or bypasses that guard.
+  if (
+    invite?.roleId &&
+    invite.roleId !== defaultRole.id &&
+    invite.roleId !== OWNER_ROLE_ID
+  ) {
     await db.insert(userRoles).values({
-      roleId: inviteRoleId,
+      roleId: invite.roleId,
       userId: user.id,
       createdAt: Date.now()
     });
@@ -148,11 +156,11 @@ const registerUser = async (
     throw new Error('User registration failed');
   }
 
-  if (inviteCode) {
+  if (invite) {
     enqueueActivityLog({
       type: ActivityLogType.USED_INVITE,
       userId: registeredUser.id,
-      details: { code: inviteCode },
+      details: { code: invite.code },
       ip
     });
   }
@@ -228,8 +236,7 @@ const loginRouteHandler = async (
       );
     }
 
-    let inviteRoleId: number | null = null;
-    let consumedInviteCode: string | undefined;
+    let invite: TInvite | undefined;
 
     // Bootstrap: first user when DB is empty signs up without invite (becomes admin via seeded role assignment).
     // Otherwise: signup requires a valid invite.
@@ -251,7 +258,7 @@ const loginRouteHandler = async (
         );
       }
 
-      const invite = await consumeInvite(data.invite);
+      invite = await consumeInvite(data.invite);
 
       if (!invite) {
         await burnTimingBudget();
@@ -263,22 +270,18 @@ const loginRouteHandler = async (
         );
         throw new HttpValidationError('identity', GENERIC_AUTH_ERROR);
       }
-
-      inviteRoleId = invite.roleId ?? null;
-      consumedInviteCode = invite.code;
     }
 
     try {
       existingUser = await registerUser(
         data.identity,
         data.password,
-        data.invite,
-        inviteRoleId,
+        invite,
         connectionInfo?.ip
       );
     } catch (error) {
       // e.g. a parallel signup won the identity: the use was never redeemed
-      if (consumedInviteCode) await refundInvite(consumedInviteCode);
+      if (invite) await refundInvite(invite.code);
       throw error;
     }
 

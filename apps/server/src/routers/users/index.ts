@@ -13,6 +13,7 @@ import {
   onUserLeaveRoute,
   onUserUpdateRoute
 } from './events';
+import { getInviteTreeRoute } from './get-invite-tree';
 import { getMySessionsRoute } from './get-my-sessions';
 import { getMyVotesTodayRoute } from './get-my-votes-today';
 import { getStatusImagesRoute } from './get-status-images';
@@ -51,6 +52,7 @@ export const usersRouter = t.router({
   updatePassword: updatePasswordRoute,
   resetPassword: resetPasswordRoute,
   getInfo: getUserInfoRoute,
+  getInviteTree: getInviteTreeRoute,
   getAll: getUsersRoute,
   me: meRoute,
   kick: kickRoute,

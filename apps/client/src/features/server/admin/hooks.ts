@@ -433,8 +433,24 @@ export const useAdminUserInfo = (userId: number) => {
         queryFn: () => getTRPCClient().users.getInfo.query({ userId })
     });
 
+    // direct invitees only; deeper levels are one mod view away
+    const { data: invitees = [], refetch: refetchInvitees } = useQuery({
+        queryKey: ['admin', 'user-info', userId, 'invitees'],
+        queryFn: () =>
+            getTRPCClient().users.getInviteTree.query({
+                userId,
+                direction: 'down',
+                maxDepth: 1
+            })
+    });
+
+    const refetchAll = useCallback(async () => {
+        await Promise.all([refetch(), refetchInvitees()]);
+    }, [refetch, refetchInvitees]);
+
     return {
         user: data?.user ?? null,
+        inviteeIds: invitees.map((node) => node.id),
         lastLoginIp: data?.lastLoginIp ?? null,
         files: data?.files ?? [],
         messages: data?.messages ?? [],
@@ -444,7 +460,7 @@ export const useAdminUserInfo = (userId: number) => {
             usedStorage: 0,
             quota: 0
         },
-        refetch: toVoid(refetch),
+        refetch: refetchAll,
         loading
     };
 };
@@ -465,12 +481,18 @@ export const useAdminInvites = () => {
         queryFn: () => getTRPCClient().invites.getLimits.query()
     });
 
+    const { data: log = [], refetch: refetchLog } = useQuery({
+        queryKey: ['admin', 'invites', 'log'],
+        queryFn: () => getTRPCClient().invites.getLog.query()
+    });
+
     const refetchAll = useCallback(async () => {
-        await Promise.all([refetch(), refetchLimits()]);
-    }, [refetch, refetchLimits]);
+        await Promise.all([refetch(), refetchLimits(), refetchLog()]);
+    }, [refetch, refetchLimits, refetchLog]);
 
     return {
         invites,
+        log,
         // expiry is judged as of this fetch, not re-read from the clock
         fetchedAt,
         limits,
