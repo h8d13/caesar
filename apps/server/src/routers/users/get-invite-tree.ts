@@ -1,5 +1,6 @@
 import { Permission } from '@caesar/shared';
 import { getInviteTree } from '@server/db/queries/invite-tree';
+import { clearFields } from '@server/helpers/clear-fields';
 import { protectedProcedure } from '@server/utils/trpc';
 import z from 'zod';
 
@@ -18,17 +19,21 @@ const getInviteTreeRoute = protectedProcedure
   .query(async ({ ctx, input }) => {
     await ctx.needsPermission(Permission.MANAGE_USERS);
 
-    const [nodes, canViewSensitive, canViewCodes] = await Promise.all([
-      getInviteTree(input.userId, input.direction, input.maxDepth),
-      ctx.hasPermission(Permission.VIEW_USER_SENSITIVE_DATA),
-      ctx.hasPermission(Permission.MANAGE_INVITES)
-    ]);
+    let nodes = await getInviteTree(
+      input.userId,
+      input.direction,
+      input.maxDepth
+    );
 
-    return nodes.map((node) => ({
-      ...node,
-      identity: canViewSensitive ? node.identity : null,
-      inviteCode: canViewCodes ? node.inviteCode : null
-    }));
+    if (!(await ctx.hasPermission(Permission.VIEW_USER_SENSITIVE_DATA))) {
+      nodes = clearFields(nodes, ['identity']);
+    }
+
+    if (!(await ctx.hasPermission(Permission.MANAGE_INVITES))) {
+      nodes = clearFields(nodes, ['inviteCode']);
+    }
+
+    return nodes;
   });
 
 export { getInviteTreeRoute };

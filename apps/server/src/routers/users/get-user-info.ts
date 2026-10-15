@@ -1,6 +1,5 @@
 import { Permission } from '@caesar/shared';
 import { getFilesByUserId } from '@server/db/queries/files';
-import { getInviteLink } from '@server/db/queries/invite-tree';
 import { getLastLoginIp } from '@server/db/queries/logins';
 import { getNonDirectMessagesFromUserId } from '@server/db/queries/messages';
 import { getEffectiveStorageSpaceQuotaByUserId } from '@server/db/queries/roles';
@@ -27,14 +26,13 @@ const getUserInfoRoute = protectedProcedure
       message: 'User not found'
     });
 
-    const [lastLoginIp, files, messages, storageUsage, settings, inviteLink] =
+    const [lastLoginIp, files, messages, storageUsage, settings] =
       await Promise.all([
         getLastLoginIp(user.id),
         getFilesByUserId(user.id),
         getNonDirectMessagesFromUserId(user.id),
         getStorageUsageByUserId(user.id),
-        getSettings(),
-        getInviteLink(user.id)
+        getSettings()
       ]);
 
     const storageQuota = await getEffectiveStorageSpaceQuotaByUserId(
@@ -52,13 +50,13 @@ const getUserInfoRoute = protectedProcedure
     }
 
     // a code may still be live: only those who already see codes get it
-    const canViewCodes = await ctx.hasPermission(Permission.MANAGE_INVITES);
+    if (!(await ctx.hasPermission(Permission.MANAGE_INVITES))) {
+      cleanUser = clearFields(cleanUser, ['inviteCode']);
+    }
 
     return {
       user: cleanUser,
       lastLoginIp: cleanLastLoginIp,
-      invitedBy: inviteLink.invitedBy,
-      inviteCode: canViewCodes ? inviteLink.inviteCode : null,
       files,
       messages,
       storage: {

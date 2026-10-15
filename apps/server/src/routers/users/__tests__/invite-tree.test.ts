@@ -103,8 +103,8 @@ describe('invite provenance', () => {
 
     const info = await caller.users.getInfo({ userId: user.id });
 
-    expect(info.invitedBy).toEqual({ id: 2, name: 'Test User' });
-    expect(info.inviteCode).toBe('INV-invitee');
+    expect(info.user.invitedBy).toBe(2);
+    expect(info.user.inviteCode).toBe('INV-invitee');
   });
 
   test.each([false, true])(
@@ -196,19 +196,18 @@ describe('users.getInviteTree', () => {
     });
 
     expect(nodes).toEqual([
-      {
-        id: a.id,
-        name: 'chaina',
-        identity: null,
-        invitedBy: 1,
-        inviteCode: null,
-        depth: 1
-      }
+      { id: a.id, identity: '', invitedBy: 1, inviteCode: '', depth: 1 }
     ]);
 
     const info = await caller.users.getInfo({ userId: a.id });
 
-    expect(info.invitedBy).toEqual({ id: 1, name: 'Test Owner' });
-    expect(info.inviteCode).toBeNull();
+    expect(info.user.invitedBy).toBe(1);
+    expect(info.user.inviteCode).toBe('');
+
+    const all = await caller.users.getAll();
+    const listed = all.find((u) => u.id === a.id);
+
+    expect(listed?.invitedBy).toBe(1);
+    expect(listed?.inviteCode).toBe('');
   });
 });

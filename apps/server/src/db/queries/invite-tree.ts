@@ -1,45 +1,16 @@
-import { users } from '@caesar/shared/db/schema';
-import { eq, sql, type SQL } from 'drizzle-orm';
-import { alias } from 'drizzle-orm/sqlite-core';
+import { sql, type SQL } from 'drizzle-orm';
 import { db } from '..';
 
 type TInviteTreeDirection = 'up' | 'down';
 
+// Ids only: the client resolves names/avatars from its user store.
+// identity and inviteCode are redacted per caller by the route.
 type TInviteTreeNode = {
   id: number;
-  name: string;
   identity: string;
   invitedBy: number | null;
   inviteCode: string | null;
   depth: number;
-};
-
-type TInviteLink = {
-  invitedBy: { id: number; name: string } | null;
-  inviteCode: string | null;
-};
-
-const inviters = alias(users, 'inviters');
-
-const getInviteLink = async (userId: number): Promise<TInviteLink> => {
-  const row = await db
-    .select({
-      inviteCode: users.inviteCode,
-      inviterId: inviters.id,
-      inviterName: inviters.name
-    })
-    .from(users)
-    .leftJoin(inviters, eq(inviters.id, users.invitedBy))
-    .where(eq(users.id, userId))
-    .get();
-
-  return {
-    invitedBy:
-      row?.inviterId != null
-        ? { id: row.inviterId, name: row.inviterName! }
-        : null,
-    inviteCode: row?.inviteCode ?? null
-  };
 };
 
 // Recursive CTE bodies yielding (id, depth). 'up' follows invited_by
@@ -74,11 +45,11 @@ const getInviteTree = async (
 ): Promise<TInviteTreeNode[]> =>
   db.all<TInviteTreeNode>(sql`
     WITH RECURSIVE tree(id, depth) AS (${walks[direction](userId, maxDepth)})
-    SELECT users.id, users.name, users.identity,
+    SELECT users.id, users.identity,
       users.invited_by AS invitedBy, users.invite_code AS inviteCode,
       tree.depth
     FROM tree JOIN users ON users.id = tree.id
     ORDER BY tree.depth, users.id
   `);
 
-export { getInviteLink, getInviteTree };
+export { getInviteTree };
