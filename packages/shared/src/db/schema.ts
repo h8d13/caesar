@@ -187,13 +187,12 @@ const users = sqliteTable(
     sessionEpoch: integer('session_epoch').notNull().default(0),
     // invite provenance: who vouched for this user. null for the bootstrap
     // owner (genesis). delete-user re-points children to the deleted-user
-    // placeholder; set null is only a safety net. inviteCode is a copy
-    // since invite rows get deleted.
+    // placeholder; set null is only a safety net. Which code was used
+    // lives in the activity log (USED_INVITE).
     invitedBy: integer('invited_by').references(
       (): AnySQLiteColumn => users.id,
       { onDelete: 'set null' }
     ),
-    inviteCode: text('invite_code'),
     createdAt: integer('created_at').notNull(),
     updatedAt: integer('updated_at')
   },

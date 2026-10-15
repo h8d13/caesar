@@ -1,5 +1,20 @@
-import { initTest } from '@server/__tests__/helpers';
-import { describe, expect, test } from 'vite-plus/test';
+import { ActivityLogType, OWNER_ROLE_ID } from '@caesar/shared';
+import { roles, users } from '@caesar/shared/db/schema';
+import { initTest, login } from '@server/__tests__/helpers';
+import { tdb } from '@server/__tests__/setup';
+import { eq } from 'drizzle-orm';
+import { describe, expect, test, vi } from 'vite-plus/test';
+
+// seeded non-persistent role, safe to hand out by invite
+const getGuestRoleId = async () => {
+  const guest = await tdb
+    .select({ id: roles.id })
+    .from(roles)
+    .where(eq(roles.name, 'Guest'))
+    .get();
+
+  return guest!.id;
+};
 
 describe('invites router', () => {
   test('should throw when user lacks permissions (getAll)', async () => {
@@ -146,14 +161,22 @@ describe('invites router', () => {
 
   test('should create invite with a valid roleId', async () => {
     const { caller } = await initTest();
+    const guestId = await getGuestRoleId();
 
-    // roleId 1 is the Owner role created during seed
     const invite = await caller.invites.add({
-      roleId: 1
+      roleId: guestId
     });
 
     expect(invite).toBeDefined();
-    expect(invite.roleId).toBe(1);
+    expect(invite.roleId).toBe(guestId);
+  });
+
+  test('should refuse invites into the owner role, even for the owner', async () => {
+    const { caller } = await initTest();
+
+    await expect(caller.invites.add({ roleId: OWNER_ROLE_ID })).rejects.toThrow(
+      'Invites cannot grant the owner role'
+    );
   });
 
   test('should throw error when creating invite with invalid roleId', async () => {
@@ -169,8 +192,9 @@ describe('invites router', () => {
   test('should return role info in getAll for invite with roleId', async () => {
     const { caller } = await initTest();
 
+    const guestId = await getGuestRoleId();
     const created = await caller.invites.add({
-      roleId: 1
+      roleId: guestId
     });
 
     const invites = await caller.invites.getAll();
@@ -179,7 +203,7 @@ describe('invites router', () => {
     expect(inviteWithRole).toBeDefined();
     expect(inviteWithRole!.role).toBeDefined();
     expect(inviteWithRole!.role).not.toBeNull();
-    expect(inviteWithRole!.role!.id).toBe(1);
+    expect(inviteWithRole!.role!.id).toBe(guestId);
     expect(inviteWithRole!.role!.name).toBeDefined();
     expect(inviteWithRole!.role!.color).toBeDefined();
   });
@@ -206,5 +230,56 @@ describe('invites router', () => {
     await expect(caller.invites.add({})).rejects.toThrow(
       'Too many requests. Please try again shortly.'
     );
+  });
+
+  test('should throw when user lacks permissions (getLog)', async () => {
+    const { caller } = await initTest(2);
+
+    await expect(caller.invites.getLog()).rejects.toThrow(
+      'Insufficient permissions'
+    );
+  });
+
+  test('should log created, used and deleted invites', async () => {
+    const { caller } = await initTest();
+
+    const invite = await caller.invites.add({});
+    const response = await login('loguser', 'password123', invite.code);
+
+    expect(response.status).toBe(200);
+
+    await caller.invites.delete({ inviteId: invite.id });
+
+    const newUser = await tdb
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.identity, 'loguser'))
+      .get();
+
+    // the activity log is written through an async queue
+    await vi.waitFor(async () => {
+      const log = await caller.invites.getLog();
+
+      expect(log).toHaveLength(3);
+      expect(log).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: ActivityLogType.CREATED_INVITE,
+            userId: 1,
+            details: expect.objectContaining({ code: invite.code })
+          }),
+          expect.objectContaining({
+            type: ActivityLogType.USED_INVITE,
+            userId: newUser!.id,
+            details: { code: invite.code, inviterId: 1 }
+          }),
+          expect.objectContaining({
+            type: ActivityLogType.DELETED_INVITE,
+            userId: 1,
+            details: { code: invite.code }
+          })
+        ])
+      );
+    });
   });
 });

@@ -1,5 +1,8 @@
 import { Protect } from '@/components/protect';
+import { setModViewOpen } from '@/features/app/actions';
 import { requestTextInput } from '@/features/dialogs/actions';
+import { useAdminInvitees } from '@/features/server/admin/hooks';
+import { useUserById, useUsers } from '@/features/server/users/hooks';
 import { getTRPCClient } from '@/lib/trpc';
 import { getTrpcError, Permission } from '@caesar/shared';
 import {
@@ -12,6 +15,7 @@ import {
 } from '@caesar/ui';
 import { format, formatDistanceToNow } from 'date-fns';
 import {
+    ArrowUpRight,
     Calendar,
     ClipboardList,
     Clock,
@@ -20,9 +24,11 @@ import {
     Gavel,
     IdCard,
     Network,
-    Pencil
+    Pencil,
+    UserPlus,
+    Users
 } from 'lucide-react';
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useModViewContext } from '../context';
 
@@ -70,6 +76,21 @@ const Row = memo(
 
 const Details = memo(() => {
     const { user, lastLoginIp, refetch } = useModViewContext();
+    const inviter = useUserById(user.invitedBy ?? -1);
+    const invitees = useAdminInvitees(user.id);
+    const users = useUsers();
+
+    const inviteeNames = useMemo(
+        () =>
+            invitees
+                .map(
+                    (node) =>
+                        users.find((u) => u.id === node.id)?.name ??
+                        `#${node.id}`
+                )
+                .join(', '),
+        [invitees, users]
+    );
 
     const onRenameIdentity = useCallback(async () => {
         const next = await requestTextInput({
@@ -143,6 +164,39 @@ const Details = memo(() => {
                             hidden
                         />
                     </Protect>
+
+                    <div className="flex items-center">
+                        <div className="flex-1">
+                            <Row
+                                icon={
+                                    <UserPlus className="h-4 w-4 text-muted-foreground" />
+                                }
+                                label="Invited by"
+                                value={inviter?.name ?? 'Unknown'}
+                            />
+                        </div>
+                        {inviter && (
+                            <Tooltip content="Open inviter">
+                                <IconButton
+                                    role="button"
+                                    onClick={() =>
+                                        setModViewOpen(true, inviter.id)
+                                    }
+                                    className="text-muted-foreground inline-flex h-6 w-6 items-center justify-center rounded bg-transparent hover:bg-accent hover:text-foreground cursor-pointer transition-colors focus:outline-none ml-1"
+                                    icon={ArrowUpRight}
+                                />
+                            </Tooltip>
+                        )}
+                    </div>
+
+                    <Row
+                        icon={
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                        }
+                        label="Invited"
+                        value={invitees.length}
+                        details={inviteeNames || undefined}
+                    />
 
                     <Row
                         icon={

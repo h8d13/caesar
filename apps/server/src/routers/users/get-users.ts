@@ -6,12 +6,9 @@ import { protectedProcedure } from '@server/utils/trpc';
 const getUsersRoute = protectedProcedure.query(async ({ ctx }) => {
   await ctx.needsPermission(Permission.MANAGE_USERS);
 
-  const users = clearFields(await getUsers(), ['identity', 'password']);
+  const users = await getUsers();
 
-  // a code may still be live: only those who already see codes get it
-  if (await ctx.hasPermission(Permission.MANAGE_INVITES)) return users;
-
-  return clearFields(users, ['inviteCode']);
+  return clearFields(users, ['identity', 'password']);
 });
 
 export { getUsersRoute };

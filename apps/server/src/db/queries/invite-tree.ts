@@ -4,12 +4,11 @@ import { db } from '..';
 type TInviteTreeDirection = 'up' | 'down';
 
 // Ids only: the client resolves names/avatars from its user store.
-// identity and inviteCode are redacted per caller by the route.
+// identity is redacted per caller by the route.
 type TInviteTreeNode = {
   id: number;
   identity: string;
   invitedBy: number | null;
-  inviteCode: string | null;
   depth: number;
 };
 
@@ -45,8 +44,7 @@ const getInviteTree = async (
 ): Promise<TInviteTreeNode[]> =>
   db.all<TInviteTreeNode>(sql`
     WITH RECURSIVE tree(id, depth) AS (${walks[direction](userId, maxDepth)})
-    SELECT users.id, users.identity,
-      users.invited_by AS invitedBy, users.invite_code AS inviteCode,
+    SELECT users.id, users.identity, users.invited_by AS invitedBy,
       tree.depth
     FROM tree JOIN users ON users.id = tree.id
     ORDER BY tree.depth, users.id

@@ -3,10 +3,12 @@ import { addInviteRoute } from './add-invite';
 import { deleteInviteRoute } from './delete-invite';
 import { getInvitesRoute } from './get-invites';
 import { getLimitsRoute } from './get-limits';
+import { getInviteLogRoute } from './get-log';
 
 export const invitesRouter = t.router({
   add: addInviteRoute,
   delete: deleteInviteRoute,
   getAll: getInvitesRoute,
-  getLimits: getLimitsRoute
+  getLimits: getLimitsRoute,
+  getLog: getInviteLogRoute
 });

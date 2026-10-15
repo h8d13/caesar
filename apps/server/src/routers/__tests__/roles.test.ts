@@ -265,4 +265,68 @@ describe('roles router', () => {
       expect(role!.permissions).toContain(perm);
     });
   });
+
+  test('should throw when user lacks permissions (duplicate)', async () => {
+    const { caller } = await initTest(2);
+
+    await expect(caller.roles.duplicate({ roleId: 2 })).rejects.toThrow(
+      'Insufficient permissions'
+    );
+  });
+
+  test('should duplicate a role as a plain copy', async () => {
+    const { caller } = await initTest();
+
+    const sourceId = await caller.roles.add();
+
+    await caller.roles.update({
+      roleId: sourceId,
+      name: 'A very long role name here',
+      color: '#ff5500',
+      permissions: [Permission.SEND_MESSAGES, Permission.UPLOAD_FILES],
+      storageQuotaOverrideEnabled: true,
+      storageSpaceQuota: 1024
+    });
+
+    const copyId = await caller.roles.duplicate({ roleId: sourceId });
+    const roles = await caller.roles.getAll();
+    const copy = roles.find((r) => r.id === copyId);
+
+    expect(copyId).not.toBe(sourceId);
+    expect(copy).toMatchObject({
+      name: 'A very long role name here',
+      color: '#ff5500',
+      isDefault: false,
+      isPersistent: false,
+      storageQuotaOverrideEnabled: true,
+      storageSpaceQuota: 1024
+    });
+    expect([...copy!.permissions].sort()).toEqual(
+      [Permission.SEND_MESSAGES, Permission.UPLOAD_FILES].sort()
+    );
+  });
+
+  test('should duplicate the default role without making it default', async () => {
+    const { caller } = await initTest();
+
+    const roles = await caller.roles.getAll();
+    const member = roles.find((r) => r.isDefault)!;
+
+    const copyId = await caller.roles.duplicate({ roleId: member.id });
+    const copy = (await caller.roles.getAll()).find((r) => r.id === copyId);
+
+    expect(copy!.name).toBe(`${member.name} copy`);
+    expect(copy!.isDefault).toBe(false);
+    expect([...copy!.permissions].sort()).toEqual(
+      [...member.permissions].sort()
+    );
+  });
+
+  test('should not duplicate the owner role', async () => {
+    const { caller } = await initTest();
+
+    await expect(caller.roles.duplicate({ roleId: 1 })).rejects.toThrow(
+      'The owner role cannot be duplicated'
+    );
+  });
 });

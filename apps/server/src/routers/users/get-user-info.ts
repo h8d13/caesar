@@ -49,11 +49,6 @@ const getUserInfoRoute = protectedProcedure
       cleanLastLoginIp = null;
     }
 
-    // a code may still be live: only those who already see codes get it
-    if (!(await ctx.hasPermission(Permission.MANAGE_INVITES))) {
-      cleanUser = clearFields(cleanUser, ['inviteCode']);
-    }
-
     return {
       user: cleanUser,
       lastLoginIp: cleanLastLoginIp,

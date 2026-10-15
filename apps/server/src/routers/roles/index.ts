@@ -1,6 +1,7 @@
 import { t } from '@server/utils/trpc';
 import { addRoleRoute } from './add-role';
 import { deleteRoleRoute } from './delete-role';
+import { duplicateRoleRoute } from './duplicate-role';
 import {
   onRoleCreateRoute,
   onRoleDeleteRoute,
@@ -13,6 +14,7 @@ import { updateRoleRoute } from './update-role';
 export const rolesRouter = t.router({
   add: addRoleRoute,
   update: updateRoleRoute,
+  duplicate: duplicateRoleRoute,
   delete: deleteRoleRoute,
   setDefault: setDefaultRoleRoute,
   getAll: getRolesRouter,

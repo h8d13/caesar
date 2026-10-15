@@ -615,6 +615,27 @@ describe('invite and role-edit escalation', () => {
     await update([Permission.MANAGE_ROLES]);
   });
 
+  test('a MANAGE_ROLES moderator cannot duplicate a stronger role', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: mod } = await makeModerator(owner, [
+      Permission.MANAGE_ROLES
+    ]);
+
+    const adminRoleId = await owner.roles.add();
+    await owner.roles.update({
+      roleId: adminRoleId,
+      name: 'Admin',
+      color: '#abcdef',
+      permissions: [Permission.MANAGE_SETTINGS],
+      storageQuotaOverrideEnabled: false,
+      storageSpaceQuota: 0
+    });
+
+    await expect(mod.roles.duplicate({ roleId: adminRoleId })).rejects.toThrow(
+      /permissions you do not have/i
+    );
+  });
+
   test('a MANAGE_ROLES moderator cannot edit the owner role', async () => {
     const { caller: owner } = await initTest(1);
     const { caller: mod } = await makeModerator(owner, [

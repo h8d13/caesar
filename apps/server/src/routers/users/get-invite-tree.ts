@@ -6,8 +6,8 @@ import z from 'zod';
 
 // Invite provenance for moderation: 'up' answers "who vouched for X",
 // 'down' lists everyone that came in through X's branch. Inviter links
-// carry no ip/geo, so MANAGE_USERS is enough. identity and invite codes
-// keep their usual gates: a code may still be live.
+// carry no ip/geo, so MANAGE_USERS is enough. identity keeps its usual
+// gate.
 const getInviteTreeRoute = protectedProcedure
   .input(
     z.object({
@@ -19,21 +19,17 @@ const getInviteTreeRoute = protectedProcedure
   .query(async ({ ctx, input }) => {
     await ctx.needsPermission(Permission.MANAGE_USERS);
 
-    let nodes = await getInviteTree(
+    const nodes = await getInviteTree(
       input.userId,
       input.direction,
       input.maxDepth
     );
 
-    if (!(await ctx.hasPermission(Permission.VIEW_USER_SENSITIVE_DATA))) {
-      nodes = clearFields(nodes, ['identity']);
+    if (await ctx.hasPermission(Permission.VIEW_USER_SENSITIVE_DATA)) {
+      return nodes;
     }
 
-    if (!(await ctx.hasPermission(Permission.MANAGE_INVITES))) {
-      nodes = clearFields(nodes, ['inviteCode']);
-    }
-
-    return nodes;
+    return clearFields(nodes, ['identity']);
   });
 
 export { getInviteTreeRoute };

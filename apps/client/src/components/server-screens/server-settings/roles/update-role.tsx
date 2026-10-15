@@ -23,7 +23,7 @@ import {
     Tooltip
 } from '@caesar/ui';
 import { filesize } from 'filesize';
-import { Info, Star, Trash2 } from 'lucide-react';
+import { Copy, Info, Star, Trash2 } from 'lucide-react';
 import { memo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { QUOTA_BY_USER_PRESETS } from '../storage/presets';
@@ -93,6 +93,22 @@ const UpdateRole = memo(
             }
         }, [selectedRole.id, values, refetch, setTrpcErrors]);
 
+        const onDuplicateRole = useCallback(async () => {
+            const trpc = getTRPCClient();
+
+            try {
+                const newRoleId = await trpc.roles.duplicate.mutate({
+                    roleId: selectedRole.id
+                });
+
+                toast.success('Role duplicated');
+                refetch();
+                setSelectedRoleId(newRoleId);
+            } catch (error) {
+                toast.error(getTrpcError(error, 'Failed to duplicate role'));
+            }
+        }, [selectedRole.id, refetch, setSelectedRoleId]);
+
         const onSetAsDefaultRole = useCallback(async () => {
             const choice = await requestConfirmation({
                 title: 'Set as Default Role',
@@ -120,6 +136,16 @@ const UpdateRole = memo(
                     <div className="flex items-center justify-between">
                         <CardTitle>Edit Role</CardTitle>
                         <div>
+                            <Tooltip content="Duplicate Role">
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    disabled={isOwnerRole}
+                                    onClick={onDuplicateRole}
+                                >
+                                    <Copy className="h-4 w-4" />
+                                </Button>
+                            </Tooltip>
                             <Tooltip content="Set as Default Role">
                                 <Button
                                     size="icon"

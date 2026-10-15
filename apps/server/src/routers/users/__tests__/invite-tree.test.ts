@@ -28,8 +28,7 @@ const signupVia = async (creatorId: number, identity: string) => {
   const user = await tdb
     .select({
       id: users.id,
-      invitedBy: users.invitedBy,
-      inviteCode: users.inviteCode
+      invitedBy: users.invitedBy
     })
     .from(users)
     .where(eq(users.identity, identity))
@@ -100,7 +99,6 @@ describe('invite provenance', () => {
     const user = await signupVia(2, 'invitee');
 
     expect(user.invitedBy).toBe(2);
-    expect(user.inviteCode).toBe('INV-invitee');
   });
 
   test('seeded genesis owner has no inviter', async () => {
@@ -116,7 +114,6 @@ describe('invite provenance', () => {
     const info = await caller.users.getInfo({ userId: user.id });
 
     expect(info.user.invitedBy).toBe(2);
-    expect(info.user.inviteCode).toBe('INV-invitee');
   });
 
   test.each([false, true])(
@@ -239,7 +236,7 @@ describe('users.getInviteTree', () => {
     expect(await getInvitedBy(a.id)).toBe(1);
   });
 
-  test('strips identity and codes without their permissions', async () => {
+  test('strips identity without VIEW_USER_SENSITIVE_DATA', async () => {
     await grantRole(2, [Permission.MANAGE_USERS]);
 
     const { caller } = await initTest(2);
@@ -251,19 +248,15 @@ describe('users.getInviteTree', () => {
       maxDepth: 1
     });
 
-    expect(nodes).toEqual([
-      { id: a.id, identity: '', invitedBy: 1, inviteCode: '', depth: 1 }
-    ]);
+    expect(nodes).toEqual([{ id: a.id, identity: '', invitedBy: 1, depth: 1 }]);
 
     const info = await caller.users.getInfo({ userId: a.id });
 
     expect(info.user.invitedBy).toBe(1);
-    expect(info.user.inviteCode).toBe('');
 
     const all = await caller.users.getAll();
     const listed = all.find((u) => u.id === a.id);
 
     expect(listed?.invitedBy).toBe(1);
-    expect(listed?.inviteCode).toBe('');
   });
 });

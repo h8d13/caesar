@@ -40,9 +40,7 @@ const joinedUserBaseFields = {
   sessionEpoch: users.sessionEpoch,
   banReason: users.banReason,
   bannedAt: users.bannedAt,
-  // invite provenance. inviteCode is redacted per caller (MANAGE_INVITES)
-  invitedBy: users.invitedBy,
-  inviteCode: users.inviteCode
+  invitedBy: users.invitedBy
 };
 
 const socialCreditSubquery = sql<number>`(SELECT COALESCE(SUM(amount), 0) FROM social_credit_ledger WHERE target_id = ${users.id})`;

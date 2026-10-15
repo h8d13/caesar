@@ -449,6 +449,21 @@ export const useAdminUserInfo = (userId: number) => {
     };
 };
 
+// direct invitees only; deeper levels are one mod view away
+export const useAdminInvitees = (userId: number) => {
+    const { data = [] } = useQuery({
+        queryKey: ['admin', 'invitees', userId],
+        queryFn: () =>
+            getTRPCClient().users.getInviteTree.query({
+                userId,
+                direction: 'down',
+                maxDepth: 1
+            })
+    });
+
+    return data;
+};
+
 export const useAdminInvites = () => {
     const {
         data: invites = [],
@@ -465,12 +480,18 @@ export const useAdminInvites = () => {
         queryFn: () => getTRPCClient().invites.getLimits.query()
     });
 
+    const { data: log = [], refetch: refetchLog } = useQuery({
+        queryKey: ['admin', 'invites', 'log'],
+        queryFn: () => getTRPCClient().invites.getLog.query()
+    });
+
     const refetchAll = useCallback(async () => {
-        await Promise.all([refetch(), refetchLimits()]);
-    }, [refetch, refetchLimits]);
+        await Promise.all([refetch(), refetchLimits(), refetchLog()]);
+    }, [refetch, refetchLimits, refetchLog]);
 
     return {
         invites,
+        log,
         // expiry is judged as of this fetch, not re-read from the clock
         fetchedAt,
         limits,

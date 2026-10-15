@@ -121,8 +121,7 @@ const registerUser = async (
       identity,
       createdAt: Date.now(),
       password: hashedPassword,
-      invitedBy: invite?.creatorId,
-      inviteCode: invite?.code
+      invitedBy: invite?.creatorId
     })
     .returning()
     .get();
