@@ -355,8 +355,8 @@ describe('users.getMySessions', () => {
     expect(sessions[0]!.hash).toMatch(/^[0-9a-f]{8}$/);
 
     // same userAgent -> same hash; different userAgent -> different hash.
-    const expectedA = (await sha256('Mozilla/5.0 testbrowser-a')).slice(0, 8);
-    const expectedB = (await sha256('Mozilla/5.0 testbrowser-b')).slice(0, 8);
+    const expectedA = sha256('Mozilla/5.0 testbrowser-a').slice(0, 8);
+    const expectedB = sha256('Mozilla/5.0 testbrowser-b').slice(0, 8);
     const hashes = sessions.map((s) => s.hash);
     expect(hashes).toContain(expectedA);
     expect(hashes).toContain(expectedB);
@@ -394,7 +394,7 @@ describe('users.getMySessions', () => {
     });
 
     const sessions = await caller1.users.getMySessions();
-    const otherHash = (await sha256('other-user-ua')).slice(0, 8);
+    const otherHash = sha256('other-user-ua').slice(0, 8);
     expect(sessions.map((s) => s.hash)).not.toContain(otherHash);
   });
 });

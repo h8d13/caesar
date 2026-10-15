@@ -62,7 +62,7 @@ const seedDatabase = async (db: LibSQLDatabase) => {
     name: 'Test Server',
     description: 'Test server description',
     serverId: randomUUIDv7(),
-    secretToken: await sha256(TEST_SECRET_TOKEN),
+    secretToken: sha256(TEST_SECRET_TOKEN),
     directMessagesEnabled: true,
     gamesEnabled: true,
     storageUploadEnabled: true,

@@ -42,7 +42,7 @@ const seedDatabase = async () => {
     description:
       'This is the default Caesar server description. Change me in the server settings!',
     serverId: randomUUIDv7(),
-    secretToken: await sha256(originalToken),
+    secretToken: sha256(originalToken),
     directMessagesEnabled: true,
     gamesEnabled: true,
     storageUploadEnabled: true,

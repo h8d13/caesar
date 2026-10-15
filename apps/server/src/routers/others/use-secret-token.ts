@@ -22,7 +22,7 @@ const useSecretTokenRoute = rateLimitedProcedure(protectedProcedure, {
   )
   .mutation(async ({ input, ctx }) => {
     const settings = await getSettings();
-    const hashedToken = await sha256(input.token);
+    const hashedToken = sha256(input.token);
 
     invariant(hashedToken === settings.secretToken, {
       code: 'FORBIDDEN',
