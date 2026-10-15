@@ -39,10 +39,7 @@ type HistoryEntry = {
     layerIds: string[];
 };
 
-export function useWhiteboard(
-    channelId: number,
-    svgRef: React.RefObject<SVGSVGElement | null>
-) {
+export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
     const ownUser = useOwnUser();
     const [layers, setLayers] = useState<Record<string, Layer>>({});
     const layersRef = useRef<Record<string, Layer>>({});
@@ -147,7 +144,7 @@ export function useWhiteboard(
     // --- Fetch initial state ---
     useEffect(() => {
         trpc.whiteboard.getState
-            .query({ channelId })
+            .query()
             .then((state) => {
                 setLayers(state.layers);
                 setLayerIds(state.layerIds);
@@ -157,90 +154,75 @@ export function useWhiteboard(
                 toast.error(getTrpcError(error, 'Failed to load whiteboard'));
             });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [channelId, trpc]);
+    }, [trpc]);
 
     // --- Subscribe to remote events ---
     useEffect(() => {
         const subs = [
-            trpc.whiteboard.onLayerAdd.subscribe(
-                { channelId },
-                {
-                    onData: (data) => {
-                        setLayers((prev) => ({
+            trpc.whiteboard.onLayerAdd.subscribe(undefined, {
+                onData: (data) => {
+                    setLayers((prev) => ({
+                        ...prev,
+                        [data.layerId]: data.layer as Layer
+                    }));
+                    setLayerIds((prev) =>
+                        prev.includes(data.layerId)
+                            ? prev
+                            : [...prev, data.layerId]
+                    );
+                }
+            }),
+            trpc.whiteboard.onLayerUpdate.subscribe(undefined, {
+                onData: (data) => {
+                    setLayers((prev) => {
+                        const existing = prev[data.layerId];
+                        if (!existing) return prev;
+                        return {
                             ...prev,
-                            [data.layerId]: data.layer as Layer
-                        }));
-                        setLayerIds((prev) =>
-                            prev.includes(data.layerId)
-                                ? prev
-                                : [...prev, data.layerId]
-                        );
-                    }
+                            [data.layerId]: {
+                                ...existing,
+                                ...data.layer
+                            } as Layer
+                        };
+                    });
                 }
-            ),
-            trpc.whiteboard.onLayerUpdate.subscribe(
-                { channelId },
-                {
-                    onData: (data) => {
-                        setLayers((prev) => {
-                            const existing = prev[data.layerId];
-                            if (!existing) return prev;
-                            return {
-                                ...prev,
-                                [data.layerId]: {
-                                    ...existing,
-                                    ...data.layer
-                                } as Layer
-                            };
-                        });
-                    }
+            }),
+            trpc.whiteboard.onLayerDelete.subscribe(undefined, {
+                onData: (data) => {
+                    const deletedSet = new Set(data.layerIds);
+                    setLayers((prev) => {
+                        const next = { ...prev };
+                        for (const id of data.layerIds) delete next[id];
+                        return next;
+                    });
+                    setLayerIds((prev) =>
+                        prev.filter((id) => !deletedSet.has(id))
+                    );
+                    setSelection((prev) =>
+                        prev.filter((id) => !deletedSet.has(id))
+                    );
                 }
-            ),
-            trpc.whiteboard.onLayerDelete.subscribe(
-                { channelId },
-                {
-                    onData: (data) => {
-                        const deletedSet = new Set(data.layerIds);
-                        setLayers((prev) => {
-                            const next = { ...prev };
-                            for (const id of data.layerIds) delete next[id];
-                            return next;
-                        });
-                        setLayerIds((prev) =>
-                            prev.filter((id) => !deletedSet.has(id))
-                        );
-                        setSelection((prev) =>
-                            prev.filter((id) => !deletedSet.has(id))
-                        );
-                    }
+            }),
+            trpc.whiteboard.onCursorUpdate.subscribe(undefined, {
+                onData: (data) => {
+                    setCursors((prev) => {
+                        const next = new Map(prev);
+                        next.set(data.cursor.userId, data.cursor);
+                        return next;
+                    });
                 }
-            ),
-            trpc.whiteboard.onCursorUpdate.subscribe(
-                { channelId },
-                {
-                    onData: (data) => {
-                        setCursors((prev) => {
-                            const next = new Map(prev);
-                            next.set(data.cursor.userId, data.cursor);
-                            return next;
-                        });
-                    }
+            }),
+            trpc.whiteboard.onClear.subscribe(undefined, {
+                onData: () => {
+                    setLayers({});
+                    setLayerIds([]);
+                    setSelection([]);
                 }
-            ),
-            trpc.whiteboard.onClear.subscribe(
-                { channelId },
-                {
-                    onData: () => {
-                        setLayers({});
-                        setLayerIds([]);
-                        setSelection([]);
-                    }
-                }
-            )
+            })
         ];
 
         return () => subs.forEach((s) => s.unsubscribe());
-    }, [channelId, trpc]);
+    }, [trpc]);
 
     // --- History ---
     const { canUndo, canRedo } = historySnapshot;
@@ -270,12 +252,12 @@ export function useWhiteboard(
         () =>
             throttle((x: number, y: number) => {
                 trpc.whiteboard.cursorUpdate
-                    .mutate({ channelId, x, y })
+                    .mutate({ x, y })
                     // only rejects when the socket is down, which the
                     // connection state already reports; the next move resends
                     .catch(() => {});
             }, 50),
-        [channelId, trpc]
+        [trpc]
     );
 
     // --- Layer ID generation ---
@@ -421,7 +403,6 @@ export function useWhiteboard(
         // Commit to server + history
         trpc.whiteboard.addLayer
             .mutate({
-                channelId,
                 layerId: drag.layerId,
                 layer: finalLayer
             })
@@ -432,7 +413,7 @@ export function useWhiteboard(
         if (layer.type === LayerType.Text) {
             setEditingLayerId(drag.layerId);
         }
-    }, [channelId, trpc, pushToHistory]);
+    }, [trpc, pushToHistory]);
 
     // --- Delete selection ---
     const deleteSelection = useCallback(() => {
@@ -448,19 +429,19 @@ export function useWhiteboard(
         setSelection([]);
 
         trpc.whiteboard.deleteLayer
-            .mutate({ channelId, layerIds: selection })
+            .mutate({ layerIds: selection })
             .catch(reportCommitError);
         pushToHistory(newLayers, newLayerIds);
-    }, [channelId, layers, layerIds, selection, trpc, pushToHistory]);
+    }, [layers, layerIds, selection, trpc, pushToHistory]);
 
     // --- Clear all ---
     const clearAll = useCallback(() => {
         setLayers({});
         setLayerIds([]);
         setSelection([]);
-        trpc.whiteboard.clear.mutate({ channelId }).catch(reportCommitError);
+        trpc.whiteboard.clear.mutate().catch(reportCommitError);
         pushToHistory({}, []);
-    }, [channelId, trpc, pushToHistory]);
+    }, [trpc, pushToHistory]);
 
     // --- Update color (sets default + applies to selection) ---
     const updateColor = useCallback(
@@ -476,7 +457,6 @@ export function useWhiteboard(
                     next[id] = { ...layer, fill: color } as Layer;
                     trpc.whiteboard.updateLayer
                         .mutate({
-                            channelId,
                             layerId: id,
                             layer: { fill: color }
                         })
@@ -485,7 +465,7 @@ export function useWhiteboard(
                 return next;
             });
         },
-        [channelId, selection, trpc]
+        [selection, trpc]
     );
 
     // --- Update layer value (for text/note) ---
@@ -498,13 +478,12 @@ export function useWhiteboard(
             });
             trpc.whiteboard.updateLayer
                 .mutate({
-                    channelId,
                     layerId,
                     layer: { value } as Partial<Layer>
                 })
                 .catch(reportCommitError);
         },
-        [channelId, trpc]
+        [trpc]
     );
 
     // --- Pointer handlers ---
@@ -804,7 +783,6 @@ export function useWhiteboard(
 
                 trpc.whiteboard.addLayer
                     .mutate({
-                        channelId,
                         layerId,
                         layer: pathLayer
                     })
@@ -842,7 +820,6 @@ export function useWhiteboard(
                         }
                         trpc.whiteboard.updateLayer
                             .mutate({
-                                channelId,
                                 layerId: id,
                                 layer: update
                             })
@@ -860,7 +837,6 @@ export function useWhiteboard(
                 if (layer) {
                     trpc.whiteboard.updateLayer
                         .mutate({
-                            channelId,
                             layerId: selection[0],
                             layer: {
                                 x: layer.x,
@@ -882,7 +858,6 @@ export function useWhiteboard(
         },
         [
             canvasMode,
-            channelId,
             finalizeInsertLayer,
             generateLayerId,
             layers,
@@ -1049,7 +1024,6 @@ export function useWhiteboard(
         for (const id of addedIds) {
             trpc.whiteboard.addLayer
                 .mutate({
-                    channelId,
                     layerId: id,
                     layer: addedLayers[id]
                 })
@@ -1062,7 +1036,7 @@ export function useWhiteboard(
 
         // Update clipboard offset so repeated pastes cascade
         clipboardRef.current = { layers: addedLayers, layerIds: addedIds };
-    }, [channelId, generateLayerId, trpc, pushToHistory]);
+    }, [generateLayerId, trpc, pushToHistory]);
 
     // --- Keyboard shortcuts ---
     useEffect(() => {

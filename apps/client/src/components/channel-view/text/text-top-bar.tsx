@@ -4,7 +4,7 @@ import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
 import { getTRPCClient } from '@/lib/trpc';
 import { getTrpcError } from '@caesar/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { Hash, PenTool, Timer, Trash2 } from 'lucide-react';
+import { Hash, Timer, Trash2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DmCallButton } from './dm-call-button';
@@ -148,17 +148,10 @@ const EphemeralToggle = memo(({ channelId }: TEphemeralToggleProps) => {
 type TTextTopbarProps = {
     onScrollToMessage: (messageId: number) => Promise<void>;
     channelId: number;
-    whiteboardOpen: boolean;
-    onToggleWhiteboard: () => void;
 };
 
 const TextTopbar = memo(
-    ({
-        onScrollToMessage,
-        channelId,
-        whiteboardOpen,
-        onToggleWhiteboard
-    }: TTextTopbarProps) => {
+    ({ onScrollToMessage, channelId }: TTextTopbarProps) => {
         const channel = useChannelById(channelId);
         const ownUserId = useOwnUserId();
         const isDm = channel?.isDm;
@@ -211,17 +204,6 @@ const TextTopbar = memo(
                         </div>
                     ) : (
                         <div className="flex items-center gap-1">
-                            <button
-                                className={`p-1.5 rounded-md transition-colors ${
-                                    whiteboardOpen
-                                        ? 'bg-primary text-primary-foreground'
-                                        : 'hover:bg-muted text-muted-foreground'
-                                }`}
-                                onClick={onToggleWhiteboard}
-                                title="Toggle whiteboard"
-                            >
-                                <PenTool size={16} />
-                            </button>
                             <PinnedMessagesPopover
                                 onScrollToMessage={onScrollToMessage}
                             />

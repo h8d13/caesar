@@ -14,7 +14,6 @@
     "check-types": "pnpm -r --if-present check-types",
     "lint": "vp lint",
     "knip": "knip",
-    "knip:production": "knip --production",
     "magic": "vp fmt && vp lint --fix && pnpm check-types"
   },
   "devDependencies": {

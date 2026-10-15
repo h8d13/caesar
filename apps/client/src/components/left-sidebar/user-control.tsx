@@ -28,6 +28,7 @@ import {
     Mic,
     MicOff,
     MonitorPlay,
+    PenTool,
     Rocket,
     Settings,
     Sparkles
@@ -78,6 +79,13 @@ const UserControl = memo(() => {
             icon: MonitorPlay,
             enabled: gamesEnabled,
             onSelect: () => openServerScreen(ServerScreen.WATCH_PARTY)
+        },
+        {
+            id: 'whiteboard',
+            label: 'Whiteboard',
+            icon: PenTool,
+            enabled: true,
+            onSelect: () => openServerScreen(ServerScreen.WHITEBOARD)
         }
     ];
     const enabledActivities = activities.filter((activity) => activity.enabled);

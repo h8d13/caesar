@@ -11,15 +11,11 @@ const createLayer = (x = 0): Layer => ({
   fill: { r: 0, g: 0, b: 0 }
 });
 
-// module-level runtime map is shared across test files (vitest runs with
-// isolate: false), so every case claims its own channel id.
-let nextChannelId = 90_000;
-const claimChannelId = (): number => nextChannelId++;
-
+// fresh runtime per case: the exported singleton is shared across test
+// files (vitest runs with isolate: false).
 describe('WhiteboardRuntime', () => {
   test('re-adding a layer id replaces it without duplicating the id', () => {
-    const channelId = claimChannelId();
-    const runtime = WhiteboardRuntime.findOrCreate(channelId);
+    const runtime = new WhiteboardRuntime();
 
     runtime.addLayer('a', createLayer(1));
     runtime.addLayer('a', createLayer(2));
@@ -31,8 +27,7 @@ describe('WhiteboardRuntime', () => {
   });
 
   test('deleting a duplicate-added id leaves no dangling entry', () => {
-    const channelId = claimChannelId();
-    const runtime = WhiteboardRuntime.findOrCreate(channelId);
+    const runtime = new WhiteboardRuntime();
 
     runtime.addLayer('a', createLayer());
     runtime.addLayer('a', createLayer());
@@ -45,49 +40,22 @@ describe('WhiteboardRuntime', () => {
     expect(state.layers).not.toHaveProperty('a');
   });
 
-  test('runtime is reclaimed once its last layer is deleted', () => {
-    const channelId = claimChannelId();
-    const runtime = WhiteboardRuntime.findOrCreate(channelId);
+  test('updating a missing layer is a no-op', () => {
+    const runtime = new WhiteboardRuntime();
 
-    runtime.addLayer('a', createLayer());
-    runtime.addLayer('b', createLayer());
+    runtime.updateLayer('ghost', { x: 5 });
 
-    runtime.deleteLayer(['a']);
-    expect(WhiteboardRuntime.findById(channelId)).toBe(runtime);
-
-    runtime.deleteLayer(['b']);
-    expect(WhiteboardRuntime.findById(channelId)).toBeUndefined();
+    expect(runtime.getState()).toEqual({ layers: {}, layerIds: [] });
   });
 
-  test('clear reclaims the runtime', () => {
-    const channelId = claimChannelId();
-    const runtime = WhiteboardRuntime.findOrCreate(channelId);
+  test('clear empties the board and drawing resumes after it', () => {
+    const runtime = new WhiteboardRuntime();
 
     runtime.addLayer('a', createLayer());
     runtime.clear();
+    expect(runtime.getState()).toEqual({ layers: {}, layerIds: [] });
 
-    expect(WhiteboardRuntime.findById(channelId)).toBeUndefined();
-  });
-
-  test('drawing again after a reclaim starts from a clean runtime', () => {
-    const channelId = claimChannelId();
-    const first = WhiteboardRuntime.findOrCreate(channelId);
-
-    first.addLayer('a', createLayer());
-    first.clear();
-
-    const second = WhiteboardRuntime.findOrCreate(channelId);
-    second.addLayer('b', createLayer());
-
-    expect(second).not.toBe(first);
-    expect(second.getState().layerIds).toEqual(['b']);
-  });
-
-  test('an empty runtime is reclaimed before it can be looked up twice', () => {
-    const channelId = claimChannelId();
-
-    WhiteboardRuntime.findOrCreate(channelId).clear();
-
-    expect(WhiteboardRuntime.findById(channelId)).toBeUndefined();
+    runtime.addLayer('b', createLayer());
+    expect(runtime.getState().layerIds).toEqual(['b']);
   });
 });

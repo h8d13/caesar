@@ -1,5 +1,5 @@
 import { ServerEvents, type Layer } from '@caesar/shared';
-import { WhiteboardRuntime } from '@server/runtimes/whiteboard';
+import { whiteboard } from '@server/runtimes/whiteboard';
 import { protectedProcedure, t } from '@server/utils/trpc';
 import { z } from 'zod';
 
@@ -25,174 +25,101 @@ const layerSchema = z.object({
 
 // --- Queries ---
 
-const getStateRoute = protectedProcedure
-  .input(z.object({ channelId: z.number() }))
-  .query(({ input }) => {
-    const runtime = WhiteboardRuntime.findById(input.channelId);
-    if (!runtime) return { layers: {}, layerIds: [] };
-    return runtime.getState();
-  });
+const getStateRoute = protectedProcedure.query(() => whiteboard.getState());
 
 // --- Mutations ---
 
 const addLayerRoute = protectedProcedure
   .input(
     z.object({
-      channelId: z.number(),
       layerId: z.string(),
       layer: layerSchema
     })
   )
   .mutation(({ input, ctx }) => {
-    const runtime = WhiteboardRuntime.findOrCreate(input.channelId);
     const layer = input.layer as Layer;
-    runtime.addLayer(input.layerId, layer);
+    whiteboard.addLayer(input.layerId, layer);
 
-    ctx.pubsub.publishForChannel(
-      input.channelId,
-      ServerEvents.WHITEBOARD_LAYER_ADD,
-      {
-        channelId: input.channelId,
-        layerId: input.layerId,
-        layer
-      }
-    );
+    ctx.pubsub.publish(ServerEvents.WHITEBOARD_LAYER_ADD, {
+      layerId: input.layerId,
+      layer
+    });
   });
 
 const updateLayerRoute = protectedProcedure
   .input(
     z.object({
-      channelId: z.number(),
       layerId: z.string(),
       layer: layerSchema.partial()
     })
   )
   .mutation(({ input, ctx }) => {
-    const runtime = WhiteboardRuntime.findById(input.channelId);
-    if (!runtime) return;
-
     const layer = input.layer as Partial<Layer>;
-    runtime.updateLayer(input.layerId, layer);
+    whiteboard.updateLayer(input.layerId, layer);
 
-    ctx.pubsub.publishForChannel(
-      input.channelId,
-      ServerEvents.WHITEBOARD_LAYER_UPDATE,
-      {
-        channelId: input.channelId,
-        layerId: input.layerId,
-        layer
-      }
-    );
+    ctx.pubsub.publish(ServerEvents.WHITEBOARD_LAYER_UPDATE, {
+      layerId: input.layerId,
+      layer
+    });
   });
 
 const deleteLayerRoute = protectedProcedure
-  .input(
-    z.object({
-      channelId: z.number(),
-      layerIds: z.array(z.string())
-    })
-  )
+  .input(z.object({ layerIds: z.array(z.string()) }))
   .mutation(({ input, ctx }) => {
-    const runtime = WhiteboardRuntime.findById(input.channelId);
-    if (!runtime) return;
+    whiteboard.deleteLayer(input.layerIds);
 
-    runtime.deleteLayer(input.layerIds);
-
-    ctx.pubsub.publishForChannel(
-      input.channelId,
-      ServerEvents.WHITEBOARD_LAYER_DELETE,
-      {
-        channelId: input.channelId,
-        layerIds: input.layerIds
-      }
-    );
+    ctx.pubsub.publish(ServerEvents.WHITEBOARD_LAYER_DELETE, {
+      layerIds: input.layerIds
+    });
   });
 
-const clearRoute = protectedProcedure
-  .input(z.object({ channelId: z.number() }))
-  .mutation(({ input, ctx }) => {
-    const runtime = WhiteboardRuntime.findById(input.channelId);
-    if (!runtime) return;
+const clearRoute = protectedProcedure.mutation(({ ctx }) => {
+  whiteboard.clear();
 
-    runtime.clear();
-
-    ctx.pubsub.publishForChannel(
-      input.channelId,
-      ServerEvents.WHITEBOARD_CLEAR,
-      { channelId: input.channelId }
-    );
-  });
+  ctx.pubsub.publish(ServerEvents.WHITEBOARD_CLEAR, {});
+});
 
 const cursorUpdateRoute = protectedProcedure
   .input(
     z.object({
-      channelId: z.number(),
       x: z.number(),
       y: z.number()
     })
   )
   .mutation(({ input, ctx }) => {
-    ctx.pubsub.publishForChannel(
-      input.channelId,
-      ServerEvents.WHITEBOARD_CURSOR_UPDATE,
-      {
-        channelId: input.channelId,
-        cursor: {
-          userId: ctx.userId,
-          userName: ctx.user.name,
-          x: input.x,
-          y: input.y
-        }
+    ctx.pubsub.publish(ServerEvents.WHITEBOARD_CURSOR_UPDATE, {
+      cursor: {
+        userId: ctx.userId,
+        userName: ctx.user.name,
+        x: input.x,
+        y: input.y
       }
-    );
+    });
   });
 
 // --- Subscriptions ---
+// Global publish/subscribe pairs: the board is server-wide, so every
+// connected client listens regardless of channel.
 
-const onLayerAddRoute = protectedProcedure
-  .input(z.object({ channelId: z.number() }))
-  .subscription(({ input, ctx }) => {
-    return ctx.pubsub.subscribeForChannel(
-      input.channelId,
-      ServerEvents.WHITEBOARD_LAYER_ADD
-    );
-  });
+const onLayerAddRoute = protectedProcedure.subscription(({ ctx }) => {
+  return ctx.pubsub.subscribe(ServerEvents.WHITEBOARD_LAYER_ADD);
+});
 
-const onLayerUpdateRoute = protectedProcedure
-  .input(z.object({ channelId: z.number() }))
-  .subscription(({ input, ctx }) => {
-    return ctx.pubsub.subscribeForChannel(
-      input.channelId,
-      ServerEvents.WHITEBOARD_LAYER_UPDATE
-    );
-  });
+const onLayerUpdateRoute = protectedProcedure.subscription(({ ctx }) => {
+  return ctx.pubsub.subscribe(ServerEvents.WHITEBOARD_LAYER_UPDATE);
+});
 
-const onLayerDeleteRoute = protectedProcedure
-  .input(z.object({ channelId: z.number() }))
-  .subscription(({ input, ctx }) => {
-    return ctx.pubsub.subscribeForChannel(
-      input.channelId,
-      ServerEvents.WHITEBOARD_LAYER_DELETE
-    );
-  });
+const onLayerDeleteRoute = protectedProcedure.subscription(({ ctx }) => {
+  return ctx.pubsub.subscribe(ServerEvents.WHITEBOARD_LAYER_DELETE);
+});
 
-const onCursorUpdateRoute = protectedProcedure
-  .input(z.object({ channelId: z.number() }))
-  .subscription(({ input, ctx }) => {
-    return ctx.pubsub.subscribeForChannel(
-      input.channelId,
-      ServerEvents.WHITEBOARD_CURSOR_UPDATE
-    );
-  });
+const onCursorUpdateRoute = protectedProcedure.subscription(({ ctx }) => {
+  return ctx.pubsub.subscribe(ServerEvents.WHITEBOARD_CURSOR_UPDATE);
+});
 
-const onClearRoute = protectedProcedure
-  .input(z.object({ channelId: z.number() }))
-  .subscription(({ input, ctx }) => {
-    return ctx.pubsub.subscribeForChannel(
-      input.channelId,
-      ServerEvents.WHITEBOARD_CLEAR
-    );
-  });
+const onClearRoute = protectedProcedure.subscription(({ ctx }) => {
+  return ctx.pubsub.subscribe(ServerEvents.WHITEBOARD_CLEAR);
+});
 
 export const whiteboardRouter = t.router({
   getState: getStateRoute,

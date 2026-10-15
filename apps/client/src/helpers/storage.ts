@@ -19,7 +19,6 @@ export enum LocalStorageKey {
     AUTO_LOGIN_TOKEN = 'caesar-auto-login-token',
     BROWSER_NOTIFICATIONS = 'caesar-browser-notifications',
     NICKNAMES = 'caesar-nicknames',
-    WHITEBOARD_SIDEBAR_WIDTH = 'caesar-whiteboard-sidebar-width',
     BROWSER_NOTIFICATIONS_FOR_MENTIONS = 'caesar-browser-notifications-for-mentions',
     BROWSER_NOTIFICATIONS_FOR_DMS = 'caesar-browser-notifications-for-dms',
     HIDDEN_STREAMS = 'caesar-hidden-streams',

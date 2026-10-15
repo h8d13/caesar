@@ -35,6 +35,9 @@ const ScreensMap = {
     ),
     [ServerScreen.WATCH_PARTY]: lazy(() =>
         import('./watch-party').then((m) => ({ default: m.WatchParty }))
+    ),
+    [ServerScreen.WHITEBOARD]: lazy(() =>
+        import('./whiteboard').then((m) => ({ default: m.Whiteboard }))
     )
 };
 
