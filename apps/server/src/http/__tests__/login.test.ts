@@ -1,3 +1,4 @@
+import { OWNER_ROLE_ID } from '@caesar/shared';
 import { invites, roles, userRoles, users } from '@caesar/shared/db/schema';
 import { login } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
@@ -381,6 +382,34 @@ describe('/login', () => {
 
     expect(assigned.map((r) => r.roleId)).toContain(guest!.id);
     expect(assigned).toHaveLength(2);
+  });
+
+  test('should never grant the owner role from an invite row', async () => {
+    // add-invite refuses this; insert directly like a pre-guard row
+    await tdb.insert(invites).values({
+      code: 'OWNERINVITE',
+      creatorId: 1,
+      roleId: OWNER_ROLE_ID,
+      createdAt: Date.now()
+    });
+
+    const response = await login('owneruser', 'password123', 'OWNERINVITE');
+
+    expect(response.status).toBe(200);
+
+    const newUser = await tdb
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.identity, 'owneruser'))
+      .get();
+
+    const assigned = await tdb
+      .select({ roleId: userRoles.roleId })
+      .from(userRoles)
+      .where(eq(userRoles.userId, newUser!.id));
+
+    expect(assigned.map((r) => r.roleId)).not.toContain(OWNER_ROLE_ID);
+    expect(assigned).toHaveLength(1);
   });
 
   test('should rate limit excessive login attempts', async () => {

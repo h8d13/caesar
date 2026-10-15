@@ -29,8 +29,8 @@ type TTableInviteProps = {
 const TableInvite = memo(
     ({ invite, fetchedAt, refetch }: TTableInviteProps) => {
         // no role on the invite: the signup only gets the default role
-        const role = useDefaultRole();
-        const shownRole = invite.role ?? role;
+        const defaultRole = useDefaultRole();
+        const shownRole = invite.role ?? defaultRole;
         const isExpired = invite.expiresAt && invite.expiresAt < fetchedAt;
         const isMaxUsesReached =
             invite.maxUses && invite.uses >= invite.maxUses;

@@ -136,7 +136,7 @@ const UpdateRole = memo(
                     <div className="flex items-center justify-between">
                         <CardTitle>Edit Role</CardTitle>
                         <div>
-                            <Tooltip content="Duplicate Role">
+                            <Tooltip content="Duplicate saved role">
                                 <Button
                                     size="icon"
                                     variant="ghost"

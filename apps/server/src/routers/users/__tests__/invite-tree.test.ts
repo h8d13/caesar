@@ -95,7 +95,7 @@ const getPlaceholderId = async () => {
 };
 
 describe('invite provenance', () => {
-  test('signup through an invite records inviter and code', async () => {
+  test('signup through an invite records the inviter', async () => {
     const user = await signupVia(2, 'invitee');
 
     expect(user.invitedBy).toBe(2);

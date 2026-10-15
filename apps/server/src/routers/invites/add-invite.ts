@@ -34,8 +34,6 @@ const addInviteRoute = rateLimitedProcedure(protectedProcedure, {
       message: 'Instance has reached its user limit. Cannot create new invites.'
     });
 
-    // An invite hands its role to whoever redeems it, so it is a role
-    // assignment and gets the same guards as users.addRole.
     // Owner is never handed out by bearer link, not even by the owner: a
     // leaked code would grant full control. Promote after joining instead.
     invariant(input.roleId !== OWNER_ROLE_ID, {
@@ -43,6 +41,8 @@ const addInviteRoute = rateLimitedProcedure(protectedProcedure, {
       message: 'Invites cannot grant the owner role'
     });
 
+    // An invite hands its role to whoever redeems it, so it is a role
+    // assignment and gets the same grant guard as users.addRole.
     if (input.roleId) {
       await assertCanAssignRole(ctx.userId, input.roleId);
     }

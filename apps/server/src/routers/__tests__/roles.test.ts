@@ -292,6 +292,7 @@ describe('roles router', () => {
     const roles = await caller.roles.getAll();
     const copy = roles.find((r) => r.id === copyId);
 
+    // source name is at the 26-char cap, so the ' copy' suffix is cut
     expect(copyId).not.toBe(sourceId);
     expect(copy).toMatchObject({
       name: 'A very long role name here',

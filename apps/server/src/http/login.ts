@@ -3,6 +3,7 @@ import {
   canonicalIdentity,
   DELETED_USER_IDENTITY_AND_NAME,
   IDENTITY_REGEX,
+  OWNER_ROLE_ID,
   type TInvite,
   type TJoinedUser
 } from '@caesar/shared';
@@ -132,8 +133,14 @@ const registerUser = async (
     createdAt: Date.now()
   });
 
-  // If the invite has a specific role and it's different from the default, assign it too
-  if (invite?.roleId && invite.roleId !== defaultRole.id) {
+  // If the invite has a specific role and it's different from the default,
+  // assign it too. Never owner: add-invite refuses it, this covers any row
+  // that predates or bypasses that guard.
+  if (
+    invite?.roleId &&
+    invite.roleId !== defaultRole.id &&
+    invite.roleId !== OWNER_ROLE_ID
+  ) {
     await db.insert(userRoles).values({
       roleId: invite.roleId,
       userId: user.id,
