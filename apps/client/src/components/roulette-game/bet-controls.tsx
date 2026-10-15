@@ -9,6 +9,7 @@ import {
     useRoulettePhaseStartedAt
 } from '@/features/server/roulette/hooks';
 import { useOwnUserId } from '@/features/server/users/hooks';
+import { useNow } from '@/hooks/use-now';
 import { cn } from '@/lib/utils';
 import {
     type RouletteBetType,
@@ -34,24 +35,11 @@ type TPhaseCountdownProps = {
 
 const PhaseCountdown = memo(
     ({ phaseStartedAt, phaseDuration }: TPhaseCountdownProps) => {
-        const [remaining, setRemaining] = useState<number | null>(null);
-
-        useEffect(() => {
-            if (!phaseStartedAt || !phaseDuration) {
-                setRemaining(null);
-                return;
-            }
-
-            const update = () => {
-                const elapsed = Date.now() - phaseStartedAt;
-                const left = Math.max(0, phaseDuration - elapsed);
-                setRemaining(left);
-            };
-
-            update();
-            const interval = setInterval(update, 100);
-            return () => clearInterval(interval);
-        }, [phaseStartedAt, phaseDuration]);
+        const now = useNow(100);
+        const remaining =
+            phaseStartedAt && phaseDuration
+                ? Math.max(0, phaseDuration - (now - phaseStartedAt))
+                : null;
 
         if (remaining === null) return null;
         return (
@@ -94,7 +82,7 @@ const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
             lastBets.current.length > 0
         ) {
             const savedBets = lastBets.current;
-            (async () => {
+            void (async () => {
                 try {
                     const result = await placeRouletteBets(savedBets);
                     if (result.errors.length > 0) {

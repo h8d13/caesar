@@ -77,7 +77,7 @@ type TScreenShareCardProps = {
     onPin: () => void;
     onUnpin: () => void;
     className?: string;
-    showPinControls: boolean;
+    showPinControls?: boolean;
 };
 
 const ScreenShareCard = memo(

@@ -44,8 +44,10 @@ const ResetPasswordDialog = memo(
         const onCopy = useCallback(() => {
             if (!temporaryPassword) return;
 
-            navigator.clipboard.writeText(temporaryPassword);
-            toast.success('Temporary password copied to clipboard');
+            navigator.clipboard.writeText(temporaryPassword).then(
+                () => toast.success('Temporary password copied to clipboard'),
+                () => toast.error('Could not copy the temporary password')
+            );
         }, [temporaryPassword]);
 
         if (temporaryPassword) {

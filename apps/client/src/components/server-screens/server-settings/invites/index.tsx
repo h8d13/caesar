@@ -15,7 +15,7 @@ import { memo } from 'react';
 import { InvitesTable } from './invites-table';
 
 const Invites = memo(() => {
-    const { invites, limits, loading, refetch } = useAdminInvites();
+    const { invites, fetchedAt, limits, loading, refetch } = useAdminInvites();
 
     if (loading) {
         return <LoadingCard className="h-[600px]" />;
@@ -59,7 +59,11 @@ const Invites = memo(() => {
                 </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-                <InvitesTable invites={invites} refetch={refetch} />
+                <InvitesTable
+                    invites={invites}
+                    fetchedAt={fetchedAt}
+                    refetch={refetch}
+                />
             </CardContent>
         </Card>
     );

@@ -47,7 +47,7 @@ export const EmojiSuggestion = {
 
             const virtualElement = { getBoundingClientRect: () => clientRect };
 
-            computePosition(virtualElement, component.element, {
+            void computePosition(virtualElement, component.element, {
                 placement: 'top-start',
                 strategy: 'fixed',
                 middleware: [flip(), shift({ padding: 8 })]

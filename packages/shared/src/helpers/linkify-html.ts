@@ -45,7 +45,7 @@ const linkifyHtml = (html: string): string => {
         return normalizeAnchorHref(part);
       }
 
-      if (/^</.test(part)) {
+      if (part.startsWith('<')) {
         return part;
       }
 

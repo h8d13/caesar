@@ -45,6 +45,7 @@ export type TStreamQualityLayer = {
 };
 
 export type TStreamQuality =
-  { mode: 'auto' } | { mode: 'layer'; spatialLayer: number };
+  | { mode: 'auto' }
+  | { mode: 'layer'; spatialLayer: number };
 
 export type TConsumerType = 'simple' | 'simulcast' | 'svc' | 'pipe';

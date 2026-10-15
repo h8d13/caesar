@@ -30,7 +30,7 @@ const hangupCallRoute = protectedProcedure
     // Destroy the runtime if both parties have left (or call was never joined).
     const runtime = VoiceRuntime.findById(input.channelId);
     if (runtime && runtime.getState().users.length === 0) {
-      await runtime.destroy();
+      runtime.destroy();
     }
   });
 

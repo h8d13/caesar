@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 import { stripZalgo } from '../strip-zalgo';
 
 // helper: builds a zalgo char by stacking N combining marks on a base
@@ -63,7 +63,7 @@ describe('strip-zalgo', () => {
     const result = stripZalgo(input);
 
     // base 'a' + 3 combiners kept
-    expect([...result].length).toBe(4);
+    expect(result).toHaveLength(4);
   });
 
   test('should preserve emoji and non-Latin scripts', () => {

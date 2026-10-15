@@ -1,10 +1,5 @@
-// these two imports NEED to be at the very top in this order
-// keep the "---------" because it forces prettier to not mess with the order, I can't turn this off here for some reason, need to check later
-import { ensureServerDirs } from './helpers/ensure-server-dirs';
-await ensureServerDirs();
-// ----------------------------------------
-import { IS_PRODUCTION, SERVER_VERSION } from './utils/env';
-// ----------------------------------------
+// Server dirs are created by config.ts before it reads config.ini: static
+// imports all evaluate before this module's body, so a call here is too late.
 import { ActivityLogType } from '@caesar/shared';
 import { config, SERVER_PRIVATE_IP } from './config';
 import { loadCrons } from './crons';
@@ -14,6 +9,7 @@ import { logger } from './logger';
 import { enqueueActivityLog } from './queues/activity-log';
 import { initVoiceRuntimes } from './runtimes';
 import { createServers } from './utils/create-servers';
+import { IS_PRODUCTION, SERVER_VERSION } from './utils/env';
 import { loadJwtSecret } from './utils/jwt-secret';
 import { getAllWorkers, loadMediasoup } from './utils/mediasoup';
 import { loadVapidKeys } from './utils/web-push';
@@ -24,7 +20,7 @@ await loadVapidKeys();
 await createServers();
 await loadMediasoup();
 await initVoiceRuntimes();
-await loadCrons();
+loadCrons();
 await initGames();
 
 const host = IS_PRODUCTION ? SERVER_PRIVATE_IP : 'localhost';

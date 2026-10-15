@@ -15,7 +15,7 @@ import {
 } from '@trpc/server/adapters/ws';
 import { eq } from 'drizzle-orm';
 import http from 'http';
-import { WebSocket, WebSocketServer } from 'ws';
+import { type RawData, WebSocket, WebSocketServer } from 'ws';
 import { db } from '../db';
 import { getAllChannelUserPermissions } from '../db/queries/channels';
 import { isUserDmParticipant } from '../db/queries/dms';
@@ -35,6 +35,15 @@ import type { Context, TChannelPermissionHints } from './trpc';
 // global `declare module 'ws'` augmentation: keeping it local stops the
 // shape leaking into client typecheck through tRPC type inference.
 type AuthedWebSocket = WebSocket & { userId?: number; token: string };
+
+// fragmented frames arrive as Buffer[], binaryType 'arraybuffer' as one
+const rawDataToString = (data: RawData) =>
+  (Array.isArray(data)
+    ? Buffer.concat(data)
+    : Buffer.isBuffer(data)
+      ? data
+      : Buffer.from(data)
+  ).toString();
 
 // Attach our session fields to a freshly connected WebSocket. Object.assign
 // both does the runtime attach and produces the typed intersection, so we
@@ -325,7 +334,7 @@ const createWsServer = async (server: http.Server) => {
 
       ws.once('message', async (message) => {
         try {
-          const parsed = JSON.parse(message.toString());
+          const parsed = JSON.parse(rawDataToString(message));
           const { token } = parsed.data as TConnectionParams;
 
           ws.token = token;

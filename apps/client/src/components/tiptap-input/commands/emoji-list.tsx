@@ -1,10 +1,4 @@
-import {
-    forwardRef,
-    useCallback,
-    useEffect,
-    useImperativeHandle,
-    useState
-} from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
 import { shouldUseFallbackImage, type TEmojiItem } from '../helpers';
 
 interface EmojiListProps {
@@ -19,11 +13,13 @@ export interface EmojiListRef {
 const EmojiList = forwardRef<EmojiListRef, EmojiListProps>(
     ({ items, onSelect }, ref) => {
         const [selectedIndex, setSelectedIndex] = useState(0);
+        // new items start the selection over at the top
+        const [prevItems, setPrevItems] = useState(items);
 
-        // reset selected index when items change
-        useEffect(() => {
+        if (items !== prevItems) {
+            setPrevItems(items);
             setSelectedIndex(0);
-        }, [items]);
+        }
 
         const selectItem = useCallback(
             (index: number) => {

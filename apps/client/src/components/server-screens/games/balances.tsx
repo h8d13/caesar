@@ -2,7 +2,7 @@ import { ownUserSelector } from '@/features/server/users/selectors';
 import type { IRootState } from '@/features/store';
 import { getTRPCClient } from '@/lib/trpc';
 import { Landmark, User } from 'lucide-react';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 const Balances = memo(() => {
@@ -10,21 +10,18 @@ const Balances = memo(() => {
     const ownUser = useSelector((state: IRootState) => ownUserSelector(state));
     const userBalance = ownUser?.socialCredit ?? 0;
 
-    const fetchBalance = useCallback(async () => {
-        try {
-            const trpc = getTRPCClient();
-            const result = await trpc.others.getBankBalance.query();
-            setBalance(result.balance);
-        } catch {
-            // silently fail
-        }
-    }, []);
-
+    // polled; a failed poll keeps the last known balance
     useEffect(() => {
-        fetchBalance();
-        const interval = setInterval(fetchBalance, 10_000);
+        const load = () =>
+            getTRPCClient()
+                .others.getBankBalance.query()
+                .then((result) => setBalance(result.balance))
+                .catch(() => {});
+
+        void load();
+        const interval = setInterval(load, 10_000);
         return () => clearInterval(interval);
-    }, [fetchBalance]);
+    }, []);
 
     if (balance === null) return null;
 

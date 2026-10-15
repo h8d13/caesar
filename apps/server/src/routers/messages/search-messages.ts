@@ -9,6 +9,13 @@ import { z } from 'zod';
 
 const GLOB_SPECIAL_CHARS = new Set(['*', '?', '[']);
 
+// a GLOB character class matches exactly one code point
+const isSingleCodePoint = (value: string) => {
+  const codePoint = value.codePointAt(0);
+
+  return codePoint !== undefined && String.fromCodePoint(codePoint) === value;
+};
+
 // SQLite LIKE only folds ASCII case, so build a GLOB with a [xX] class per
 // cased char instead (é matches É). Bracketing the glob specials keeps the
 // query literal.
@@ -20,7 +27,7 @@ const buildCaseInsensitiveGlob = (value: string) => {
     const upper = char.toUpperCase();
     // skip folds that change length (ß -> SS): a class matches one char
     const isCased =
-      lower !== upper && [...lower].length === 1 && [...upper].length === 1;
+      lower !== upper && isSingleCodePoint(lower) && isSingleCodePoint(upper);
 
     if (isCased) {
       pattern += `[${lower}${upper}]`;

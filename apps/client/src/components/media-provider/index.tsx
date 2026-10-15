@@ -316,7 +316,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         }
 
         if (microphoneNoiseGateAudioContextRef.current) {
-            microphoneNoiseGateAudioContextRef.current.close();
+            void microphoneNoiseGateAudioContextRef.current.close();
             microphoneNoiseGateAudioContextRef.current = null;
         }
 
@@ -625,7 +625,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                             microphoneRNNoiseWorkletNodeRef.current = null;
                             microphoneNoiseGateWorkletNodeRef.current?.disconnect();
                             microphoneNoiseGateWorkletNodeRef.current = null;
-                            audioContext.close();
+                            void audioContext.close();
                             audioContext = null;
                             logVoice(
                                 'Audio processing produced no audio track, using raw mic stream'
@@ -633,7 +633,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                         }
                     } catch (error) {
                         if (audioContext) {
-                            audioContext.close();
+                            void audioContext.close();
                         }
 
                         logVoice(

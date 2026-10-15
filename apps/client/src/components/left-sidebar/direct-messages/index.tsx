@@ -105,24 +105,21 @@ const DirectMessages = memo(() => {
     const ownUserId = useOwnUserId();
     const selectedDmChannelId = useSelectedDmChannelId();
 
-    const fetchConversations = useCallback(async () => {
-        const trpc = getTRPCClient();
-
-        setLoading(true);
-
-        try {
-            const items = await trpc.dms.get.query();
-
-            setConversations(items);
-        } catch {
-            toast.error('Failed to load direct messages');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    // loading covers the first fetch only; refetches swap the list in place
+    const fetchConversations = useCallback(
+        () =>
+            getTRPCClient()
+                .dms.get.query()
+                .then(setConversations)
+                .catch(() => {
+                    toast.error('Failed to load direct messages');
+                })
+                .finally(() => setLoading(false)),
+        []
+    );
 
     useEffect(() => {
-        fetchConversations();
+        void fetchConversations();
     }, [channels.length, fetchConversations]);
 
     const visibleConversations = useMemo(() => {

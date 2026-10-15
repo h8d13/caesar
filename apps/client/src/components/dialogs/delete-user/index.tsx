@@ -44,7 +44,7 @@ const DeleteUserDialog = memo(
                 toast.success('User deleted successfully');
 
                 close();
-                refetch();
+                void refetch();
                 onDelete?.();
             } catch (error) {
                 toast.error(getTrpcError(error, 'Failed to delete user'));

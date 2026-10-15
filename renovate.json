@@ -45,8 +45,9 @@
     { "matchManagers": ["dockerfile", "docker-compose"], "groupName": "docker" },
     { "matchManagers": ["pre-commit"], "groupName": "pre-commit" },
     {
-      "matchPackageNames": ["prettier", "prettier-plugin-organize-imports"],
-      "groupName": "prettier"
+      "matchPackageNames": ["vite-plus", "@voidzero-dev/vite-plus-core"],
+      "groupName": "vite-plus",
+      "description": "catalog aliases vite to vite-plus-core at the vite-plus version; they ship together"
     },
     {
       "matchPackageNames": ["node", "pnpm", "actions/setup-node", "@types/node"],
@@ -70,17 +71,20 @@
       "description": "ts/node/mediasoup/pnpm majors must be approved on the dashboard"
     },
     {
-      "matchPackageNames": ["typescript"],
-      "allowedVersions": "<7",
-      "description": "typescript-eslint crashes on TS 7, see typescript-eslint#10940"
-    },
-    {
       "matchPackageNames": ["mediasoup", "argon2", "better-sqlite3"],
       "rangeStrategy": "pin",
       "description": "native postinstall, pin exact so prebuilt-binary caches stay valid"
     }
   ],
   "customManagers": [
+    {
+      "customType": "regex",
+      "description": "corepack is npm-installed in the images since Node 25 stopped bundling it",
+      "managerFilePatterns": ["/^Dockerfile\\.(dev|prod)$/"],
+      "matchStrings": ["npm install -g corepack@(?<currentValue>[0-9.]+)"],
+      "depNameTemplate": "corepack",
+      "datasourceTemplate": "npm"
+    },
     {
       "customType": "regex",
       "description": "setup-node's node-version isn't tracked by the github-actions manager; follow the docker tag so CI moves with the Dockerfiles",

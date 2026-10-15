@@ -467,19 +467,31 @@ const useTransports = ({
                 });
 
                 remoteAudioIds.forEach((remoteId) => {
-                    consume(remoteId, StreamKind.AUDIO, routerRtpCapabilities);
+                    void consume(
+                        remoteId,
+                        StreamKind.AUDIO,
+                        routerRtpCapabilities
+                    );
                 });
 
                 remoteVideoIds.forEach((remoteId) => {
-                    consume(remoteId, StreamKind.VIDEO, routerRtpCapabilities);
+                    void consume(
+                        remoteId,
+                        StreamKind.VIDEO,
+                        routerRtpCapabilities
+                    );
                 });
 
                 remoteScreenIds.forEach((remoteId) => {
-                    consume(remoteId, StreamKind.SCREEN, routerRtpCapabilities);
+                    void consume(
+                        remoteId,
+                        StreamKind.SCREEN,
+                        routerRtpCapabilities
+                    );
                 });
 
                 remoteScreenAudioIds.forEach((remoteId) => {
-                    consume(
+                    void consume(
                         remoteId,
                         StreamKind.SCREEN_AUDIO,
                         routerRtpCapabilities

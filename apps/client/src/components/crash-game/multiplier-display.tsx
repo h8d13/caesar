@@ -11,15 +11,23 @@ const GROWTH_RATE = 0.06;
 const MultiplierDisplay = memo(() => {
     const serverMultiplier = useCrashMultiplier();
     const phase = useCrashPhase();
-    const [displayMultiplier, setDisplayMultiplier] =
-        useState(serverMultiplier);
+    // interpolated between server updates; a new server value wins until
+    // the next animation frame extrapolates from it
+    const [interpolated, setInterpolated] = useState<{
+        base: number;
+        value: number;
+    } | null>(null);
     const rafRef = useRef<number>(0);
-    const lastServerUpdate = useRef(Date.now());
+    const lastServerUpdate = useRef(0);
 
     useEffect(() => {
         lastServerUpdate.current = Date.now();
-        setDisplayMultiplier(serverMultiplier);
     }, [serverMultiplier]);
+
+    const displayMultiplier =
+        interpolated?.base === serverMultiplier
+            ? interpolated.value
+            : serverMultiplier;
 
     useEffect(() => {
         if (phase !== CrashPhase.FLYING) {
@@ -29,11 +37,13 @@ const MultiplierDisplay = memo(() => {
 
         const animate = () => {
             const elapsed = (Date.now() - lastServerUpdate.current) / 1000;
-            const interpolated =
-                Math.floor(
-                    serverMultiplier * Math.exp(GROWTH_RATE * elapsed) * 100
-                ) / 100;
-            setDisplayMultiplier(interpolated);
+            setInterpolated({
+                base: serverMultiplier,
+                value:
+                    Math.floor(
+                        serverMultiplier * Math.exp(GROWTH_RATE * elapsed) * 100
+                    ) / 100
+            });
             rafRef.current = requestAnimationFrame(animate);
         };
 

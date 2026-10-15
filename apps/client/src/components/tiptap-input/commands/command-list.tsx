@@ -1,12 +1,6 @@
 import type { TBuiltInCommand } from '@/helpers/built-in-commands';
 import { Terminal } from 'lucide-react';
-import {
-    forwardRef,
-    useCallback,
-    useEffect,
-    useImperativeHandle,
-    useState
-} from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
 
 interface CommandListProps {
     items: TBuiltInCommand[];
@@ -20,10 +14,13 @@ export interface CommandListRef {
 const CommandList = forwardRef<CommandListRef, CommandListProps>(
     ({ items, onSelect }, ref) => {
         const [selectedIndex, setSelectedIndex] = useState(0);
+        // new items start the selection over at the top
+        const [prevItems, setPrevItems] = useState(items);
 
-        useEffect(() => {
+        if (items !== prevItems) {
+            setPrevItems(items);
             setSelectedIndex(0);
-        }, [items]);
+        }
 
         const selectItem = useCallback(
             (index: number) => {

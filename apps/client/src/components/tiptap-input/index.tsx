@@ -1,7 +1,7 @@
 import { EmojiPicker } from '@/components/emoji-picker';
 import { useCustomEmojis } from '@/features/server/emojis/hooks';
 import { useAccessibleChannels } from '@/features/server/hooks';
-import type { TChannel, TJoinedPublicUser } from '@caesar/shared';
+import type { TJoinedPublicUser } from '@caesar/shared';
 import { Button } from '@caesar/ui';
 import { gitHubEmojis } from '@tiptap/extension-emoji';
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
@@ -47,9 +47,12 @@ const TiptapInput = memo(
         readOnly,
         users
     }: TTiptapInputProps) => {
+        // read by editor key/paste/drop handlers, which outlive renders
         const readOnlyRef = useRef(readOnly);
 
-        readOnlyRef.current = readOnly;
+        useLayoutEffect(() => {
+            readOnlyRef.current = readOnly;
+        }, [readOnly]);
 
         const [isExpanded, setIsExpanded] = useState(false);
         const [hasOverflow, setHasOverflow] = useState(false);
@@ -179,36 +182,32 @@ const TiptapInput = memo(
         // this ensures newly added emojis appear in autocomplete without refreshing the app
         useEffect(() => {
             if (isLive(editor) && editor.storage.emoji) {
-                editor.storage.emoji.emojis = [
+                editor.commands.setEmojiList([
                     ...gitHubEmojis,
                     ...customEmojis
-                ];
+                ]);
             }
         }, [editor, customEmojis]);
 
-        // keep mention storage in sync with users from the store
+        // keep mention storage in sync with users from the store; the
+        // mention extensions are only registered when there is data
         useEffect(() => {
-            if (isLive(editor) && users) {
-                const slot = (
-                    editor.storage as unknown as Record<
-                        string,
-                        { users?: TJoinedPublicUser[] }
-                    >
-                )[USER_MENTION_STORAGE_KEY];
-                if (slot) slot.users = users;
+            if (
+                isLive(editor) &&
+                users &&
+                USER_MENTION_STORAGE_KEY in editor.storage
+            ) {
+                editor.commands.setMentionUsers(users);
             }
         }, [editor, users]);
 
         // keep channel-mention storage in sync with accessible channels
         useEffect(() => {
-            if (isLive(editor)) {
-                const slot = (
-                    editor.storage as unknown as Record<
-                        string,
-                        { channels?: TChannel[] }
-                    >
-                )[CHANNEL_MENTION_STORAGE_KEY];
-                if (slot) slot.channels = channels;
+            if (
+                isLive(editor) &&
+                CHANNEL_MENTION_STORAGE_KEY in editor.storage
+            ) {
+                editor.commands.setMentionChannels(channels);
             }
         }, [editor, channels]);
 

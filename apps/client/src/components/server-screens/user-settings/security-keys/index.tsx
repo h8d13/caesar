@@ -47,7 +47,9 @@ const SecurityKeys = memo(() => {
     }, []);
 
     useEffect(() => {
-        refresh();
+        // oxlint false positive: refresh only sets state after its await
+        // oxlint-disable-next-line react/set-state-in-effect
+        void refresh();
     }, [refresh]);
 
     const addKey = useCallback(async () => {

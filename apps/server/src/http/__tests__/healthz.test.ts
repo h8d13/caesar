@@ -1,5 +1,5 @@
 import { testsBaseUrl } from '@server/__tests__/setup';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 describe('/healthz', () => {
   test('should return 200 status', async () => {

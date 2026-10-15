@@ -2,7 +2,7 @@ import { Spinner } from '@caesar/ui';
 import { memo } from 'react';
 
 type TLoadingApp = {
-    text: string;
+    text?: string;
 };
 
 const LoadingApp = memo(({ text = 'Loading' }: TLoadingApp) => (

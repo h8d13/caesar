@@ -4,22 +4,21 @@
   "private": true,
   "packageManager": "pnpm@12.9.1",
   "engines": {
-    "node": ">=24.20.0",
+    "node": ">=26.11.1",
     "pnpm": "^12.9.1"
   },
   "scripts": {
     "test": "pnpm -r --if-present test",
-    "format": "pnpm -r --if-present format",
-    "format:check": "pnpm -r --if-present format:check",
+    "format": "vp fmt",
+    "format:check": "vp fmt --check",
     "check-types": "pnpm -r --if-present check-types",
-    "lint": "pnpm -r --if-present lint",
+    "lint": "vp lint",
     "knip": "knip",
     "knip:production": "knip --production",
-    "magic": "pnpm format && pnpm check-types && pnpm lint"
+    "magic": "vp fmt && vp lint --fix && pnpm check-types"
   },
   "devDependencies": {
     "knip": "^6.41.0",
-    "prettier": "catalog:",
-    "prettier-plugin-organize-imports": "catalog:"
+    "vite-plus": "catalog:"
   }
 }

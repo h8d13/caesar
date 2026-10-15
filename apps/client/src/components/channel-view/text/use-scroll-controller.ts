@@ -59,7 +59,7 @@ const useScrollController = ({
         if (container.scrollTop <= SCROLL_THRESHOLD && hasMore) {
             const prevScrollHeight = container.scrollHeight;
 
-            loadMore().then(() => {
+            void loadMore().then(() => {
                 const newScrollHeight = container.scrollHeight;
 
                 container.scrollTop =

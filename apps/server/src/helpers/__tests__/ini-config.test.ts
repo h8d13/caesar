@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import path from 'path';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 import { iniDefaults, parseIniConfig } from '../ini-config';
 
 // The shipped config.ini (repo root) lists every key commented out at its

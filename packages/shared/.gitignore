@@ -23,7 +23,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .env.local
 
 # caches
-.eslintcache
 .cache
 *.tsbuildinfo
 
@@ -32,3 +31,4 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Finder (MacOS) folder config
 .DS_Store
+.vitest/

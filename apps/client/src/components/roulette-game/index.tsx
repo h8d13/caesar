@@ -3,7 +3,9 @@ import {
     fetchRouletteState
 } from '@/features/server/roulette/actions';
 import { subscribeToRoulette } from '@/features/server/roulette/subscriptions';
+import { getTrpcError } from '@caesar/shared';
 import { memo, useEffect } from 'react';
+import { toast } from 'sonner';
 import { BetControls } from './bet-controls';
 import { BettingBoard } from './betting-board';
 import { RoulettePlayerBets } from './player-bets';
@@ -13,8 +15,12 @@ import { RoundWinners } from './round-winners';
 
 const RouletteGameContent = memo(() => {
     useEffect(() => {
-        fetchRouletteState();
-        fetchRouletteHistory();
+        const onLoadError = (error: unknown) => {
+            toast.error(getTrpcError(error, 'Failed to load roulette'));
+        };
+
+        fetchRouletteState().catch(onLoadError);
+        fetchRouletteHistory().catch(onLoadError);
         const unsubscribe = subscribeToRoulette();
         return unsubscribe;
     }, []);

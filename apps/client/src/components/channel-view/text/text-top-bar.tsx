@@ -78,7 +78,7 @@ const EphemeralToggle = memo(({ channelId }: TEphemeralToggleProps) => {
     // which the server now rejects but produces a worse UX than a fresh
     // local view.
     const invalidateE2eeContext = useCallback(() => {
-        queryClient.invalidateQueries({
+        void queryClient.invalidateQueries({
             queryKey: ['dms', 'e2eeContext', channelId]
         });
     }, [queryClient, channelId]);
@@ -161,12 +161,14 @@ const TextTopbar = memo(
     }: TTextTopbarProps) => {
         const channel = useChannelById(channelId);
         const ownUserId = useOwnUserId();
+        const isDm = channel?.isDm;
+        const channelName = channel?.name;
         const dmPeerId = useMemo(
             () =>
-                channel?.isDm
-                    ? parseDmPeerId(channel.name, ownUserId)
+                isDm && channelName !== undefined
+                    ? parseDmPeerId(channelName, ownUserId)
                     : undefined,
-            [channel?.isDm, channel?.name, ownUserId]
+            [isDm, channelName, ownUserId]
         );
         const dmPeer = useUserById(dmPeerId ?? -1);
 

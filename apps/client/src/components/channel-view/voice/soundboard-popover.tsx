@@ -1,5 +1,6 @@
 import { useSounds } from '@/features/server/sounds/hooks';
 import { getTRPCClient } from '@/lib/trpc';
+import { getTrpcError } from '@caesar/shared';
 import {
     Button,
     Popover,
@@ -9,6 +10,7 @@ import {
 } from '@caesar/ui';
 import { Music, Search, Volume2 } from 'lucide-react';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 const COOLDOWN_MS = 500;
 
@@ -31,7 +33,9 @@ const SoundboardPopover = memo(() => {
         lastPlayedRef.current = now;
 
         const trpc = getTRPCClient();
-        trpc.voice.playSoundboard.mutate({ soundId });
+        trpc.voice.playSoundboard.mutate({ soundId }).catch((error) => {
+            toast.error(getTrpcError(error, 'Failed to play sound'));
+        });
     }, []);
 
     return (

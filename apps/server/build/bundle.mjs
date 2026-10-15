@@ -42,7 +42,7 @@ await build({
   outfile: path.join(distDir, 'server.mjs'),
   bundle: true,
   platform: 'node',
-  target: 'node24',
+  target: 'node26',
   format: 'esm',
   // Prod: external .map keeps the .mjs lean (the 10mb culprit was inline
   // base64 sourcemaps embedded in the artifact). SEA still embeds the

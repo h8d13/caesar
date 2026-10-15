@@ -3,31 +3,19 @@ import {
     useCrashPhaseDuration,
     useCrashPhaseStartedAt
 } from '@/features/server/crash/hooks';
+import { useNow } from '@/hooks/use-now';
 import { CrashPhase } from '@caesar/shared/games/crash';
-import { memo, useEffect, useState } from 'react';
+import { memo } from 'react';
 
 const CountdownTimer = memo(() => {
     const phase = useCrashPhase();
     const phaseStartedAt = useCrashPhaseStartedAt();
     const phaseDuration = useCrashPhaseDuration();
-    const [remaining, setRemaining] = useState<number | null>(null);
-
-    useEffect(() => {
-        if (!phaseStartedAt || !phaseDuration) {
-            setRemaining(null);
-            return;
-        }
-
-        const update = () => {
-            const elapsed = Date.now() - phaseStartedAt;
-            const left = Math.max(0, phaseDuration - elapsed);
-            setRemaining(left);
-        };
-
-        update();
-        const interval = setInterval(update, 100);
-        return () => clearInterval(interval);
-    }, [phaseStartedAt, phaseDuration]);
+    const now = useNow(100);
+    const remaining =
+        phaseStartedAt && phaseDuration
+            ? Math.max(0, phaseDuration - (now - phaseStartedAt))
+            : null;
 
     if (remaining === null || phase === CrashPhase.FLYING) {
         return <div className="text-center text-sm invisible">&nbsp;</div>;

@@ -3,7 +3,7 @@ import { useAccessibleChannels } from '@/features/server/hooks';
 import { BUILT_IN_COMMANDS } from '@/helpers/built-in-commands';
 import type { TJoinedPublicUser } from '@caesar/shared';
 import type { Extension } from '@tiptap/core';
-import Emoji, { gitHubEmojis } from '@tiptap/extension-emoji';
+import Emoji, { gitHubEmojis, type EmojiItem } from '@tiptap/extension-emoji';
 import StarterKit from '@tiptap/starter-kit';
 // imported here, not in main.tsx: the editor chunk group would otherwise
 // pull the whole tiptap stack into the entry's static deps
@@ -19,6 +19,28 @@ import { MentionNode } from './commands/mention-node';
 import { SlashCommands } from './commands/slash-commands-extension';
 import { EmojiSuggestion } from './commands/suggestions';
 import { UserMentionSuggestion } from './commands/user-mention-suggestion';
+
+declare module '@tiptap/core' {
+    interface Commands<ReturnType> {
+        emojiList: {
+            setEmojiList: (emojis: EmojiItem[]) => ReturnType;
+        };
+    }
+}
+
+// The editor outlives extension changes (useEditor has no deps), so the
+// emoji list is replaced through a command, as the mention extensions do.
+const MessageEmoji = Emoji.extend({
+    addCommands() {
+        return {
+            ...this.parent?.(),
+            setEmojiList: (emojis) => () => {
+                this.storage.emojis = emojis;
+                return true;
+            }
+        };
+    }
+});
 
 // Single source of truth for the message editor's tiptap extensions, shared
 // by the inline composer (TiptapInput) and the full-screen editor so mentions,
@@ -38,7 +60,7 @@ const useMessageEditorExtensions = (
                     }
                 }
             }),
-            Emoji.configure({
+            MessageEmoji.configure({
                 emojis: [...gitHubEmojis, ...customEmojis],
                 enableEmoticons: false,
                 suggestion: EmojiSuggestion,

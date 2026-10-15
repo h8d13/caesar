@@ -1,7 +1,7 @@
 import { directMessages } from '@caesar/shared/db/schema';
 import { initTest } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 describe('joinServer channel visibility', () => {
   test('a private channel leaks neither its row nor its unread count', async () => {

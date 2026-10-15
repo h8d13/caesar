@@ -19,7 +19,7 @@ import {
   users
 } from '@caesar/shared/db/schema';
 import { eq } from 'drizzle-orm';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 import { tdb } from './setup';
 
 describe('database cascades', async () => {

@@ -3,7 +3,7 @@ import type { Client } from '@libsql/client';
 import { initTest } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { and, eq } from 'drizzle-orm';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 // messages.get used to read the same channels row three times per call (the
 // DM check, the permission check, and the handler's own fileAccessToken

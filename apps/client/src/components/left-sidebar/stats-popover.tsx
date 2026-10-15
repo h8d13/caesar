@@ -34,30 +34,32 @@ const StatsPopover = memo(({ children }: StatsPopoverProps) => {
         currentBitrateReceived
     } = transportStats;
 
-    const encoder = useMemo(() => {
-        if (!screenShare?.encoderImplementation) return null;
+    const encoderImplementation = screenShare?.encoderImplementation;
 
-        const lowerImpl = screenShare?.encoderImplementation.toLowerCase();
+    const encoder = useMemo(() => {
+        if (!encoderImplementation) return null;
+
+        const lowerImpl = encoderImplementation.toLowerCase();
 
         if (hardwareEncoders.some((hw) => lowerImpl.includes(hw))) {
             return {
-                label: `GPU (${screenShare.encoderImplementation})`,
+                label: `GPU (${encoderImplementation})`,
                 isHardware: true
             };
         }
 
         if (softwareEncoders.some((sw) => lowerImpl.includes(sw))) {
             return {
-                label: `CPU (${screenShare.encoderImplementation})`,
+                label: `CPU (${encoderImplementation})`,
                 isHardware: false
             };
         }
 
         return {
-            label: `Unknown (${screenShare.encoderImplementation})`,
+            label: `Unknown (${encoderImplementation})`,
             isHardware: null
         };
-    }, [screenShare?.encoderImplementation]);
+    }, [encoderImplementation]);
 
     const codec = useMemo(() => {
         const parts = screenShare?.codec.split('/');

@@ -1,6 +1,7 @@
 import { IconButton } from '@caesar/ui';
 import { Maximize, Minimize } from 'lucide-react';
 import { memo, type RefObject, useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 type TFullscreenButtonProps = {
     containerRef: RefObject<HTMLDivElement | null>;
@@ -29,9 +30,13 @@ const FullscreenButton = memo(({ containerRef }: TFullscreenButtonProps) => {
         if (!containerRef.current) return;
 
         if (document.fullscreenElement === containerRef.current) {
-            document.exitFullscreen();
+            // only rejects when nothing is fullscreen, ruled out above
+            void document.exitFullscreen();
         } else {
-            containerRef.current.requestFullscreen();
+            // refused without a user gesture or by a permissions policy
+            containerRef.current.requestFullscreen().catch(() => {
+                toast.error('Fullscreen is not available');
+            });
         }
     }, [containerRef]);
 

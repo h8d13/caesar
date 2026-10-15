@@ -20,9 +20,14 @@ const WatchParty = memo(({ close }: TWatchPartyProps) => {
         const trpc = getTRPCClient();
         let active = true;
 
-        trpc.watchParty.getState.query().then((state) => {
-            if (active) setVideoId(state.videoId);
-        });
+        trpc.watchParty.getState
+            .query()
+            .then((state) => {
+                if (active) setVideoId(state.videoId);
+            })
+            .catch(() => {
+                if (active) toast.error('Could not load the watch party');
+            });
 
         const sub = trpc.watchParty.onUpdate.subscribe(undefined, {
             onData: (state) => setVideoId(state.videoId),
@@ -67,7 +72,7 @@ const WatchParty = memo(({ close }: TWatchPartyProps) => {
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleShare();
+                            if (e.key === 'Enter') void handleShare();
                         }}
                         placeholder="Paste a YouTube link to share with everyone…"
                         className="flex-1"

@@ -4,7 +4,7 @@ import { initTest, uploadFile } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { setRateLimitingDisabled } from '@server/utils/rate-limiters';
 import { and, eq } from 'drizzle-orm';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 describe('messages router', () => {
   test('should throw when user lacks permissions (edit - not own message)', async () => {

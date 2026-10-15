@@ -8,7 +8,7 @@ import {
 } from '@server/__tests__/helpers';
 import { TEST_SECRET_TOKEN } from '@server/__tests__/seed';
 import { tdb } from '@server/__tests__/setup';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 describe('others router', () => {
   test('should throw when user tries to join with no handshake', async () => {

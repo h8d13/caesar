@@ -29,7 +29,7 @@ import { getAllUserIds, getPublicUserById } from './queries/users';
 
 // Broadcasts announce writes that have already committed, and most callers
 // fire them without awaiting. A failure is logged here instead of rejecting:
-// Node 24 exits the process on an unhandled rejection.
+// Node exits the process on an unhandled rejection.
 const logFailures =
   <A extends unknown[]>(
     name: string,

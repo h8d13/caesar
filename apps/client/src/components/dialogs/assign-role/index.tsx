@@ -58,7 +58,7 @@ const AssignRoleDialog = memo(
 
                 toast.success('Role assigned successfully');
                 close();
-                refetch();
+                void refetch();
             } catch (error) {
                 toast.error(getTrpcError(error, 'Failed to assign role'));
             }

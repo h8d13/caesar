@@ -11,7 +11,7 @@ import {
     SelectTrigger,
     SelectValue
 } from '@caesar/ui';
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { FormDialogShell } from '../form-dialog-shell';
 import type { TDialogBaseProps } from '../types';
@@ -23,6 +23,8 @@ type TCreateInviteDialogProps = TDialogBaseProps & {
 const CreateInviteDialog = memo(
     ({ refetch, close, isOpen }: TCreateInviteDialogProps) => {
         const roles = useRoles();
+        // earliest pickable expiry: the moment the dialog opened
+        const [openedAt] = useState(() => Date.now());
         const { r, rrn, values, setTrpcErrors, onChange } = useForm({
             maxUses: 0,
             expiresAt: 0,
@@ -74,10 +76,7 @@ const CreateInviteDialog = memo(
                         label="Expires in"
                         description="Leave empty for no expiration."
                     >
-                        <DatePicker
-                            {...rrn('expiresAt')}
-                            minDate={Date.now()}
-                        />
+                        <DatePicker {...rrn('expiresAt')} minDate={openedAt} />
                     </Group>
                     <Group
                         label="Assign Role"

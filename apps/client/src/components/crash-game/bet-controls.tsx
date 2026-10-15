@@ -53,7 +53,7 @@ const BetControls = memo(() => {
             setAmount(String(lastBetAmount.current));
             const parsed = lastBetAmount.current;
 
-            (async () => {
+            void (async () => {
                 setLoading(true);
                 try {
                     await placeBet(parsed);

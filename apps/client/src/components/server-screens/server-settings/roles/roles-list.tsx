@@ -9,7 +9,7 @@ type TRolesListProps = {
     roles: TJoinedRole[];
     selectedRoleId: number | undefined;
     setSelectedRoleId: (roleId: number) => void;
-    refetch: () => void;
+    refetch: () => Promise<void>;
 };
 
 const RolesList = memo(

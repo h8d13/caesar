@@ -5,51 +5,55 @@ import { TableInvite } from './table-invite';
 
 type TInvitesTableProps = {
     invites: TJoinedInvite[];
+    fetchedAt: number;
     refetch: () => void;
 };
 
-const InvitesTable = memo(({ invites, refetch }: TInvitesTableProps) => {
-    const searchFilter = useCallback(
-        (invite: TJoinedInvite, searchTerm: string) => {
-            const query = searchTerm.toLowerCase();
+const InvitesTable = memo(
+    ({ invites, fetchedAt, refetch }: TInvitesTableProps) => {
+        const searchFilter = useCallback(
+            (invite: TJoinedInvite, searchTerm: string) => {
+                const query = searchTerm.toLowerCase();
 
-            return (
-                invite.code.toLowerCase().includes(query) ||
-                invite.creator.name.toLowerCase().includes(query)
-            );
-        },
-        []
-    );
+                return (
+                    invite.code.toLowerCase().includes(query) ||
+                    invite.creator.name.toLowerCase().includes(query)
+                );
+            },
+            []
+        );
 
-    return (
-        <PaginatedTable
-            items={invites}
-            renderRow={(invite) => (
-                <TableInvite
-                    key={invite.id}
-                    invite={invite}
-                    refetch={refetch}
-                />
-            )}
-            searchFilter={searchFilter}
-            headerColumns={
-                <>
-                    <div>Code</div>
-                    <div>Role</div>
-                    <div>Creator</div>
-                    <div>Uses</div>
-                    <div>Expires</div>
-                    <div>Created</div>
-                    <div>Status</div>
-                    <div>Actions</div>
-                </>
-            }
-            gridCols="grid-cols-[1fr_80px_50px_70px_90px_110px_70px_60px]"
-            itemsPerPage={8}
-            searchPlaceholder="Search invites by code or creator..."
-            emptyMessage="No invites found"
-        />
-    );
-});
+        return (
+            <PaginatedTable
+                items={invites}
+                renderRow={(invite) => (
+                    <TableInvite
+                        key={invite.id}
+                        invite={invite}
+                        fetchedAt={fetchedAt}
+                        refetch={refetch}
+                    />
+                )}
+                searchFilter={searchFilter}
+                headerColumns={
+                    <>
+                        <div>Code</div>
+                        <div>Role</div>
+                        <div>Creator</div>
+                        <div>Uses</div>
+                        <div>Expires</div>
+                        <div>Created</div>
+                        <div>Status</div>
+                        <div>Actions</div>
+                    </>
+                }
+                gridCols="grid-cols-[1fr_80px_50px_70px_90px_110px_70px_60px]"
+                itemsPerPage={8}
+                searchPlaceholder="Search invites by code or creator..."
+                emptyMessage="No invites found"
+            />
+        );
+    }
+);
 
 export { InvitesTable };

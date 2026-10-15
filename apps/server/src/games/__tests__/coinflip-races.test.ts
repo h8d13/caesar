@@ -2,7 +2,7 @@ import { socialCreditLedger } from '@caesar/shared/db/schema';
 import { CoinflipSide } from '@caesar/shared/games/coinflip';
 import { tdb } from '@server/__tests__/setup';
 import { eq, sql } from 'drizzle-orm';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 import { CoinflipRuntime } from '../coinflip/runtime';
 import { createGameLedgerBindings } from '../shared-bindings';
 
@@ -65,7 +65,9 @@ describe('coinflip concurrency', () => {
     expect(fulfilled(results)).toBe(1);
 
     // the losing acceptor keeps their stake
-    const balances = [await balanceOf(3), await balanceOf(4)].sort();
+    const balances = [await balanceOf(3), await balanceOf(4)].sort(
+      (a, b) => a - b
+    );
     expect(balances).toEqual([0, 100]);
   });
 });

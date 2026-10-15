@@ -109,7 +109,7 @@ const useMediaRefs = (remoteId: number) => {
         audioRef.current.volume = userVolume / 100;
         audioRef.current.muted = ownVoiceState.soundMuted;
 
-        applyAudioOutputDevice(audioRef.current, devices.playbackId);
+        void applyAudioOutputDevice(audioRef.current, devices.playbackId);
     }, [
         audioStream,
         audioRef,
@@ -128,7 +128,10 @@ const useMediaRefs = (remoteId: number) => {
         screenShareAudioRef.current.volume = userScreenVolume / 100;
         screenShareAudioRef.current.muted = ownVoiceState.soundMuted;
 
-        applyAudioOutputDevice(screenShareAudioRef.current, devices.playbackId);
+        void applyAudioOutputDevice(
+            screenShareAudioRef.current,
+            devices.playbackId
+        );
     }, [
         screenShareAudioStream,
         screenShareAudioRef,

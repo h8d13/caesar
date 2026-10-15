@@ -15,7 +15,7 @@ import { eq } from 'drizzle-orm';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
-import { beforeEach, describe, expect, test } from 'vitest';
+import { beforeEach, describe, expect, test } from 'vite-plus/test';
 
 const upload = async (file: File, token: string) => {
   const uploadResponse = await uploadFile(file, token);
@@ -297,7 +297,7 @@ describe('/public', () => {
     });
 
     // load crons here, it will run the file cleanup cron job
-    await loadCrons();
+    loadCrons();
 
     await new Promise((r) => setTimeout(r, 1000)); // wait a bit for cron to finish
 

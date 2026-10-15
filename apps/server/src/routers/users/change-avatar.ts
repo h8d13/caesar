@@ -47,7 +47,7 @@ const changeAvatarRoute = rateLimitedProcedure(protectedProcedure, {
     }
 
     if (input.fileId) {
-      const tempFile = await fileManager.getTemporaryFile(input.fileId);
+      const tempFile = fileManager.getTemporaryFile(input.fileId);
 
       invariant(tempFile, {
         code: 'NOT_FOUND',

@@ -1,7 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { defineConfig } from 'vite';
+import { defineConfig, lazyPlugins } from 'vite-plus';
 // lives in public/ so it ships to dist and /manifest.json resolves in prod
 import pkg from './package.json' with { type: 'json' };
 import manifest from './public/manifest.json' with { type: 'json' };
@@ -11,7 +11,7 @@ import precompress from './vite-plugin-precompress.ts';
 
 // https://vite.dev/config/
 export default defineConfig({
-    plugins: [
+    plugins: lazyPlugins(() => [
         react(),
         tailwindcss(),
         dumpDevMaps({ outDir: '.vite-devmaps' }),
@@ -22,7 +22,7 @@ export default defineConfig({
             transformIndexHtml: (html) =>
                 html.replace(/%APP_NAME%/g, manifest.name)
         }
-    ],
+    ]),
     server: {
         // Forward HTTP server routes to the Node server on :4991 so dev is same-origin.
         // tRPC WebSocket connects directly to :4991 (no CORS preflight on WS).

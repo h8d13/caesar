@@ -104,7 +104,7 @@ const cleanup = (keepToken = false) => {
     isCleaningUp = true;
 
     if (wsClient) {
-        wsClient.close();
+        void wsClient.close();
         wsClient = null;
     }
 

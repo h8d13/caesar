@@ -1,6 +1,6 @@
 import { initTest } from '@server/__tests__/helpers';
 import { loadMediasoup } from '@server/utils/mediasoup';
-import { beforeAll, describe, expect, test } from 'vitest';
+import { beforeAll, describe, expect, test } from 'vite-plus/test';
 
 // Voice runtime requires the mediasoup native worker. `pnpm test:fast`
 // (SKIP_MEDIASOUP=1) leaves it unloaded, so the suite skips entirely.

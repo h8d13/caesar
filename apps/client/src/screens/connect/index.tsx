@@ -289,7 +289,7 @@ const Connect = memo(() => {
                                 className="flex flex-col gap-2"
                                 onSubmit={(e) => {
                                     e.preventDefault();
-                                    onConnectClick();
+                                    void onConnectClick();
                                 }}
                             >
                                 <Group

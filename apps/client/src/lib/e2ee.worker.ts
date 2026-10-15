@@ -31,5 +31,3 @@ self.onmessage = (e: MessageEvent<Req>) => {
         self.postMessage(res);
     }
 };
-
-export {};

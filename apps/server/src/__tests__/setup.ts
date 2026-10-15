@@ -4,7 +4,7 @@ import { migrate } from 'drizzle-orm/libsql/migrator';
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
-import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vite-plus/test';
 import { createDbClient } from '../db/connection';
 import { getServerToken } from '../db/queries/server';
 import { DATA_PATH, DRIZZLE_PATH } from '../helpers/paths';

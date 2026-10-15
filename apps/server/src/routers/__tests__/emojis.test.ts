@@ -1,6 +1,6 @@
 import type { TTempFile } from '@caesar/shared';
 import { initTest, uploadFile } from '@server/__tests__/helpers';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 
 describe('emojis router', () => {
   test('should throw when user lacks permissions (add)', async () => {

@@ -69,16 +69,8 @@ const useVoiceEvents = ({
                         channelId
                     });
 
-                    try {
-                        consume(remoteId, kind, rtpCapabilities);
-                    } catch (error) {
-                        logVoice('Error consuming new producer', {
-                            error,
-                            remoteId,
-                            kind,
-                            channelId
-                        });
-                    }
+                    // consume handles and logs its own failures
+                    void consume(remoteId, kind, rtpCapabilities);
                 },
                 onError: (error) => {
                     logVoice('onVoiceNewProducer subscription error', {

@@ -3,7 +3,9 @@ import {
     fetchCrashState
 } from '@/features/server/crash/actions';
 import { subscribeToCrash } from '@/features/server/crash/subscriptions';
+import { getTrpcError } from '@caesar/shared';
 import { memo, useEffect } from 'react';
+import { toast } from 'sonner';
 import { BetControls } from './bet-controls';
 import { CountdownTimer } from './countdown-timer';
 import { MultiplierDisplay } from './multiplier-display';
@@ -12,8 +14,12 @@ import { RoundHistory } from './round-history';
 
 const CrashGameContent = memo(() => {
     useEffect(() => {
-        fetchCrashState();
-        fetchCrashHistory();
+        const onLoadError = (error: unknown) => {
+            toast.error(getTrpcError(error, 'Failed to load crash game'));
+        };
+
+        fetchCrashState().catch(onLoadError);
+        fetchCrashHistory().catch(onLoadError);
         const unsubscribe = subscribeToCrash();
         return unsubscribe;
     }, []);

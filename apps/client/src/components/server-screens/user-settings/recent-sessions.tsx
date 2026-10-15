@@ -40,7 +40,7 @@ const RecentSessions = memo(() => {
     useEffect(() => {
         const sub = getTRPCClient().users.onMyLogin.subscribe(undefined, {
             onData: () => {
-                queryClient.invalidateQueries({
+                void queryClient.invalidateQueries({
                     queryKey: ['users', 'getMySessions']
                 });
             }

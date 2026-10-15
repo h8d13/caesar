@@ -112,7 +112,7 @@ const UserControl = memo(() => {
                                     type="button"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        handleToggleAppearOffline();
+                                        void handleToggleAppearOffline();
                                     }}
                                     className="text-muted-foreground hover:text-foreground transition-colors"
                                 >

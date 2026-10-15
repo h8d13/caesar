@@ -28,22 +28,23 @@ const StoryViewerInner = memo(({ userId }: TInnerProps) => {
     const [index, setIndex] = useState(0);
     const [loading, setLoading] = useState(true);
 
-    const load = useCallback(async () => {
-        try {
-            const result = await getTRPCClient().users.getStatusImages.query({
-                userId
-            });
-            setImages(result);
-        } catch {
-            setImages([]);
-        } finally {
-            setLoading(false);
-        }
-    }, [userId]);
-
     useEffect(() => {
-        load();
-    }, [load]);
+        const load = async () => {
+            try {
+                const result =
+                    await getTRPCClient().users.getStatusImages.query({
+                        userId
+                    });
+                setImages(result);
+            } catch {
+                setImages([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        void load();
+    }, [userId]);
 
     const close = useCallback(() => closeStoryViewer(), []);
 

@@ -4,7 +4,7 @@ ARG CAESAR_BUILD_VERSION
 # trixie = Debian 13, same glibc as the cc-debian13 runtime below. mediasoup's
 # postinstall self-tests its prebuilt worker here; the kernel7 build (picked
 # on kernel 7 hosts) needs glibc >= 2.38 and fails on bookworm.
-FROM node:24.20.0-trixie-slim@sha256:50c3b2f6988dfc307b86e5301d69611af31f4789bdf232863b07d3b02fe55ae0 AS builder
+FROM node:26.11.1-trixie-slim@sha256:193fe51b64e77981119c98c2002c9e32a70e2f006fb4d25068ce0558998917f0 AS builder
 ARG CAESAR_BUILD_VERSION
 ENV CAESAR_BUILD_VERSION=${CAESAR_BUILD_VERSION}
 ENV PNPM_HOME=/pnpm
@@ -14,7 +14,8 @@ ENV PATH=$PNPM_HOME:$PATH
 # node_modules and re-download every build; copying from the cache is cheaper.
 ENV pnpm_config_store_dir=/pnpm/store
 
-RUN corepack enable
+# Node 25+ no longer bundles corepack; pnpm still comes from packageManager
+RUN npm install -g corepack@0.36.0 && corepack enable
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
@@ -61,11 +62,13 @@ RUN mkdir -p /out/app/static-prod-assets /out/home/node/.config/caesar \
     && cp -r /app/apps/client/dist /out/app/static-prod-assets/interface \
     && cp -r /app/apps/server/src/db/migrations /out/app/static-prod-assets/drizzle \
     && cp -r /deploy/server/node_modules /out/app/node_modules \
-    && cp /app/apps/server/dist/caesar /out/caesar
+    && cp /app/apps/server/dist/caesar /out/caesar \
+    && cp -a --parents /usr/lib/*-linux-gnu/libatomic.so.1* /out
 
 # --- Runtime stage ---
 # distroless "cc" = glibc + libstdc++ + libgcc: minimum for the Node SEA,
 # prebuilt mediasoup-worker and argon2 (all dynamic glibc). "static" has no libc.
+# Node 26 also links libatomic, which "cc" lacks: staged from the builder.
 FROM gcr.io/distroless/cc-debian13@sha256:a017e74bd2a12d98342dbecd33d121d2b160415ed777573dc1808969e989d94d
 
 # DATA_PATH = XDG_CONFIG_HOME/caesar; set HOME/XDG since uid 1000 has no passwd entry.
@@ -74,6 +77,7 @@ ENV CAESAR_ENV=production \
     XDG_CONFIG_HOME=/home/node/.config
 
 COPY --from=builder --chmod=755 /out/caesar /usr/local/bin/caesar
+COPY --from=builder /out/usr/lib /usr/lib
 
 # uid 1000 so the SEA can write /app/.caesar-runtime.mjs on boot.
 COPY --from=builder --chown=1000:1000 /out/app /app

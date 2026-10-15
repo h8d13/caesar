@@ -5,7 +5,7 @@ import {
   settings,
   users
 } from '@caesar/shared/db/schema';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vite-plus/test';
 import { tdb } from './setup';
 
 describe('tests setup', () => {

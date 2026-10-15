@@ -3,7 +3,7 @@
 // matter for links / mentions, not for which raw tags reach the DOM.
 
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, test, vi } from 'vite-plus/test';
 import { renderMessageContent } from '../render-content';
 
 vi.mock('@/components/hljs-theme', () => ({ ensureHljsTheme: () => {} }));

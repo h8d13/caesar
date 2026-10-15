@@ -17,7 +17,7 @@ const reposition = (component: ReactRenderer | null, clientRect: DOMRect) => {
     if (!component?.element) return;
     component.element.style.position = 'fixed';
     const virtual = { getBoundingClientRect: () => clientRect };
-    computePosition(virtual, component.element, {
+    void computePosition(virtual, component.element, {
         placement: 'top-start',
         strategy: 'fixed',
         middleware: [flip(), shift({ padding: 8 })]
