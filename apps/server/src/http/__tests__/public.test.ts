@@ -7,7 +7,7 @@ import {
 } from '@caesar/shared/db/schema';
 import { initTest, login, uploadFile } from '@server/__tests__/helpers';
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
-import { loadCrons } from '@server/crons';
+import { cleanupFiles } from '@server/crons/cleanup-files';
 import { generateFileToken } from '@server/helpers/files-crypto';
 import { PUBLIC_PATH } from '@server/helpers/paths';
 import { fileManager } from '@server/utils/file-manager';
@@ -296,10 +296,8 @@ describe('/public', () => {
       channelId: 1
     });
 
-    // load crons here, it will run the file cleanup cron job
-    loadCrons();
-
-    await new Promise((r) => setTimeout(r, 1000)); // wait a bit for cron to finish
+    // run the cron job directly: loadCrons() would leave live jobs in the fork
+    await cleanupFiles();
 
     const afterDbFile = await tdb
       .select()
