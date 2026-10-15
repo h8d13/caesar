@@ -119,26 +119,20 @@ type Events = {
   };
 
   [ServerEvents.WHITEBOARD_LAYER_ADD]: {
-    channelId: number;
     layerId: string;
     layer: Layer;
   };
   [ServerEvents.WHITEBOARD_LAYER_UPDATE]: {
-    channelId: number;
     layerId: string;
     layer: Partial<Layer>;
   };
   [ServerEvents.WHITEBOARD_LAYER_DELETE]: {
-    channelId: number;
     layerIds: string[];
   };
   [ServerEvents.WHITEBOARD_CURSOR_UPDATE]: {
-    channelId: number;
     cursor: WhiteboardCursor;
   };
-  [ServerEvents.WHITEBOARD_CLEAR]: {
-    channelId: number;
-  };
+  [ServerEvents.WHITEBOARD_CLEAR]: Record<string, never>;
 
   [ServerEvents.DM_CONVERSATION_OPEN]: { channelId: number };
   [ServerEvents.DM_EPHEMERAL_UPDATE]: {

@@ -2,7 +2,6 @@ import {
     MessageCompose,
     type TMessageComposeHandle
 } from '@/components/message-compose';
-import { ResizableSidebar } from '@/components/resizable-sidebar';
 import { useChannelById } from '@/features/server/channels/hooks';
 import {
     useChannelCan,
@@ -17,7 +16,6 @@ import { playSound } from '@/features/server/sounds/actions';
 import { SoundType } from '@/features/server/types';
 import { useOwnUserId, useUsers } from '@/features/server/users/hooks';
 import { handleBuiltInCommand } from '@/helpers/built-in-commands';
-import { LocalStorageKey } from '@/helpers/storage';
 import { throttle } from '@/helpers/throttle';
 import { dmKey, E2EE_LOCKED_MESSAGE, hasPriv, open, seal } from '@/lib/e2ee';
 import { getTRPCClient } from '@/lib/trpc';
@@ -43,14 +41,12 @@ import {
     setDraftMessage
 } from './use-draft-messages';
 import { useScrollController } from './use-scroll-controller';
-import { WhiteboardPanel } from './whiteboard/WhiteboardPanel';
 
 type TChannelProps = {
     channelId: number;
 };
 
 const TextChannel = memo(({ channelId }: TChannelProps) => {
-    const [whiteboardOpen, setWhiteboardOpen] = useState(false);
     const [replyingTo, setReplyingTo] = useState<TJoinedMessage | null>(null);
 
     const {
@@ -279,8 +275,6 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
             <TextTopbar
                 onScrollToMessage={scrollToMessage}
                 channelId={channelId}
-                whiteboardOpen={whiteboardOpen}
-                onToggleWhiteboard={() => setWhiteboardOpen((prev) => !prev)}
             />
 
             <div className="flex flex-1 min-h-0">
@@ -335,22 +329,6 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
                         users={mentionUsers}
                     />
                 </div>
-
-                {!channel?.isDm && (
-                    <ResizableSidebar
-                        storageKey={LocalStorageKey.WHITEBOARD_SIDEBAR_WIDTH}
-                        minWidth={300}
-                        maxWidth={900}
-                        defaultWidth={500}
-                        edge="left"
-                        isOpen={whiteboardOpen}
-                    >
-                        <WhiteboardPanel
-                            channelId={channelId}
-                            onClose={() => setWhiteboardOpen(false)}
-                        />
-                    </ResizableSidebar>
-                )}
             </div>
         </>
     );

@@ -7,8 +7,7 @@ import {
     Maximize,
     Minimize,
     Minus,
-    Plus,
-    X
+    Plus
 } from 'lucide-react';
 import getStroke from 'perfect-freehand';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
@@ -24,15 +23,10 @@ import {
     pointerEventToCanvasPoint
 } from './utils';
 
-type WhiteboardPanelProps = {
-    channelId: number;
-    onClose?: () => void;
-};
-
-const WhiteboardPanel = memo(({ channelId, onClose }: WhiteboardPanelProps) => {
+const WhiteboardPanel = memo(() => {
     const containerRef = useRef<HTMLDivElement>(null);
     const svgRef = useRef<SVGSVGElement>(null);
-    const wb = useWhiteboard(channelId, svgRef);
+    const wb = useWhiteboard(svgRef);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     // Fullscreen tracking
@@ -181,15 +175,6 @@ const WhiteboardPanel = memo(({ channelId, onClose }: WhiteboardPanelProps) => {
                             <Maximize size={16} />
                         )}
                     </button>
-                    {onClose && (
-                        <button
-                            className="p-1 rounded hover:bg-muted text-muted-foreground transition-colors"
-                            onClick={onClose}
-                            title="Close whiteboard"
-                        >
-                            <X size={16} />
-                        </button>
-                    )}
                 </div>
             </div>
 

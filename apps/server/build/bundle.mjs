@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 // Bundle the server into a single ESM file (dist/server.mjs).
-// Externals stay on disk as node_modules sidecars at runtime.
+// Externals stay on disk as node_modules sidecars at runtime, and they are
+// exactly package.json `dependencies`: everything else is bundled, so it is a
+// devDependency and `pnpm deploy --prod` ships only what runs from disk.
 // Everything that loads a .node binding or spawns a worker must be
 // external; bundled JS cant resolve runtime `require('@scope/native')`.
 //   - argon2: native bindings via node-gyp-build.
 //   - mediasoup: native worker binary (resolved from its package) + flatbuffers.
-//   - @libsql/client + libsql: native sqlite bindings under @libsql/*-*.
+//   - @libsql/client: native sqlite bindings under @libsql/*-* (via libsql).
 
 import { execSync } from 'node:child_process';
 import { build } from 'esbuild';
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir, readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -34,6 +36,10 @@ const buildVersion =
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+const { dependencies } = JSON.parse(
+  await readFile(path.join(serverDir, 'package.json'), 'utf8')
+);
+
 await rm(distDir, { recursive: true, force: true });
 await mkdir(distDir, { recursive: true });
 
@@ -52,7 +58,7 @@ await build({
   minify: isProduction,
   legalComments: 'none',
   logLevel: 'info',
-  external: ['argon2', 'mediasoup', '@libsql/client', 'libsql'],
+  external: Object.keys(dependencies),
   tsconfig: path.join(serverDir, 'tsconfig.json'),
   // Bake the build version into the bundle at compile time. esbuild leaves
   // `process.env.X` alone by default, so without this the runtime sees
