@@ -10,6 +10,7 @@ import {
     useCallback,
     useContext,
     useEffect,
+    useMemo,
     useRef,
     useState
 } from 'react';
@@ -85,6 +86,8 @@ const SoundboardPlayer = memo(() => {
     const { getVolume } = useMediaControl();
     const volume = getVolume('soundboard');
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    // read by the play listener so it subscribes once, not per render
+    const volumeRef = useRef(volume);
 
     // Listen for soundboard play events from the subscription
     useEffect(() => {
@@ -96,7 +99,7 @@ const SoundboardPlayer = memo(() => {
             }
 
             const audio = new Audio(url);
-            audio.volume = volume / 100;
+            audio.volume = volumeRef.current / 100;
             audioRef.current = audio;
 
             audio.addEventListener('ended', () => {
@@ -110,11 +113,12 @@ const SoundboardPlayer = memo(() => {
                 if (audioRef.current === audio) audioRef.current = null;
             });
         });
-    });
+    }, []);
 
     // Update volume on the active audio element reactively,
     // same pattern as use-media-refs: audioRef.current.volume = userVolume / 100
     useEffect(() => {
+        volumeRef.current = volume;
         if (audioRef.current) {
             audioRef.current.volume = volume / 100;
         }
@@ -220,21 +224,38 @@ const MediaControlProvider = memo(
             return `userscreenvideo-${userId}`;
         }, []);
 
+        // Memoized: the provider re-renders on every transport stats tick
+        // (MediaProvider owns that state) and a fresh object here would
+        // re-render every useMediaControl consumer once a second.
+        const value = useMemo(
+            () => ({
+                volumes,
+                getVolume,
+                setVolume,
+                toggleMute,
+                getUserVolumeKey,
+                getUserScreenVolumeKey,
+                isStreamHidden,
+                toggleStreamVisibility,
+                getUserVideoKey,
+                getUserScreenVideoKey
+            }),
+            [
+                volumes,
+                getVolume,
+                setVolume,
+                toggleMute,
+                getUserVolumeKey,
+                getUserScreenVolumeKey,
+                isStreamHidden,
+                toggleStreamVisibility,
+                getUserVideoKey,
+                getUserScreenVideoKey
+            ]
+        );
+
         return (
-            <MediaControlContext.Provider
-                value={{
-                    volumes,
-                    getVolume,
-                    setVolume,
-                    toggleMute,
-                    getUserVolumeKey,
-                    getUserScreenVolumeKey,
-                    isStreamHidden,
-                    toggleStreamVisibility,
-                    getUserVideoKey,
-                    getUserScreenVideoKey
-                }}
-            >
+            <MediaControlContext.Provider value={value}>
                 <SoundboardPlayer />
                 {children}
             </MediaControlContext.Provider>

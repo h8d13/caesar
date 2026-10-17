@@ -21,16 +21,11 @@ import { SoundboardPopover } from '../channel-view/voice/soundboard-popover';
 import { VoiceAudioStreams } from '../channel-view/voice/voice-audio-streams';
 import { StatsPopover } from './stats-popover';
 
-const VoiceControl = memo(() => {
-    const voiceChannelId = useCurrentVoiceChannelId();
-    const channelCan = useChannelCan(voiceChannelId);
-    const { ownVoiceState, toggleWebcam, toggleScreenShare, connectionStatus } =
-        useMedia();
+// Isolates the 1s transport stats tick: only this pill re-renders on it,
+// not the rest of the voice controls.
+const ConnectionStatus = memo(() => {
+    const { connectionStatus } = useMedia();
     const transportStats = useMediaStats();
-
-    const handleDisconnect = useCallback(() => {
-        void leaveVoice({ reason: 'user_disconnect_button' });
-    }, []);
 
     const connectionInfo = useMemo(() => {
         switch (connectionStatus) {
@@ -114,6 +109,29 @@ const VoiceControl = memo(() => {
         }
     }, [connectionStatus, transportStats]);
 
+    return (
+        <StatsPopover>
+            <div className="flex items-center px-2 py-1.5 gap-2 bg-secondary/50 cursor-pointer hover:bg-secondary/60 transition-colors">
+                {connectionInfo.icon}
+                <span
+                    className={cn('text-xs font-medium', connectionInfo.color)}
+                >
+                    {connectionInfo.text}
+                </span>
+            </div>
+        </StatsPopover>
+    );
+});
+
+const VoiceControl = memo(() => {
+    const voiceChannelId = useCurrentVoiceChannelId();
+    const channelCan = useChannelCan(voiceChannelId);
+    const { ownVoiceState, toggleWebcam, toggleScreenShare } = useMedia();
+
+    const handleDisconnect = useCallback(() => {
+        void leaveVoice({ reason: 'user_disconnect_button' });
+    }, []);
+
     if (!voiceChannelId) {
         return null;
     }
@@ -122,19 +140,7 @@ const VoiceControl = memo(() => {
         <>
             <VoiceAudioStreams channelId={voiceChannelId} />
             <div className="bg-secondary/30 border-t border-border">
-                <StatsPopover>
-                    <div className="flex items-center px-2 py-1.5 gap-2 bg-secondary/50 cursor-pointer hover:bg-secondary/60 transition-colors">
-                        {connectionInfo.icon}
-                        <span
-                            className={cn(
-                                'text-xs font-medium',
-                                connectionInfo.color
-                            )}
-                        >
-                            {connectionInfo.text}
-                        </span>
-                    </div>
-                </StatsPopover>
+                <ConnectionStatus />
 
                 <div className="flex items-center justify-between px-2 py-2">
                     <Button
