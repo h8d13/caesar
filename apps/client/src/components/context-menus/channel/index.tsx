@@ -51,7 +51,11 @@ const ChannelContextMenu = memo(
             openServerScreen(ServerScreen.CHANNEL_SETTINGS, { channelId });
         }, [channelId]);
 
-        if (!can(Permission.MANAGE_CHANNELS)) {
+        const canManageChannels = can(Permission.MANAGE_CHANNELS);
+
+        // channel settings also hold the permissions tab, which a user can
+        // manage without MANAGE_CHANNELS
+        if (!canManageChannels && !can(Permission.MANAGE_CHANNEL_PERMISSIONS)) {
             return <>{children}</>;
         }
 
@@ -64,12 +68,14 @@ const ChannelContextMenu = memo(
                     <ContextMenuItem onClick={onEditClick}>
                         Edit
                     </ContextMenuItem>
-                    <ContextMenuItem
-                        variant="destructive"
-                        onClick={onDeleteClick}
-                    >
-                        Delete
-                    </ContextMenuItem>
+                    {canManageChannels && (
+                        <ContextMenuItem
+                            variant="destructive"
+                            onClick={onDeleteClick}
+                        >
+                            Delete
+                        </ContextMenuItem>
+                    )}
                 </ContextMenuContent>
             </ContextMenu>
         );

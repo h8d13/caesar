@@ -1,5 +1,6 @@
 import { UserAvatar } from '@/components/user-avatar';
-import { useAdminRoles, useAdminUsers } from '@/features/server/admin/hooks';
+import { useRoles } from '@/features/server/roles/hooks';
+import { useUsers } from '@/features/server/users/hooks';
 import { OWNER_ROLE_ID } from '@caesar/shared';
 import {
     Button,
@@ -28,8 +29,10 @@ const SearchPopover = memo(
         const [searchQuery, setSearchQuery] = useState('');
         const [activeTab, setActiveTab] =
             useState<TChannelPermissionType>('role');
-        const { users } = useAdminUsers();
-        const { roles } = useAdminRoles();
+        // store lists, not the admin endpoints: those need MANAGE_USERS /
+        // MANAGE_ROLES, which a channel-permissions manager may lack
+        const users = useUsers();
+        const roles = useRoles();
 
         // Owner bypasses channel ACLs; overrides for it are no-ops.
         const filteredRoles = useMemo(
