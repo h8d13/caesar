@@ -4,6 +4,11 @@ export * from './storage';
 
 export const DEFAULT_MESSAGES_LIMIT = 50;
 
+// Sized for E2EE: ciphertext is base64 (~1.37x the HTML it encrypts).
+export const MESSAGE_MAX_LENGTH = 32_000;
+
+export const REACTION_EMOJI_MAX_LENGTH = 64;
+
 export const OWNER_ROLE_ID = 1;
 
 export const TYPING_MS = 300;

@@ -1,4 +1,8 @@
-import { ChannelPermission, Permission } from '@caesar/shared';
+import {
+  ChannelPermission,
+  MESSAGE_MAX_LENGTH,
+  Permission
+} from '@caesar/shared';
 import { messages, rolePermissions, settings } from '@caesar/shared/db/schema';
 import { initTest, uploadFile } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
@@ -369,6 +373,42 @@ describe('messages router', () => {
         messageId: 999999
       })
     ).rejects.toThrow('Message not found');
+  });
+
+  test('should reject messages over the max length', async () => {
+    const { caller } = await initTest();
+
+    await expect(
+      caller.messages.send({
+        channelId: 1,
+        content: 'a'.repeat(MESSAGE_MAX_LENGTH + 1),
+        files: []
+      })
+    ).rejects.toThrow();
+  });
+
+  test('should reject reactions that are not an emoji', async () => {
+    const { caller } = await initTest();
+
+    await caller.messages.send({ channelId: 1, content: 'react', files: [] });
+
+    const page = await caller.messages.get({
+      channelId: 1,
+      cursor: null,
+      limit: 50
+    });
+    const messageId = page.messages[0]!.id;
+
+    await expect(
+      caller.messages.toggleReaction({ messageId, emoji: 'not an emoji <b>' })
+    ).rejects.toThrow('Unknown emoji');
+
+    await expect(
+      caller.messages.toggleReaction({ messageId, emoji: 'x'.repeat(65) })
+    ).rejects.toThrow();
+
+    await caller.messages.toggleReaction({ messageId, emoji: 'thumbsup' });
+    await caller.messages.toggleReaction({ messageId, emoji: '👍🏽' });
   });
 
   test('should toggle reaction on message', async () => {

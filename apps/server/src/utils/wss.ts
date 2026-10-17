@@ -323,7 +323,10 @@ const createWsServer = async (server: http.Server) => {
     // capped a 200-user room at ~1.5s send p95 (85ms without).
     wss = new WebSocketServer({
       server,
-      perMessageDeflate: false
+      perMessageDeflate: false,
+      // ws defaults to 100 MiB per frame; uploads go over HTTP, the largest
+      // legit frame (a long whiteboard stroke) is well under this
+      maxPayload: 4 * 1024 * 1024
     });
 
     wss.on('connection', (incoming) => {

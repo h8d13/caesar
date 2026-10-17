@@ -1,4 +1,9 @@
-import { ChannelPermission, isEmptyMessage, Permission } from '@caesar/shared';
+import {
+  ChannelPermission,
+  isEmptyMessage,
+  MESSAGE_MAX_LENGTH,
+  Permission
+} from '@caesar/shared';
 import { messageFiles, messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
@@ -24,7 +29,7 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
 })
   .input(
     z.object({
-      content: z.string(),
+      content: z.string().max(MESSAGE_MAX_LENGTH),
       channelId: z.number(),
       files: z.array(z.string()).default([]),
       replyToMessageId: z.number().optional(),

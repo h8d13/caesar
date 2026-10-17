@@ -1,4 +1,4 @@
-import { Permission, isEmptyMessage } from '@caesar/shared';
+import { Permission, isEmptyMessage, MESSAGE_MAX_LENGTH } from '@caesar/shared';
 import { messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
@@ -19,7 +19,7 @@ const editMessageRoute = rateLimitedProcedure(protectedProcedure, {
   .input(
     z.object({
       messageId: z.number(),
-      content: z.string(),
+      content: z.string().max(MESSAGE_MAX_LENGTH),
       // mirrors send-message: ciphertext skips sanitize, and isEncrypted
       // must match the existing message's ephemeral state.
       isEncrypted: z.boolean().optional().default(false)
