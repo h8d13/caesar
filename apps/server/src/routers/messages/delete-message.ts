@@ -3,7 +3,7 @@ import { messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { removeFile } from '@server/db/mutations/files';
-import { publishMessage, publishReplyCount } from '@server/db/publishers';
+import { publishMessage } from '@server/db/publishers';
 import { getFilesByMessageId } from '@server/db/queries/files';
 import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
@@ -21,8 +21,7 @@ const deleteMessageRoute = rateLimitedProcedure(protectedProcedure, {
     const targetMessage = await db
       .select({
         userId: messages.userId,
-        channelId: messages.channelId,
-        parentMessageId: messages.parentMessageId
+        channelId: messages.channelId
       })
       .from(messages)
       .where(eq(messages.id, input.messageId))
@@ -58,13 +57,6 @@ const deleteMessageRoute = rateLimitedProcedure(protectedProcedure, {
     await db.delete(messages).where(eq(messages.id, input.messageId));
 
     void publishMessage(input.messageId, targetMessage.channelId, 'delete');
-
-    if (targetMessage.parentMessageId) {
-      void publishReplyCount(
-        targetMessage.parentMessageId,
-        targetMessage.channelId
-      );
-    }
   });
 
 export { deleteMessageRoute };

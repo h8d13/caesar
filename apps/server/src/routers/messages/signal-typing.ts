@@ -12,8 +12,7 @@ const signalTypingRoute = rateLimitedProcedure(protectedProcedure, {
 })
   .input(
     z.object({
-      channelId: z.number(),
-      parentMessageId: z.number().optional()
+      channelId: z.number()
     })
   )
   .mutation(async ({ input, ctx }) => {
@@ -35,8 +34,7 @@ const signalTypingRoute = rateLimitedProcedure(protectedProcedure, {
 
     ctx.pubsub.publishFor(affectedUserIds, ServerEvents.MESSAGE_TYPING, {
       channelId: input.channelId,
-      userId: ctx.userId,
-      parentMessageId: input.parentMessageId
+      userId: ctx.userId
     });
   });
 

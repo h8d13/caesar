@@ -5,14 +5,9 @@ import { ModViewSheet } from '@/components/mod-view-sheet';
 import { Protect } from '@/components/protect';
 import { RightSidebar } from '@/components/right-sidebar';
 import { StoryViewer } from '@/components/story-viewer';
-import { ThreadSidebar } from '@/components/thread-sidebar';
 import { TopBar } from '@/components/top-bar';
 import { setDmsOpen } from '@/features/app/actions';
-import {
-    useDmsOpen,
-    useSelectedDmChannelId,
-    useThreadSidebar
-} from '@/features/app/hooks';
+import { useDmsOpen, useSelectedDmChannelId } from '@/features/app/hooks';
 import { setSelectedChannelId } from '@/features/server/channels/actions';
 import { useCan, usePublicServerSettings } from '@/features/server/hooks';
 import { getLocalStorageItemBool, LocalStorageKey } from '@/helpers/storage';
@@ -41,7 +36,6 @@ const ServerView = memo(() => {
     const can = useCan();
     const canUseDms = can(Permission.USE_DMS);
     const previousServerChannelIdRef = useRef<number | undefined>(undefined);
-    const { isOpen: isThreadSidebarOpen } = useThreadSidebar();
     const isLgUp = useIsLgUp();
 
     useBirthdayToasts();
@@ -164,8 +158,6 @@ const ServerView = memo(() => {
                         isDmMode={dmsOpen}
                         selectedDmChannelId={selectedDmChannelId}
                     />
-
-                    <ThreadSidebar isOpen={isThreadSidebarOpen} />
 
                     <RightSidebar
                         className={cn(

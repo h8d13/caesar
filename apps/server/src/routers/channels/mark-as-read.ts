@@ -8,7 +8,7 @@ import {
 } from '@server/db/queries/dms';
 import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
-import { and, desc, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 const markAsReadRoute = rateLimitedProcedure(protectedProcedure, {
@@ -26,16 +26,13 @@ const markAsReadRoute = rateLimitedProcedure(protectedProcedure, {
 
     const { channelId } = input;
 
-    // get the newest root message in the channel (excluding thread replies).
-    // ordered by id, not createdAt: the unread count compares ids, so a
+    // get the newest message in the channel. ordered by id, not createdAt: the unread count compares ids, so a
     // same-millisecond tie resolved the other way would leave the newest
     // message counted as unread.
     const newestMessage: TMessage | undefined = await db
       .select()
       .from(messages)
-      .where(
-        and(eq(messages.channelId, channelId), isNull(messages.parentMessageId))
-      )
+      .where(eq(messages.channelId, channelId))
       .orderBy(desc(messages.id))
       .limit(1)
       .get();

@@ -8,13 +8,11 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { toast } from 'sonner';
-import { addMessages, addThreadMessages, clearThreadMessages } from './actions';
+import { addMessages } from './actions';
 import { lockAutoScroll } from './scroll-lock';
 import {
-    latestOwnRootMessageIdSelector,
-    messagesByChannelIdSelector,
-    parentMessageByIdSelector,
-    threadMessagesByParentIdSelector
+    latestOwnMessageIdSelector,
+    messagesByChannelIdSelector
 } from './selectors';
 
 export const useMessagesByChannelId = (channelId: number) =>
@@ -22,9 +20,9 @@ export const useMessagesByChannelId = (channelId: number) =>
         messagesByChannelIdSelector(state, channelId)
     );
 
-export const useLatestOwnRootMessageId = (channelId: number) =>
+export const useLatestOwnMessageId = (channelId: number) =>
     useSelector((state: IRootState) =>
-        latestOwnRootMessageIdSelector(state, channelId)
+        latestOwnMessageIdSelector(state, channelId)
     );
 
 const useGroupedMessages = (messages: TJoinedMessage[]) =>
@@ -143,15 +141,10 @@ const waitForMessageElement = (
 
 const usePaginatedMessages = (
     messages: TJoinedMessage[],
-    fetchPage: TFetchPage,
-    options?: { initialLoading?: boolean; failureMessage?: string }
+    fetchPage: TFetchPage
 ) => {
-    const failureMessage = options?.failureMessage ?? 'Failed to load messages';
-
     const [fetching, setFetching] = useState(false);
-    const [loading, setLoading] = useState(
-        options?.initialLoading ?? messages.length === 0
-    );
+    const [loading, setLoading] = useState(messages.length === 0);
     const [cursor, setCursor] = useState<number | null>(null);
     const [hasMore, setHasMore] = useState(true);
 
@@ -165,13 +158,13 @@ const usePaginatedMessages = (
                 setCursor(nextCursor);
                 setHasMore(nextCursor !== null);
             } catch (error) {
-                toast.error(getTrpcError(error, failureMessage));
+                toast.error(getTrpcError(error, 'Failed to load messages'));
             } finally {
                 setFetching(false);
                 setLoading(false);
             }
         },
-        [fetchPage, failureMessage]
+        [fetchPage]
     );
 
     const loadMore = useCallback(async () => {
@@ -187,12 +180,6 @@ const usePaginatedMessages = (
 
     const groupedMessages = useGroupedMessages(messages);
 
-    const reset = useCallback(() => {
-        setCursor(null);
-        setHasMore(true);
-        setLoading(true);
-    }, []);
-
     return {
         fetching,
         loading,
@@ -202,8 +189,7 @@ const usePaginatedMessages = (
         cursor,
         groupedMessages,
         isEmpty,
-        fetchMessages,
-        reset
+        fetchMessages
     };
 };
 
@@ -285,54 +271,3 @@ export const useMessages = (channelId: number) => {
 
     return { ...paginated, scrollToMessage };
 };
-
-export const useThreadMessagesByParentId = (parentMessageId: number) =>
-    useSelector((state: IRootState) =>
-        threadMessagesByParentIdSelector(state, parentMessageId)
-    );
-
-export const useThreadMessages = (parentMessageId: number) => {
-    const messages = useThreadMessagesByParentId(parentMessageId);
-
-    const fetchPage = useCallback(
-        async (cursorToFetch: number | null) => {
-            const trpcClient = getTRPCClient();
-
-            const { messages: page, nextCursor } =
-                await trpcClient.messages.getThread.query({
-                    parentMessageId,
-                    cursor: cursorToFetch,
-                    limit: DEFAULT_MESSAGES_LIMIT
-                });
-
-            addThreadMessages(parentMessageId, page);
-
-            return { nextCursor };
-        },
-        [parentMessageId]
-    );
-
-    const paginated = usePaginatedMessages(messages, fetchPage, {
-        initialLoading: true,
-        failureMessage: 'Failed to load thread'
-    });
-
-    // fetch fresh data every time the thread is opened
-    useEffect(() => {
-        clearThreadMessages(parentMessageId);
-        paginated.reset();
-        void paginated.fetchMessages(null);
-    }, [parentMessageId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    return paginated;
-};
-
-export const useParentMessage = (
-    messageId: number | undefined,
-    channelId: number | undefined
-) =>
-    useSelector((state: IRootState) =>
-        messageId && channelId
-            ? parentMessageByIdSelector(state, messageId, channelId)
-            : undefined
-    );

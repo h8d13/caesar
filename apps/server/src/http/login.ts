@@ -13,7 +13,7 @@ import {
   userRoles,
   users
 } from '@caesar/shared/db/schema';
-import { count, isNull, max } from 'drizzle-orm';
+import { count, max } from 'drizzle-orm';
 import http from 'http';
 import jwt from 'jsonwebtoken';
 import z from 'zod';
@@ -291,7 +291,6 @@ const loginRouteHandler = async (
         latestMessageId: max(messages.id)
       })
       .from(messages)
-      .where(isNull(messages.parentMessageId))
       .groupBy(messages.channelId);
 
     const readStateValues = latestMessagePerChannel

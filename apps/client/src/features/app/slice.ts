@@ -12,9 +12,6 @@ export interface TAppState {
     devices: TDevices | undefined;
     modViewOpen: boolean;
     modViewUserId: number | undefined;
-    threadSidebarOpen: boolean;
-    threadParentMessageId: number | undefined;
-    threadChannelId: number | undefined;
     dmsOpen: boolean;
     selectedDmChannelId: number | undefined;
     // userId whose stories the fullscreen viewer is showing; undefined = closed
@@ -32,9 +29,6 @@ const initialState: TAppState = {
     devices: undefined,
     modViewOpen: false,
     modViewUserId: undefined,
-    threadSidebarOpen: false,
-    threadParentMessageId: undefined,
-    threadChannelId: undefined,
     dmsOpen: false,
     selectedDmChannelId: undefined,
     storyViewerUserId: undefined,
@@ -71,18 +65,6 @@ export const appSlice = createSlice({
         ) => {
             state.modViewOpen = action.payload.modViewOpen;
             state.modViewUserId = action.payload.userId;
-        },
-        setThreadSidebarOpen: (
-            state,
-            action: PayloadAction<{
-                open: boolean;
-                parentMessageId?: number;
-                channelId?: number;
-            }>
-        ) => {
-            state.threadSidebarOpen = action.payload.open;
-            state.threadParentMessageId = action.payload.parentMessageId;
-            state.threadChannelId = action.payload.channelId;
         },
         setIsAutoConnecting: (state, action: PayloadAction<boolean>) => {
             state.isAutoConnecting = action.payload;

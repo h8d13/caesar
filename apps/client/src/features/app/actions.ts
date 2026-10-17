@@ -52,36 +52,11 @@ export const setModViewOpen = (isOpen: boolean, userId?: number) =>
         })
     );
 
-export const openThreadSidebar = (parentMessageId: number, channelId: number) =>
-    store.dispatch(
-        appSliceActions.setThreadSidebarOpen({
-            open: true,
-            parentMessageId,
-            channelId
-        })
-    );
-
-export const closeThreadSidebar = () =>
-    store.dispatch(
-        appSliceActions.setThreadSidebarOpen({
-            open: false,
-            parentMessageId: undefined,
-            channelId: undefined
-        })
-    );
-
 export const resetApp = () => {
     store.dispatch(
         appSliceActions.setModViewOpen({
             modViewOpen: false,
             userId: undefined
-        })
-    );
-    store.dispatch(
-        appSliceActions.setThreadSidebarOpen({
-            open: false,
-            parentMessageId: undefined,
-            channelId: undefined
         })
     );
     store.dispatch(appSliceActions.setStoryViewerUserId(undefined));

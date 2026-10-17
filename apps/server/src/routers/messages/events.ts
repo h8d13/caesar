@@ -23,19 +23,9 @@ const onMessageTypingRoute = protectedProcedure.subscription(
   }
 );
 
-const onThreadReplyCountUpdateRoute = protectedProcedure.subscription(
-  async ({ ctx }) => {
-    return ctx.pubsub.subscribeFor(
-      ctx.userId,
-      ServerEvents.THREAD_REPLY_COUNT_UPDATE
-    );
-  }
-);
-
 export {
   onMessageDeleteRoute,
   onMessageRoute,
   onMessageTypingRoute,
-  onMessageUpdateRoute,
-  onThreadReplyCountUpdateRoute
+  onMessageUpdateRoute
 };

@@ -12,7 +12,7 @@ import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { pubsub } from '@server/utils/pubsub';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
-import { and, desc, eq, gte, isNull, lt } from 'drizzle-orm';
+import { and, desc, eq, gte, lt } from 'drizzle-orm';
 import { z } from 'zod';
 
 const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
@@ -46,10 +46,7 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
       message: 'Channel not found'
     });
 
-    const baseWhere = and(
-      eq(messages.channelId, channelId),
-      isNull(messages.parentMessageId)
-    );
+    const baseWhere = eq(messages.channelId, channelId);
 
     let rows: TJoinedMessage[];
     let nextCursor: number | null = null;
@@ -59,8 +56,7 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
       const targetMessage = await db
         .select({
           id: messages.id,
-          createdAt: messages.createdAt,
-          parentMessageId: messages.parentMessageId
+          createdAt: messages.createdAt
         })
         .from(messages)
         .where(
@@ -76,24 +72,17 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
         message: 'Target message not found'
       });
 
-      invariant(!targetMessage.parentMessageId, {
-        code: 'BAD_REQUEST',
-        message: 'Target message must be a root message'
-      });
-
       // fetch everything from newest down to the target, plus 20 older messages
       // for context around the target
       const olderMessages = await getJoinedMessages(channel, {
         where: and(baseWhere, lt(messages.createdAt, targetMessage.createdAt)),
         orderBy: desc(messages.createdAt),
-        limit: 20,
-        withReplyCount: true
+        limit: 20
       });
 
       const newerMessages = await getJoinedMessages(channel, {
         where: and(baseWhere, gte(messages.createdAt, targetMessage.createdAt)),
-        orderBy: desc(messages.createdAt),
-        withReplyCount: true
+        orderBy: desc(messages.createdAt)
       });
 
       rows = [...newerMessages, ...olderMessages];
@@ -104,8 +93,7 @@ const getMessagesRoute = rateLimitedProcedure(protectedProcedure, {
           ? and(baseWhere, lt(messages.createdAt, cursor))
           : baseWhere,
         orderBy: desc(messages.createdAt),
-        limit: limit + 1,
-        withReplyCount: true
+        limit: limit + 1
       });
 
       if (rows.length > limit) {

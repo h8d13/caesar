@@ -2,7 +2,7 @@ import { ChannelPermission, isEmptyMessage, Permission } from '@caesar/shared';
 import { messageFiles, messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
-import { publishMessage, publishReplyCount } from '@server/db/publishers';
+import { publishMessage } from '@server/db/publishers';
 import {
   assertDmChannel,
   getDmEphemeralMs,
@@ -27,7 +27,6 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
       content: z.string(),
       channelId: z.number(),
       files: z.array(z.string()).default([]),
-      parentMessageId: z.number().optional(),
       replyToMessageId: z.number().optional(),
       // E2EE marker. true => content is base64 AES-GCM ciphertext, MUST
       // skip HTML sanitization, and channel MUST currently be ephemeral.
@@ -42,35 +41,6 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
         ChannelPermission.SEND_MESSAGES
       )
     ]);
-
-    if (input.parentMessageId) {
-      const parentMessage = await db
-        .select({
-          id: messages.id,
-          channelId: messages.channelId,
-          parentMessageId: messages.parentMessageId
-        })
-        .from(messages)
-        .where(eq(messages.id, input.parentMessageId))
-        .limit(1)
-        .get();
-
-      invariant(parentMessage, {
-        code: 'NOT_FOUND',
-        message: 'Parent message not found.'
-      });
-
-      invariant(parentMessage.channelId === input.channelId, {
-        code: 'BAD_REQUEST',
-        message: 'Parent message must be in the same channel.'
-      });
-
-      invariant(!parentMessage.parentMessageId, {
-        code: 'BAD_REQUEST',
-        message:
-          'Cannot reply to a thread reply. Threads are only one level deep.'
-      });
-    }
 
     if (input.replyToMessageId) {
       const replyToMessage = await db
@@ -167,7 +137,6 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
         channelId: input.channelId,
         userId: ctx.userId,
         content: targetContent,
-        parentMessageId: input.parentMessageId ?? null,
         replyToMessageId: input.replyToMessageId ?? null,
         expiresAt: ephemeralMs ? now + ephemeralMs : null,
         createdAt: now
@@ -188,10 +157,6 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
     }
 
     void publishMessage(message.id, input.channelId, 'create');
-
-    if (input.parentMessageId) {
-      void publishReplyCount(input.parentMessageId, input.channelId);
-    }
 
     enqueueProcessMetadata(targetContent, message.id);
 

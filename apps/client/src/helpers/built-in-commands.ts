@@ -17,7 +17,6 @@ const createLocalMessage = (
         content,
         userId,
         channelId,
-        parentMessageId: null,
         editable: false,
         metadata: null,
         expiresAt: null,

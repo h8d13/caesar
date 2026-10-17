@@ -10,8 +10,7 @@ import {
     modViewOpenSelector,
     modViewUserIdSelector,
     selectedDmChannelIdSelector,
-    storyViewerUserIdSelector,
-    threadSidebarDataSelector
+    storyViewerUserIdSelector
 } from './selectors';
 
 export const useIsAppLoading = () => useSelector(appLoadingSelector);
@@ -24,8 +23,6 @@ export const useModViewOpen = () => {
 
     return useMemo(() => ({ isOpen, userId }), [isOpen, userId]);
 };
-
-export const useThreadSidebar = () => useSelector(threadSidebarDataSelector);
 
 export const useStoryViewerUserId = () =>
     useSelector(storyViewerUserIdSelector);

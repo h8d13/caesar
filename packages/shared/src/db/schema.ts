@@ -285,7 +285,6 @@ const messages = sqliteTable(
     channelId: integer('channel_id')
       .notNull()
       .references(() => channels.id, { onDelete: 'cascade' }),
-    parentMessageId: integer('parent_message_id'),
     replyToMessageId: integer('reply_to_message_id'),
     editable: integer('editable', { mode: 'boolean' }).default(true),
     metadata: text('metadata', { mode: 'json' }).$type<TMessageMetadata[]>(),
@@ -307,7 +306,6 @@ const messages = sqliteTable(
     index('messages_channel_idx').on(t.channelId),
     index('messages_created_idx').on(t.createdAt),
     index('messages_channel_created_idx').on(t.channelId, t.createdAt),
-    index('messages_parent_idx').on(t.parentMessageId),
     index('messages_reply_to_idx').on(t.replyToMessageId)
   ]
 );
