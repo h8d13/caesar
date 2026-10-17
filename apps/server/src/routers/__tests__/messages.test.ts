@@ -375,6 +375,30 @@ describe('messages router', () => {
     ).rejects.toThrow('Message not found');
   });
 
+  test('should not store a message when one of its files fails', async () => {
+    const { caller, mockedToken } = await initTest();
+
+    const response = await uploadFile(
+      new File(['ok'], 'ok.txt', { type: 'text/plain' }),
+      mockedToken
+    );
+    const { id: goodFileId } = (await response.json()) as { id: string };
+
+    const before = await tdb.select().from(messages);
+
+    await expect(
+      caller.messages.send({
+        channelId: 1,
+        content: 'with files',
+        files: [goodFileId, 'missing-temp-file']
+      })
+    ).rejects.toThrow();
+
+    const after = await tdb.select().from(messages);
+
+    expect(after).toHaveLength(before.length);
+  });
+
   test('should reject messages over the max length', async () => {
     const { caller } = await initTest();
 

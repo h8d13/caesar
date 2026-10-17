@@ -2,7 +2,8 @@ import {
   ChannelPermission,
   isEmptyMessage,
   MESSAGE_MAX_LENGTH,
-  Permission
+  Permission,
+  type TFile
 } from '@caesar/shared';
 import { messageFiles, messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
@@ -136,6 +137,17 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
         'Your message only contained unsupported or removed content, so there was nothing to send.'
     });
 
+    // save files before the message exists: saveFile throws (expired temp
+    // file, quota), and a failure mid-way used to leave a stored but never
+    // published message. Files saved before a failure are swept as orphans.
+    // (No transaction: they only serialize against each other, and this hot
+    // path would contend with plain writes like the metadata queue.)
+    const savedFiles: TFile[] = [];
+
+    for (const tempFileId of limitedFiles) {
+      savedFiles.push(await fileManager.saveFile(tempFileId, ctx.userId));
+    }
+
     const message = await db
       .insert(messages)
       .values({
@@ -149,16 +161,14 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
       .returning()
       .get();
 
-    if (limitedFiles.length > 0) {
-      for (const tempFileId of limitedFiles) {
-        const newFile = await fileManager.saveFile(tempFileId, ctx.userId);
-
-        await db.insert(messageFiles).values({
+    if (savedFiles.length > 0) {
+      await db.insert(messageFiles).values(
+        savedFiles.map((file) => ({
           messageId: message.id,
-          fileId: newFile.id,
+          fileId: file.id,
           createdAt: Date.now()
-        });
-      }
+        }))
+      );
     }
 
     void publishMessage(message.id, input.channelId, 'create');
