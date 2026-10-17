@@ -174,7 +174,6 @@ type TAggregatedReaction = {
     count: number;
     userIds: number[];
     isUserReacted: boolean;
-    createdAt: number;
     file: TFile | null;
 };
 
@@ -212,7 +211,6 @@ const MessageReactions = memo(
                         count: 0,
                         userIds: [],
                         isUserReacted: false,
-                        createdAt: reaction.createdAt,
                         file: reaction.file
                     });
                 }
@@ -227,10 +225,8 @@ const MessageReactions = memo(
                 }
             });
 
-            // sort by first reaction createdAt desc
-            return Array.from(reactionMap.values()).sort(
-                (a, b) => b.createdAt + a.createdAt
-            );
+            // first-appearance order: pills stay put as reactions are added
+            return Array.from(reactionMap.values());
         }, [reactions, ownUserId]);
 
         if (!aggregatedReactions.length) return null;
