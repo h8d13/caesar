@@ -1,4 +1,6 @@
+import { ChannelType } from '@caesar/shared';
 import { initTest } from '@server/__tests__/helpers';
+import { VoiceRuntime } from '@server/runtimes/voice';
 import { loadMediasoup } from '@server/utils/mediasoup';
 import { beforeAll, describe, expect, test } from 'vite-plus/test';
 
@@ -40,5 +42,30 @@ d('voice router', () => {
         }
       })
     ).rejects.toThrow('Too many requests. Please try again shortly.');
+  });
+
+  test('re-creating a producer transport closes the old one and keeps the new', async () => {
+    const { caller } = await initTest(1);
+
+    const channelId = await caller.channels.add({
+      type: ChannelType.VOICE,
+      name: 'voice-transports',
+      categoryId: 1
+    });
+
+    const runtime = VoiceRuntime.findById(channelId)!;
+
+    await runtime.createProducerTransport(1);
+    const first = runtime.getProducerTransport(1)!;
+
+    await runtime.createProducerTransport(1);
+    const second = runtime.getProducerTransport(1)!;
+
+    expect(first.closed).toBe(true);
+    expect(second.closed).toBe(false);
+    expect(second).not.toBe(first);
+
+    second.close();
+    expect(runtime.getProducerTransport(1)).toBeUndefined();
   });
 });

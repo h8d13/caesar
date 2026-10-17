@@ -423,12 +423,18 @@ class VoiceRuntime {
     return pipePromise;
   };
 
+  // Re-creating a transport, producer or consumer replaces the old one: close
+  // it first (else it leaks a port and memory), and close handlers only clear
+  // their own entry so a late close of the old one can't drop the new one.
   public createConsumerTransport = async (userId: number) => {
     const { transport, params } = await this.createTransport(userId);
 
+    this.removeConsumerTransport(userId);
     this.consumerTransports[userId] = transport;
 
     transport.observer.on('close', () => {
+      if (this.consumerTransports[userId] !== transport) return;
+
       delete this.consumerTransports[userId];
 
       if (this.consumers[userId]) {
@@ -464,9 +470,12 @@ class VoiceRuntime {
   public createProducerTransport = async (userId: number) => {
     const { params, transport } = await this.createTransport(userId);
 
+    this.removeProducerTransport(userId);
     this.producerTransports[userId] = transport;
 
     transport.observer.on('close', () => {
+      if (this.producerTransports[userId] !== transport) return;
+
       delete this.producerTransports[userId];
 
       this.removeProducer(userId, StreamKind.AUDIO);
@@ -521,6 +530,8 @@ class VoiceRuntime {
     (producer.appData as AppData & { workerIndex?: number }).workerIndex =
       this.getWorkerIndexForUser(userId);
 
+    this.removeProducer(userId, type);
+
     if (type === StreamKind.VIDEO) {
       this.videoProducers[userId] = producer;
     } else if (type === StreamKind.AUDIO) {
@@ -541,6 +552,7 @@ class VoiceRuntime {
 
     producer.observer.on('close', () => {
       this.producerQualityLayers.delete(producer.id);
+      if (this.getProducer(type, userId) !== producer) return;
       if (type === StreamKind.VIDEO) {
         delete this.videoProducers[userId];
       } else if (type === StreamKind.AUDIO) {
@@ -616,10 +628,13 @@ class VoiceRuntime {
     }
 
     const key = `${remoteId}-${kind}`;
+    this.consumers[userId][key]?.close();
     this.consumers[userId][key] = consumer;
 
     consumer.observer.on('close', () => {
-      delete this.consumers[userId]?.[key];
+      if (this.consumers[userId]?.[key] !== consumer) return;
+
+      delete this.consumers[userId][key];
     });
   };
 
