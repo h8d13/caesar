@@ -147,11 +147,7 @@ const UserControl = memo(() => {
                             : 'text-muted-foreground hover:text-foreground'
                     )}
                     onClick={toggleMic}
-                    title={
-                        ownVoiceState.micMuted
-                            ? 'Unmute microphone'
-                            : 'Mute microphone'
-                    }
+                    title={ownVoiceState.micMuted ? 'Unmute (M)' : 'Mute (M)'}
                     disabled={!channelCan(ChannelPermission.SPEAK)}
                 >
                     {ownVoiceState.micMuted ? (
@@ -171,7 +167,9 @@ const UserControl = memo(() => {
                             : 'text-muted-foreground hover:text-foreground'
                     )}
                     onClick={toggleSound}
-                    title={ownVoiceState.soundMuted ? 'Undeafen' : 'Deafen'}
+                    title={
+                        ownVoiceState.soundMuted ? 'Undeafen (D)' : 'Deafen (D)'
+                    }
                 >
                     {ownVoiceState.soundMuted ? (
                         <HeadphoneOff className="h-4 w-4" />
