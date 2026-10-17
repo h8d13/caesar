@@ -5,13 +5,11 @@ import {
   onMessageDeleteRoute,
   onMessageRoute,
   onMessageTypingRoute,
-  onMessageUpdateRoute,
-  onThreadReplyCountUpdateRoute
+  onMessageUpdateRoute
 } from './events';
 import { getMessageRoute } from './get-message';
 import { getMessagesRoute } from './get-messages';
 import { getPinnedRoute } from './get-pinned';
-import { getThreadMessagesRoute } from './get-thread-messages';
 import { searchMessagesRoute } from './search-messages';
 import { sendMessageRoute } from './send-message';
 import { signalTypingRoute } from './signal-typing';
@@ -27,7 +25,6 @@ export const messagesRouter = t.router({
   get: getMessagesRoute,
   getPinned: getPinnedRoute,
   getOne: getMessageRoute,
-  getThread: getThreadMessagesRoute,
   toggleReaction: toggleMessageReactionRoute,
   toggleScVote: toggleMessageScVoteRoute,
   togglePin: toggleMessagePinRoute,
@@ -35,6 +32,5 @@ export const messagesRouter = t.router({
   onNew: onMessageRoute,
   onUpdate: onMessageUpdateRoute,
   onDelete: onMessageDeleteRoute,
-  onTyping: onMessageTypingRoute,
-  onThreadReplyCountUpdate: onThreadReplyCountUpdateRoute
+  onTyping: onMessageTypingRoute
 });

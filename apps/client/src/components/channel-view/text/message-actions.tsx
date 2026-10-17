@@ -5,21 +5,12 @@ import {
     shouldUseFallbackImage,
     type TEmojiItem
 } from '@/components/tiptap-input/helpers';
-import { openThreadSidebar } from '@/features/app/actions';
 import { requestConfirmation } from '@/features/dialogs/actions';
 import { deleteMessage } from '@/features/server/messages/actions';
 import { getTRPCClient } from '@/lib/trpc';
 import { Permission } from '@caesar/shared';
 import { IconButton } from '@caesar/ui';
-import {
-    MessageSquareText,
-    Pencil,
-    Pin,
-    PinOff,
-    Reply,
-    Smile,
-    Trash
-} from 'lucide-react';
+import { Pencil, Pin, PinOff, Reply, Smile, Trash } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 
@@ -32,10 +23,8 @@ type TMessageActionsProps = {
     onReply?: () => void;
     canManage: boolean;
     editable: boolean;
-    isThreadReply?: boolean;
     isPinned?: boolean;
     disablePin?: boolean;
-    disableThreads?: boolean;
 };
 
 const MessageActions = memo(
@@ -46,10 +35,8 @@ const MessageActions = memo(
         channelId,
         canManage,
         editable,
-        isThreadReply,
         isPinned,
-        disablePin,
-        disableThreads
+        disablePin
     }: TMessageActionsProps) => {
         const { recentEmojis } = useRecentEmojis();
         const recentEmojisToShow = useMemo(
@@ -103,10 +90,6 @@ const MessageActions = memo(
             [messageId]
         );
 
-        const onReplyClick = useCallback(() => {
-            openThreadSidebar(messageId, channelId);
-        }, [messageId, channelId]);
-
         const onPinClick = useCallback(async () => {
             const trpc = getTRPCClient();
 
@@ -123,22 +106,13 @@ const MessageActions = memo(
 
         return (
             <div className="gap-1 absolute right-0 -top-6 z-10 hidden group-hover:flex [&:has([data-state=open])]:flex items-center space-x-1 rounded-lg shadow-lg border border-border p-2 transition-all bg-background">
-                {!isThreadReply && onReply && (
+                {onReply && (
                     <IconButton
                         size="sm"
                         variant="ghost"
                         icon={Reply}
                         onClick={onReply}
                         title="Reply"
-                    />
-                )}
-                {!isThreadReply && !disableThreads && (
-                    <IconButton
-                        size="sm"
-                        variant="ghost"
-                        icon={MessageSquareText}
-                        onClick={onReplyClick}
-                        title="Reply in Thread"
                     />
                 )}
                 {canManage && (

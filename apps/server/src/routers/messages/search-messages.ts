@@ -4,7 +4,7 @@ import { config } from '@server/config';
 import { db } from '@server/db';
 import { getChannelsForUser } from '@server/db/queries/channels';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
-import { and, desc, inArray, isNull, sql } from 'drizzle-orm';
+import { and, desc, inArray, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 const GLOB_SPECIAL_CHARS = new Set(['*', '?', '[']);
@@ -90,8 +90,7 @@ const searchMessagesRoute = rateLimitedProcedure(protectedProcedure, {
       .where(
         and(
           inArray(messages.channelId, accessibleIds),
-          sql`${messages.content} GLOB ${buildCaseInsensitiveGlob(query)}`,
-          isNull(messages.parentMessageId)
+          sql`${messages.content} GLOB ${buildCaseInsensitiveGlob(query)}`
         )
       )
       .orderBy(desc(messages.createdAt))

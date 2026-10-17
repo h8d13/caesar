@@ -204,6 +204,13 @@
       "when": 1792026000000,
       "tag": "0028_drop_owner_invites",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "6",
+      "when": 1792029600000,
+      "tag": "0029_drop_threads",
+      "breakpoints": true
     }
   ]
 }

@@ -31,10 +31,6 @@ export type TMessagesMap = {
     [channelId: number]: TJoinedMessage[];
 };
 
-export type TThreadMessagesMap = {
-    [parentMessageId: number]: TJoinedMessage[];
-};
-
 export type TDisconnectInfo = {
     code: number;
     reason: string;

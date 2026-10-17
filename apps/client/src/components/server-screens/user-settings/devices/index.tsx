@@ -55,7 +55,6 @@ import { useAvailableDevices } from './hooks/use-available-devices';
 import { useMicrophoneTest } from './hooks/use-microphone-test';
 import { useWebcamTest } from './hooks/use-webcam-test';
 import { MicrophoneTestLevelBar } from './microphone-test-level-bar';
-import PushToTalkKeyPicker from './push-to-talk-key-picker';
 import ResolutionFpsControl from './resolution-fps-control';
 
 const DEFAULT_NAME = 'default';
@@ -302,30 +301,6 @@ const Devices = memo(() => {
                                     />
                                 </Group>
                             </div>
-
-                            <Group
-                                label="Push to talk"
-                                description="Only transmit while the bound key is held down."
-                            >
-                                <div className="flex items-center gap-3">
-                                    <Switch
-                                        checked={!!values.pushToTalkEnabled}
-                                        onCheckedChange={(checked) =>
-                                            onChange(
-                                                'pushToTalkEnabled',
-                                                checked
-                                            )
-                                        }
-                                    />
-                                    <PushToTalkKeyPicker
-                                        combo={values.pushToTalkKeys || 'Space'}
-                                        onComboChange={(combo) =>
-                                            onChange('pushToTalkKeys', combo)
-                                        }
-                                        disabled={!values.pushToTalkEnabled}
-                                    />
-                                </div>
-                            </Group>
 
                             <Group label="AI Noise Suppression">
                                 <Select

@@ -3,8 +3,7 @@ import {
     browserNotificationsForMentionsSelector,
     browserNotificationsSelector,
     dmsOpenSelector,
-    selectedDmChannelIdSelector,
-    threadSidebarDataSelector
+    selectedDmChannelIdSelector
 } from '@/features/app/selectors';
 import { store } from '@/features/store';
 import { getFileUrl } from '@/helpers/get-file-url';
@@ -19,7 +18,6 @@ import { serverSliceActions } from '../slice';
 import { playSound } from '../sounds/actions';
 import { SoundType } from '../types';
 import { ownUserIdSelector, userByIdSelector } from '../users/selectors';
-import { threadMessagesMapSelector } from './selectors';
 
 const sendBrowserNotification = (
     message: TJoinedMessage,
@@ -93,49 +91,18 @@ export const addMessages = (
     const selectedDmChannelId = selectedDmChannelIdSelector(state);
     const dmsOpen = dmsOpenSelector(state);
 
-    const rootMessages = messages.filter((m) => !m.parentMessageId);
-    const threadReplies = messages.filter((m) => !!m.parentMessageId);
-
-    if (rootMessages.length > 0) {
+    if (messages.length > 0) {
         store.dispatch(
             serverSliceActions.addMessages({
                 channelId,
-                messages: rootMessages,
+                messages,
                 opts
             })
         );
     }
 
-    const repliesByParent = new Map<number, TJoinedMessage[]>();
-
-    for (const reply of threadReplies) {
-        const parentId = reply.parentMessageId!;
-
-        if (!repliesByParent.has(parentId)) {
-            repliesByParent.set(parentId, []);
-        }
-
-        repliesByParent.get(parentId)!.push(reply);
-    }
-
-    for (const [parentMessageId, replies] of repliesByParent) {
-        store.dispatch(
-            serverSliceActions.addThreadMessages({
-                parentMessageId,
-                messages: replies,
-                opts
-            })
-        );
-    }
-
-    rootMessages.forEach((message) => {
+    messages.forEach((message) => {
         removeTypingUser(channelId, message.userId);
-    });
-
-    threadReplies.forEach((message) => {
-        if (message.parentMessageId) {
-            removeThreadTypingUser(message.parentMessageId, message.userId);
-        }
     });
 
     if (isSubscriptionMessage && messages.length > 0) {
@@ -161,22 +128,7 @@ export const addMessages = (
         const isWindowHidden = document?.hidden;
 
         if (!isFromOwnUser) {
-            const isThreadReply = !!targetMessage.parentMessageId;
-
-            if (isThreadReply) {
-                const { isOpen, parentMessageId } =
-                    threadSidebarDataSelector(state);
-
-                // only play sound if the user has this thread open
-                if (
-                    isOpen &&
-                    parentMessageId === targetMessage.parentMessageId
-                ) {
-                    playSound(SoundType.MESSAGE_RECEIVED);
-                }
-            } else {
-                playSound(SoundType.MESSAGE_RECEIVED);
-            }
+            playSound(SoundType.MESSAGE_RECEIVED);
 
             // only send browser notifications if the user is not currently viewing this channel
             if (!isChannelSelected || isWindowHidden) {
@@ -199,7 +151,7 @@ export const addMessages = (
             }
         }
 
-        if (isChannelSelected && !isFromOwnUser && rootMessages.length > 0) {
+        if (isChannelSelected && !isFromOwnUser) {
             const trpc = getTRPCClient();
 
             // fire-and-forget read receipt: log rejection so a broken
@@ -212,18 +164,7 @@ export const addMessages = (
 };
 
 export const updateMessage = (channelId: number, message: TJoinedMessage) => {
-    if (message.parentMessageId) {
-        store.dispatch(
-            serverSliceActions.updateThreadMessage({
-                parentMessageId: message.parentMessageId,
-                message
-            })
-        );
-    } else {
-        store.dispatch(
-            serverSliceActions.updateMessage({ channelId, message })
-        );
-    }
+    store.dispatch(serverSliceActions.updateMessage({ channelId, message }));
 };
 
 export const clearChannelMessages = (channelId: number) => {
@@ -231,107 +172,25 @@ export const clearChannelMessages = (channelId: number) => {
 };
 
 export const deleteMessage = (channelId: number, messageId: number) => {
-    // delete from both maps, the message could be a thread reply or root
     store.dispatch(serverSliceActions.deleteMessage({ channelId, messageId }));
+};
 
-    const state = store.getState();
-    const threadMessagesMap = threadMessagesMapSelector(state);
+export const addTypingUser = (channelId: number, userId: number) => {
+    store.dispatch(serverSliceActions.addTypingUser({ channelId, userId }));
 
-    for (const parentId in threadMessagesMap) {
-        const threadMessages = threadMessagesMap[parentId];
+    const timeoutKey = getTypingKey(channelId, userId);
 
-        if (threadMessages?.some((m) => m.id === messageId)) {
-            store.dispatch(
-                serverSliceActions.deleteThreadMessage({
-                    parentMessageId: Number(parentId),
-                    messageId
-                })
-            );
-
-            break;
-        }
+    if (typingTimeouts[timeoutKey]) {
+        clearTimeout(typingTimeouts[timeoutKey]);
     }
-};
 
-export const addThreadMessages = (
-    parentMessageId: number,
-    messages: TJoinedMessage[],
-    opts: { prepend?: boolean } = {}
-) => {
-    store.dispatch(
-        serverSliceActions.addThreadMessages({
-            parentMessageId,
-            messages,
-            opts
-        })
-    );
-};
+    typingTimeouts[timeoutKey] = setTimeout(() => {
+        removeTypingUser(channelId, userId);
 
-export const clearThreadMessages = (parentMessageId: number) => {
-    store.dispatch(serverSliceActions.clearThreadMessages(parentMessageId));
-};
-
-export const addTypingUser = (
-    channelId: number,
-    userId: number,
-    parentMessageId?: number
-) => {
-    if (parentMessageId) {
-        store.dispatch(
-            serverSliceActions.addThreadTypingUser({ parentMessageId, userId })
-        );
-
-        const timeoutKey = `thread-${parentMessageId}-${userId}`;
-
-        if (typingTimeouts[timeoutKey]) {
-            clearTimeout(typingTimeouts[timeoutKey]);
-        }
-
-        typingTimeouts[timeoutKey] = setTimeout(() => {
-            removeThreadTypingUser(parentMessageId, userId);
-
-            delete typingTimeouts[timeoutKey];
-        }, TYPING_MS + 500);
-    } else {
-        store.dispatch(serverSliceActions.addTypingUser({ channelId, userId }));
-
-        const timeoutKey = getTypingKey(channelId, userId);
-
-        if (typingTimeouts[timeoutKey]) {
-            clearTimeout(typingTimeouts[timeoutKey]);
-        }
-
-        typingTimeouts[timeoutKey] = setTimeout(() => {
-            removeTypingUser(channelId, userId);
-
-            delete typingTimeouts[timeoutKey];
-        }, TYPING_MS + 500);
-    }
+        delete typingTimeouts[timeoutKey];
+    }, TYPING_MS + 500);
 };
 
 export const removeTypingUser = (channelId: number, userId: number) => {
     store.dispatch(serverSliceActions.removeTypingUser({ channelId, userId }));
-};
-
-export const removeThreadTypingUser = (
-    parentMessageId: number,
-    userId: number
-) => {
-    store.dispatch(
-        serverSliceActions.removeThreadTypingUser({ parentMessageId, userId })
-    );
-};
-
-export const updateReplyCount = (
-    channelId: number,
-    messageId: number,
-    replyCount: number
-) => {
-    store.dispatch(
-        serverSliceActions.updateReplyCount({
-            channelId,
-            messageId,
-            replyCount
-        })
-    );
 };

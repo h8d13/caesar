@@ -45,7 +45,6 @@ const {
 } = getTableColumns(messages);
 
 const replyTo = alias(messages, 'reply_to');
-const replies = alias(messages, 'replies');
 
 const messageRelationsJson = {
   files: jsonArrayOf(
@@ -88,24 +87,10 @@ const messageRelationsJson = {
   )
 };
 
-// thread replies have no threads of their own
-const replyCountSql = sql`CASE WHEN ${messages.parentMessageId} IS NULL
-  THEN (SELECT count(*) FROM ${messages} AS ${sql.identifier('replies')}
-    WHERE ${replies.parentMessageId} = ${messages.id})
-  ELSE 0 END`;
-
 const joinedMessageJson = precompile(
   jsonObject({
     ...messageWireColumns,
     ...messageRelationsJson
-  })
-);
-
-const joinedMessageWithReplyCountJson = precompile(
-  jsonObject({
-    ...messageWireColumns,
-    ...messageRelationsJson,
-    replyCount: replyCountSql
   })
 );
 
@@ -132,15 +117,10 @@ const getJoinedMessages = async (
     where: SQL | undefined;
     orderBy: SQL;
     limit?: number;
-    withReplyCount?: boolean;
   }
 ): Promise<TJoinedMessage[]> => {
-  const json = query.withReplyCount
-    ? joinedMessageWithReplyCountJson
-    : joinedMessageJson;
-
   const rows = await db.all<{ message: string }>(
-    sql`SELECT ${json} AS message FROM ${messages}
+    sql`SELECT ${joinedMessageJson} AS message FROM ${messages}
       WHERE ${query.where ?? sql`1`}
       ORDER BY ${query.orderBy}
       ${query.limit === undefined ? sql`` : sql`LIMIT ${query.limit}`}`
@@ -171,7 +151,7 @@ const getMessage = async (
   const row = await db.get<
     { message: string; private: number; fileAccessToken: string } | undefined
   >(
-    sql`SELECT ${joinedMessageWithReplyCountJson} AS message,
+    sql`SELECT ${joinedMessageJson} AS message,
         ${channels.private} AS private,
         ${channels.fileAccessToken} AS fileAccessToken
       FROM ${messages}

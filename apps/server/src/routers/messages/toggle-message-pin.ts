@@ -36,11 +36,6 @@ const toggleMessagePinRoute = rateLimitedProcedure(protectedProcedure, {
 
     await assertChannelAccess(ctx, message.channelId);
 
-    invariant(!message.parentMessageId, {
-      code: 'BAD_REQUEST',
-      message: 'Cannot pin a thread message'
-    });
-
     const now = Date.now();
 
     await db

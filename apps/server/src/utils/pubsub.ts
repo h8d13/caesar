@@ -28,12 +28,6 @@ type Events = {
   [ServerEvents.MESSAGE_TYPING]: {
     channelId: number;
     userId: number;
-    parentMessageId?: number;
-  };
-  [ServerEvents.THREAD_REPLY_COUNT_UPDATE]: {
-    messageId: number;
-    channelId: number;
-    replyCount: number;
   };
 
   [ServerEvents.USER_JOIN]: TJoinedPublicUser;

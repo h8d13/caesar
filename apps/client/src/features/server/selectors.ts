@@ -16,7 +16,6 @@ import {
 } from './channels/selectors';
 import {
     messagesByChannelIdSelector,
-    threadTypingMapSelector,
     typingMapSelector
 } from './messages/selectors';
 import { rolesSelector } from './roles/selectors';
@@ -103,24 +102,6 @@ export const typingUsersByChannelIdSelector = createCachedSelector(
             .filter((u) => u.status !== UserStatus.OFFLINE);
     }
 )((_, channelId: number) => channelId);
-
-export const typingUsersByThreadIdSelector = createCachedSelector(
-    [
-        threadTypingMapSelector,
-        (_: IRootState, parentMessageId: number) => parentMessageId,
-        ownUserIdSelector,
-        usersSelector
-    ],
-    (threadTypingMap, parentMessageId, ownUserId, users) => {
-        const userIds = threadTypingMap[parentMessageId] || [];
-
-        return userIds
-            .filter((id) => id !== ownUserId)
-            .map((id) => users.find((u) => u.id === id)!)
-            .filter((u) => !!u)
-            .filter((u) => u.status !== UserStatus.OFFLINE);
-    }
-)((_, parentMessageId: number) => `thread-${parentMessageId}`);
 
 export const voiceUsersByChannelIdSelector = createSelector(
     [usersSelector, voiceChannelStateSelector],

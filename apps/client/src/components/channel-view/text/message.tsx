@@ -1,11 +1,9 @@
-import { openThreadSidebar } from '@/features/app/actions';
-import { useThreadSidebar } from '@/features/app/hooks';
 import {
     useChannelById,
     useDmReadByPeer
 } from '@/features/server/channels/hooks';
 import { useCan } from '@/features/server/hooks';
-import { useLatestOwnRootMessageId } from '@/features/server/messages/hooks';
+import { useLatestOwnMessageId } from '@/features/server/messages/hooks';
 import {
     useIsOwnUser,
     useOwnUserId,
@@ -16,7 +14,7 @@ import { useDecryptedMessage } from '@/lib/use-decrypted-message';
 import { cn } from '@/lib/utils';
 import { hasMention, Permission, type TJoinedMessage } from '@caesar/shared';
 import { format } from 'date-fns';
-import { Check, CornerUpRight, MessageSquareText } from 'lucide-react';
+import { Check, CornerUpRight } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { ExpiresBadge } from './expires-badge';
 import { MessageActions } from './message-actions';
@@ -51,12 +49,10 @@ const Message = memo(
         const isFromOwnUser = useIsOwnUser(message.userId);
         const ownUserId = useOwnUserId();
         const can = useCan();
-        const { isOpen: isThreadOpen, parentMessageId: threadParentId } =
-            useThreadSidebar();
         const channel = useChannelById(message.channelId);
         const dmReadByPeer = useDmReadByPeer(message.channelId);
-        const latestOwnId = useLatestOwnRootMessageId(message.channelId);
-        // pinned to the latest own root message in the channel, and only
+        const latestOwnId = useLatestOwnMessageId(message.channelId);
+        // pinned to the latest own message in the channel, and only
         // when the peer has read at least up to it. sliding forward as
         // new own messages are sent avoids stranding the mark mid-group.
         const showDmReadIndicator =
@@ -86,15 +82,7 @@ const Message = memo(
             [displayMessage.content, ownUserId]
         );
 
-        const isThreadReply = !!message.parentMessageId;
-        const replyCount = message.replyCount ?? 0;
-        const isActiveThread = isThreadOpen && threadParentId === message.id;
-
         const replyToUser = useUserById(message.replyTo?.userId ?? -1);
-
-        const onThreadClick = useCallback(() => {
-            openThreadSidebar(message.id, message.channelId);
-        }, [message.id, message.channelId]);
 
         const handleReply = useCallback(() => {
             onReply?.(message);
@@ -111,7 +99,6 @@ const Message = memo(
             <div
                 className={cn(
                     'min-w-0 flex-1 ml-1 relative hover:bg-secondary/50 rounded-md px-1 py-0.5 group',
-                    isActiveThread && 'bg-primary/10',
                     isMentioned && 'border-l-2 border-primary bg-primary/5'
                 )}
                 data-message-id={message.id}
@@ -158,24 +145,6 @@ const Message = memo(
                                 Read {format(dmReadByPeer.readAt, 'HH:mm')}
                             </span>
                         )}
-                        {!isThreadReply && !channel?.isDm && replyCount > 0 && (
-                            <button
-                                type="button"
-                                onClick={onThreadClick}
-                                className={cn(
-                                    'inline-flex items-center gap-1 mt-1 rounded-full border px-2 py-0.5 text-xs font-medium transition-colors',
-                                    isActiveThread
-                                        ? 'border-primary/40 bg-primary/20 text-primary'
-                                        : 'border-primary/20 bg-primary/10 text-primary/80 hover:bg-primary/20 hover:text-primary'
-                                )}
-                            >
-                                <MessageSquareText className="h-3 w-3" />
-                                <span>
-                                    {replyCount}{' '}
-                                    {replyCount === 1 ? 'reply' : 'replies'}
-                                </span>
-                            </button>
-                        )}
                         {!disableActions && (
                             <MessageActions
                                 onEdit={() => setIsEditing(true)}
@@ -185,11 +154,7 @@ const Message = memo(
                                 channelId={message.channelId}
                                 editable={message.editable ?? false}
                                 isPinned={message.pinned ?? false}
-                                disablePin={
-                                    !!message.parentMessageId || !!channel?.isDm
-                                }
-                                disableThreads={!!channel?.isDm}
-                                isThreadReply={isThreadReply}
+                                disablePin={!!channel?.isDm}
                             />
                         )}
                     </>

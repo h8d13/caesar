@@ -6,8 +6,7 @@ import {
     addTypingUser,
     clearChannelMessages,
     deleteMessage,
-    updateMessage,
-    updateReplyCount
+    updateMessage
 } from './actions';
 
 const subscribeToMessages = () => {
@@ -50,48 +49,17 @@ const subscribeToMessages = () => {
     const onMessageTypingSub = trpc.messages.onTyping.subscribe(undefined, {
         onData: ({
             userId,
-            channelId,
-            parentMessageId
+            channelId
         }: {
             userId: number;
             channelId: number;
-            parentMessageId?: number;
         }) => {
-            logDebug('[EVENTS] messages.onTyping', {
-                userId,
-                channelId,
-                parentMessageId
-            });
-            addTypingUser(channelId, userId, parentMessageId);
+            logDebug('[EVENTS] messages.onTyping', { userId, channelId });
+            addTypingUser(channelId, userId);
         },
         onError: (err) =>
             console.error('onMessageTyping subscription error:', err)
     });
-
-    const onThreadReplyCountUpdateSub =
-        trpc.messages.onThreadReplyCountUpdate.subscribe(undefined, {
-            onData: ({
-                messageId,
-                channelId,
-                replyCount
-            }: {
-                messageId: number;
-                channelId: number;
-                replyCount: number;
-            }) => {
-                logDebug('[EVENTS] messages.onThreadReplyCountUpdate', {
-                    messageId,
-                    channelId,
-                    replyCount
-                });
-                updateReplyCount(channelId, messageId, replyCount);
-            },
-            onError: (err) =>
-                console.error(
-                    'onThreadReplyCountUpdate subscription error:',
-                    err
-                )
-        });
 
     return () => {
         onMessageSub.unsubscribe();
@@ -99,7 +67,6 @@ const subscribeToMessages = () => {
         onMessageDeleteSub.unsubscribe();
         onDmWipedSub.unsubscribe();
         onMessageTypingSub.unsubscribe();
-        onThreadReplyCountUpdateSub.unsubscribe();
     };
 };
 

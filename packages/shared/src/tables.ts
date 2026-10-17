@@ -160,7 +160,6 @@ export type TJoinedMessage = Omit<
   files: TFile[];
   reactions: TJoinedMessageReaction[];
   scVotes: TMessageScVote[];
-  replyCount?: number;
   replyTo?: {
     id: number;
     content: string | null;

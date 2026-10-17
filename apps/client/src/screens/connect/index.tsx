@@ -215,6 +215,19 @@ const Connect = memo(() => {
                 })
             });
 
+            // Burst limit and failed-login lockout reply 429 with a plain
+            // { error } body rather than per-field errors.
+            if (response.status === 429) {
+                const data = await response.json().catch(() => ({}));
+
+                setErrors({
+                    identity:
+                        data.error ||
+                        'Too many attempts. Please try again later.'
+                });
+                return;
+            }
+
             if (!response.ok) {
                 const data = await response.json();
 

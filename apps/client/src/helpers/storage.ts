@@ -11,7 +11,6 @@ export enum LocalStorageKey {
     DEBUG = 'caesar-debug',
     DRAFT_MESSAGES = 'caesar-draft-messages',
     HIDE_NON_VIDEO_PARTICIPANTS = 'caesar-hide-non-video-participants',
-    THREAD_SIDEBAR_WIDTH = 'caesar-thread-sidebar-width',
     LEFT_SIDEBAR_WIDTH = 'caesar-left-sidebar-width',
     RIGHT_SIDEBAR_WIDTH = 'caesar-right-sidebar-width',
     CATEGORIES_EXPANDED = 'caesar-categories-expanded',

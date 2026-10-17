@@ -1,3 +1,4 @@
+import { DEFAULT_MESSAGES_LIMIT } from '@caesar/shared';
 import { channelReadStates } from '@caesar/shared/db/schema';
 import type { Client } from '@libsql/client';
 import { initTest } from '@server/__tests__/helpers';
@@ -84,7 +85,7 @@ const sendMessages = async (caller: Caller, channelId: number, n: number) => {
   const page = await caller.messages.get({
     channelId,
     cursor: null,
-    limit: 100
+    limit: DEFAULT_MESSAGES_LIMIT
   });
 
   for (const message of page.messages) ids.push(message.id);
@@ -159,7 +160,7 @@ describe('messages.get channel access', () => {
     expect(countMatching(statements, LATEST_MESSAGE_LOOKUP)).toBe(1);
   });
 
-  test('reads the channel row once on pinned and thread reads', async () => {
+  test('reads the channel row once on pinned reads', async () => {
     const { caller } = await initTest(1);
 
     await caller.messages.send({ channelId: 1, content: 'parent', files: [] });
@@ -172,30 +173,14 @@ describe('messages.get channel access', () => {
     const parentId = page.messages[0]!.id;
 
     await caller.messages.togglePin({ messageId: parentId });
-    await caller.messages.send({
-      channelId: 1,
-      content: 'reply',
-      files: [],
-      parentMessageId: parentId
-    });
 
-    // Both routes call assertChannelAccess and then need the same row for
-    // fileAccessToken; they must use the returned one, not select it again.
+    // The route calls assertChannelAccess and then needs the same row for
+    // fileAccessToken; it must use the returned one, not select it again.
     const pinnedSql = await recordSql(() =>
       caller.messages.getPinned({ channelId: 1 })
     );
 
     expect(countMatching(pinnedSql, ACCESS_CHANNEL_READ)).toBe(1);
-
-    const threadSql = await recordSql(() =>
-      caller.messages.getThread({
-        parentMessageId: parentId,
-        cursor: null,
-        limit: 50
-      })
-    );
-
-    expect(countMatching(threadSql, ACCESS_CHANNEL_READ)).toBe(1);
   });
 
   test('still enforces DM participation', async () => {
@@ -294,7 +279,7 @@ describe('messages.get payload shape', () => {
     expect(child.replyTo?.content).toBe('parent');
   });
 
-  test('omits the same fields on pinned and thread reads', async () => {
+  test('omits the same fields on pinned reads', async () => {
     const { caller } = await initTest(1);
 
     await caller.messages.send({ channelId: 1, content: 'parent', files: [] });
@@ -307,23 +292,11 @@ describe('messages.get payload shape', () => {
     const parentId = page.messages[0]!.id;
 
     await caller.messages.togglePin({ messageId: parentId });
-    await caller.messages.send({
-      channelId: 1,
-      content: 'reply',
-      files: [],
-      parentMessageId: parentId
-    });
 
     const pinned = await caller.messages.getPinned({ channelId: 1 });
-    const thread = await caller.messages.getThread({
-      parentMessageId: parentId,
-      cursor: null,
-      limit: 50
-    });
 
     for (const field of NEVER_READ) {
       expect(pinned[0]!).not.toHaveProperty(field);
-      expect(thread.messages[0]!).not.toHaveProperty(field);
     }
   });
 });

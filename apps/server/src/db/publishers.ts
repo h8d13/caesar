@@ -3,13 +3,8 @@ import {
   ServerEvents,
   type TChannelUserPermissionsMap
 } from '@caesar/shared';
-import {
-  categories,
-  channels,
-  messages,
-  users
-} from '@caesar/shared/db/schema';
-import { count, eq, inArray } from 'drizzle-orm';
+import { categories, channels, users } from '@caesar/shared/db/schema';
+import { eq, inArray } from 'drizzle-orm';
 import { db } from '.';
 import { extractMentionUserIds } from '../helpers/extract-mention-user-ids';
 import { logger } from '../logger';
@@ -96,9 +91,6 @@ const publishMessage = logFailures(
         content: message.content ?? null
       });
     }
-
-    // thread replies should not increment the channel's unread count
-    if (message.parentMessageId) return;
 
     // Only `create` bumps the unread counter. `update` covers re-publishes
     // for edits, sc-vote toggles, file deletions, and the URL-metadata
@@ -404,37 +396,12 @@ const publishChannelPermissions = logFailures(
   }
 );
 
-const publishReplyCount = logFailures(
-  'publishReplyCount',
-  async (parentMessageId: number, channelId: number) => {
-    const replyCountRow = await db
-      .select({ count: count() })
-      .from(messages)
-      .where(eq(messages.parentMessageId, parentMessageId))
-      .get();
-
-    const affectedUserIds = await getAffectedOnlineUserIdsForChannel(
-      channelId,
-      {
-        permission: ChannelPermission.VIEW_CHANNEL
-      }
-    );
-
-    pubsub.publishFor(affectedUserIds, ServerEvents.THREAD_REPLY_COUNT_UPDATE, {
-      messageId: parentMessageId,
-      channelId,
-      replyCount: replyCountRow?.count ?? 0
-    });
-  }
-);
-
 export {
   publishCategory,
   publishChannel,
   publishChannelPermissions,
   publishEmoji,
   publishMessage,
-  publishReplyCount,
   publishRole,
   publishSettings,
   publishSound,

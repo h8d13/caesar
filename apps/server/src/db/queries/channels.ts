@@ -322,7 +322,6 @@ const getUnreadCounts = async (
   const unread = (range?: SQL) => sql<number>`(
     SELECT COUNT(*) FROM ${messages}
     WHERE ${messages.channelId} = ${channels.id}
-      AND ${messages.parentMessageId} IS NULL
       AND ${messages.userId} != ${userId}
       ${range ? sql`AND ${range}` : sql``}
   )`;
