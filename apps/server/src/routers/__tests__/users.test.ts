@@ -406,6 +406,36 @@ describe('users router', () => {
     ).rejects.toThrow('Avatar file exceeds the configured maximum size');
   });
 
+  test('should keep the current avatar when the new one is rejected', async () => {
+    const { caller, mockedToken } = await initTest();
+
+    const upload = async (content: string) => {
+      const response = await uploadFile(
+        new File([content], 'avatar.png', { type: 'image/png' }),
+        mockedToken
+      );
+
+      return ((await response.json()) as TTempFile).id;
+    };
+
+    await caller.users.changeAvatar({ fileId: await upload('ok') });
+
+    const before = (await caller.users.getInfo({ userId: 1 })).user.avatarId;
+
+    await tdb.update(settings).set({ storageMaxAvatarSize: 10 }).execute();
+
+    await expect(
+      caller.users.changeAvatar({
+        fileId: await upload('avatar content bigger than ten bytes')
+      })
+    ).rejects.toThrow('Avatar file exceeds the configured maximum size');
+
+    const after = (await caller.users.getInfo({ userId: 1 })).user.avatarId;
+
+    expect(before).not.toBeNull();
+    expect(after).toBe(before);
+  });
+
   test('should change banner', async () => {
     const { caller, mockedToken } = await initTest();
 

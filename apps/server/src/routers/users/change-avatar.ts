@@ -36,15 +36,9 @@ const changeAvatarRoute = rateLimitedProcedure(protectedProcedure, {
       message: 'User not found'
     });
 
-    if (user.avatarId) {
-      await removeFile(user.avatarId);
-
-      await db
-        .update(users)
-        .set({ avatarId: null })
-        .where(eq(users.id, ctx.userId))
-        .run();
-    }
+    // save the new file before touching the old one: if it is rejected
+    // (missing, too large, over quota) the user keeps their current avatar
+    let newAvatarId: number | null = null;
 
     if (input.fileId) {
       const tempFile = fileManager.getTemporaryFile(input.fileId);
@@ -63,11 +57,17 @@ const changeAvatarRoute = rateLimitedProcedure(protectedProcedure, {
 
       const newFile = await fileManager.saveFile(input.fileId, ctx.userId);
 
-      await db
-        .update(users)
-        .set({ avatarId: newFile.id })
-        .where(eq(users.id, ctx.userId))
-        .run();
+      newAvatarId = newFile.id;
+    }
+
+    await db
+      .update(users)
+      .set({ avatarId: newAvatarId })
+      .where(eq(users.id, ctx.userId))
+      .run();
+
+    if (user.avatarId) {
+      await removeFile(user.avatarId);
     }
 
     void publishUser(ctx.userId, 'update');

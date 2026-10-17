@@ -36,14 +36,9 @@ const changeBannerRoute = rateLimitedProcedure(protectedProcedure, {
       message: 'User not found'
     });
 
-    if (user.bannerId) {
-      await removeFile(user.bannerId);
-
-      await db
-        .update(users)
-        .set({ bannerId: null })
-        .where(eq(users.id, ctx.userId));
-    }
+    // save the new file before touching the old one: if it is rejected
+    // (missing, too large, over quota) the user keeps their current banner
+    let newBannerId: number | null = null;
 
     if (input.fileId) {
       const tempFile = fileManager.getTemporaryFile(input.fileId);
@@ -62,10 +57,16 @@ const changeBannerRoute = rateLimitedProcedure(protectedProcedure, {
 
       const newFile = await fileManager.saveFile(input.fileId, ctx.userId);
 
-      await db
-        .update(users)
-        .set({ bannerId: newFile.id })
-        .where(eq(users.id, ctx.userId));
+      newBannerId = newFile.id;
+    }
+
+    await db
+      .update(users)
+      .set({ bannerId: newBannerId })
+      .where(eq(users.id, ctx.userId));
+
+    if (user.bannerId) {
+      await removeFile(user.bannerId);
     }
 
     void publishUser(ctx.userId, 'update');
