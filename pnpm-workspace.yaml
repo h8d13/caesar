@@ -16,7 +16,7 @@ catalog:
   clsx: ^2.1.1
   drizzle-orm: ^0.45.4
   lucide-react: ^1.55.0
-  mediasoup: 3.29.0
+  mediasoup: 3.30.0
   react: ^19.3.0
   react-dom: ^19.3.0
   sonner: ^2.0.8
