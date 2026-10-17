@@ -195,8 +195,10 @@ const publicRouteHandler = async (
     ? 'inline'
     : 'attachment';
 
+  // plain filename= is the ASCII fallback (filename* carries the real name):
+  // Node rejects header chars outside latin1, so a CJK/emoji name 500'd
   const safeFileName = dbFile.originalName
-    .replace(/[\r\n]/g, '') // strip CR/LF to prevent header injection
+    .replace(/[^\x20-\x7e]/g, '_') // also strips CR/LF (header injection)
     .replace(/"/g, '\\"'); // escape double quotes for header safety
 
   const encodedFileName = encodeURIComponent(dbFile.originalName).replace(

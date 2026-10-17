@@ -339,6 +339,26 @@ describe('/public', () => {
     expect(row).toBeDefined();
   });
 
+  test('should serve files with non-ASCII names', async () => {
+    const dbFile = await getFileByMessageId(filesToCreate[0]!.messageId!);
+    const originalName = '报告 🎉.txt';
+
+    await tdb
+      .update(files)
+      .set({ originalName })
+      .where(eq(files.id, dbFile!.id));
+
+    const response = await fetch(
+      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
+      { headers: { 'x-token': token } }
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Disposition')).toContain(
+      `filename*=UTF-8''${encodeURIComponent(originalName)}`
+    );
+  });
+
   test('should return 403 when trying to access a private channel file without token', async () => {
     const { caller } = await initTest();
 
