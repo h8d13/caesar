@@ -18,15 +18,40 @@ marked.setOptions({
  * Old messages stored as proper HTML (with <h1>, <strong>, etc.) pass
  * through safely marked preserves existing HTML tags.
  */
+const FENCE_LINE = /^\s*(```|~~~)/;
+
+// Enter in the editor starts a new <p>, so code typed line by line arrives
+// one paragraph per line. Paragraphs normally join with a blank line, but
+// inside a fence that blank line became part of the code (an empty first
+// line, every line double-spaced): there they join with a single newline.
+const joinParagraphs = (paragraphs: string[]): string => {
+    let text = '';
+    let inFence = false;
+
+    paragraphs.forEach((paragraph, index) => {
+        if (index > 0) text += inFence ? '\n' : '\n\n';
+
+        text += paragraph;
+
+        for (const line of paragraph.split('\n')) {
+            if (FENCE_LINE.test(line)) inFence = !inFence;
+        }
+    });
+
+    return text;
+};
+
 const renderMarkdown = (content: string): string => {
     // Convert editor HTML to markdown-like text:
     // - <br> variants → newlines
-    // - paragraph boundaries → double newlines
+    // - paragraph boundaries → newlines (see joinParagraphs)
     // - strip remaining <p> tags
-    const text = content
+    const paragraphs = content
         .replace(/<br\s*(?:class="[^"]*")?\s*\/?>/gi, '\n')
-        .replace(/<\/p>\s*<p>/gi, '\n\n')
-        .replace(/<\/?p>/gi, '')
+        .split(/<\/p>\s*<p>/i)
+        .map((paragraph) => paragraph.replace(/<\/?p>/gi, ''));
+
+    const text = joinParagraphs(paragraphs)
         .replace(/&gt;/g, '>')
         .replace(/&lt;/g, '<')
         .replace(/&amp;/g, '&');
