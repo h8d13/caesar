@@ -1,5 +1,5 @@
 import { Button, Input, Slider } from '@caesar/ui';
-import { memo, useCallback, type ReactNode } from 'react';
+import { memo, useCallback, useState, type ReactNode } from 'react';
 import { FILE_SIZE_STEP, MEGABYTE } from './presets';
 
 const clamp = (value: number, min: number, max: number) =>
@@ -32,18 +32,22 @@ const StorageSizeControl = memo(
     }: TStorageSizeControlProps) => {
         const valueInMb = Math.round(Number(value) / MEGABYTE);
 
-        const onChangeHandler = useCallback(
-            (e: React.ChangeEvent<HTMLInputElement>) => {
-                const nextValue = Number(e.target.value);
+        // Clamping on every keystroke made values unreachable whenever the
+        // minimum exceeds a partial entry (quota min is 1024 MB: typing "2"
+        // snapped to 1024). Edit a draft, clamp and commit on blur/Enter.
+        const [draft, setDraft] = useState<string | null>(null);
 
-                if (!Number.isFinite(nextValue)) {
-                    return;
-                }
+        const commitDraft = useCallback(() => {
+            if (draft === null) return;
 
-                onChange(clamp(nextValue * MEGABYTE, min, max));
-            },
-            [onChange, min, max]
-        );
+            const nextValue = Number(draft);
+
+            setDraft(null);
+
+            if (draft.trim() === '' || !Number.isFinite(nextValue)) return;
+
+            onChange(clamp(nextValue * MEGABYTE, min, max));
+        }, [draft, onChange, min, max]);
 
         return (
             <div className="max-w-150 space-y-2">
@@ -67,9 +71,11 @@ const StorageSizeControl = memo(
                             min={Math.ceil(min / MEGABYTE)}
                             max={Math.floor(max / MEGABYTE)}
                             step={1}
-                            value={valueInMb}
+                            value={draft ?? valueInMb}
                             disabled={disabled}
-                            onChange={onChangeHandler}
+                            onChange={(e) => setDraft(e.target.value)}
+                            onBlur={commitDraft}
+                            onEnter={commitDraft}
                         />
                         <span className="text-xs text-muted-foreground">
                             MB
