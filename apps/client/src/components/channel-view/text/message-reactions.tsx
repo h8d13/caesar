@@ -45,12 +45,17 @@ type TEmojiProps = {
 const Emoji = memo(
     ({ emoji, file, className, nativeEmojiClassName }: TEmojiProps) => {
         const gitHubEmojis = useGitHubEmojis();
+        // a reaction carrying a file is a custom emoji: it wins even when
+        // its name matches a built-in shortcode
         const gitHubEmoji = useMemo(
             () =>
-                gitHubEmojis?.find(
-                    (e) => e.name === emoji || e.shortcodes.includes(emoji)
-                ),
-            [gitHubEmojis, emoji]
+                file
+                    ? undefined
+                    : gitHubEmojis?.find(
+                          (e) =>
+                              e.name === emoji || e.shortcodes.includes(emoji)
+                      ),
+            [gitHubEmojis, emoji, file]
         );
 
         const onError = useCallback(

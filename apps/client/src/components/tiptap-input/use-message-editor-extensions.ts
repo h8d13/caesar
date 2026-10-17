@@ -66,7 +66,8 @@ const useMessageEditorExtensions = (
             // so text typed right after a pasted/autolinked URL joined it.
             Link.extend({ inclusive: () => false }),
             MessageEmoji.configure({
-                emojis: [...gitHubEmojis, ...customEmojis],
+                // custom first: on a name clash the first match wins
+                emojis: [...customEmojis, ...gitHubEmojis],
                 enableEmoticons: false,
                 suggestion: EmojiSuggestion,
                 HTMLAttributes: {

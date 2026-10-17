@@ -182,9 +182,10 @@ const TiptapInput = memo(
         // this ensures newly added emojis appear in autocomplete without refreshing the app
         useEffect(() => {
             if (isLive(editor) && editor.storage.emoji) {
+                // custom first, as in use-message-editor-extensions
                 editor.commands.setEmojiList([
-                    ...gitHubEmojis,
-                    ...customEmojis
+                    ...customEmojis,
+                    ...gitHubEmojis
                 ]);
             }
         }, [editor, customEmojis]);
