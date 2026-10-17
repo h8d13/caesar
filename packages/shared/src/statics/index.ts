@@ -2,7 +2,7 @@ export * from './metrics';
 export * from './permissions';
 export * from './storage';
 
-export const DEFAULT_MESSAGES_LIMIT = 100;
+export const DEFAULT_MESSAGES_LIMIT = 50;
 
 export const OWNER_ROLE_ID = 1;
 

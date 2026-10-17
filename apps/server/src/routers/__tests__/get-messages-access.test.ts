@@ -1,3 +1,4 @@
+import { DEFAULT_MESSAGES_LIMIT } from '@caesar/shared';
 import { channelReadStates } from '@caesar/shared/db/schema';
 import type { Client } from '@libsql/client';
 import { initTest } from '@server/__tests__/helpers';
@@ -84,7 +85,7 @@ const sendMessages = async (caller: Caller, channelId: number, n: number) => {
   const page = await caller.messages.get({
     channelId,
     cursor: null,
-    limit: 100
+    limit: DEFAULT_MESSAGES_LIMIT
   });
 
   for (const message of page.messages) ids.push(message.id);
