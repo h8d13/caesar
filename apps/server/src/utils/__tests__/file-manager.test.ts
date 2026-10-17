@@ -1,5 +1,11 @@
 import { StorageOverflowAction } from '@caesar/shared';
-import { files, settings } from '@caesar/shared/db/schema';
+import {
+  files,
+  messageFiles,
+  messages,
+  settings,
+  users
+} from '@caesar/shared/db/schema';
 import { tdb } from '@server/__tests__/setup';
 import { PUBLIC_PATH, TMP_PATH, UPLOADS_PATH } from '@server/helpers/paths';
 import { eq } from 'drizzle-orm';
@@ -364,7 +370,11 @@ describe('file manager', () => {
       .execute();
   });
 
-  test('should delete old files when storage limit exceeded with DELETE_OLD_FILES', async () => {
+  // Saves a file, then fills the quota so the next upload must evict
+  // `wouldExceedBy` bytes; returns the old file and the new upload's id.
+  const saveThenOverflow = async (
+    linkOld: (fileId: number) => Promise<void>
+  ) => {
     const oldFileName = `old-${Date.now()}.txt`;
     const newFileName = `new-${Date.now()}.txt`;
     const oldFilePath = path.join(UPLOADS_PATH, oldFileName);
@@ -381,6 +391,8 @@ describe('file manager', () => {
     });
 
     const oldSavedFile = await fileManager.saveFile(oldTempFile.id, 1);
+
+    await linkOld(oldSavedFile.id);
 
     await new Promise((r) => setTimeout(r, 100)); // ensure different timestamps
 
@@ -409,21 +421,39 @@ describe('file manager', () => {
 
     tempFilesToCleanup.push(path.join(PUBLIC_PATH, newSavedFile.name));
 
-    const oldDbFile = await tdb
-      .select()
-      .from(files)
-      .where(eq(files.id, oldSavedFile.id))
-      .get();
+    const fileExists = async (id: number) =>
+      !!(await tdb.select().from(files).where(eq(files.id, id)).get());
 
-    expect(oldDbFile).toBeUndefined();
+    return {
+      oldExists: await fileExists(oldSavedFile.id),
+      newExists: await fileExists(newSavedFile.id)
+    };
+  };
 
-    const newDbFile = await tdb
-      .select()
-      .from(files)
-      .where(eq(files.id, newSavedFile.id))
-      .get();
+  test('should delete old message attachments when storage limit exceeded with DELETE_OLD_FILES', async () => {
+    const result = await saveThenOverflow(async (fileId) => {
+      const message = await tdb
+        .insert(messages)
+        .values({ channelId: 1, userId: 1, createdAt: Date.now() })
+        .returning()
+        .get();
 
-    expect(newDbFile).toBeDefined();
+      await tdb
+        .insert(messageFiles)
+        .values({ messageId: message.id, fileId, createdAt: Date.now() });
+    });
+
+    expect(result.oldExists).toBe(false);
+    expect(result.newExists).toBe(true);
+  });
+
+  test('should never evict non-attachment files (avatars, emojis, logo) for space', async () => {
+    const result = await saveThenOverflow(async (fileId) => {
+      await tdb.update(users).set({ avatarId: fileId }).where(eq(users.id, 1));
+    });
+
+    expect(result.oldExists).toBe(true);
+    expect(result.newExists).toBe(true);
   });
 
   test('should allow save when storage limits are disabled', async () => {

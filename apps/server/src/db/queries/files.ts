@@ -12,7 +12,7 @@ import {
   users
 } from '@caesar/shared/db/schema';
 import { generateFileToken } from '@server/helpers/files-crypto';
-import { and, asc, eq, notExists, sql, sum } from 'drizzle-orm';
+import { and, asc, eq, exists, notExists, sql, sum } from 'drizzle-orm';
 import type { SQLiteColumn } from 'drizzle-orm/sqlite-core';
 import { db } from '..';
 import { getSettings } from './server';
@@ -47,6 +47,16 @@ const getExceedingOldFiles = async (newFileSize: number) => {
       createdAt: files.createdAt
     })
     .from(files)
+    // only message attachments are fair game: avatars, banners, emojis,
+    // sounds, status images and the logo must never be evicted for space
+    .where(
+      exists(
+        db
+          .select({ one: sql`1` })
+          .from(messageFiles)
+          .where(eq(messageFiles.fileId, files.id))
+      )
+    )
     .orderBy(asc(files.createdAt));
 
   const filesToDelete = [];
