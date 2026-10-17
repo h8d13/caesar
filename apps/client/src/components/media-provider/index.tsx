@@ -1,7 +1,7 @@
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
 import { playSound } from '@/features/server/sounds/actions';
 import { SoundType } from '@/features/server/types';
-import { joinVoice } from '@/features/server/voice/actions';
+import { joinVoice, leaveVoice } from '@/features/server/voice/actions';
 import { useOwnVoiceState } from '@/features/server/voice/hooks';
 import {
     MICROPHONE_GATE_CLOSE_HOLD_MS,
@@ -1133,6 +1133,11 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
 
                 setConnectionStatus(ConnectionStatus.FAILED);
                 setLoading(false);
+
+                // the server already counts us in the channel: leave so
+                // others don't see a ghost and the half-built transports
+                // are torn down (leaving triggers cleanup below)
+                void leaveVoice({ reason: 'join_failed' });
 
                 throw error;
             }

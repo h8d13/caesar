@@ -149,6 +149,7 @@ export type TLeaveVoiceReason =
     | 'switch_channel'
     | 'open_device_settings'
     | 'channel_deleted'
+    | 'join_failed'
     | 'unknown';
 
 export const leaveVoice = async (options?: {
