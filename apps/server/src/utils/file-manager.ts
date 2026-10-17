@@ -51,8 +51,15 @@ const moveFile = async (src: string, dest: string) => {
   }
 };
 
+// The extension becomes part of the on-disk name and the /public URL, so
+// keep only [a-z0-9]: '#' or '?' from the original name would cut the URL.
 const getNormalizedExtension = (name: string): string => {
-  return path.extname(name).toLowerCase();
+  const extension = path
+    .extname(name)
+    .toLowerCase()
+    .replace(/[^a-z0-9.]/g, '');
+
+  return extension === '.' ? '' : extension;
 };
 
 class TemporaryFileManager {

@@ -153,6 +153,19 @@ describe('/upload', () => {
     expect(existsSync(data.path)).toBe(true);
   });
 
+  test('should keep URL-breaking characters out of the stored extension', async () => {
+    const file = new File(['odd'], 'notes.t#x?', { type: 'text/plain' });
+
+    const response = await uploadFile(file, token);
+
+    expect(response.status).toBe(200);
+
+    const data = (await response.json()) as TTempFile;
+
+    expect(data.extension).toBe('.tx');
+    expect(data.path).not.toMatch(/[#?]/);
+  });
+
   test('should handle empty files', async () => {
     const blob = new Blob([], { type: 'text/plain' });
     const file = new File([blob], 'empty.txt', { type: 'text/plain' });
