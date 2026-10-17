@@ -135,6 +135,10 @@ const getUserByToken = async (token: string | undefined) => {
     // by a newer login, a logout, or a password change.
     if (!user || decoded.sessionEpoch !== user.sessionEpoch) return undefined;
 
+    // banned users keep a valid epoch; every HTTP route (upload, private
+    // files) and the WS handshake gate on this, so refuse them here.
+    if (user.banned) return undefined;
+
     return user;
   } catch {
     return undefined;

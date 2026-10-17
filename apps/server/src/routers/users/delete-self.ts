@@ -17,7 +17,7 @@ const deleteSelfRoute = protectedProcedure
       actorUserId: ctx.userId,
       wipe: input.wipe,
       reason: 'Account deleted by user',
-      userWs: undefined
+      userWsList: []
     });
   });
 

@@ -26,9 +26,7 @@ const banRoute = protectedProcedure
 
     await assertCanModifyOwnerUser(ctx.userId, input.userId, 'ban');
 
-    const userWs = ctx.getUserWs(input.userId);
-
-    if (userWs) {
+    for (const userWs of ctx.getUserWsList(input.userId)) {
       userWs.close(DisconnectCode.BANNED, input.reason);
     }
 

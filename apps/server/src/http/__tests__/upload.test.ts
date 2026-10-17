@@ -1,8 +1,9 @@
 import { UploadHeaders, type TTempFile } from '@caesar/shared';
-import { settings } from '@caesar/shared/db/schema';
+import { settings, users } from '@caesar/shared/db/schema';
 import { login, uploadFile } from '@server/__tests__/helpers';
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
 import { TMP_PATH } from '@server/helpers/paths';
+import { eq } from 'drizzle-orm';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
 import path from 'path';
@@ -87,6 +88,17 @@ describe('/upload', () => {
     const data: any = await response.json();
 
     expect(data).toHaveProperty('error', 'Unauthorized');
+  });
+
+  test('should reject uploads from a banned user with a live token', async () => {
+    await tdb
+      .update(users)
+      .set({ banned: true })
+      .where(eq(users.identity, 'testowner'));
+
+    const response = await uploadFile(getMockFile('banned upload'), token);
+
+    expect(response.status).toBe(401);
   });
 
   test('should throw when uploads are disabled', async () => {

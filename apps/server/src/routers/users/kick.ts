@@ -17,14 +17,16 @@ const kickRoute = protectedProcedure
 
     await assertCanModifyOwnerUser(ctx.userId, input.userId, 'kick');
 
-    const userWs = ctx.getUserWs(input.userId);
+    const userWsList = ctx.getUserWsList(input.userId);
 
-    invariant(userWs, {
+    invariant(userWsList.length > 0, {
       code: 'NOT_FOUND',
       message: 'User is not connected'
     });
 
-    userWs.close(DisconnectCode.KICKED, input.reason);
+    for (const userWs of userWsList) {
+      userWs.close(DisconnectCode.KICKED, input.reason);
+    }
 
     enqueueActivityLog({
       type: ActivityLogType.USER_KICKED,

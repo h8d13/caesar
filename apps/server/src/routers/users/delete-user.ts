@@ -63,7 +63,7 @@ type TPerformUserDeletionArgs = {
   actorUserId: number;
   wipe: boolean;
   reason: string;
-  userWs: WebSocket | undefined;
+  userWsList: WebSocket[];
 };
 
 const performUserDeletion = async ({
@@ -71,7 +71,7 @@ const performUserDeletion = async ({
   actorUserId,
   wipe,
   reason,
-  userWs
+  userWsList
 }: TPerformUserDeletionArgs) => {
   const targetUser = await db
     .select({
@@ -94,7 +94,7 @@ const performUserDeletion = async ({
     message: 'Cannot delete the deleted user placeholder.'
   });
 
-  if (userWs) {
+  for (const userWs of userWsList) {
     userWs.close(DisconnectCode.KICKED, reason);
   }
 
@@ -174,7 +174,7 @@ const deleteUserRoute = protectedProcedure
       actorUserId: ctx.userId,
       wipe: input.wipe,
       reason: 'Your account has been deleted',
-      userWs: ctx.getUserWs(input.userId)
+      userWsList: ctx.getUserWsList(input.userId)
     });
   });
 

@@ -123,11 +123,6 @@ const createContext = async ({
     message: 'Invalid authentication token'
   });
 
-  invariant(!decodedUser.banned, {
-    code: 'FORBIDDEN',
-    message: 'User is banned'
-  });
-
   // Roles alone decide: a deleted user has none, so the full user row
   // (avatar/banner joins, social credit SUM) is not worth loading per check.
   const hasPermission = async (targetPermission: Permission | Permission[]) => {
@@ -222,9 +217,11 @@ const createContext = async ({
 
   const getOwnWs = () => ownWs;
 
-  const getUserWs = (userId: number) => {
-    if (!wss) return undefined;
-    return Array.from(authedClients()).find(
+  // every socket of the user: multiple sessions/tabs are allowed, so kick,
+  // ban and delete must close them all
+  const getUserWsList = (userId: number) => {
+    if (!wss) return [];
+    return Array.from(authedClients()).filter(
       (client) => client.userId === userId
     );
   };
@@ -312,7 +309,7 @@ const createContext = async ({
     getOwnWs,
     getStatusById,
     setWsUserId,
-    getUserWs,
+    getUserWsList,
     getConnectionInfo,
     throwValidationError,
     saveUserIp
