@@ -12,6 +12,7 @@ import { protectedProcedure } from '@server/utils/trpc';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { assertCanModifyOwnerRole } from './assert-can-modify-owner-role';
+import { assertCanModifyOwnerUser } from './assert-can-modify-owner-user';
 
 const removeRoleRoute = protectedProcedure
   .input(
@@ -24,6 +25,11 @@ const removeRoleRoute = protectedProcedure
     await ctx.needsPermission(Permission.MANAGE_USERS);
 
     await assertCanModifyOwnerRole(ctx.userId, input.roleId, 'remove');
+    await assertCanModifyOwnerUser(
+      ctx.userId,
+      input.userId,
+      'change the roles of'
+    );
 
     const existing = await db
       .select()

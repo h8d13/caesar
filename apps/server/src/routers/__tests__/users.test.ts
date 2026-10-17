@@ -708,6 +708,33 @@ describe('users router', () => {
     );
   });
 
+  test("should throw when a moderator changes the owner's other roles", async () => {
+    const { caller } = await initTest();
+    const modRoleId = await caller.roles.add();
+    const extraRoleId = await caller.roles.add();
+
+    await caller.roles.update({
+      roleId: modRoleId,
+      name: 'Mod',
+      color: '#123456',
+      permissions: [Permission.MANAGE_USERS],
+      storageQuotaOverrideEnabled: false,
+      storageSpaceQuota: 0
+    });
+
+    await caller.users.addRole({ userId: 2, roleId: modRoleId });
+    await caller.users.addRole({ userId: 1, roleId: extraRoleId });
+
+    const { caller: modCaller } = await initTest(2);
+
+    await expect(
+      modCaller.users.removeRole({ userId: 1, roleId: extraRoleId })
+    ).rejects.toThrow('You cannot change the roles of the server owner.');
+    await expect(
+      modCaller.users.addRole({ userId: 1, roleId: modRoleId })
+    ).rejects.toThrow('You cannot change the roles of the server owner.');
+  });
+
   test('should throw when non-owner user tries to remove owner role from someone else', async () => {
     const { caller } = await initTest();
     const newRoleId = await caller.roles.add();

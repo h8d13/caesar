@@ -13,6 +13,7 @@ import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { assertCanAssignRole } from './assert-can-assign-role';
 import { assertCanModifyOwnerRole } from './assert-can-modify-owner-role';
+import { assertCanModifyOwnerUser } from './assert-can-modify-owner-user';
 
 const addRoleRoute = protectedProcedure
   .input(
@@ -40,6 +41,11 @@ const addRoleRoute = protectedProcedure
     });
 
     await assertCanModifyOwnerRole(ctx.userId, input.roleId, 'assign');
+    await assertCanModifyOwnerUser(
+      ctx.userId,
+      input.userId,
+      'change the roles of'
+    );
     await assertCanAssignRole(ctx.userId, input.roleId);
 
     const beforeChannels = await snapshotUserChannelAccess(input.userId);
