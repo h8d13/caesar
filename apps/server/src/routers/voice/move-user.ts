@@ -32,7 +32,13 @@ const moveUserRoute = protectedProcedure
 
     const sourceRuntime = VoiceRuntime.findRuntimeByUserId(input.userId);
 
-    invariant(sourceRuntime, {
+    // DM calls are voice runtimes too, but private: never pull someone out
+    // of one, and answer exactly as if they weren't in voice so the error
+    // doesn't reveal that they are in a DM call.
+    const sourceIsDm =
+      !!sourceRuntime && (await getChannelByIdOrThrow(sourceRuntime.id)).isDm;
+
+    invariant(sourceRuntime && !sourceIsDm, {
       code: 'BAD_REQUEST',
       message: 'User is not in a voice channel'
     });

@@ -68,4 +68,32 @@ d('voice router', () => {
     second.close();
     expect(runtime.getProducerTransport(1)).toBeUndefined();
   });
+
+  test('moderators cannot move a user out of a DM call', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: caller2 } = await initTest(2);
+
+    const voiceChannelId = await owner.channels.add({
+      type: ChannelType.VOICE,
+      name: 'voice-move-target',
+      categoryId: 1
+    });
+
+    const { channelId: dmChannelId } = await caller2.dms.open({ userId: 3 });
+
+    await caller2.dms.startCall({ channelId: dmChannelId });
+
+    await caller2.voice.join({
+      channelId: dmChannelId,
+      state: { micMuted: true, soundMuted: false }
+    });
+
+    try {
+      await expect(
+        owner.voice.moveUser({ userId: 2, channelId: voiceChannelId })
+      ).rejects.toThrow('User is not in a voice channel');
+    } finally {
+      await caller2.voice.leave();
+    }
+  });
 });
