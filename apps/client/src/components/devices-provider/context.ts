@@ -21,8 +21,6 @@ const DEFAULT_DEVICE_SETTINGS: TDeviceSettings = {
     noiseGateEnabled: true,
     noiseGateThresholdDb: MICROPHONE_GATE_DEFAULT_THRESHOLD_DB,
     noiseSuppressionMode: NoiseSuppressionMode.RNNOISE,
-    pushToTalkEnabled: false,
-    pushToTalkKeys: 'Space',
     shareSystemAudio: true,
     mirrorOwnVideo: false,
     simulcastEnabled: true,

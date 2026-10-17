@@ -25,7 +25,6 @@ import {
     markRNNoiseWorkletUnavailable
 } from '@/helpers/audio-worklet/rnnoise-worklet';
 import { logVoice } from '@/helpers/browser-logger';
-import { parseKeyCombo } from '@/helpers/format-key-code';
 import { getResWidthHeight } from '@/helpers/get-res-with-height';
 import { getTRPCClient } from '@/lib/trpc';
 import { NoiseSuppressionMode, VideoCodec } from '@/types';
@@ -51,6 +50,7 @@ import {
 } from './context';
 import { FloatingPinnedCard } from './floating-pinned-card';
 import { useLocalStreams } from './hooks/use-local-streams';
+import { useMuteHotkey } from './hooks/use-mute-hotkey';
 import { useRemoteStreams } from './hooks/use-remote-streams';
 import { useTransportStats } from './hooks/use-transport-stats';
 import { useTransports } from './hooks/use-transports';
@@ -279,17 +279,13 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
     );
     const microphoneDTLNWorkletNodeRef = useRef<AudioWorkletNode | null>(null);
     const micMutedRef = useRef(ownVoiceState.micMuted);
-    const pushToTalkEnabledRef = useRef(!!devices.pushToTalkEnabled);
-    const pushToTalkActiveRef = useRef(false);
 
     const syncTransmitMicrophoneTrackState = useCallback(() => {
         const track = transmitMicrophoneTrackRef.current;
 
         if (!track) return;
 
-        const shouldEnable =
-            !micMutedRef.current &&
-            (!pushToTalkEnabledRef.current || pushToTalkActiveRef.current);
+        const shouldEnable = !micMutedRef.current;
 
         if (track.enabled !== shouldEnable) {
             track.enabled = shouldEnable;
@@ -333,75 +329,6 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         micMutedRef.current = ownVoiceState.micMuted;
         syncTransmitMicrophoneTrackState();
     }, [ownVoiceState.micMuted, syncTransmitMicrophoneTrackState]);
-
-    useEffect(() => {
-        pushToTalkEnabledRef.current = !!devices.pushToTalkEnabled;
-        pushToTalkActiveRef.current = false;
-        syncTransmitMicrophoneTrackState();
-
-        if (!devices.pushToTalkEnabled) return;
-
-        const comboCodes = parseKeyCombo(devices.pushToTalkKeys || 'Space');
-        const heldCodes = new Set<string>();
-
-        const isTypingTarget = (target: EventTarget | null) => {
-            if (!(target instanceof HTMLElement)) return false;
-
-            return (
-                target.isContentEditable ||
-                target.tagName === 'INPUT' ||
-                target.tagName === 'TEXTAREA' ||
-                target.tagName === 'SELECT'
-            );
-        };
-
-        const syncActiveFromHeldCodes = () => {
-            const isActive = comboCodes.every((code) => heldCodes.has(code));
-
-            if (pushToTalkActiveRef.current === isActive) return;
-
-            pushToTalkActiveRef.current = isActive;
-            syncTransmitMicrophoneTrackState();
-        };
-
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (!comboCodes.includes(event.code)) return;
-            if (isTypingTarget(event.target)) return;
-
-            heldCodes.add(event.code);
-            syncActiveFromHeldCodes();
-        };
-
-        const handleKeyUp = (event: KeyboardEvent) => {
-            if (!comboCodes.includes(event.code)) return;
-
-            heldCodes.delete(event.code);
-            syncActiveFromHeldCodes();
-        };
-
-        // Window blur (e.g. alt-tab while held) has no matching keyup, so
-        // the mic would stay open until the combo is pressed again.
-        const handleBlur = () => {
-            heldCodes.clear();
-            syncActiveFromHeldCodes();
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        window.addEventListener('keyup', handleKeyUp);
-        window.addEventListener('blur', handleBlur);
-
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-            window.removeEventListener('keyup', handleKeyUp);
-            window.removeEventListener('blur', handleBlur);
-            pushToTalkActiveRef.current = false;
-            syncTransmitMicrophoneTrackState();
-        };
-    }, [
-        devices.pushToTalkEnabled,
-        devices.pushToTalkKeys,
-        syncTransmitMicrophoneTrackState
-    ]);
 
     useEffect(() => {
         if (!microphoneNoiseGateWorkletNodeRef.current) return;
@@ -1251,6 +1178,8 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             startScreenShareStream,
             stopScreenShareStream
         });
+
+    useMuteHotkey(toggleMic);
 
     useVoiceEvents({
         consume,
