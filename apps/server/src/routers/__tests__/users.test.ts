@@ -777,6 +777,31 @@ describe('users router', () => {
     expect(deletedUser).toBeUndefined();
   });
 
+  test('should delete two users who reacted with the same emoji', async () => {
+    const { caller } = await initTest();
+
+    const message = await tdb
+      .insert(messages)
+      .values({ channelId: 1, userId: 1, createdAt: Date.now() })
+      .returning()
+      .get();
+
+    await tdb.insert(messageReactions).values([
+      { messageId: message.id, userId: 2, emoji: 'thumbsup', createdAt: 1 },
+      { messageId: message.id, userId: 3, emoji: 'thumbsup', createdAt: 2 }
+    ]);
+
+    await caller.users.delete({ userId: 2 });
+    await caller.users.delete({ userId: 3 });
+
+    const reactions = await tdb
+      .select()
+      .from(messageReactions)
+      .where(eq(messageReactions.messageId, message.id));
+
+    expect(reactions).toHaveLength(1);
+  });
+
   test('should throw when trying to delete yourself', async () => {
     const { caller } = await initTest();
 

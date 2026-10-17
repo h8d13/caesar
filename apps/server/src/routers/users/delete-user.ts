@@ -20,7 +20,8 @@ import { invariant } from '@server/utils/invariant';
 import { pubsub } from '@server/utils/pubsub';
 import { protectedProcedure } from '@server/utils/trpc';
 import { randomUUIDv7 } from '@server/utils/uuid';
-import { eq } from 'drizzle-orm';
+import { and, eq, exists, sql } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/sqlite-core';
 import type { WebSocket } from 'ws';
 import z from 'zod';
 import { assertCanModifyOwnerUser } from './assert-can-modify-owner-user';
@@ -113,6 +114,32 @@ const performUserDeletion = async ({
         .update(emojis)
         .set({ userId: deletedUserId })
         .where(eq(emojis.userId, targetUserId));
+
+      // reactions are keyed (message, user, emoji): drop the ones the
+      // placeholder already has (an earlier deleted user reacted the same)
+      // or the reassign below violates the primary key
+      const placeholderReactions = alias(messageReactions, 'placeholder');
+
+      await tx.delete(messageReactions).where(
+        and(
+          eq(messageReactions.userId, targetUserId),
+          exists(
+            tx
+              .select({ one: sql`1` })
+              .from(placeholderReactions)
+              .where(
+                and(
+                  eq(placeholderReactions.userId, deletedUserId),
+                  eq(
+                    placeholderReactions.messageId,
+                    messageReactions.messageId
+                  ),
+                  eq(placeholderReactions.emoji, messageReactions.emoji)
+                )
+              )
+          )
+        )
+      );
 
       await tx
         .update(messageReactions)
