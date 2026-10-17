@@ -24,6 +24,7 @@ import { publishUser } from '../db/publishers';
 import { getDefaultRole } from '../db/queries/roles';
 import { getUserByIdentity } from '../db/queries/users';
 import { getWsInfo } from '../helpers/get-ws-info';
+import { getIpBlockKey } from '../helpers/network';
 import { isAtUserCap } from '../helpers/user-cap';
 import { logger } from '../logger';
 import { enqueueActivityLog } from '../queues/activity-log';
@@ -31,10 +32,7 @@ import { invariant } from '../utils/invariant';
 import { getJwtSecret } from '../utils/jwt-secret';
 import { hashPassword, verifyPassword } from '../utils/password';
 import { createLoginLockout } from '../utils/rate-limiters/login-lockout';
-import {
-  createRateLimiter,
-  getClientRateLimitKey
-} from '../utils/rate-limiters/rate-limiter';
+import { createRateLimiter } from '../utils/rate-limiters/rate-limiter';
 import {
   generateLoginOptions,
   hasWebauthnCredentials
@@ -200,7 +198,7 @@ const loginRouteHandler = async (
   // Key for the failed-login lockout. Lifted to handler scope so the
   // lockout can be updated after the credential check below.
   const lockoutKey = connectionInfo?.ip
-    ? getClientRateLimitKey(connectionInfo.ip)
+    ? getIpBlockKey(connectionInfo.ip)
     : undefined;
 
   const recordLoginFailure = () => {
