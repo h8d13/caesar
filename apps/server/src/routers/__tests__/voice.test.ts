@@ -96,4 +96,37 @@ d('voice router', () => {
       await caller2.voice.leave();
     }
   });
+
+  test('deleting a category tears down its voice runtimes', async () => {
+    const { caller } = await initTest(1);
+
+    const categoryId = await caller.categories.add({ name: 'voice-cat' });
+    const doomedId = await caller.channels.add({
+      type: ChannelType.VOICE,
+      name: 'doomed',
+      categoryId
+    });
+    const otherId = await caller.channels.add({
+      type: ChannelType.VOICE,
+      name: 'other',
+      categoryId: 1
+    });
+
+    await caller.voice.join({
+      channelId: doomedId,
+      state: { micMuted: true, soundMuted: false }
+    });
+
+    await caller.categories.delete({ categoryId });
+
+    expect(VoiceRuntime.findById(doomedId)).toBeUndefined();
+    expect(VoiceRuntime.findRuntimeByUserId(1)).toBeUndefined();
+
+    // not stuck as "already in a voice channel"
+    await caller.voice.join({
+      channelId: otherId,
+      state: { micMuted: true, soundMuted: false }
+    });
+    await caller.voice.leave();
+  });
 });

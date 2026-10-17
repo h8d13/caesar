@@ -148,6 +148,7 @@ export type TLeaveVoiceReason =
     | 'user_disconnect_button'
     | 'switch_channel'
     | 'open_device_settings'
+    | 'channel_deleted'
     | 'unknown';
 
 export const leaveVoice = async (options?: {
@@ -176,6 +177,12 @@ export const leaveVoice = async (options?: {
     setCurrentVoiceChannelId(undefined);
     updateOwnVoiceState({ webcamEnabled: false, sharingScreen: false });
     setPinnedCard(undefined);
+
+    // the server already destroyed the runtime: just tear down locally
+    if (reason === 'channel_deleted') {
+        playSound(SoundType.OWN_USER_LEFT_VOICE_CHANNEL);
+        return;
+    }
 
     const client = getTRPCClient();
 

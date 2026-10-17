@@ -1,5 +1,7 @@
+import { store } from '@/features/store';
 import { logDebug } from '@/helpers/browser-logger';
 import { getTRPCClient } from '@/lib/trpc';
+import { leaveVoice } from '../voice/actions';
 import {
     addChannel,
     addChannelUnreadMention,
@@ -8,6 +10,7 @@ import {
     setChannelReadState,
     updateChannel
 } from './actions';
+import { currentVoiceChannelIdSelector } from './selectors';
 
 const subscribeToChannels = () => {
     const trpc = getTRPCClient();
@@ -24,6 +27,11 @@ const subscribeToChannels = () => {
     const onChannelDeleteSub = trpc.channels.onDelete.subscribe(undefined, {
         onData: (channelId) => {
             logDebug('[EVENTS] channels.onDelete', { channelId });
+
+            if (currentVoiceChannelIdSelector(store.getState()) === channelId) {
+                void leaveVoice({ reason: 'channel_deleted' });
+            }
+
             removeChannel(channelId);
         },
         onError: (err) =>
