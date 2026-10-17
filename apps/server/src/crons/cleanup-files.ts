@@ -2,10 +2,15 @@ import { removeFile } from '../db/mutations/files';
 import { getOrphanedFileIds } from '../db/queries/files';
 import { logger } from '../logger';
 
+// files newer than this may still be between save and link
+const ORPHAN_GRACE_MS = 60 * 60 * 1000;
+
 const cleanupFiles = async () => {
   logger.debug('[Cron] Starting file cleanup...');
 
-  const orphanedFileIds = await getOrphanedFileIds();
+  const orphanedFileIds = await getOrphanedFileIds({
+    minAgeMs: ORPHAN_GRACE_MS
+  });
 
   if (orphanedFileIds.length === 0) {
     logger.debug('[Cron] No orphaned files found.');

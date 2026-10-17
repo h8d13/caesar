@@ -296,6 +296,12 @@ describe('/public', () => {
       channelId: 1
     });
 
+    // the sweep skips files younger than its grace period; age this one
+    await tdb
+      .update(files)
+      .set({ createdAt: Date.now() - 2 * 60 * 60 * 1000 })
+      .where(eq(files.id, dbFile!.id));
+
     // run the cron job directly: loadCrons() would leave live jobs in the fork
     await cleanupFiles();
 
@@ -310,6 +316,27 @@ describe('/public', () => {
 
     // file is deleted from disk
     expect(existsSync(path.join(PUBLIC_PATH, dbFile!.name))).toBe(false);
+  });
+
+  test('cleanup cron keeps a freshly saved file that is not linked yet', async () => {
+    const { mockedToken } = await initTest();
+
+    const tempFile = await upload(
+      new File(['fresh'], 'fresh.txt', { type: 'text/plain' }),
+      mockedToken
+    );
+    const saved = await fileManager.saveFile(tempFile.id, 1);
+
+    // between save and link, as in send-message / change-avatar
+    await cleanupFiles();
+
+    const row = await tdb
+      .select()
+      .from(files)
+      .where(eq(files.id, saved.id))
+      .get();
+
+    expect(row).toBeDefined();
   });
 
   test('should return 403 when trying to access a private channel file without token', async () => {

@@ -12,7 +12,7 @@ import {
   users
 } from '@caesar/shared/db/schema';
 import { generateFileToken } from '@server/helpers/files-crypto';
-import { and, asc, eq, exists, notExists, sql, sum } from 'drizzle-orm';
+import { and, asc, eq, exists, lt, notExists, sql, sum } from 'drizzle-orm';
 import type { SQLiteColumn } from 'drizzle-orm/sqlite-core';
 import { db } from '..';
 import { getSettings } from './server';
@@ -151,11 +151,18 @@ const isUnreferenced = (fileId: SQLiteColumn) =>
     )
   );
 
-const getOrphanedFileIds = async (): Promise<number[]> => {
+// minAgeMs skips files saved moments ago: routes save the file row first and
+// link it right after, so a sweep in between would delete a file in use.
+const getOrphanedFileIds = async ({ minAgeMs = 0 } = {}): Promise<number[]> => {
   const rows = await db
     .select({ id: files.id })
     .from(files)
-    .where(isUnreferenced(files.id));
+    .where(
+      and(
+        isUnreferenced(files.id),
+        lt(files.createdAt, Date.now() - minAgeMs + 1)
+      )
+    );
 
   return rows.map(({ id }) => id);
 };
