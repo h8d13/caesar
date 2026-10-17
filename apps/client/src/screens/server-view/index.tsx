@@ -10,7 +10,11 @@ import { setDmsOpen } from '@/features/app/actions';
 import { useDmsOpen, useSelectedDmChannelId } from '@/features/app/hooks';
 import { setSelectedChannelId } from '@/features/server/channels/actions';
 import { useCan, usePublicServerSettings } from '@/features/server/hooks';
-import { getLocalStorageItemBool, LocalStorageKey } from '@/helpers/storage';
+import {
+    getLocalStorageItemBool,
+    LocalStorageKey,
+    setLocalStorageItemBool
+} from '@/helpers/storage';
 import { useBirthdayToasts } from '@/hooks/use-birthday-toasts';
 import { useIsLgUp } from '@/hooks/use-is-lg-up';
 import { useSwipeGestures } from '@/hooks/use-swipe-gestures';
@@ -42,9 +46,9 @@ const ServerView = memo(() => {
 
     const handleDesktopLeftSidebarToggle = useCallback(() => {
         setIsDesktopLeftSidebarOpen((prev) => !prev);
-        localStorage.setItem(
+        setLocalStorageItemBool(
             LocalStorageKey.LEFT_SIDEBAR_STATE,
-            !isDesktopLeftSidebarOpen ? 'true' : 'false'
+            !isDesktopLeftSidebarOpen
         );
     }, [isDesktopLeftSidebarOpen]);
 
@@ -57,9 +61,9 @@ const ServerView = memo(() => {
         }
 
         setIsDesktopRightSidebarOpen((prev) => !prev);
-        localStorage.setItem(
+        setLocalStorageItemBool(
             LocalStorageKey.RIGHT_SIDEBAR_STATE,
-            !isDesktopRightSidebarOpen ? 'true' : 'false'
+            !isDesktopRightSidebarOpen
         );
     }, [isLgUp, isDesktopRightSidebarOpen]);
 

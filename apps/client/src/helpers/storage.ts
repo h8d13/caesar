@@ -29,15 +29,25 @@ export enum SessionStorageKey {
     TOKEN = 'caesar-token'
 }
 
-const getLocalStorageItem = (key: LocalStorageKey): string | null => {
-    return localStorage.getItem(key);
+// Storage access throws when site data is blocked (LibreWolf, hardened
+// Firefox) and stored JSON can be corrupt; neither should crash the app, so
+// every access falls back instead.
+const tryStorage = <T>(fn: () => T, fallback: T): T => {
+    try {
+        return fn();
+    } catch {
+        return fallback;
+    }
 };
+
+const getLocalStorageItem = (key: LocalStorageKey): string | null =>
+    tryStorage(() => localStorage.getItem(key), null);
 
 const getLocalStorageItemBool = (
     key: LocalStorageKey,
     defaultValue: boolean = false
 ): boolean => {
-    const item = localStorage.getItem(key);
+    const item = getLocalStorageItem(key);
 
     if (item === null) {
         return defaultValue ?? false;
@@ -46,49 +56,39 @@ const getLocalStorageItemBool = (
     return item === 'true';
 };
 
-const setLocalStorageItemBool = (
-    key: LocalStorageKey,
-    value: boolean
-): void => {
-    localStorage.setItem(key, value.toString());
-};
+const setLocalStorageItemBool = (key: LocalStorageKey, value: boolean): void =>
+    setLocalStorageItem(key, value.toString());
 
 const getLocalStorageItemAsJSON = <T>(
     key: LocalStorageKey,
     defaultValue?: T
 ): T | undefined => {
-    const item = localStorage.getItem(key);
+    const item = getLocalStorageItem(key);
 
     if (item) {
-        return JSON.parse(item) as T;
+        return tryStorage(() => JSON.parse(item) as T, defaultValue);
     }
 
     return defaultValue;
 };
 
-const setLocalStorageItemAsJSON = <T>(key: LocalStorageKey, value: T): void => {
-    localStorage.setItem(key, JSON.stringify(value));
-};
+const setLocalStorageItemAsJSON = <T>(key: LocalStorageKey, value: T): void =>
+    setLocalStorageItem(key, JSON.stringify(value));
 
-const setLocalStorageItem = (key: LocalStorageKey, value: string): void => {
-    localStorage.setItem(key, value);
-};
+const setLocalStorageItem = (key: LocalStorageKey, value: string): void =>
+    tryStorage(() => localStorage.setItem(key, value), undefined);
 
-const removeLocalStorageItem = (key: LocalStorageKey): void => {
-    localStorage.removeItem(key);
-};
+const removeLocalStorageItem = (key: LocalStorageKey): void =>
+    tryStorage(() => localStorage.removeItem(key), undefined);
 
-const getSessionStorageItem = (key: SessionStorageKey): string | null => {
-    return sessionStorage.getItem(key);
-};
+const getSessionStorageItem = (key: SessionStorageKey): string | null =>
+    tryStorage(() => sessionStorage.getItem(key), null);
 
-const setSessionStorageItem = (key: SessionStorageKey, value: string): void => {
-    sessionStorage.setItem(key, value);
-};
+const setSessionStorageItem = (key: SessionStorageKey, value: string): void =>
+    tryStorage(() => sessionStorage.setItem(key, value), undefined);
 
-const removeSessionStorageItem = (key: SessionStorageKey): void => {
-    sessionStorage.removeItem(key);
-};
+const removeSessionStorageItem = (key: SessionStorageKey): void =>
+    tryStorage(() => sessionStorage.removeItem(key), undefined);
 
 export {
     getLocalStorageItem,

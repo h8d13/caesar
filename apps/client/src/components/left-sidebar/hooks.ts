@@ -5,7 +5,11 @@ import {
 } from '@/features/server/channels/hooks';
 import { joinVoice } from '@/features/server/voice/actions';
 import { useMedia } from '@/features/server/voice/hooks';
-import { getLocalStorageItemAsJSON, LocalStorageKey } from '@/helpers/storage';
+import {
+    getLocalStorageItemAsJSON,
+    LocalStorageKey,
+    setLocalStorageItemAsJSON
+} from '@/helpers/storage';
 import { ChannelType } from '@caesar/shared';
 import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -30,9 +34,9 @@ const saveExpandedValue = (categoryId: number, expanded: boolean): void => {
         [categoryId]: expanded
     };
 
-    localStorage.setItem(
+    setLocalStorageItemAsJSON(
         LocalStorageKey.CATEGORIES_EXPANDED,
-        JSON.stringify(newExpandedMap)
+        newExpandedMap
     );
 };
 
