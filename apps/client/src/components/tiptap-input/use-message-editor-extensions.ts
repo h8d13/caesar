@@ -4,6 +4,7 @@ import { BUILT_IN_COMMANDS } from '@/helpers/built-in-commands';
 import type { TJoinedPublicUser } from '@caesar/shared';
 import type { Extension } from '@tiptap/core';
 import Emoji, { gitHubEmojis, type EmojiItem } from '@tiptap/extension-emoji';
+import Link from '@tiptap/extension-link';
 import StarterKit from '@tiptap/starter-kit';
 // imported here, not in main.tsx: the editor chunk group would otherwise
 // pull the whole tiptap stack into the entry's static deps
@@ -58,8 +59,12 @@ const useMessageEditorExtensions = (
                     HTMLAttributes: {
                         class: 'hard-break'
                     }
-                }
+                },
+                link: false
             }),
+            // Link's mark is inclusive whenever autolink is on (the default),
+            // so text typed right after a pasted/autolinked URL joined it.
+            Link.extend({ inclusive: () => false }),
             MessageEmoji.configure({
                 emojis: [...gitHubEmojis, ...customEmojis],
                 enableEmoticons: false,
