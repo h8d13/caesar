@@ -2,14 +2,17 @@ import { ActivityLogType, DisconnectCode } from '@caesar/shared';
 import { users } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
+import {
+  isRememberedToken,
+  mintSessionToken,
+  stageSessionRefresh
+} from '@server/helpers/session-token';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
-import { getJwtSecret } from '@server/utils/jwt-secret';
 import { hashPassword, verifyPassword } from '@server/utils/password';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { closeUserSessions } from '@server/utils/wss';
 import { eq, sql } from 'drizzle-orm';
-import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 
 const updatePasswordRoute = rateLimitedProcedure(protectedProcedure, {
@@ -75,10 +78,10 @@ const updatePasswordRoute = rateLimitedProcedure(protectedProcedure, {
 
     const sessionEpoch = updated?.sessionEpoch ?? 0;
 
-    const newToken = jwt.sign(
-      { userId: ctx.userId, sessionEpoch },
-      await getJwtSecret(),
-      { expiresIn: '604800s' }
+    const newToken = await mintSessionToken(
+      ctx.userId,
+      sessionEpoch,
+      isRememberedToken(ctx.token)
     );
 
     closeUserSessions(
@@ -93,7 +96,8 @@ const updatePasswordRoute = rateLimitedProcedure(protectedProcedure, {
       userId: ctx.user.id
     });
 
-    return { token: newToken };
+    // redeemed at /session/refresh, as in signOutOtherSessions
+    return { refreshNonce: stageSessionRefresh(ctx.userId, newToken) };
   });
 
 export { updatePasswordRoute };

@@ -5,7 +5,7 @@ import {
   messageFiles,
   messages
 } from '@caesar/shared/db/schema';
-import { initTest, login, uploadFile } from '@server/__tests__/helpers';
+import { initTest, loginToken, uploadFile } from '@server/__tests__/helpers';
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
 import { cleanupFiles } from '@server/crons/cleanup-files';
 import { generateFileToken } from '@server/helpers/files-crypto';
@@ -71,10 +71,7 @@ describe('/public', () => {
   let token: string;
 
   beforeEach(async () => {
-    const response = await login('testowner', 'password123');
-    const data = (await response.json()) as { token: string };
-
-    token = data.token;
+    token = await loginToken('testowner', 'password123');
 
     for (const fileData of filesToCreate) {
       fileData.messageId = null;

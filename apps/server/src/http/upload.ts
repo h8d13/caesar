@@ -5,6 +5,7 @@ import z from 'zod';
 import { config } from '../config';
 import { getSettings } from '../db/queries/server';
 import { getUserByToken } from '../db/queries/users';
+import { getSessionToken } from '../helpers/session-token';
 import { logger } from '../logger';
 import { fileManager } from '../utils/file-manager';
 import { createRateLimiter } from '../utils/rate-limiters/rate-limiter';
@@ -12,7 +13,9 @@ import { sanitizeFileName } from './helpers';
 import { enforceHttpRateLimit } from './rate-limit';
 
 const zHeaders = z.object({
-  [UploadHeaders.TOKEN]: z.string(),
+  // browsers authenticate with the session cookie; API clients may still
+  // send the token header
+  [UploadHeaders.TOKEN]: z.string().optional(),
   [UploadHeaders.ORIGINAL_NAME]: z.string(),
   [UploadHeaders.CONTENT_LENGTH]: z.string().transform((val) => Number(val))
 });
@@ -34,7 +37,7 @@ const uploadFileRouteHandler = async (
   const parsedHeaders = zHeaders.parse(req.headers);
 
   const [token, rawOriginalName, contentLength] = [
-    parsedHeaders[UploadHeaders.TOKEN],
+    getSessionToken(req),
     parsedHeaders[UploadHeaders.ORIGINAL_NAME],
     parsedHeaders[UploadHeaders.CONTENT_LENGTH]
   ];

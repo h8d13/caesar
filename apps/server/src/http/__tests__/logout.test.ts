@@ -1,11 +1,10 @@
-import { login } from '@server/__tests__/helpers';
+import { loginToken } from '@server/__tests__/helpers';
 import { testsBaseUrl } from '@server/__tests__/setup';
 import { describe, expect, test } from 'vite-plus/test';
 
 describe('/logout', () => {
   test('returns 200 with clearing cookie when token is valid', async () => {
-    const loginRes = await login('testowner', 'password123');
-    const { token } = (await loginRes.json()) as { token: string };
+    const token = await loginToken('testowner', 'password123');
 
     const res = await fetch(`${testsBaseUrl}/logout`, {
       method: 'POST',
@@ -14,7 +13,7 @@ describe('/logout', () => {
 
     expect(res.status).toBe(200);
     const setCookie = res.headers.get('set-cookie');
-    expect(setCookie).toContain('caesar-token=');
+    expect(setCookie).toContain('caesar-session=; HttpOnly');
     expect(setCookie).toContain('Max-Age=0');
   });
 

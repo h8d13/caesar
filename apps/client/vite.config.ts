@@ -31,6 +31,8 @@ export default defineConfig({
             '/healthz': 'http://localhost:4991',
             '/login': 'http://localhost:4991',
             '/logout': 'http://localhost:4991',
+            '/session': 'http://localhost:4991',
+            '/e2ee': 'http://localhost:4991',
             '/upload': 'http://localhost:4991',
             '/public': 'http://localhost:4991'
         }
@@ -38,7 +40,11 @@ export default defineConfig({
     assetsInclude: ['**/*.wasm'],
     build: {
         target: 'esnext',
-        chunkSizeWarningLimit: 1000
+        chunkSizeWarningLimit: 1000,
+        // small ?url scripts (audio worklets) would otherwise inline as
+        // data: URLs, which script-src deliberately does not allow
+        assetsInlineLimit: (filePath) =>
+            filePath.endsWith('.js') ? false : undefined
     },
     resolve: {
         alias: {

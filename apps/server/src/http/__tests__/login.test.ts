@@ -1,7 +1,11 @@
 import { OWNER_ROLE_ID } from '@caesar/shared';
 import { invites, roles, userRoles, users } from '@caesar/shared/db/schema';
-import { getRoleIdByName, login } from '@server/__tests__/helpers';
-import { tdb } from '@server/__tests__/setup';
+import {
+  getRoleIdByName,
+  getSessionCookie,
+  login
+} from '@server/__tests__/helpers';
+import { tdb, testsBaseUrl } from '@server/__tests__/setup';
 import { getJwtSecret } from '@server/utils/jwt-secret';
 import { setRateLimitingDisabled } from '@server/utils/rate-limiters';
 import { eq } from 'drizzle-orm';
@@ -44,14 +48,66 @@ describe('/login', () => {
 
     expect(response.status).toBe(200);
 
-    const data = (await response.json()) as { success: boolean; token: string };
+    const data = (await response.json()) as { success: boolean };
 
     expect(data).toHaveProperty('success', true);
-    expect(data).toHaveProperty('token');
 
-    const decoded = jwt.verify(data.token, await getJwtSecret());
+    const decoded = jwt.verify(
+      getSessionCookie(response)!,
+      await getJwtSecret()
+    );
 
     expect(decoded).toHaveProperty('userId');
+  });
+
+  test('token only leaves as an HttpOnly cookie, never in the body', async () => {
+    const response = await login('testowner', 'password123');
+    const data = await response.json();
+
+    expect(data).not.toHaveProperty('token');
+
+    const cookie = response.headers
+      .getSetCookie()
+      .find((c) => c.startsWith('caesar-session='))!;
+
+    expect(cookie).toContain('HttpOnly');
+    expect(cookie).toContain('Secure');
+    expect(cookie).toContain('SameSite=Strict');
+    expect(cookie).toMatch(/Path=\/(;|$)/);
+    // remember not requested: a browser-session cookie
+    expect(cookie).not.toContain('Max-Age');
+  });
+
+  test('refuses a cross-origin login (login CSRF)', async () => {
+    const response = await fetch(`${testsBaseUrl}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        origin: 'https://evil.example'
+      },
+      body: JSON.stringify({ identity: 'testowner', password: 'password123' })
+    });
+
+    expect(response.status).toBe(403);
+    expect(getSessionCookie(response)).toBeUndefined();
+  });
+
+  test('remember gives a persistent cookie', async () => {
+    const response = await fetch(`${testsBaseUrl}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        identity: 'testowner',
+        password: 'password123',
+        remember: true
+      })
+    });
+
+    const cookie = response.headers
+      .getSetCookie()
+      .find((c) => c.startsWith('caesar-session='))!;
+
+    expect(cookie).toContain('Max-Age=604800');
   });
 
   test('should fail login with invalid password', async () => {
@@ -184,7 +240,7 @@ describe('/login', () => {
     const data = await response.json();
 
     expect(data).toHaveProperty('success', true);
-    expect(data).toHaveProperty('token');
+    expect(getSessionCookie(response)).toBeTruthy();
 
     const updatedInvite = await tdb
       .select()
@@ -329,10 +385,8 @@ describe('/login', () => {
 
     expect(response.status).toBe(200);
 
-    const data: any = await response.json();
-
     const decoded = jwt.verify(
-      data.token,
+      getSessionCookie(response)!,
       await getJwtSecret()
     ) as jwt.JwtPayload;
 
@@ -425,7 +479,7 @@ describe('/login', () => {
     const data = await response.json();
 
     expect(data).toHaveProperty('success', true);
-    expect(data).toHaveProperty('token');
+    expect(getSessionCookie(response)).toBeTruthy();
   });
 
   test('identity should be case-insensitive', async () => {
@@ -433,13 +487,10 @@ describe('/login', () => {
 
     expect(response.status).toBe(200);
 
-    const data = (await response.json()) as { token: string };
-
-    expect(data).toHaveProperty('success', true);
-    expect(data).toHaveProperty('token');
+    expect(await response.json()).toHaveProperty('success', true);
 
     const decoded = jwt.verify(
-      data.token,
+      getSessionCookie(response)!,
       await getJwtSecret()
     ) as jwt.JwtPayload;
 
@@ -455,10 +506,8 @@ describe('/login', () => {
 
     expect(response2.status).toBe(200);
 
-    const data2 = (await response2.json()) as { token: string };
-
     const decoded2 = jwt.verify(
-      data2.token,
+      getSessionCookie(response2)!,
       await getJwtSecret()
     ) as jwt.JwtPayload;
 

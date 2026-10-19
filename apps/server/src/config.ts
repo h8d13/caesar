@@ -3,14 +3,11 @@ import z from 'zod';
 import { applyEnvOverrides } from './helpers/apply-env-overrides';
 import { ensureServerDirs } from './helpers/ensure-server-dirs';
 import { iniDefaults, parseIniConfig } from './helpers/ini-config';
-import { getPrivateIp, getPublicIp } from './helpers/network';
+import { getPrivateIp } from './helpers/network';
 import { CONFIG_INI_PATH } from './helpers/paths';
 import { IS_DEVELOPMENT } from './utils/env';
 
-const [SERVER_PUBLIC_IP, SERVER_PRIVATE_IP] = await Promise.all([
-  getPublicIp(),
-  getPrivateIp()
-]);
+const SERVER_PRIVATE_IP = await getPrivateIp();
 
 // ---------------------------------------------------------------------------
 // Env-backed config: deploy/infra knobs. Set via environment (docker-compose),
@@ -99,4 +96,4 @@ const iniConfig = await loadIniConfig();
 
 const config = Object.freeze({ ...envConfig, ...iniConfig });
 
-export { config, SERVER_PRIVATE_IP, SERVER_PUBLIC_IP };
+export { config, SERVER_PRIVATE_IP };

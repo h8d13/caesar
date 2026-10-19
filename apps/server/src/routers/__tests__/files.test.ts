@@ -1,5 +1,5 @@
 import type { TTempFile } from '@caesar/shared';
-import { initTest, login, uploadFile } from '@server/__tests__/helpers';
+import { initTest, loginToken, uploadFile } from '@server/__tests__/helpers';
 import { fileManager } from '@server/utils/file-manager';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
@@ -10,12 +10,9 @@ describe('files router', () => {
   let counter = 0;
 
   beforeEach(async () => {
-    const response = await login('testowner', 'password123');
-    const data: any = await response.json();
-
     const res = await uploadFile(
       new File(['test'], `file-${counter++}.txt`, { type: 'text/plain' }),
-      data.token
+      await loginToken('testowner', 'password123')
     );
 
     tempFile = (await res.json()) as TTempFile;

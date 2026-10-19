@@ -1,14 +1,22 @@
 // E2EE for ephemeral DMs (expiresAt != null).
 //
 // priv = argon2id(password, identity). deterministic, heap-only,
-// never persisted/sent. derived at manual login before the session starts,
-// so it is fixed for the session's lifetime. auto-login replays the JWT
-// only => no password => no priv => ephemeral DMs stay locked until the
+// never sent. derived at manual login before the session starts, so it is
+// fixed for the session's lifetime. auto-login resumes the session cookie
+// only => no password, so priv comes back via the session key below (sealed blob here,
+// wrap key on the server); without both, ephemeral DMs stay locked until the
 // user logs out and back in.
 //
 // "ephemeral" = server TTL, not forward secrecy: password holder can
 // always rederive and read still-live msgs.
 
+import { getUrlFromServer } from '@/helpers/get-file-url';
+import {
+    getLocalStorageItem,
+    LocalStorageKey,
+    removeLocalStorageItem,
+    setLocalStorageItem
+} from '@/helpers/storage';
 import { canonicalIdentity } from '@caesar/shared';
 import { x25519 } from '@noble/curves/ed25519.js';
 import { argon2id } from '@noble/hashes/argon2.js';
@@ -190,6 +198,73 @@ const open = async (key: CryptoKey, payloadB64: string): Promise<string> => {
     return new TextDecoder().decode(pt);
 };
 
+// session key: lets auto-login unlock priv without the password (the
+// Proton approach). priv is sealed under a random wrap key; the sealed blob
+// stays in this browser, the wrap key goes to the server bound to this
+// session's token. Neither half alone yields priv, and revoking the session
+// (logout, password change, sign-out-others) makes the server half
+// unfetchable.
+const importWrapKey = (raw: Uint8Array) =>
+    crypto.subtle.importKey('raw', raw as BufferSource, 'AES-GCM', false, [
+        'encrypt',
+        'decrypt'
+    ]);
+
+const forgetSessionKey = () =>
+    removeLocalStorageItem(LocalStorageKey.E2EE_SESSION_KEY);
+
+// both requests authenticate with the HttpOnly session cookie
+const persistSessionKey = async () => {
+    if (!myPriv) return;
+
+    const wrapKey = crypto.getRandomValues(new Uint8Array(32));
+    const blob = await seal(
+        await importWrapKey(wrapKey),
+        bytesToBase64(myPriv)
+    );
+
+    const res = await fetch(`${getUrlFromServer()}/e2ee/session-key`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wrapKey: bytesToBase64(wrapKey) })
+    });
+
+    if (!res.ok)
+        throw new Error(`e2ee: session key store failed (${res.status})`);
+
+    // only after the server holds the matching wrap key
+    setLocalStorageItem(LocalStorageKey.E2EE_SESSION_KEY, blob);
+};
+
+const restoreSessionKey = async () => {
+    const blob = getLocalStorageItem(LocalStorageKey.E2EE_SESSION_KEY);
+    if (!blob) return;
+
+    const res = await fetch(`${getUrlFromServer()}/e2ee/session-key`);
+
+    // revoked session or no wrap key for this token: the blob is dead
+    if (res.status === 401 || res.status === 404) {
+        forgetSessionKey();
+        return;
+    }
+
+    // transient (429, 5xx): keep the blob, the next auto-login retries
+    if (!res.ok) return;
+
+    const { wrapKey } = (await res.json()) as { wrapKey: string };
+
+    try {
+        const priv = base64ToBytes(
+            await open(await importWrapKey(base64ToBytes(wrapKey)), blob)
+        );
+        if (priv.length !== 32) throw new Error('e2ee: bad priv length');
+        setPriv(priv);
+    } catch {
+        // sealed under another wrap key (overwritten by a later login)
+        forgetSessionKey();
+    }
+};
+
 // chunked variants for files. AES-GCM has a 256 MB single-call hard
 // limit (NIST SP 800-38D) plus the obvious memory-pressure problem of
 // holding multi-GB plaintext + ciphertext + Blob in heap; chunking
@@ -311,10 +386,13 @@ export {
     derivePub,
     dmKey,
     E2EE_LOCKED_MESSAGE,
+    forgetSessionKey,
     getMyPubB64,
     hasPriv,
     open,
     openStreamed,
+    persistSessionKey,
+    restoreSessionKey,
     seal,
     sealStreamed,
     setPriv

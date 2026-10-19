@@ -1,6 +1,6 @@
 import { UploadHeaders, type TTempFile } from '@caesar/shared';
 import { settings, users } from '@caesar/shared/db/schema';
-import { login, uploadFile } from '@server/__tests__/helpers';
+import { loginToken, uploadFile } from '@server/__tests__/helpers';
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
 import { TMP_PATH } from '@server/helpers/paths';
 import { eq } from 'drizzle-orm';
@@ -23,10 +23,7 @@ describe('/upload', () => {
   // sessionEpoch resets to 0; a token cached from a previous login is
   // tied to a now-stale epoch and would 401. Re-login per test.
   beforeEach(async () => {
-    const response = await login('testowner', 'password123');
-    const data: any = await response.json();
-
-    token = data.token;
+    token = await loginToken('testowner', 'password123');
   });
 
   afterAll(async () => {
@@ -74,8 +71,8 @@ describe('/upload', () => {
 
     const data: any = await response.json();
 
+    // the token header is optional now (browsers send the session cookie)
     expect(data).toHaveProperty('errors');
-    expect(data.errors[UploadHeaders.TOKEN]).toBeDefined();
     expect(data.errors[UploadHeaders.ORIGINAL_NAME]).toBeDefined();
   });
 

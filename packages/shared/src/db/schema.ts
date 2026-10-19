@@ -234,6 +234,27 @@ const userKeys = sqliteTable('user_keys', {
   publicKey: text('public_key').notNull()
 });
 
+// Proton-style unlock for auto-login: the browser keeps the E2EE private
+// key encrypted under a random wrap key, and only the server holds that wrap
+// key, bound to one session token. Neither half alone yields the key. A row
+// is valid only while sessionEpoch still matches users.sessionEpoch, so every
+// existing revoke (logout, password change, sign-out-others) also revokes
+// it; the prune cron then deletes the dead rows.
+const e2eeSessionKeys = sqliteTable(
+  'e2ee_session_keys',
+  {
+    // sha256 of the JWT: never store the bearer token itself
+    tokenHash: text('token_hash').primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    sessionEpoch: integer('session_epoch').notNull(),
+    wrapKey: text('wrap_key').notNull(),
+    createdAt: integer('created_at').notNull()
+  },
+  (t) => [index('e2ee_session_keys_user_idx').on(t.userId)]
+);
+
 const userRoles = sqliteTable(
   'user_roles',
   {
@@ -829,6 +850,7 @@ export {
   crashBets,
   crashRounds,
   directMessages,
+  e2eeSessionKeys,
   emojis,
   files,
   invites,

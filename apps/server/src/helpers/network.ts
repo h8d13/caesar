@@ -11,56 +11,6 @@ const getPrivateIp = async () => {
   return addresses[0];
 };
 
-const getPublicIpFromIpify = async (): Promise<string | undefined> => {
-  try {
-    const response = await fetch('https://api.ipify.org?format=json');
-    const data = (await response.json()) as {
-      ip: string;
-    };
-
-    return data.ip;
-  } catch {
-    return undefined;
-  }
-};
-
-// fallback since it can return ipv6 sometimes
-const getPublicIpFromIfconfig = async (): Promise<string | undefined> => {
-  try {
-    const response = await fetch('https://ifconfig.me/ip');
-    const ip = (await response.text()).trim();
-
-    return ip;
-  } catch {
-    return undefined;
-  }
-};
-
-const getPublicIpFromIcanhazip = async (): Promise<string | undefined> => {
-  try {
-    const response = await fetch('https://ipv4.icanhazip.com');
-    const ip = (await response.text()).trim();
-
-    return ip;
-  } catch {
-    return undefined;
-  }
-};
-
-const getPublicIp = async () => {
-  let ip = await getPublicIpFromIcanhazip();
-
-  if (!ip) {
-    ip = await getPublicIpFromIpify();
-  }
-
-  if (!ip) {
-    ip = await getPublicIpFromIfconfig();
-  }
-
-  return ip;
-};
-
 // Key for IP-based blocks (login lockout). IPv4 is used as is; IPv6 is grouped
 // by /64 since a single client usually controls a whole /64 and could
 // otherwise rotate addresses to dodge the block.
@@ -78,4 +28,4 @@ const getIpBlockKey = (ip: string): string => {
   return `${network.toString()}/64`;
 };
 
-export { getIpBlockKey, getPrivateIp, getPublicIp };
+export { getIpBlockKey, getPrivateIp };

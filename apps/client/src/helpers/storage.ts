@@ -15,7 +15,11 @@ export enum LocalStorageKey {
     RIGHT_SIDEBAR_WIDTH = 'caesar-right-sidebar-width',
     CATEGORIES_EXPANDED = 'caesar-categories-expanded',
     AUTO_LOGIN = 'caesar-auto-login',
-    AUTO_LOGIN_TOKEN = 'caesar-auto-login-token',
+    // not the session (that is an HttpOnly cookie script can't read): only
+    // tells a fresh page load to try resuming it. Set at login, cleared on
+    // logout or a rejected resume.
+    HAS_SESSION = 'caesar-has-session',
+    E2EE_SESSION_KEY = 'caesar-e2ee-session-key',
     BROWSER_NOTIFICATIONS = 'caesar-browser-notifications',
     NICKNAMES = 'caesar-nicknames',
     BROWSER_NOTIFICATIONS_FOR_MENTIONS = 'caesar-browser-notifications-for-mentions',
@@ -23,10 +27,6 @@ export enum LocalStorageKey {
     HIDDEN_STREAMS = 'caesar-hidden-streams',
     HIDDEN_DMS = 'caesar-hidden-dms',
     BIRTHDAY_LAST_SHOWN = 'caesar-birthday-last-shown'
-}
-
-export enum SessionStorageKey {
-    TOKEN = 'caesar-token'
 }
 
 // Storage access throws when site data is blocked (LibreWolf, hardened
@@ -81,24 +81,20 @@ const setLocalStorageItem = (key: LocalStorageKey, value: string): void =>
 const removeLocalStorageItem = (key: LocalStorageKey): void =>
     tryStorage(() => localStorage.removeItem(key), undefined);
 
-const getSessionStorageItem = (key: SessionStorageKey): string | null =>
-    tryStorage(() => sessionStorage.getItem(key), null);
-
-const setSessionStorageItem = (key: SessionStorageKey, value: string): void =>
-    tryStorage(() => sessionStorage.setItem(key, value), undefined);
-
-const removeSessionStorageItem = (key: SessionStorageKey): void =>
-    tryStorage(() => sessionStorage.removeItem(key), undefined);
+// pre-HttpOnly builds kept the session JWT in script-readable storage
+const removeLegacySessionTokens = (): void =>
+    tryStorage(() => {
+        localStorage.removeItem('caesar-auto-login-token');
+        sessionStorage.removeItem('caesar-token');
+    }, undefined);
 
 export {
     getLocalStorageItem,
     getLocalStorageItemAsJSON,
     getLocalStorageItemBool,
-    getSessionStorageItem,
+    removeLegacySessionTokens,
     removeLocalStorageItem,
-    removeSessionStorageItem,
     setLocalStorageItem,
     setLocalStorageItemAsJSON,
-    setLocalStorageItemBool,
-    setSessionStorageItem
+    setLocalStorageItemBool
 };

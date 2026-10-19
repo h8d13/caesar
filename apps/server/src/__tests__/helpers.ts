@@ -64,6 +64,22 @@ const login = async (identity: string, password: string, invite?: string) =>
     })
   });
 
+// the session token only ever comes back as the HttpOnly cookie
+const getSessionCookie = (res: Response) =>
+  res.headers
+    .getSetCookie()
+    .find((c) => c.startsWith('caesar-session='))
+    ?.split(';')[0]!
+    .slice('caesar-session='.length);
+
+const loginToken = async (identity: string, password: string) => {
+  const token = getSessionCookie(await login(identity, password));
+
+  if (!token) throw new Error(`login failed for ${identity}`);
+
+  return token;
+};
+
 const uploadFile = async (file: File, token: string) =>
   fetch(`${testsBaseUrl}/upload`, {
     method: 'POST',
@@ -114,8 +130,10 @@ export {
   getCaller,
   getMockedToken,
   getRoleIdByName,
+  getSessionCookie,
   initTest,
   login,
+  loginToken,
   makeModerator,
   uploadFile
 };

@@ -21,6 +21,11 @@ import { getAllChannelUserPermissions } from '../db/queries/channels';
 import { isUserDmParticipant } from '../db/queries/dms';
 import { getUserById, getUserByToken } from '../db/queries/users';
 import { getWsInfo } from '../helpers/get-ws-info';
+import {
+  getCookie,
+  isCrossOrigin,
+  SESSION_COOKIE
+} from '../helpers/session-token';
 import { logger } from '../logger';
 import { enqueueActivityLog } from '../queues/activity-log';
 import { appRouter } from '../routers';
@@ -114,7 +119,15 @@ const createContext = async ({
   req,
   res
 }: CreateWSSContextFnOptions): Promise<Context> => {
-  const { token } = info.connectionParams as TConnectionParams;
+  // browsers authenticate the upgrade with the HttpOnly session cookie;
+  // connectionParams remains for non-browser clients and tests
+  const cookieToken = isCrossOrigin(req)
+    ? undefined
+    : getCookie(req, SESSION_COOKIE);
+  const token =
+    cookieToken ??
+    (info.connectionParams as TConnectionParams | null)?.token ??
+    '';
 
   const decodedUser = await getUserByToken(token);
 
@@ -329,19 +342,35 @@ const createWsServer = async (server: http.Server) => {
       maxPayload: 4 * 1024 * 1024
     });
 
-    wss.on('connection', (incoming) => {
+    wss.on('connection', (incoming, req) => {
       const ws = attachSessionFields(incoming);
 
-      ws.once('message', async (message) => {
-        try {
-          const parsed = JSON.parse(rawDataToString(message));
-          const { token } = parsed.data as TConnectionParams;
+      // cross-site WebSocket hijacking: another site's page can open a
+      // socket here and the browser attaches our cookie, so refuse any
+      // upgrade whose Origin isn't this host
+      if (isCrossOrigin(req)) {
+        ws.close(1008, 'Forbidden origin');
+        return;
+      }
 
-          ws.token = token;
-        } catch {
-          logger.error('Failed to parse initial WebSocket message');
-        }
-      });
+      // the token closeUserSessions matches on; non-browser clients send it
+      // as connectionParams in their first message instead of a cookie
+      const cookieToken = getCookie(req, SESSION_COOKIE);
+
+      if (cookieToken) {
+        ws.token = cookieToken;
+      } else {
+        ws.once('message', async (message) => {
+          try {
+            const parsed = JSON.parse(rawDataToString(message));
+            const { token } = parsed.data as TConnectionParams;
+
+            ws.token = token;
+          } catch {
+            logger.error('Failed to parse initial WebSocket message');
+          }
+        });
+      }
 
       ws.on('close', async () => {
         const userId = ws.userId;

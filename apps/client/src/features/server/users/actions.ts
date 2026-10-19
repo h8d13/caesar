@@ -1,11 +1,6 @@
 import { store } from '@/features/store';
-import {
-    getLocalStorageItem,
-    LocalStorageKey,
-    SessionStorageKey,
-    setLocalStorageItem,
-    setSessionStorageItem
-} from '@/helpers/storage';
+import { getUrlFromServer } from '@/helpers/get-file-url';
+import { forgetSessionKey, persistSessionKey } from '@/lib/e2ee';
 import { getTRPCClient } from '@/lib/trpc';
 import { UserStatus, type TJoinedPublicUser } from '@caesar/shared';
 import { serverSliceActions } from '../slice';
@@ -46,21 +41,33 @@ export const handleUserJoin = (user: TJoinedPublicUser) => {
     }
 };
 
+// The WebSocket can't set cookies, so a mutation that re-mints this
+// session's token hands back a one-time nonce instead; this trades it for
+// the new HttpOnly cookie. Redeeming also needs the current cookie.
+const redeemSessionRefresh = async (refreshNonce: string) => {
+    const res = await fetch(`${getUrlFromServer()}/session/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nonce: refreshNonce })
+    });
+
+    if (!res.ok) {
+        throw new Error('Could not refresh this session. Sign in again.');
+    }
+};
+
 export const signOutOtherSessions = async () => {
     const trpc = getTRPCClient();
-    const result = await trpc.users.signOutOtherSessions.mutate();
+    const { refreshNonce } = await trpc.users.signOutOtherSessions.mutate();
 
-    // Caller's current WS is preserved server-side, but its old token is
-    // epoch-stale. Swap the new one into storage so the next reconnect /
-    // page reload uses it. Only touch localStorage if it was already in
-    // use (cross-tab opt-in); we don't want to silently enable persistence.
-    setSessionStorageItem(SessionStorageKey.TOKEN, result.token);
+    // Caller's current WS is preserved server-side, but its old cookie is
+    // epoch-stale; swap in the new one so the next reconnect / page reload
+    // works.
+    await redeemSessionRefresh(refreshNonce);
 
-    if (getLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN)) {
-        setLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN, result.token);
-    }
-
-    return result.token;
+    // the epoch bump revoked the old wrap key; same password, so re-seal the
+    // key this session already holds under the new cookie
+    persistSessionKey().catch(() => {});
 };
 
 export const updatePassword = async (values: {
@@ -72,13 +79,12 @@ export const updatePassword = async (values: {
     const result = await trpc.users.updatePassword.mutate(values);
 
     // A password change bumps sessionEpoch server-side, so the caller's old
-    // token is now stale. Swap in the fresh one the server minted (same
+    // cookie is now stale. Swap in the fresh one the server minted (same
     // pattern as signOutOtherSessions) so the next reconnect / reload works.
-    setSessionStorageItem(SessionStorageKey.TOKEN, result.token);
+    await redeemSessionRefresh(result.refreshNonce);
 
-    if (getLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN)) {
-        setLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN, result.token);
-    }
+    // the sealed key was derived from the old password; never re-seal it
+    forgetSessionKey();
 };
 
 export const setAllowMultipleSessions = async (value: boolean) => {

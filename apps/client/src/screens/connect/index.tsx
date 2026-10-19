@@ -5,14 +5,10 @@ import { getFileUrl, getUrlFromServer } from '@/helpers/get-file-url';
 import {
     getLocalStorageItemBool,
     LocalStorageKey,
-    removeLocalStorageItem,
-    SessionStorageKey,
-    setLocalStorageItem,
-    setLocalStorageItemBool,
-    setSessionStorageItem
+    setLocalStorageItemBool
 } from '@/helpers/storage';
 import { useForm } from '@/hooks/use-form';
-import { derivePrivAsync, setPriv } from '@/lib/e2ee';
+import { derivePrivAsync, persistSessionKey, setPriv } from '@/lib/e2ee';
 import { cn } from '@/lib/utils';
 import { TestId } from '@caesar/shared';
 import {
@@ -147,43 +143,32 @@ const Connect = memo(() => {
         [setErrors]
     );
 
-    // Runs once we hold the final session token (password-only OR 2FA).
-    const completeLogin = useCallback(
-        async (token: string) => {
-            // E2EE: derive before connecting so the key is fixed for the
-            // whole session (<E2eeKeyRegister /> registers it once
-            // joinServer lands). argon2id runs in a Web Worker, so the
-            // login spinner stays responsive. A failed derive only locks
-            // ephemeral DMs; logging out and back in retries it.
-            try {
-                setPriv(
-                    await derivePrivAsync(values.password, values.identity)
-                );
-            } catch {
-                // proceed without a key
-            }
+    // Runs once /login (password-only) or /login/2fa has set the HttpOnly
+    // session cookie. The token itself never reaches this code.
+    const completeLogin = useCallback(async () => {
+        // E2EE: derive before connecting so the key is fixed for the
+        // whole session (<E2eeKeyRegister /> registers it once
+        // joinServer lands). argon2id runs in a Web Worker, so the
+        // login spinner stays responsive. A failed derive only locks
+        // ephemeral DMs; logging out and back in retries it.
+        try {
+            setPriv(await derivePrivAsync(values.password, values.identity));
+        } catch {
+            // proceed without a key
+        }
 
-            // Toggle gates cross-tab session sharing. When ON, the token is
-            // written to localStorage so other tabs of this browser silently
-            // resume the session via AutoLoginController. When OFF, only
-            // sessionStorage is used (per-tab) and other tabs hit /login,
-            // which bumps sessionEpoch and supersedes this tab.
-            setSessionStorageItem(SessionStorageKey.TOKEN, token);
-            setLocalStorageItemBool(
-                LocalStorageKey.AUTO_LOGIN,
-                values.autoLogin
-            );
+        // The toggle only picks the cookie's lifetime (sent as remember):
+        // persistent, or gone when the browser closes. Either way other
+        // tabs and reloads resume it via AutoLoginController.
+        setLocalStorageItemBool(LocalStorageKey.AUTO_LOGIN, values.autoLogin);
+        setLocalStorageItemBool(LocalStorageKey.HAS_SESSION, true);
 
-            if (values.autoLogin) {
-                setLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN, token);
-            } else {
-                removeLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN);
-            }
+        // lets a resumed session unlock ephemeral DMs; on failure it
+        // just stays locked
+        await persistSessionKey().catch(() => {});
 
-            await connect();
-        },
-        [values.password, values.identity, values.autoLogin]
-    );
+        await connect();
+    }, [values.password, values.identity, values.autoLogin]);
 
     const onConnectClick = useCallback(async () => {
         // Pre-warm the AudioContext inside this gesture stack so
@@ -211,7 +196,7 @@ const Connect = memo(() => {
                     identity: values.identity,
                     password: values.password,
                     invite: inviteCode || undefined,
-                    autoLogin: values.autoLogin || undefined
+                    remember: values.autoLogin
                 })
             });
 
@@ -236,7 +221,7 @@ const Connect = memo(() => {
             }
 
             const data = (await response.json()) as
-                | { token: string }
+                | { success: true }
                 | {
                       needs2fa: true;
                       preAuthToken: string;
@@ -251,7 +236,7 @@ const Connect = memo(() => {
                 return;
             }
 
-            await completeLogin(data.token);
+            await completeLogin();
         } catch (error) {
             const errorMessage =
                 error instanceof Error ? error.message : String(error);
@@ -304,8 +289,7 @@ const Connect = memo(() => {
                 return;
             }
 
-            const data = (await response.json()) as { token: string };
-            await completeLogin(data.token);
+            await completeLogin();
         } catch (error) {
             const message =
                 error instanceof Error ? error.message : String(error);

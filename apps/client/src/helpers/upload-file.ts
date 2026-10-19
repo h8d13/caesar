@@ -2,7 +2,6 @@ import { UploadHeaders, type TTempFile } from '@caesar/shared';
 import { toast } from 'sonner';
 import { sealStreamed } from '../lib/e2ee';
 import { getUrlFromServer } from './get-file-url';
-import { getSessionStorageItem, SessionStorageKey } from './storage';
 
 const getSafeFileName = (name: string) =>
     encodeURIComponent(name.replace(/[^\w.-]/g, '_'));
@@ -58,10 +57,6 @@ const uploadFile = async (
         xhr.setRequestHeader(
             UploadHeaders.ORIGINAL_NAME,
             getSafeFileName(file.name)
-        );
-        xhr.setRequestHeader(
-            UploadHeaders.TOKEN,
-            getSessionStorageItem(SessionStorageKey.TOKEN) ?? ''
         );
 
         if (options?.onProgress) {
