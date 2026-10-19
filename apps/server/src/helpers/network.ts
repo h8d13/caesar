@@ -1,4 +1,5 @@
 import ipaddr from 'ipaddr.js';
+import https from 'https';
 import os from 'os';
 
 const getPrivateIp = async () => {
@@ -11,55 +12,27 @@ const getPrivateIp = async () => {
   return addresses[0];
 };
 
-const getPublicIpFromIpify = async (): Promise<string | undefined> => {
-  try {
-    const response = await fetch('https://api.ipify.org?format=json');
-    const data = (await response.json()) as {
-      ip: string;
-    };
+// Only used when CAESAR_WEBRTC_ANNOUNCED_ADDRESS is unset. Equivalent of
+// `curl -4 ifconfig.me`: family 4 so a dual-stack host never gets its IPv6.
+const getPublicIp = (): Promise<string | undefined> =>
+  new Promise((resolve) => {
+    const req = https.get(
+      'https://ifconfig.me/ip',
+      { family: 4, timeout: 5000 },
+      (res) => {
+        let body = '';
+        res.setEncoding('utf-8');
+        res.on('data', (chunk) => (body += chunk));
+        res.on('end', () => {
+          const ip = body.trim();
+          resolve(ipaddr.IPv4.isValid(ip) ? ip : undefined);
+        });
+      }
+    );
 
-    return data.ip;
-  } catch {
-    return undefined;
-  }
-};
-
-// fallback since it can return ipv6 sometimes
-const getPublicIpFromIfconfig = async (): Promise<string | undefined> => {
-  try {
-    const response = await fetch('https://ifconfig.me/ip');
-    const ip = (await response.text()).trim();
-
-    return ip;
-  } catch {
-    return undefined;
-  }
-};
-
-const getPublicIpFromIcanhazip = async (): Promise<string | undefined> => {
-  try {
-    const response = await fetch('https://ipv4.icanhazip.com');
-    const ip = (await response.text()).trim();
-
-    return ip;
-  } catch {
-    return undefined;
-  }
-};
-
-const getPublicIp = async () => {
-  let ip = await getPublicIpFromIcanhazip();
-
-  if (!ip) {
-    ip = await getPublicIpFromIpify();
-  }
-
-  if (!ip) {
-    ip = await getPublicIpFromIfconfig();
-  }
-
-  return ip;
-};
+    req.on('timeout', () => req.destroy());
+    req.on('error', () => resolve(undefined));
+  });
 
 // Key for IP-based blocks (login lockout). IPv4 is used as is; IPv6 is grouped
 // by /64 since a single client usually controls a whole /64 and could
