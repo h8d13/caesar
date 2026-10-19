@@ -159,4 +159,15 @@ describe('buildCsp', () => {
     expect(csp).toContain("form-action 'self'");
     expect(csp).toContain("object-src 'none'");
   });
+
+  test('allows no data: scripts and no arbitrary WebSocket hosts', () => {
+    const directives = Object.fromEntries(
+      buildCsp('nonce123')
+        .split('; ')
+        .map((d) => [d.split(' ')[0], d])
+    );
+
+    expect(directives['script-src']).not.toContain('data:');
+    expect(directives['connect-src']).not.toMatch(/\bwss?:/);
+  });
 });

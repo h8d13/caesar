@@ -108,9 +108,11 @@ const sanitizeFileName = (name: string): string | null => {
 // script-src keeps data: because Vite inlines small `?url` imports (the
 // audio worklet processors) as data: URLs under assetsInlineLimit.
 const buildCsp = (nonce?: string): string => {
+  // blob: is the DTLN worklet (fetched, cached, loaded via object URL). No
+  // data:: an injected <script src="data:..."> would run under it.
   const scriptSrc = nonce
-    ? `'self' blob: data: 'wasm-unsafe-eval' 'nonce-${nonce}'`
-    : "'self' blob: data: 'wasm-unsafe-eval'";
+    ? `'self' blob: 'wasm-unsafe-eval' 'nonce-${nonce}'`
+    : "'self' blob: 'wasm-unsafe-eval'";
   const styleSrc = "'self' 'unsafe-inline'";
 
   return [
@@ -118,8 +120,9 @@ const buildCsp = (nonce?: string): string => {
     `script-src ${scriptSrc}`,
     `style-src ${styleSrc}`,
     "img-src 'self' data: blob: https:",
-    // api.giphy.com: keyless GIF search from the client-side picker
-    "connect-src 'self' wss: ws: https://api.giphy.com",
+    // 'self' covers the same-origin tRPC WebSocket (ws/wss). api.giphy.com:
+    // keyless GIF search from the client-side picker
+    "connect-src 'self' https://api.giphy.com",
     "media-src 'self' blob:",
     "font-src 'self'",
     'frame-src https://www.youtube-nocookie.com',

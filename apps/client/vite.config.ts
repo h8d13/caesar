@@ -38,7 +38,11 @@ export default defineConfig({
     assetsInclude: ['**/*.wasm'],
     build: {
         target: 'esnext',
-        chunkSizeWarningLimit: 1000
+        chunkSizeWarningLimit: 1000,
+        // small ?url scripts (audio worklets) would otherwise inline as
+        // data: URLs, which script-src deliberately does not allow
+        assetsInlineLimit: (filePath) =>
+            filePath.endsWith('.js') ? false : undefined
     },
     resolve: {
         alias: {
