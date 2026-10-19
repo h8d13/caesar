@@ -4,7 +4,7 @@ import { config } from '@server/config';
 import { db } from '@server/db';
 import { getChannelsForUser } from '@server/db/queries/channels';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
-import { and, desc, inArray, sql } from 'drizzle-orm';
+import { and, desc, inArray, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 const GLOB_SPECIAL_CHARS = new Set(['*', '?', '[']);
@@ -90,6 +90,9 @@ const searchMessagesRoute = rateLimitedProcedure(protectedProcedure, {
       .where(
         and(
           inArray(messages.channelId, accessibleIds),
+          // ephemeral DM messages (expiresAt set) hold base64 ciphertext:
+          // the server can't search them, and GLOB would match random base64
+          isNull(messages.expiresAt),
           sql`${messages.content} GLOB ${buildCaseInsensitiveGlob(query)}`
         )
       )

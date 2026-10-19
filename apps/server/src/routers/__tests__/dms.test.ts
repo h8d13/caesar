@@ -163,6 +163,27 @@ describe('dms router', () => {
     ).rejects.toThrow('You are not a participant in this DM channel');
   });
 
+  test('ephemeral mode: search skips encrypted messages', async () => {
+    const { caller: caller1 } = await initTest(1);
+    await initTest(2);
+
+    const { channelId } = await caller1.dms.open({ userId: 2 });
+
+    await caller1.messages.send({ channelId, content: 'plain abc', files: [] });
+    await caller1.dms.setEphemeral({ channelId, enabled: true });
+    // stands in for base64 ciphertext that happens to contain the query
+    await caller1.messages.send({
+      channelId,
+      content: 'k9xAbC2q+/w=',
+      isEncrypted: true,
+      files: []
+    });
+
+    const results = await caller1.messages.search({ query: 'abc' });
+
+    expect(results.map((r) => r.content)).toEqual(['plain abc']);
+  });
+
   test('ephemeral mode: messages get expiresAt and prune cron deletes them', async () => {
     const { caller: caller1 } = await initTest(1);
     await initTest(2);
