@@ -1,8 +1,4 @@
-import {
-    getLocalStorageItem,
-    getLocalStorageItemBool,
-    LocalStorageKey
-} from '@/helpers/storage';
+import { getLocalStorageItemBool, LocalStorageKey } from '@/helpers/storage';
 import type { TDevices } from '@/types';
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
@@ -25,7 +21,7 @@ const initialState: TAppState = {
     appLoading: true,
     // AutoLoginController only flips this after the first post-load render,
     // which flashed <Connect /> between the two loading screens
-    isAutoConnecting: !!getLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN),
+    isAutoConnecting: getLocalStorageItemBool(LocalStorageKey.HAS_SESSION),
     devices: undefined,
     modViewOpen: false,
     modViewUserId: undefined,

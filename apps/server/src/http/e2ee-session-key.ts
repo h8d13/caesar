@@ -6,14 +6,14 @@ import z from 'zod';
 import { config } from '../config';
 import { db } from '../db';
 import { getUserByToken } from '../db/queries/users';
+import { getSessionToken } from '../helpers/session-token';
 import { createRateLimiter } from '../utils/rate-limiters/rate-limiter';
 import { getJsonBody } from './helpers';
 import { enforceHttpRateLimit } from './rate-limit';
 
 // Wrap key half of the auto-login E2EE unlock (see e2eeSessionKeys). Plain
 // HTTP rather than tRPC because auto-login needs the key before connecting,
-// and the WS context only authenticates at joinServer. Header-only auth: the
-// session cookie is scoped to Path=/public and never reaches these routes.
+// and the WS context only authenticates at joinServer.
 
 const e2eeSessionKeyRateLimiter = createRateLimiter({
   maxRequests: config.rateLimiters.e2eeSessionKey.maxRequests,
@@ -51,8 +51,8 @@ const authenticate = async (
     return undefined;
   }
 
-  const token = req.headers['x-token'] as string | undefined;
-  const user = await getUserByToken(token || undefined);
+  const token = getSessionToken(req);
+  const user = await getUserByToken(token);
 
   if (!token || !user) {
     sendJson(res, 401, { error: 'Unauthorized' });

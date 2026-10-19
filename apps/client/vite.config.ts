@@ -31,6 +31,7 @@ export default defineConfig({
             '/healthz': 'http://localhost:4991',
             '/login': 'http://localhost:4991',
             '/logout': 'http://localhost:4991',
+            '/session': 'http://localhost:4991',
             '/e2ee': 'http://localhost:4991',
             '/upload': 'http://localhost:4991',
             '/public': 'http://localhost:4991'

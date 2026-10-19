@@ -2,6 +2,7 @@ import http from 'http';
 import z from 'zod';
 import { config } from '../config';
 import { getWsInfo } from '../helpers/get-ws-info';
+import { isCrossOrigin } from '../helpers/session-token';
 import { logger } from '../logger';
 import {
   getE2eeSessionKeyRouteHandler,
@@ -20,6 +21,7 @@ import { loginRouteHandler } from './login';
 import { login2faRouteHandler } from './login-2fa';
 import { logoutRouteHandler } from './logout';
 import { publicRouteHandler } from './public';
+import { sessionRefreshRouteHandler } from './session-refresh';
 import { uploadFileRouteHandler } from './upload';
 import { HttpValidationError, PayloadTooLargeError } from './utils';
 
@@ -54,6 +56,7 @@ const routeHandlers: Partial<
       '/login': (req, res) => loginRouteHandler(req, res),
       '/login/2fa': (req, res) => login2faRouteHandler(req, res),
       '/logout': (req, res) => logoutRouteHandler(req, res),
+      '/session/refresh': (req, res) => sessionRefreshRouteHandler(req, res),
       '/e2ee/session-key': (req, res) =>
         storeE2eeSessionKeyRouteHandler(req, res)
     },
@@ -116,6 +119,16 @@ const createHttpServer = async (port: number = config.server.port) => {
         if (!pathname) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Bad request' }));
+          return;
+        }
+
+        // CSRF: every POST either sets the session cookie (/login,
+        // /login/2fa, /session/refresh) or acts on it, so only our own page
+        // may send one. API clients send no Origin and pass.
+        if (req.method === 'POST' && isCrossOrigin(req)) {
+          req.resume();
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Forbidden origin' }));
           return;
         }
 

@@ -2,8 +2,8 @@
 //
 // priv = argon2id(password, identity). deterministic, heap-only,
 // never sent. derived at manual login before the session starts, so it is
-// fixed for the session's lifetime. auto-login replays the JWT only => no
-// password, so priv comes back via the session key below (sealed blob here,
+// fixed for the session's lifetime. auto-login resumes the session cookie
+// only => no password, so priv comes back via the session key below (sealed blob here,
 // wrap key on the server); without both, ephemeral DMs stay locked until the
 // user logs out and back in.
 //
@@ -203,7 +203,7 @@ const open = async (key: CryptoKey, payloadB64: string): Promise<string> => {
 // stays in this browser, the wrap key goes to the server bound to this
 // session's token. Neither half alone yields priv, and revoking the session
 // (logout, password change, sign-out-others) makes the server half
-// unfetchable. Only stored when the user opts into auto-login.
+// unfetchable.
 const importWrapKey = (raw: Uint8Array) =>
     crypto.subtle.importKey('raw', raw as BufferSource, 'AES-GCM', false, [
         'encrypt',
@@ -213,7 +213,8 @@ const importWrapKey = (raw: Uint8Array) =>
 const forgetSessionKey = () =>
     removeLocalStorageItem(LocalStorageKey.E2EE_SESSION_KEY);
 
-const persistSessionKey = async (token: string) => {
+// both requests authenticate with the HttpOnly session cookie
+const persistSessionKey = async () => {
     if (!myPriv) return;
 
     const wrapKey = crypto.getRandomValues(new Uint8Array(32));
@@ -224,7 +225,7 @@ const persistSessionKey = async (token: string) => {
 
     const res = await fetch(`${getUrlFromServer()}/e2ee/session-key`, {
         method: 'POST',
-        headers: { 'x-token': token, 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ wrapKey: bytesToBase64(wrapKey) })
     });
 
@@ -235,13 +236,11 @@ const persistSessionKey = async (token: string) => {
     setLocalStorageItem(LocalStorageKey.E2EE_SESSION_KEY, blob);
 };
 
-const restoreSessionKey = async (token: string) => {
+const restoreSessionKey = async () => {
     const blob = getLocalStorageItem(LocalStorageKey.E2EE_SESSION_KEY);
     if (!blob) return;
 
-    const res = await fetch(`${getUrlFromServer()}/e2ee/session-key`, {
-        headers: { 'x-token': token }
-    });
+    const res = await fetch(`${getUrlFromServer()}/e2ee/session-key`);
 
     // revoked session or no wrap key for this token: the blob is dead
     if (res.status === 401 || res.status === 404) {

@@ -3,7 +3,7 @@ import { settings } from '@caesar/shared/db/schema';
 import {
   getCaller,
   initTest,
-  login,
+  loginToken,
   uploadFile
 } from '@server/__tests__/helpers';
 import { TEST_SECRET_TOKEN } from '@server/__tests__/seed';
@@ -122,8 +122,7 @@ describe('others router', () => {
   test('should change logo', async () => {
     const { caller } = await initTest(1);
 
-    const response = await login('testowner', 'password123');
-    const { token } = (await response.json()) as { token: string };
+    const token = await loginToken('testowner', 'password123');
 
     const logoFile = new File(['logo content'], 'logo.png', {
       type: 'image/png'

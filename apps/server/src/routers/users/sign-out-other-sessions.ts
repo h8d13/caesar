@@ -1,11 +1,14 @@
 import { DisconnectCode } from '@caesar/shared';
 import { users } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import { getJwtSecret } from '@server/utils/jwt-secret';
+import {
+  isRememberedToken,
+  mintSessionToken,
+  stageSessionRefresh
+} from '@server/helpers/session-token';
 import { protectedProcedure } from '@server/utils/trpc';
 import { closeUserSessions } from '@server/utils/wss';
 import { eq, sql } from 'drizzle-orm';
-import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 
 const signOutOtherSessionsRoute = protectedProcedure
@@ -21,12 +24,13 @@ const signOutOtherSessionsRoute = protectedProcedure
     const sessionEpoch = updated?.sessionEpoch ?? 0;
 
     // Caller's WS stays alive (no kick), but its old token is now epoch-
-    // stale. Hand back a fresh JWT so the next reconnect / page load
+    // stale. Stage a fresh one; the client redeems the nonce at
+    // /session/refresh for the new cookie so the next reconnect / page load
     // doesn't bounce off the new epoch.
-    const newToken = jwt.sign(
-      { userId: ctx.userId, sessionEpoch },
-      await getJwtSecret(),
-      { expiresIn: '604800s' }
+    const newToken = await mintSessionToken(
+      ctx.userId,
+      sessionEpoch,
+      isRememberedToken(ctx.token)
     );
 
     closeUserSessions(
@@ -36,7 +40,7 @@ const signOutOtherSessionsRoute = protectedProcedure
       ctx.token
     );
 
-    return { token: newToken };
+    return { refreshNonce: stageSessionRefresh(ctx.userId, newToken) };
   });
 
 export { signOutOtherSessionsRoute };

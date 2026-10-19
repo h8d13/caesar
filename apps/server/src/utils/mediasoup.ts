@@ -1,6 +1,7 @@
 import mediasoup from 'mediasoup';
-import { config, SERVER_PUBLIC_IP } from '../config.js';
+import { config } from '../config.js';
 import { getErrorMessage } from '../helpers/get-error-message.js';
+import { parseSite } from '../helpers/parse-site.js';
 import { logger } from '../logger.js';
 import { IS_PRODUCTION } from './env.js';
 
@@ -36,13 +37,19 @@ const resolveLogLevel = (): mediasoup.types.WorkerLogLevel => {
 };
 
 // Always 0.0.0.0: dev runs in a container too, where 127.0.0.1 is the
-// container's own loopback and unreachable through published ports. Dev
-// clients sit on the same host, so it announces 127.0.0.1 (compose.dev.yaml
-// publishes on host loopback only).
+// container's own loopback and unreachable through published ports.
+// Announced as CAESAR_SITE's host: mediasoup is ICE-lite and can't discover
+// its public address, but the domain clients already reach over HTTPS points
+// at it (mediasoup accepts a hostname, the browser resolves it). localhost
+// becomes 127.0.0.1, matching the IPv4-only listen. Set
+// CAESAR_WEBRTC_ANNOUNCED_ADDRESS when the domain doesn't resolve to this
+// host, e.g. behind a proxy that doesn't forward UDP.
+const SITE_HOST = parseSite(process.env.CAESAR_SITE).host;
+
 const buildListenInfos = (port: number) => {
   const announcedAddress =
     config.webRtc.announcedAddress ||
-    (IS_PRODUCTION ? SERVER_PUBLIC_IP : '127.0.0.1');
+    (SITE_HOST === 'localhost' ? '127.0.0.1' : SITE_HOST);
 
   return {
     listenInfos: [

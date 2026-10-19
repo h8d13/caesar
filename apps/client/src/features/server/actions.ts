@@ -1,12 +1,6 @@
 import { logDebug } from '@/helpers/browser-logger';
 import { getHostFromServer, getUrlFromServer } from '@/helpers/get-file-url';
-import {
-    getSessionStorageItem,
-    LocalStorageKey,
-    removeLocalStorageItem,
-    removeSessionStorageItem,
-    SessionStorageKey
-} from '@/helpers/storage';
+import { LocalStorageKey, removeLocalStorageItem } from '@/helpers/storage';
 import { cleanup, connectToTRPC, getTRPCClient } from '@/lib/trpc';
 import { type TPublicServerSettings, type TServerInfo } from '@caesar/shared';
 import { toast } from 'sonner';
@@ -72,27 +66,20 @@ export const joinServer = async (handshakeHash: string) => {
 };
 
 export const disconnectFromServer = () => {
-    // Explicit logout: wipe the persisted token up-front before cleanup so
-    // it survives any beforeunload race (cleanup's localStorage clear is
-    // gated on isNavigatingAway to protect refresh, which can flip true
-    // between click and the cleanup line otherwise).
-    const token = getSessionStorageItem(SessionStorageKey.TOKEN);
-    removeLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN);
-    removeSessionStorageItem(SessionStorageKey.TOKEN);
+    // Explicit logout: drop the resume hint up-front before cleanup so it
+    // survives any beforeunload race (cleanup's localStorage clear is gated
+    // on isNavigatingAway to protect refresh, which can flip true between
+    // click and the cleanup line otherwise).
+    removeLocalStorageItem(LocalStorageKey.HAS_SESSION);
 
-    // Best-effort server revoke: bumps sessionEpoch so leaked copies of the
-    // JWT (cookie, etc) stop authenticating, and returns a clearing
-    // Set-Cookie. Fire-and-forget; local state has already been wiped, so
-    // a failed/cancelled request can't leave the user half-logged-out.
-    if (token) {
-        const url = getUrlFromServer();
-        fetch(`${url}/logout`, {
-            method: 'POST',
-            headers: { 'x-token': token },
-            credentials: 'include',
-            keepalive: true
-        }).catch(() => {});
-    }
+    // The session cookie is HttpOnly, so only the server can clear it: this
+    // bumps sessionEpoch (every copy of the JWT stops authenticating) and
+    // returns a clearing Set-Cookie. keepalive lets it finish even if the
+    // page unloads right after.
+    fetch(`${getUrlFromServer()}/logout`, {
+        method: 'POST',
+        keepalive: true
+    }).catch(() => {});
 
     cleanup();
     unsubscribeFromServer?.();

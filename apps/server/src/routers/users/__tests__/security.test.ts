@@ -4,8 +4,13 @@ import {
   Permission
 } from '@caesar/shared';
 import { logins, userRoles, users } from '@caesar/shared/db/schema';
-import { initTest, login, makeModerator } from '@server/__tests__/helpers';
-import { tdb } from '@server/__tests__/setup';
+import {
+  getSessionCookie,
+  initTest,
+  login,
+  makeModerator
+} from '@server/__tests__/helpers';
+import { tdb, testsBaseUrl } from '@server/__tests__/setup';
 import { sha256 } from '@server/helpers/sha256';
 import { getJwtSecret } from '@server/utils/jwt-secret';
 import { verifyPassword } from '@server/utils/password';
@@ -31,6 +36,17 @@ const insertUser = async (identity: string): Promise<number> => {
 
   return row!.id;
 };
+
+// trade a staged refresh nonce for the new session cookie, presenting the
+// caller's current (now epoch-stale) token as the browser would
+const redeem = async (nonce: string, currentToken: string) =>
+  getSessionCookie(
+    await fetch(`${testsBaseUrl}/session/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-token': currentToken },
+      body: JSON.stringify({ nonce })
+    })
+  );
 
 const epochFor = async (userId: number): Promise<number> => {
   const row = await tdb
@@ -101,8 +117,10 @@ describe('/login epoch behavior with allowMultipleSessions', () => {
     expect(after).toBe(before);
 
     // and the minted token carries that same (un-bumped) epoch
-    const data = (await response.json()) as { token: string };
-    const decoded = jwt.verify(data.token, await getJwtSecret());
+    const decoded = jwt.verify(
+      getSessionCookie(response)!,
+      await getJwtSecret()
+    );
     expect((decoded as { sessionEpoch: number }).sessionEpoch).toBe(before);
   });
 });
@@ -120,11 +138,12 @@ describe('users.signOutOtherSessions', () => {
     expect(after).toBe(before + 1);
   });
 
-  test('returns a fresh JWT minted at the new epoch', async () => {
-    const { caller } = await initTest(1);
+  test('stages a fresh cookie minted at the new epoch', async () => {
+    const { caller, mockedToken } = await initTest(1);
 
-    const { token } = await caller.users.signOutOtherSessions();
-    const decoded = jwt.verify(token, await getJwtSecret());
+    const { refreshNonce } = await caller.users.signOutOtherSessions();
+    const token = await redeem(refreshNonce, mockedToken);
+    const decoded = jwt.verify(token!, await getJwtSecret());
 
     const epochNow = await epochFor(1);
     expect((decoded as { sessionEpoch: number }).sessionEpoch).toBe(epochNow);
@@ -650,16 +669,17 @@ describe('users.updatePassword session invalidation', () => {
     expect(after).toBe(before + 1);
   });
 
-  test('returns a fresh JWT minted at the new epoch', async () => {
-    const { caller } = await initTest(1);
+  test('stages a fresh cookie minted at the new epoch', async () => {
+    const { caller, mockedToken } = await initTest(1);
 
-    const { token } = await caller.users.updatePassword({
+    const { refreshNonce } = await caller.users.updatePassword({
       currentPassword: 'password123',
       newPassword: 'newpass456',
       confirmNewPassword: 'newpass456'
     });
 
-    const decoded = jwt.verify(token, await getJwtSecret());
+    const token = await redeem(refreshNonce, mockedToken);
+    const decoded = jwt.verify(token!, await getJwtSecret());
     const epochNow = await epochFor(1);
     expect((decoded as { sessionEpoch: number }).sessionEpoch).toBe(epochNow);
     expect((decoded as { userId: number }).userId).toBe(1);

@@ -1,5 +1,5 @@
 import { e2eeSessionKeys, users } from '@caesar/shared/db/schema';
-import { login } from '@server/__tests__/helpers';
+import { loginToken } from '@server/__tests__/helpers';
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
 import { pruneE2eeSessionKeys } from '@server/crons/prune-e2ee-session-keys';
 import { eq, sql } from 'drizzle-orm';
@@ -7,12 +7,7 @@ import { describe, expect, test } from 'vite-plus/test';
 
 const WRAP_KEY = Buffer.alloc(32, 7).toString('base64');
 
-const getToken = async () => {
-  const res = await login('testowner', 'password123');
-  const { token } = (await res.json()) as { token: string };
-
-  return token;
-};
+const getToken = () => loginToken('testowner', 'password123');
 
 const store = (token: string | undefined, wrapKey: string = WRAP_KEY) =>
   fetch(`${testsBaseUrl}/e2ee/session-key`, {

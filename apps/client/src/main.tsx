@@ -16,10 +16,14 @@ import { ServerScreensProvider } from './components/server-screens/index.tsx';
 import { ThemeProvider } from './components/theme-provider/index.tsx';
 import { loadApp } from './features/app/actions.ts';
 import { store } from './features/store.ts';
-import { LocalStorageKey } from './helpers/storage.ts';
+import {
+    LocalStorageKey,
+    removeLegacySessionTokens
+} from './helpers/storage.ts';
 import { registerServiceWorker } from './lib/push.ts';
 import { queryClient } from './lib/query-client.ts';
 
+removeLegacySessionTokens();
 registerServiceWorker();
 // once per page load, before render: tied to the loading screen it re-ran
 // (second /info) whenever that screen remounted

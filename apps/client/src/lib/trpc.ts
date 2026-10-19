@@ -5,12 +5,9 @@ import { resetServerState, setDisconnectInfo } from '@/features/server/actions';
 import { connectedSelector } from '@/features/server/selectors';
 import { store } from '@/features/store';
 import {
-    getLocalStorageItem,
-    getSessionStorageItem,
+    getLocalStorageItemBool,
     LocalStorageKey,
-    removeLocalStorageItem,
-    removeSessionStorageItem,
-    SessionStorageKey
+    removeLocalStorageItem
 } from '@/helpers/storage';
 import { isTransientClose } from '@/lib/close-policy';
 import { clearPriv, forgetSessionKey } from '@/lib/e2ee';
@@ -21,7 +18,6 @@ import { queryClient } from '@/lib/query-client';
 // here: Rolldown resolves the module before stripping type-only specifiers,
 // so the inline form pulls the real server router tree (and its Node-only
 // imports like @libsql/client) into the client bundle.
-import type { TConnectionParams } from '@caesar/shared';
 import type { AppRouter } from '@server/routers';
 import { createTRPCProxyClient, createWSClient, wsLink } from '@trpc/client';
 
@@ -45,10 +41,10 @@ const initializeTRPC = (host: string) => {
             cleanup(transient);
 
             // transport loss: leave disconnectInfo unset so
-            // AutoLoginController resumes with the kept token
+            // AutoLoginController resumes the kept session
             if (
                 transient &&
-                getLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN)
+                getLocalStorageItemBool(LocalStorageKey.HAS_SESSION)
             )
                 return;
 
@@ -59,11 +55,8 @@ const initializeTRPC = (host: string) => {
                 time: new Date()
             });
         },
-        connectionParams: async (): Promise<TConnectionParams> => {
-            return {
-                token: getSessionStorageItem(SessionStorageKey.TOKEN) || ''
-            };
-        },
+        // no connectionParams: the upgrade request carries the HttpOnly
+        // session cookie, which the server authenticates instead
         keepAlive: {
             enabled: true,
             intervalMs: 30_000,
@@ -96,7 +89,7 @@ const getTRPCClient = () => {
     return trpc;
 };
 
-const cleanup = (keepToken = false) => {
+const cleanup = (keepSession = false) => {
     if (isCleaningUp) {
         return;
     }
@@ -111,10 +104,10 @@ const cleanup = (keepToken = false) => {
     trpc = null;
     currentHost = null;
 
-    // dropping the token stops auto-login loops on a rejected token; kept
+    // dropping the hint stops auto-login loops on a rejected session; kept
     // on transport loss (backgrounded PWA, Firefox refresh) so it resumes
-    if (!keepToken) {
-        removeLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN);
+    if (!keepSession) {
+        removeLocalStorageItem(LocalStorageKey.HAS_SESSION);
         forgetSessionKey();
     }
 
@@ -122,8 +115,6 @@ const cleanup = (keepToken = false) => {
     resetServerState();
     resetDialogs();
     resetApp();
-
-    removeSessionStorageItem(SessionStorageKey.TOKEN);
 
     // the key and the query cache (per-viewer E2EE context, decrypted
     // plaintext) belong to this session's user; a later login in this tab

@@ -2,18 +2,22 @@ import { DisconnectCode, type TJoinedUser } from '@caesar/shared';
 import { users } from '@caesar/shared/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import http from 'http';
-import jwt from 'jsonwebtoken';
 import { db } from '../db';
-import { getJwtSecret } from '../utils/jwt-secret';
+import {
+  mintSessionToken,
+  sessionCookieHeaders
+} from '../helpers/session-token';
 import { closeUserSessions } from '../utils/wss';
 
 // Single-session by default: bump sessionEpoch so prior tokens fail the
 // equality check in getUserByToken and prior WS connections get kicked.
 // Users opted in to multi-session keep the current epoch so their existing
 // tokens remain valid alongside the new one.
+// The token only ever leaves in the HttpOnly cookie, never in the body.
 const issueSession = async (
   user: TJoinedUser,
-  res: http.ServerResponse
+  res: http.ServerResponse,
+  remember: boolean
 ): Promise<http.ServerResponse> => {
   let sessionEpoch: number;
 
@@ -30,11 +34,7 @@ const issueSession = async (
     sessionEpoch = updated?.sessionEpoch ?? 0;
   }
 
-  const token = jwt.sign(
-    { userId: user.id, sessionEpoch },
-    await getJwtSecret(),
-    { expiresIn: '604800s' /* 7 days */ }
-  );
+  const token = await mintSessionToken(user.id, sessionEpoch, remember);
 
   if (!user.allowMultipleSessions) {
     closeUserSessions(
@@ -45,12 +45,9 @@ const issueSession = async (
     );
   }
 
-  res.setHeader(
-    'Set-Cookie',
-    `caesar-token=${token}; HttpOnly; Secure; SameSite=Strict; Path=/public; Max-Age=604800`
-  );
+  res.setHeader('Set-Cookie', sessionCookieHeaders(token, remember));
   res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ success: true, token }));
+  res.end(JSON.stringify({ success: true }));
 
   return res;
 };

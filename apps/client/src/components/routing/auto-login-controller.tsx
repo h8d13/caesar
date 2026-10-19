@@ -3,11 +3,9 @@ import { useIsAppLoading } from '@/features/app/hooks';
 import { connect } from '@/features/server/actions';
 import { useDisconnectInfo, useIsConnected } from '@/features/server/hooks';
 import {
-    getLocalStorageItem,
+    getLocalStorageItemBool,
     LocalStorageKey,
-    removeLocalStorageItem,
-    SessionStorageKey,
-    setSessionStorageItem
+    removeLocalStorageItem
 } from '@/helpers/storage';
 import { useIsPageVisible } from '@/hooks/use-is-page-visible';
 import { forgetSessionKey, restoreSessionKey } from '@/lib/e2ee';
@@ -33,31 +31,25 @@ const AutoLoginController = memo(() => {
             return;
         }
 
-        const savedToken = getLocalStorageItem(
-            LocalStorageKey.AUTO_LOGIN_TOKEN
-        );
-
-        // Any tab of this browser whose localStorage carries a token resumes
-        // the session silently. This is what makes a second tab share the
-        // first tab's session instead of forcing a new /login (which would
-        // bump sessionEpoch and kick the first tab). The `AUTO_LOGIN` bool
-        // is kept as a user preference but no longer gates reuse.
-        if (!savedToken) return;
+        // Any tab of this browser resumes the session silently: the HttpOnly
+        // cookie rides along on the WebSocket upgrade. This is what makes a
+        // second tab share the first tab's session instead of forcing a new
+        // /login (which would bump sessionEpoch and kick the first tab).
+        if (!getLocalStorageItemBool(LocalStorageKey.HAS_SESSION)) return;
 
         autoLoginAttempted.current = true;
 
         setIsAutoConnecting(true);
-        setSessionStorageItem(SessionStorageKey.TOKEN, savedToken);
 
         // unlock before connecting, like the password flow, so the key is
         // fixed for the session; a failed unlock only locks ephemeral DMs
-        restoreSessionKey(savedToken)
+        restoreSessionKey()
             .catch(() => {})
             .then(() => connect())
             .catch(() => {
-                // token expired / epoch stale clear it so the user sees the
-                // connect screen and can log in manually.
-                removeLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN);
+                // cookie expired / epoch stale: drop the hint so the user sees
+                // the connect screen and can log in manually.
+                removeLocalStorageItem(LocalStorageKey.HAS_SESSION);
                 forgetSessionKey();
             })
             .finally(() => {

@@ -28,6 +28,8 @@ const zBody = z.object({
 type PreAuthClaims = {
   userId: number;
   type: 'pre-2fa';
+  // the password step's remember choice, carried signed to the session
+  remember?: boolean;
 };
 
 const verifyPreAuthToken = async (
@@ -104,7 +106,7 @@ const login2faRouteHandler = async (
     throw new HttpValidationError('response', GENERIC_2FA_ERROR);
   }
 
-  return issueSession(user, res);
+  return issueSession(user, res, claims.remember === true);
 };
 
 export { login2faRouteHandler };

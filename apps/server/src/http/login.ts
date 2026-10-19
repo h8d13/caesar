@@ -51,7 +51,9 @@ const zBody = z.object({
     .string()
     .min(4, 'Password must be at least 4 characters long')
     .max(128),
-  invite: z.string().optional()
+  invite: z.string().optional(),
+  // persistent session cookie vs one that ends with the browser session
+  remember: z.boolean().optional().default(false)
 });
 
 const loginRateLimiter = createRateLimiter({
@@ -353,7 +355,7 @@ const loginRouteHandler = async (
     });
 
     const preAuthToken = jwt.sign(
-      { userId: existingUser.id, type: 'pre-2fa' },
+      { userId: existingUser.id, type: 'pre-2fa', remember: data.remember },
       await getJwtSecret(),
       { expiresIn: '300s' /* 5 minutes */ }
     );
@@ -364,7 +366,7 @@ const loginRouteHandler = async (
     return res;
   }
 
-  return issueSession(existingUser, res);
+  return issueSession(existingUser, res, data.remember);
 };
 
 export { loginRouteHandler };

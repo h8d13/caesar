@@ -11,6 +11,7 @@ import { getSettings } from '../db/queries/server';
 import { getUserByToken } from '../db/queries/users';
 import { verifyFileToken } from '../helpers/files-crypto';
 import { PUBLIC_PATH } from '../helpers/paths';
+import { getSessionToken } from '../helpers/session-token';
 import { logger } from '../logger';
 import { createRateLimiter } from '../utils/rate-limiters/rate-limiter';
 import { buildEtag, safeDecodeURIComponent, sendNotModified } from './helpers';
@@ -116,15 +117,7 @@ const publicRouteHandler = async (
 
   if (!isServerLogo) {
     // all non-logo files require authentication
-    const token =
-      (req.headers['x-token'] as string | undefined) ||
-      req.headers.cookie
-        ?.split('; ')
-        .find((c) => c.startsWith('caesar-token='))
-        ?.split('=')
-        .slice(1)
-        .join('=');
-    const user = await getUserByToken(token || undefined);
+    const user = await getUserByToken(getSessionToken(req));
 
     if (!user) {
       res.writeHead(401, { 'Content-Type': 'application/json' });
