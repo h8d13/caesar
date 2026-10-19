@@ -1,5 +1,5 @@
 import { DisconnectCode } from '@caesar/shared';
-import { users } from '@caesar/shared/db/schema';
+import { e2eeSessionKeys, users } from '@caesar/shared/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import http from 'http';
 import { db } from '../db';
@@ -24,6 +24,10 @@ const logoutRouteHandler = async (
   const user = await getUserByToken(token || undefined);
 
   if (user) {
+    // the epoch bump below already revokes every session; also drop their
+    // E2EE wrap keys now instead of leaving them for the prune cron
+    await db.delete(e2eeSessionKeys).where(eq(e2eeSessionKeys.userId, user.id));
+
     await db
       .update(users)
       .set({ sessionEpoch: sql`${users.sessionEpoch} + 1` })

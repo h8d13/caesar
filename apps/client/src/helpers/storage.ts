@@ -16,6 +16,7 @@ export enum LocalStorageKey {
     CATEGORIES_EXPANDED = 'caesar-categories-expanded',
     AUTO_LOGIN = 'caesar-auto-login',
     AUTO_LOGIN_TOKEN = 'caesar-auto-login-token',
+    E2EE_SESSION_KEY = 'caesar-e2ee-session-key',
     BROWSER_NOTIFICATIONS = 'caesar-browser-notifications',
     NICKNAMES = 'caesar-nicknames',
     BROWSER_NOTIFICATIONS_FOR_MENTIONS = 'caesar-browser-notifications-for-mentions',

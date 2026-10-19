@@ -12,7 +12,12 @@ import {
     setSessionStorageItem
 } from '@/helpers/storage';
 import { useForm } from '@/hooks/use-form';
-import { derivePrivAsync, setPriv } from '@/lib/e2ee';
+import {
+    derivePrivAsync,
+    forgetSessionKey,
+    persistSessionKey,
+    setPriv
+} from '@/lib/e2ee';
 import { cn } from '@/lib/utils';
 import { TestId } from '@caesar/shared';
 import {
@@ -176,8 +181,12 @@ const Connect = memo(() => {
 
             if (values.autoLogin) {
                 setLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN, token);
+                // lets auto-login unlock ephemeral DMs; on failure the next
+                // auto-login just stays locked
+                await persistSessionKey(token).catch(() => {});
             } else {
                 removeLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN);
+                forgetSessionKey();
             }
 
             await connect();

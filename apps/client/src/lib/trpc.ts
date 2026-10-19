@@ -13,7 +13,7 @@ import {
     SessionStorageKey
 } from '@/helpers/storage';
 import { isTransientClose } from '@/lib/close-policy';
-import { clearPriv } from '@/lib/e2ee';
+import { clearPriv, forgetSessionKey } from '@/lib/e2ee';
 import { queryClient } from '@/lib/query-client';
 // AppRouter is the server's router type; imported directly via the
 // @server/* alias (the agreed channel for cross-workspace server refs).
@@ -113,7 +113,10 @@ const cleanup = (keepToken = false) => {
 
     // dropping the token stops auto-login loops on a rejected token; kept
     // on transport loss (backgrounded PWA, Firefox refresh) so it resumes
-    if (!keepToken) removeLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN);
+    if (!keepToken) {
+        removeLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN);
+        forgetSessionKey();
+    }
 
     resetServerScreens();
     resetServerState();

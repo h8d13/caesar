@@ -6,6 +6,7 @@ import {
     setLocalStorageItem,
     setSessionStorageItem
 } from '@/helpers/storage';
+import { forgetSessionKey, persistSessionKey } from '@/lib/e2ee';
 import { getTRPCClient } from '@/lib/trpc';
 import { UserStatus, type TJoinedPublicUser } from '@caesar/shared';
 import { serverSliceActions } from '../slice';
@@ -58,6 +59,9 @@ export const signOutOtherSessions = async () => {
 
     if (getLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN)) {
         setLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN, result.token);
+        // the epoch bump revoked the old wrap key; same password, so re-seal
+        // the key this session already holds under the new token
+        persistSessionKey(result.token).catch(() => {});
     }
 
     return result.token;
@@ -79,6 +83,9 @@ export const updatePassword = async (values: {
     if (getLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN)) {
         setLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN, result.token);
     }
+
+    // the sealed key was derived from the old password; never re-seal it
+    forgetSessionKey();
 };
 
 export const setAllowMultipleSessions = async (value: boolean) => {

@@ -3,6 +3,10 @@ import z from 'zod';
 import { config } from '../config';
 import { getWsInfo } from '../helpers/get-ws-info';
 import { logger } from '../logger';
+import {
+  getE2eeSessionKeyRouteHandler,
+  storeE2eeSessionKeyRouteHandler
+} from './e2ee-session-key';
 import { healthRouteHandler } from './healthz';
 import {
   buildCsp,
@@ -37,7 +41,8 @@ const routeHandlers: Partial<
   GET: {
     exact: {
       '/healthz': (req, res) => healthRouteHandler(req, res),
-      '/info': (req, res) => infoRouteHandler(req, res)
+      '/info': (req, res) => infoRouteHandler(req, res),
+      '/e2ee/session-key': (req, res) => getE2eeSessionKeyRouteHandler(req, res)
     },
     prefix: {
       '/public': (req, res) => publicRouteHandler(req, res)
@@ -48,7 +53,9 @@ const routeHandlers: Partial<
       '/upload': (req, res) => uploadFileRouteHandler(req, res),
       '/login': (req, res) => loginRouteHandler(req, res),
       '/login/2fa': (req, res) => login2faRouteHandler(req, res),
-      '/logout': (req, res) => logoutRouteHandler(req, res)
+      '/logout': (req, res) => logoutRouteHandler(req, res),
+      '/e2ee/session-key': (req, res) =>
+        storeE2eeSessionKeyRouteHandler(req, res)
     },
     prefix: {}
   }

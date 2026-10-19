@@ -10,6 +10,7 @@ import {
     setSessionStorageItem
 } from '@/helpers/storage';
 import { useIsPageVisible } from '@/hooks/use-is-page-visible';
+import { forgetSessionKey, restoreSessionKey } from '@/lib/e2ee';
 import { memo, useEffect, useRef } from 'react';
 
 const AutoLoginController = memo(() => {
@@ -48,11 +49,16 @@ const AutoLoginController = memo(() => {
         setIsAutoConnecting(true);
         setSessionStorageItem(SessionStorageKey.TOKEN, savedToken);
 
-        connect()
+        // unlock before connecting, like the password flow, so the key is
+        // fixed for the session; a failed unlock only locks ephemeral DMs
+        restoreSessionKey(savedToken)
+            .catch(() => {})
+            .then(() => connect())
             .catch(() => {
                 // token expired / epoch stale clear it so the user sees the
                 // connect screen and can log in manually.
                 removeLocalStorageItem(LocalStorageKey.AUTO_LOGIN_TOKEN);
+                forgetSessionKey();
             })
             .finally(() => {
                 // reset attempt state so if the user logs out and back in they can resume again
