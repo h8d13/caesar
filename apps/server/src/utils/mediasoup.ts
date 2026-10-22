@@ -96,10 +96,7 @@ const loadMediasoup = async () => {
     });
 
     const port = basePort + i;
-    const { listenInfos, summary } = buildListenInfos(
-      port,
-      announcedAddress
-    );
+    const { listenInfos, summary } = buildListenInfos(port, announcedAddress);
     const webRtcServer = await worker.createWebRtcServer({ listenInfos });
 
     if (i === 0) webRtcServerListenInfo = summary;
