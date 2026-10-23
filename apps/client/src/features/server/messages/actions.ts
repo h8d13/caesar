@@ -7,7 +7,7 @@ import {
 } from '@/features/app/selectors';
 import { store } from '@/features/store';
 import { getFileUrl } from '@/helpers/get-file-url';
-import { getRegistration } from '@/lib/push';
+import { getRegistration } from '@/lib/service-worker';
 import { getTRPCClient } from '@/lib/trpc';
 import { hasMention, TYPING_MS, type TJoinedMessage } from '@caesar/shared';
 import {

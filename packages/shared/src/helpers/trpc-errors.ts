@@ -1,9 +1,13 @@
-import { TRPCClientError } from '@trpc/client';
-
 export type TTrpcErrors = Record<string, string | undefined>;
 
+// Matched by name rather than `instanceof TRPCClientError`: importing the
+// class would pull @trpc/client into every bundle that touches a form,
+// including the login page. tRPC sets this name in the constructor.
+const isTrpcClientError = (err: unknown): err is Error =>
+  err instanceof Error && err.name === 'TRPCClientError';
+
 const parseTrpcErrors = (err: unknown): TTrpcErrors => {
-  if (!(err instanceof TRPCClientError)) {
+  if (!isTrpcClientError(err)) {
     if (typeof err === 'object') {
       return err as TTrpcErrors;
     }
@@ -31,7 +35,7 @@ const parseTrpcErrors = (err: unknown): TTrpcErrors => {
 };
 
 const getTrpcError = (err: unknown, fallback: string): string => {
-  if (err instanceof TRPCClientError) {
+  if (isTrpcClientError(err)) {
     return err.message;
   }
 

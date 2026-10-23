@@ -1,7 +1,8 @@
 import { resetApp } from '@/features/app/actions';
 import { resetDialogs } from '@/features/dialogs/actions';
 import { resetServerScreens } from '@/features/server-screens/actions';
-import { resetServerState, setDisconnectInfo } from '@/features/server/actions';
+import { resetServerState } from '@/features/server/actions';
+import { setDisconnectInfo } from '@/features/server/pre-auth-actions';
 import { connectedSelector } from '@/features/server/selectors';
 import { store } from '@/features/store';
 import {

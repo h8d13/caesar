@@ -1,6 +1,5 @@
-import { setIsAutoConnecting } from '@/features/app/actions';
 import { useIsAppLoading } from '@/features/app/hooks';
-import { connect } from '@/features/server/actions';
+import { setIsAutoConnecting } from '@/features/app/pre-auth-actions';
 import { useDisconnectInfo, useIsConnected } from '@/features/server/hooks';
 import {
     getLocalStorageItemBool,
@@ -8,7 +7,6 @@ import {
     removeLocalStorageItem
 } from '@/helpers/storage';
 import { useIsPageVisible } from '@/hooks/use-is-page-visible';
-import { forgetSessionKey, restoreSessionKey } from '@/lib/e2ee';
 import { memo, useEffect, useRef } from 'react';
 
 const AutoLoginController = memo(() => {
@@ -41,16 +39,27 @@ const AutoLoginController = memo(() => {
 
         setIsAutoConnecting(true);
 
-        // unlock before connecting, like the password flow, so the key is
-        // fixed for the session; a failed unlock only locks ephemeral DMs
-        restoreSessionKey()
-            .catch(() => {})
-            .then(() => connect())
-            .catch(() => {
-                // cookie expired / epoch stale: drop the hint so the user sees
-                // the connect screen and can log in manually.
-                removeLocalStorageItem(LocalStorageKey.HAS_SESSION);
-                forgetSessionKey();
+        // loaded here rather than imported, so the login page an anonymous
+        // visitor gets ships without tRPC and the e2ee crypto
+        Promise.all([import('@/lib/e2ee'), import('@/features/server/actions')])
+            .then(([{ forgetSessionKey, restoreSessionKey }, { connect }]) =>
+                // unlock before connecting, like the password flow, so the key
+                // is fixed for the session; a failed unlock only locks
+                // ephemeral DMs
+                restoreSessionKey()
+                    .catch(() => {})
+                    .then(() => connect())
+                    .catch(() => {
+                        // cookie expired / epoch stale: drop the hint so the
+                        // user sees the connect screen and can log in manually.
+                        removeLocalStorageItem(LocalStorageKey.HAS_SESSION);
+                        forgetSessionKey();
+                    })
+            )
+            .catch((e) => {
+                // chunk failed to load (offline, redeploy): keep the hint so
+                // a reload can still resume the session
+                console.error('auto-login: failed to load session modules', e);
             })
             .finally(() => {
                 // reset attempt state so if the user logs out and back in they can resume again

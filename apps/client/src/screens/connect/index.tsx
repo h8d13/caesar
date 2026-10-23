@@ -1,4 +1,3 @@
-import { connect } from '@/features/server/actions';
 import { useInfo } from '@/features/server/hooks';
 import { ensureAudioCtxReady } from '@/features/server/sounds/actions';
 import { getFileUrl, getUrlFromServer } from '@/helpers/get-file-url';
@@ -8,7 +7,6 @@ import {
     setLocalStorageItemBool
 } from '@/helpers/storage';
 import { useForm } from '@/hooks/use-form';
-import { derivePrivAsync, persistSessionKey, setPriv } from '@/lib/e2ee';
 import { cn } from '@/lib/utils';
 import { TestId } from '@caesar/shared';
 import {
@@ -40,6 +38,12 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 type TConnectMode = 'sign-in' | 'sign-up';
+
+// tRPC, the e2ee crypto and the server subscriptions only matter once a
+// login succeeds, so the page an anonymous visitor loads ships without
+// them. Started on submit, alongside /login, so it rarely adds a wait.
+const loadSessionModules = () =>
+    Promise.all([import('@/lib/e2ee'), import('@/features/server/actions')]);
 
 // An invite link (/?invite=CODE) only seeds the Sign up form. The param is
 // dropped from the address bar once read, so a bookmark of this page is
@@ -146,6 +150,9 @@ const Connect = memo(() => {
     // Runs once /login (password-only) or /login/2fa has set the HttpOnly
     // session cookie. The token itself never reaches this code.
     const completeLogin = useCallback(async () => {
+        const [{ derivePrivAsync, persistSessionKey, setPriv }, { connect }] =
+            await loadSessionModules();
+
         // E2EE: derive before connecting so the key is fixed for the
         // whole session (<E2eeKeyRegister /> registers it once
         // joinServer lands). argon2id runs in a Web Worker, so the
@@ -175,6 +182,9 @@ const Connect = memo(() => {
         // event-driven sounds (incoming-call ring, msg pings) can play
         // later without the browser keeping the context suspended.
         ensureAudioCtxReady();
+        void loadSessionModules().catch(() => {
+            // completeLogin awaits it again and reports the failure
+        });
 
         if (isSignup && values.password !== values.confirmPassword) {
             setErrors({

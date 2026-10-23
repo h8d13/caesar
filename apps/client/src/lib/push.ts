@@ -5,6 +5,7 @@ import {
 } from '@/features/app/selectors';
 import { publicServerSettingsSelector } from '@/features/server/selectors';
 import { store } from '@/features/store';
+import { getRegistration } from '@/lib/service-worker';
 import { getTRPCClient } from '@/lib/trpc';
 
 // Web Push plumbing. The three notification prefs stay client-owned
@@ -12,26 +13,10 @@ import { getTRPCClient } from '@/lib/trpc';
 // push subscription on the server so closed/backgrounded PWAs still
 // get notified.
 
-let registrationPromise: Promise<ServiceWorkerRegistration> | undefined;
-
 const isPushSupported = () =>
     'serviceWorker' in navigator &&
     'PushManager' in window &&
     'Notification' in window;
-
-const registerServiceWorker = () => {
-    if (!('serviceWorker' in navigator)) return;
-
-    registrationPromise = navigator.serviceWorker
-        .register('/sw.js')
-        .catch((e) => {
-            console.error('service worker registration failed', e);
-            registrationPromise = undefined;
-            throw e;
-        });
-};
-
-const getRegistration = () => registrationPromise;
 
 // applicationServerKey wants raw bytes, the VAPID key comes base64url.
 // explicit ArrayBuffer so TS doesn't widen to ArrayBufferLike (BufferSource
@@ -106,4 +91,4 @@ const syncPushSubscription = async () => {
     });
 };
 
-export { getRegistration, registerServiceWorker, syncPushSubscription };
+export { syncPushSubscription };

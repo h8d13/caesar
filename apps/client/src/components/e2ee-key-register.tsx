@@ -6,7 +6,8 @@ import { memo, useEffect } from 'react';
 // Registers this session's E2EE public key once joinServer has made the
 // connection authenticated (keys.register rejects before that). The key is
 // derived before connecting and fixed for the session, so one register per
-// connection is enough; none happens after auto-login (no key).
+// connection is enough; none happens after auto-login (no key). Mounted
+// inside ServerView, so it only loads once connected.
 const E2eeKeyRegister = memo(() => {
     const isConnected = useIsConnected();
 

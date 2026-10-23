@@ -476,9 +476,6 @@ importers:
 
   packages/shared:
     dependencies:
-      '@trpc/client':
-        specifier: 'catalog:'
-        version: 11.19.0(@trpc/server@11.19.0(typescript@7.0.2))(typescript@7.0.2)
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.4(@libsql/client@0.18.0)

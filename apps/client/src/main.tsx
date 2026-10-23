@@ -9,19 +9,18 @@ import { DebugInfo } from './components/debug-info/index.tsx';
 import { StoreDebug } from './components/debug/store-debug.tsx';
 import { DevicesProvider } from './components/devices-provider/index.tsx';
 import { DialogsProvider } from './components/dialogs/index.tsx';
-import { E2eeKeyRegister } from './components/e2ee-key-register.tsx';
 import { AutoLoginController } from './components/routing/auto-login-controller.tsx';
 import { Routing } from './components/routing/index.tsx';
 import { ServerScreensProvider } from './components/server-screens/index.tsx';
 import { ThemeProvider } from './components/theme-provider/index.tsx';
-import { loadApp } from './features/app/actions.ts';
+import { loadApp } from './features/app/pre-auth-actions.ts';
 import { store } from './features/store.ts';
 import {
     LocalStorageKey,
     removeLegacySessionTokens
 } from './helpers/storage.ts';
-import { registerServiceWorker } from './lib/push.ts';
 import { queryClient } from './lib/query-client.ts';
+import { registerServiceWorker } from './lib/service-worker.ts';
 
 removeLegacySessionTokens();
 registerServiceWorker();
@@ -54,7 +53,6 @@ createRoot(document.getElementById('root')!).render(
                             <DialogsProvider />
                             <ServerScreensProvider />
                             <AutoLoginController />
-                            <E2eeKeyRegister />
                             <Routing />
                         </DevicesProvider>
                     </TooltipProvider>

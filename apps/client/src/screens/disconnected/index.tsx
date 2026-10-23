@@ -1,4 +1,4 @@
-import { setDisconnectInfo } from '@/features/server/actions';
+import { setDisconnectInfo } from '@/features/server/pre-auth-actions';
 import type { TDisconnectInfo } from '@/features/server/types';
 import { DisconnectCode } from '@caesar/shared';
 import { Button } from '@caesar/ui';

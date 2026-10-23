@@ -1,3 +1,7 @@
+// Buffer (webauthn public keys) is a Node type; declared here because
+// browser packages type-check this file through @caesar/shared too.
+/// <reference types="node" />
+
 import {
   type TActivityLogDetailsMap,
   type TMessageMetadata

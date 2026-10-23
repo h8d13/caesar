@@ -1,4 +1,5 @@
 import { DmIncomingCall } from '@/components/dm-incoming-call';
+import { E2eeKeyRegister } from '@/components/e2ee-key-register';
 import { LeftSidebar } from '@/components/left-sidebar';
 import { MediaProvider } from '@/components/media-provider';
 import { ModViewSheet } from '@/components/mod-view-sheet';
@@ -119,6 +120,7 @@ const ServerView = memo(() => {
     return (
         <MediaProvider>
             <DmIncomingCall />
+            <E2eeKeyRegister />
             <div
                 className="flex h-dvh flex-col bg-background text-foreground"
                 {...swipeHandlers}

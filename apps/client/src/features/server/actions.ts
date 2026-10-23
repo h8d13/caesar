@@ -2,13 +2,12 @@ import { logDebug } from '@/helpers/browser-logger';
 import { getHostFromServer, getUrlFromServer } from '@/helpers/get-file-url';
 import { LocalStorageKey, removeLocalStorageItem } from '@/helpers/storage';
 import { cleanup, connectToTRPC, getTRPCClient } from '@/lib/trpc';
-import { type TPublicServerSettings, type TServerInfo } from '@caesar/shared';
+import { type TPublicServerSettings } from '@caesar/shared';
 import { toast } from 'sonner';
 import { store } from '../store';
 import { infoSelector } from './selectors';
 import { serverSliceActions } from './slice';
 import { initSubscriptions } from './subscriptions';
-import { type TDisconnectInfo } from './types';
 
 let unsubscribeFromServer: (() => void) | null = null;
 
@@ -16,18 +15,10 @@ export const resetServerState = () => {
     store.dispatch(serverSliceActions.resetState());
 };
 
-export const setDisconnectInfo = (info: TDisconnectInfo | undefined) => {
-    store.dispatch(serverSliceActions.setDisconnectInfo(info));
-};
-
 export const setPublicServerSettings = (
     settings: TPublicServerSettings | undefined
 ) => {
     store.dispatch(serverSliceActions.setPublicSettings(settings));
-};
-
-export const setInfo = (info: TServerInfo | undefined) => {
-    store.dispatch(serverSliceActions.setInfo(info));
 };
 
 export const connect = async () => {
