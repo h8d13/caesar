@@ -17,7 +17,7 @@
     "magic": "vp fmt && vp lint --fix && pnpm check-types"
   },
   "devDependencies": {
-    "knip": "^6.41.0",
+    "knip": "^6.42.1",
     "vite-plus": "catalog:"
   }
 }
