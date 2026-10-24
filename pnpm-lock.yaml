@@ -271,8 +271,8 @@ importers:
         specifier: ^4.3.3
         version: 4.3.3(@voidzero-dev/vite-plus-core@1.3.0(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1))
       '@tanstack/react-query':
-        specifier: ^5.104.3
-        version: 5.104.4(@types/react@19.3.0)(react@19.3.1)
+        specifier: ^5.104.5
+        version: 5.104.5(@types/react@19.3.0)(react@19.3.1)
       '@tiptap/core':
         specifier: ^3.32.0
         version: 3.32.0(@tiptap/pm@3.32.0)
@@ -301,14 +301,14 @@ importers:
         specifier: ^4.4.0
         version: 4.4.0
       filesize:
-        specifier: ^11.0.26
-        version: 11.0.26
+        specifier: ^11.0.27
+        version: 11.0.28
       highlight.js:
         specifier: ^11.12.0
         version: 11.12.0
       html-react-parser:
-        specifier: ^6.1.8
-        version: 6.1.8(@types/react@19.3.0)(react@19.3.1)
+        specifier: ^6.1.9
+        version: 6.1.9(@types/react@19.3.0)(react@19.3.1)
       lucide-react:
         specifier: 'catalog:'
         version: 1.57.0(@types/react@19.3.0)(react@19.3.1)
@@ -316,8 +316,8 @@ importers:
         specifier: ^18.1.1
         version: 18.1.1
       mediasoup-client:
-        specifier: ^3.24.5
-        version: 3.24.5
+        specifier: ^3.25.3
+        version: 3.25.3
       perfect-freehand:
         specifier: ^1.2.3
         version: 1.2.3
@@ -2062,11 +2062,11 @@ packages:
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7 || ^8
 
-  '@tanstack/query-core@5.104.4':
-    resolution: {integrity: sha512-nU4Yrb8Sjn0DeVb7PKG9uiepNavys3yoxy1FX0hViY4/P6Ng/mBje2SMl7i9812rtyHKtHyqiaC/td6GkI8StA==}
+  '@tanstack/query-core@5.104.5':
+    resolution: {integrity: sha512-Q94gI8Opd+CbdVNOdj8ZCyV8WqLYitrDq1t96Xc8WZT6lY0r5iRnJLXYDxMex7EEf2v+mXvn4FcjaBKSxXZQ9A==}
 
-  '@tanstack/react-query@5.104.4':
-    resolution: {integrity: sha512-YD5QkvUNy8Ey3LbOy2vwL97JjoYycwDv++cWAibTe+9BLYvl3c09XpYp5dZ2VcxcguwoDhGF+utYJYb79RB36w==}
+  '@tanstack/react-query@5.104.5':
+    resolution: {integrity: sha512-RORgFe052U+93weaNuqg7qHq7vNVNzXN/VrXqD4bbAuQCWUqOl2lV5Ui9flWk5CVvMyL/Bh27QWhzwH0aaOx9g==}
     peerDependencies:
       '@types/react': ^18 || ^19
       react: ^18 || ^19
@@ -3029,8 +3029,8 @@ packages:
   fflate@0.8.3:
     resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
-  filesize@11.0.26:
-    resolution: {integrity: sha512-CgbdcjFLDJzMUnxQxHZ5uVxREmTVkjoXnppVB0AH8X0N8Uz4CZarWZLFALLv/Ymyf6EEu1AgaLPS6laXiqBEWA==}
+  filesize@11.0.28:
+    resolution: {integrity: sha512-tsZcwUmhL0WQpsxe9Oua6FBjb0aBTRkXobZBhQdkoII0pYgy9h+cXm5tp13Fsr8dSwp1+UVDxNwAFULDpxkXaw==}
     engines: {node: '>= 10.8.0'}
 
   flatbuffers@25.9.23:
@@ -3074,8 +3074,8 @@ packages:
   html-dom-parser@8.0.2:
     resolution: {integrity: sha512-UnUW0rcyfkYo9OCgeo+5Pzc4lRaifZB4h8RlGRwYIJmEz97Q3OKIYhNVXhG53jmNKWvBrq9n4ZzZIZAECnatSw==}
 
-  html-react-parser@6.1.8:
-    resolution: {integrity: sha512-tlLNVnvtAhGabZTyboRJ/5/ZTD1iZzN5oAQZkW37gUvpcR/XkVNUvcB25Vpo+/tosbJNyfHbx/8H30k3Ug638Q==}
+  html-react-parser@6.1.9:
+    resolution: {integrity: sha512-5lQzzUQXrFe1+OR7GOGkATsm/2h3UIIWQvPkl+84+A9vYG6zbGxhZJjrCDlGvmQs7qPMbffO3XYizVrHekLZbA==}
     peerDependencies:
       '@types/react': 0.14 || 15 || 16 || 17 || 18 || 19
       react: 0.14 || 15 || 16 || 17 || 18 || 19
@@ -3368,8 +3368,8 @@ packages:
     engines: {node: '>= 20'}
     hasBin: true
 
-  mediasoup-client@3.24.5:
-    resolution: {integrity: sha512-an3eWWk0YvvO327H5+Edj9zIzdho7UJr1l0w7uyCsmzsSP6YQ41KmBTwgUdF49fGuiQFc4IZA5jLmKi62/uiLg==}
+  mediasoup-client@3.25.3:
+    resolution: {integrity: sha512-LczeC7H96+pNGw/tly80FWqRHn+mim1kvUMq/7FNTC9zP2AVWK8nBZ4cHp+OIg1uF1DIiQGnOSsPr7X2aSGDTg==}
     engines: {node: '>=22'}
 
   mediasoup@3.30.0:
@@ -5185,11 +5185,11 @@ snapshots:
       tailwindcss: 4.3.3
       vite: '@voidzero-dev/vite-plus-core@1.3.0(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(typescript@7.0.2)(yaml@2.9.1)'
 
-  '@tanstack/query-core@5.104.4': {}
+  '@tanstack/query-core@5.104.5': {}
 
-  '@tanstack/react-query@5.104.4(@types/react@19.3.0)(react@19.3.1)':
+  '@tanstack/react-query@5.104.5(@types/react@19.3.0)(react@19.3.1)':
     dependencies:
-      '@tanstack/query-core': 5.104.4
+      '@tanstack/query-core': 5.104.5
       react: 19.3.1
     optionalDependencies:
       '@types/react': 19.3.0
@@ -6010,7 +6010,7 @@ snapshots:
 
   fflate@0.8.3: {}
 
-  filesize@11.0.26: {}
+  filesize@11.0.28: {}
 
   flatbuffers@25.9.23: {}
 
@@ -6049,7 +6049,7 @@ snapshots:
       domhandler: 6.0.1
       htmlparser2: 12.0.0
 
-  html-react-parser@6.1.8(@types/react@19.3.0)(react@19.3.1):
+  html-react-parser@6.1.9(@types/react@19.3.0)(react@19.3.1):
     dependencies:
       domhandler: 6.0.1
       html-dom-parser: 8.0.2
@@ -6307,7 +6307,7 @@ snapshots:
 
   marked@18.1.1: {}
 
-  mediasoup-client@3.24.5:
+  mediasoup-client@3.25.3:
     dependencies:
       '@types/debug': 4.1.13
       '@types/events-alias': '@types/events@3.0.3'
