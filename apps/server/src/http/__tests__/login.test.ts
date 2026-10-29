@@ -7,6 +7,7 @@ import {
 } from '@server/__tests__/helpers';
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
 import { getJwtSecret } from '@server/utils/jwt-secret';
+import { deriveAuthKey } from '@server/utils/password';
 import { setRateLimitingDisabled } from '@server/utils/rate-limiters';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
@@ -85,7 +86,10 @@ describe('/login', () => {
         'Content-Type': 'application/json',
         origin: 'https://evil.example'
       },
-      body: JSON.stringify({ identity: 'testowner', password: 'password123' })
+      body: JSON.stringify({
+        identity: 'testowner',
+        authKey: await deriveAuthKey('password123', 'testowner')
+      })
     });
 
     expect(response.status).toBe(403);
@@ -98,7 +102,7 @@ describe('/login', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         identity: 'testowner',
-        password: 'password123',
+        authKey: await deriveAuthKey('password123', 'testowner'),
         remember: true
       })
     });
@@ -370,8 +374,12 @@ describe('/login', () => {
     expect(data).toHaveProperty('errors');
   });
 
-  test('should fail with missing password', async () => {
-    const response = await login('someidentity', '');
+  test('refuses a plaintext password in place of the authKey', async () => {
+    const response = await fetch(`${testsBaseUrl}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identity: 'testowner', password: 'password123' })
+    });
 
     expect(response.status).toBe(400);
 

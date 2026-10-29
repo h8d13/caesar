@@ -22,7 +22,7 @@ import { initTest, uploadFile } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { pruneExpiredStatuses } from '@server/crons/prune-expired-statuses';
 import { getOrphanedFileIds } from '@server/db/queries/files';
-import { verifyPassword } from '@server/utils/password';
+import { deriveAuthKey, verifyPassword } from '@server/utils/password';
 import { and, eq } from 'drizzle-orm';
 import { describe, expect, test } from 'vite-plus/test';
 
@@ -272,13 +272,11 @@ describe('users router', () => {
   test('should update password successfully', async () => {
     const { caller } = await initTest();
 
-    const currentPassword = 'password123';
-    const newPassword = 'newpassword456';
+    const newAuthKey = await deriveAuthKey('newpassword456', 'testowner');
 
     await caller.users.updatePassword({
-      currentPassword,
-      newPassword,
-      confirmNewPassword: newPassword
+      currentAuthKey: await deriveAuthKey('password123', 'testowner'),
+      newAuthKey
     });
 
     const row = await tdb
@@ -291,14 +289,14 @@ describe('users router', () => {
 
     expect(row).toBeDefined();
 
-    // should not be plain text
-    expect(row!.password).not.toBe(newPassword);
+    // should not be the authKey itself
+    expect(row!.password).not.toBe(newAuthKey);
 
     // should be hashed with argon2
     expect(row!.password).toMatch(/^\$argon2/);
 
-    // should verify against the new password
-    const isValid = await verifyPassword(newPassword, row!.password);
+    // should verify against the new authKey
+    const isValid = await verifyPassword(newAuthKey, row!.password);
     expect(isValid).toBe(true);
   });
 
@@ -307,23 +305,21 @@ describe('users router', () => {
 
     await expect(
       caller.users.updatePassword({
-        currentPassword: 'wrongpassword',
-        newPassword: 'newpassword',
-        confirmNewPassword: 'newpassword'
+        currentAuthKey: await deriveAuthKey('wrongpassword', 'testowner'),
+        newAuthKey: await deriveAuthKey('newpassword', 'testowner')
       })
     ).rejects.toThrow('Current password is incorrect');
   });
 
-  test('should throw when new passwords do not match', async () => {
+  test('should reject a plaintext password', async () => {
     const { caller } = await initTest();
 
     await expect(
       caller.users.updatePassword({
-        currentPassword: 'password123',
-        newPassword: 'newpassword',
-        confirmNewPassword: 'differentpassword'
+        currentAuthKey: 'password123',
+        newAuthKey: await deriveAuthKey('newpassword', 'testowner')
       })
-    ).rejects.toThrow('New password and confirmation do not match');
+    ).rejects.toThrow();
   });
 
   test('should change avatar', async () => {
@@ -1316,23 +1312,17 @@ describe('users router', () => {
 
   test('should rate limit excessive update password attempts', async () => {
     const { caller } = await initTest();
+    const currentAuthKey = await deriveAuthKey('wrongpassword', 'testowner');
+    const newAuthKey = await deriveAuthKey('newpassword', 'testowner');
 
     for (let i = 0; i < 5; i++) {
       await expect(
-        caller.users.updatePassword({
-          currentPassword: 'wrongpassword',
-          newPassword: 'newpassword',
-          confirmNewPassword: 'newpassword'
-        })
+        caller.users.updatePassword({ currentAuthKey, newAuthKey })
       ).rejects.toThrow('Current password is incorrect');
     }
 
     await expect(
-      caller.users.updatePassword({
-        currentPassword: 'wrongpassword',
-        newPassword: 'newpassword',
-        confirmNewPassword: 'newpassword'
-      })
+      caller.users.updatePassword({ currentAuthKey, newAuthKey })
     ).rejects.toThrow('Too many requests. Please try again shortly.');
   });
 

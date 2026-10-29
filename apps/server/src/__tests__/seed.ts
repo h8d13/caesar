@@ -31,12 +31,14 @@ import {
 } from '@caesar/shared/db/schema';
 import { type LibSQLDatabase } from 'drizzle-orm/libsql';
 import { sha256 } from '../helpers/sha256';
-import { hashPassword } from '../utils/password';
+import { deriveAuthKey, hashPassword } from '../utils/password';
 import { randomUUIDv7 } from '../utils/uuid';
 
 const TEST_SECRET_TOKEN = 'test-secret-token-for-unit-tests';
 
-const hashedPassword = await hashPassword('password123');
+// every seeded user's password is 'password123'
+const hashedPasswordFor = async (identity: string) =>
+  hashPassword(await deriveAuthKey('password123', identity));
 
 /**
  * Current mocked data in the database after seeding (not complete, just a summary):
@@ -171,7 +173,7 @@ const seedDatabase = async (db: LibSQLDatabase) => {
   const ownerUser: TIUser = {
     name: 'Test Owner',
     identity: 'testowner',
-    password: hashedPassword,
+    password: await hashedPasswordFor('testowner'),
     avatarId: null,
     bannerId: null,
     bio: null,
@@ -190,7 +192,7 @@ const seedDatabase = async (db: LibSQLDatabase) => {
   const regularUser: TIUser = {
     name: 'Test User',
     identity: 'testuser',
-    password: hashedPassword,
+    password: await hashedPasswordFor('testuser'),
     avatarId: null,
     bannerId: null,
     bio: null,
@@ -220,7 +222,7 @@ const seedDatabase = async (db: LibSQLDatabase) => {
   const userA: TIUser = {
     name: 'User A',
     identity: 'usera',
-    password: hashedPassword,
+    password: await hashedPasswordFor('usera'),
     avatarId: null,
     bannerId: null,
     bio: null,
@@ -231,7 +233,7 @@ const seedDatabase = async (db: LibSQLDatabase) => {
   const userB: TIUser = {
     name: 'User B',
     identity: 'userb',
-    password: hashedPassword,
+    password: await hashedPasswordFor('userb'),
     avatarId: null,
     bannerId: null,
     bio: null,

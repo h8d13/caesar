@@ -1,6 +1,6 @@
 import { Protect } from '@/components/protect';
 import { setModViewOpen } from '@/features/app/actions';
-import { requestTextInput } from '@/features/dialogs/actions';
+import { openDialog, requestTextInput } from '@/features/dialogs/actions';
 import { useUserById, useUsers } from '@/features/server/users/hooks';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
 import { getTRPCClient } from '@/lib/trpc';
@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { Dialog } from '../../dialogs/dialogs';
 import { useModViewContext } from '../context';
 
 const iconButtonClass =
@@ -98,23 +99,29 @@ const Details = memo(() => {
     const onRenameIdentity = useCallback(async () => {
         const next = await requestTextInput({
             title: 'Rename identity',
-            message: `Current: ${user.identity}. New identity must start with a letter or digit (letters, digits, _, - only). The user will be signed out and must use the new identity to log back in.`,
+            message: `Current: ${user.identity}. New identity must start with a letter or digit (letters, digits, _, - only). The user will be signed out and given a new temporary password to log back in with.`,
             confirmLabel: 'Rename'
         });
 
         if (!next) return;
 
         try {
-            await getTRPCClient().users.renameIdentity.mutate({
-                userId: user.id,
-                identity: next
-            });
+            const { temporaryPassword } =
+                await getTRPCClient().users.renameIdentity.mutate({
+                    userId: user.id,
+                    identity: next
+                });
             toast.success('Identity updated');
             refetch();
+            openDialog(Dialog.RESET_PASSWORD, {
+                user,
+                refetch,
+                issuedPassword: temporaryPassword
+            });
         } catch (error) {
             toast.error(getTrpcError(error, 'Could not rename identity'));
         }
-    }, [user.id, user.identity, refetch]);
+    }, [user, refetch]);
 
     return (
         <Card>

@@ -13,7 +13,7 @@ import {
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
 import { sha256 } from '@server/helpers/sha256';
 import { getJwtSecret } from '@server/utils/jwt-secret';
-import { verifyPassword } from '@server/utils/password';
+import { deriveAuthKey, verifyPassword } from '@server/utils/password';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import { describe, expect, test } from 'vite-plus/test';
@@ -210,6 +210,28 @@ describe('users.renameIdentity', () => {
     expect(after).toBe(before + 1);
   });
 
+  test('issues a temporary password salted with the new identity', async () => {
+    const { caller: adminCaller } = await initTest(1);
+
+    const { temporaryPassword } = await adminCaller.users.renameIdentity({
+      userId: 2,
+      identity: 'rename-password-test'
+    });
+
+    const row = await tdb
+      .select({ password: users.password })
+      .from(users)
+      .where(eq(users.id, 2))
+      .get();
+
+    expect(
+      await verifyPassword(
+        await deriveAuthKey(temporaryPassword, 'rename-password-test'),
+        row!.password
+      )
+    ).toBe(true);
+  });
+
   test('rejects malformed identities (leading symbol, spaces, etc.)', async () => {
     const { caller: adminCaller } = await initTest(1);
 
@@ -256,9 +278,12 @@ describe('users.resetPassword', () => {
     });
 
     expect(temporaryPassword.length).toBeGreaterThanOrEqual(16);
-    expect(await verifyPassword(temporaryPassword, await passwordFor(2))).toBe(
-      true
-    );
+    expect(
+      await verifyPassword(
+        await deriveAuthKey(temporaryPassword, 'testuser'),
+        await passwordFor(2)
+      )
+    ).toBe(true);
   });
 
   test('bumps the target sessionEpoch so existing JWTs invalidate', async () => {
@@ -660,9 +685,8 @@ describe('users.updatePassword session invalidation', () => {
     const before = await epochFor(1);
 
     await caller.users.updatePassword({
-      currentPassword: 'password123',
-      newPassword: 'newpass456',
-      confirmNewPassword: 'newpass456'
+      currentAuthKey: await deriveAuthKey('password123', 'testowner'),
+      newAuthKey: await deriveAuthKey('newpass456', 'testowner')
     });
 
     const after = await epochFor(1);
@@ -673,9 +697,8 @@ describe('users.updatePassword session invalidation', () => {
     const { caller, mockedToken } = await initTest(1);
 
     const { refreshNonce } = await caller.users.updatePassword({
-      currentPassword: 'password123',
-      newPassword: 'newpass456',
-      confirmNewPassword: 'newpass456'
+      currentAuthKey: await deriveAuthKey('password123', 'testowner'),
+      newAuthKey: await deriveAuthKey('newpass456', 'testowner')
     });
 
     const token = await redeem(refreshNonce, mockedToken);

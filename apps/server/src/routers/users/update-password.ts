@@ -1,4 +1,8 @@
-import { ActivityLogType, DisconnectCode } from '@caesar/shared';
+import {
+  ActivityLogType,
+  AUTH_KEY_REGEX,
+  DisconnectCode
+} from '@caesar/shared';
 import { users } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
@@ -22,9 +26,10 @@ const updatePasswordRoute = rateLimitedProcedure(protectedProcedure, {
 })
   .input(
     z.object({
-      currentPassword: z.string().min(4).max(128),
-      newPassword: z.string().min(4).max(128),
-      confirmNewPassword: z.string().min(4).max(128)
+      // authKeys derived client-side, as at /login; length and
+      // confirmation checks on the passwords happen there too
+      currentAuthKey: z.string().regex(AUTH_KEY_REGEX),
+      newAuthKey: z.string().regex(AUTH_KEY_REGEX)
     })
   )
   .mutation(async ({ ctx, input }) => {
@@ -42,7 +47,7 @@ const updatePasswordRoute = rateLimitedProcedure(protectedProcedure, {
     });
 
     const currentPasswordValid = await verifyPassword(
-      input.currentPassword,
+      input.currentAuthKey,
       user.password
     );
 
@@ -53,14 +58,7 @@ const updatePasswordRoute = rateLimitedProcedure(protectedProcedure, {
       );
     }
 
-    if (input.newPassword !== input.confirmNewPassword) {
-      ctx.throwValidationError(
-        'confirmNewPassword',
-        'New password and confirmation do not match'
-      );
-    }
-
-    const hashedNewPassword = await hashPassword(input.confirmNewPassword);
+    const hashedNewPassword = await hashPassword(input.newAuthKey);
 
     // Bump sessionEpoch in the same write: a password change must revoke
     // any token an attacker may already hold, and sessionEpoch is the only

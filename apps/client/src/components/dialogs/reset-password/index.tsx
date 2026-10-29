@@ -10,16 +10,24 @@ import type { TDialogBaseProps } from '../types';
 type TResetPasswordDialogProps = TDialogBaseProps & {
     user: TJoinedUser;
     refetch: () => void;
+    // already issued (renameIdentity): open straight on the result
+    issuedPassword?: string;
 };
 
 // Two-step: confirm, then display the one-shot credential the server
 // minted. The plaintext exists only in this response, so the dialog must
 // not close itself after the mutation - the mod has to copy it out first.
 const ResetPasswordDialog = memo(
-    ({ isOpen, close, user, refetch }: TResetPasswordDialogProps) => {
+    ({
+        isOpen,
+        close,
+        user,
+        refetch,
+        issuedPassword
+    }: TResetPasswordDialogProps) => {
         const [temporaryPassword, setTemporaryPassword] = useState<
             string | undefined
-        >(undefined);
+        >(issuedPassword);
         const [isResetting, setIsResetting] = useState(false);
 
         const onReset = useCallback(async () => {

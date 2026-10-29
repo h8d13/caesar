@@ -10,22 +10,12 @@ import { db } from '@server/db';
 import { getUserById } from '@server/db/queries/users';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
-import { hashPassword } from '@server/utils/password';
+import { generateTemporaryPassword } from '@server/utils/password';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { closeUserSessions } from '@server/utils/wss';
-import crypto from 'crypto';
 import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { assertCanModifyOwnerUser } from './assert-can-modify-owner-user';
-
-// 18 random bytes -> 24 base64url chars. The moderator never picks the
-// value: a generated one-shot credential can't be a reused/weak password,
-// and it is returned exactly once (never stored in plaintext, never
-// re-readable) so the mod has to relay it out-of-band.
-const TEMPORARY_PASSWORD_BYTES = 18;
-
-const generateTemporaryPassword = () =>
-  crypto.randomBytes(TEMPORARY_PASSWORD_BYTES).toString('base64url');
 
 const resetPasswordRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: config.rateLimiters.resetPassword.maxRequests,
@@ -61,7 +51,9 @@ const resetPasswordRoute = rateLimitedProcedure(protectedProcedure, {
       message: 'Cannot reset the password of the deleted user placeholder.'
     });
 
-    const temporaryPassword = generateTemporaryPassword();
+    const { temporaryPassword, hash } = await generateTemporaryPassword(
+      target.identity
+    );
 
     // Same write shape as users.updatePassword: bumping sessionEpoch is what
     // actually revokes tokens (getUserByToken is the only gate), so a reset
@@ -70,7 +62,7 @@ const resetPasswordRoute = rateLimitedProcedure(protectedProcedure, {
     await db
       .update(users)
       .set({
-        password: await hashPassword(temporaryPassword),
+        password: hash,
         sessionEpoch: sql`${users.sessionEpoch} + 1`,
         updatedAt: Date.now()
       })

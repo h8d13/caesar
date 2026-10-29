@@ -119,6 +119,7 @@ const Connect = memo(() => {
     const [pending2fa, setPending2fa] = useState<{
         preAuthToken: string;
         options: PublicKeyCredentialRequestOptionsJSON;
+        priv: Uint8Array;
     } | null>(null);
     const info = useInfo();
 
@@ -149,33 +150,33 @@ const Connect = memo(() => {
 
     // Runs once /login (password-only) or /login/2fa has set the HttpOnly
     // session cookie. The token itself never reaches this code.
-    const completeLogin = useCallback(async () => {
-        const [{ derivePrivAsync, persistSessionKey, setPriv }, { connect }] =
-            await loadSessionModules();
+    const completeLogin = useCallback(
+        async (priv: Uint8Array) => {
+            const [{ persistSessionKey, setPriv }, { connect }] =
+                await loadSessionModules();
 
-        // E2EE: derive before connecting so the key is fixed for the
-        // whole session (<E2eeKeyRegister /> registers it once
-        // joinServer lands). argon2id runs in a Web Worker, so the
-        // login spinner stays responsive. A failed derive only locks
-        // ephemeral DMs; logging out and back in retries it.
-        try {
-            setPriv(await derivePrivAsync(values.password, values.identity));
-        } catch {
-            // proceed without a key
-        }
+            // E2EE: set before connecting so the key is fixed for the
+            // whole session (<E2eeKeyRegister /> registers it once
+            // joinServer lands).
+            setPriv(priv);
 
-        // The toggle only picks the cookie's lifetime (sent as remember):
-        // persistent, or gone when the browser closes. Either way other
-        // tabs and reloads resume it via AutoLoginController.
-        setLocalStorageItemBool(LocalStorageKey.AUTO_LOGIN, values.autoLogin);
-        setLocalStorageItemBool(LocalStorageKey.HAS_SESSION, true);
+            // The toggle only picks the cookie's lifetime (sent as remember):
+            // persistent, or gone when the browser closes. Either way other
+            // tabs and reloads resume it via AutoLoginController.
+            setLocalStorageItemBool(
+                LocalStorageKey.AUTO_LOGIN,
+                values.autoLogin
+            );
+            setLocalStorageItemBool(LocalStorageKey.HAS_SESSION, true);
 
-        // lets a resumed session unlock ephemeral DMs; on failure it
-        // just stays locked
-        await persistSessionKey().catch(() => {});
+            // lets a resumed session unlock ephemeral DMs; on failure it
+            // just stays locked
+            await persistSessionKey().catch(() => {});
 
-        await connect();
-    }, [values.password, values.identity, values.autoLogin]);
+            await connect();
+        },
+        [values.autoLogin]
+    );
 
     const onConnectClick = useCallback(async () => {
         // Pre-warm the AudioContext inside this gesture stack so
@@ -193,9 +194,26 @@ const Connect = memo(() => {
             return;
         }
 
+        if (values.password.length < 4 || values.password.length > 128) {
+            setErrors({
+                password: 'Password must be between 4 and 128 characters long'
+            });
+            return;
+        }
+
         setLoading(true);
 
         try {
+            const [{ deriveAuthKey, derivePrivAsync }] =
+                await loadSessionModules();
+
+            // argon2id runs in a Web Worker, so the spinner stays
+            // responsive. Only authKey leaves this browser.
+            const priv = await derivePrivAsync(
+                values.password,
+                values.identity
+            );
+
             const url = getUrlFromServer();
             const response = await fetch(`${url}/login`, {
                 method: 'POST',
@@ -204,7 +222,7 @@ const Connect = memo(() => {
                 },
                 body: JSON.stringify({
                     identity: values.identity,
-                    password: values.password,
+                    authKey: deriveAuthKey(priv),
                     invite: inviteCode || undefined,
                     remember: values.autoLogin
                 })
@@ -241,12 +259,13 @@ const Connect = memo(() => {
             if ('needs2fa' in data) {
                 setPending2fa({
                     preAuthToken: data.preAuthToken,
-                    options: data.options
+                    options: data.options,
+                    priv
                 });
                 return;
             }
 
-            await completeLogin();
+            await completeLogin(priv);
         } catch (error) {
             const errorMessage =
                 error instanceof Error ? error.message : String(error);
@@ -299,7 +318,7 @@ const Connect = memo(() => {
                 return;
             }
 
-            await completeLogin();
+            await completeLogin(pending2fa.priv);
         } catch (error) {
             const message =
                 error instanceof Error ? error.message : String(error);

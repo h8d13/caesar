@@ -9,6 +9,9 @@
 //
 // "ephemeral" = server TTL, not forward secrecy: password holder can
 // always rederive and read still-live msgs.
+//
+// the server authenticates with authKey = HKDF(priv), so it never sees the
+// password and can't derive priv from what it receives.
 
 import { getUrlFromServer } from '@/helpers/get-file-url';
 import {
@@ -17,9 +20,15 @@ import {
     removeLocalStorageItem,
     setLocalStorageItem
 } from '@/helpers/storage';
-import { canonicalIdentity } from '@caesar/shared';
+import {
+    AUTH_KEY_INFO,
+    canonicalIdentity,
+    PASSWORD_KDF,
+    PASSWORD_KDF_TEST
+} from '@caesar/shared';
 import { x25519 } from '@noble/curves/ed25519.js';
 import { argon2id } from '@noble/hashes/argon2.js';
+import { hkdf } from '@noble/hashes/hkdf.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { base64ToBytes, bytesToBase64 } from './base64';
 
@@ -28,9 +37,7 @@ import { base64ToBytes, bytesToBase64 } from './base64';
 // near-zero params (correctness, not strength). Vite production builds set
 // MODE=production and dead-code-eliminate the test branch.
 const ARGON2 =
-    import.meta.env.MODE === 'test'
-        ? { t: 1, m: 256, p: 1, dkLen: 32 }
-        : { t: 3, m: 64 * 1024, p: 1, dkLen: 32 };
+    import.meta.env.MODE === 'test' ? PASSWORD_KDF_TEST : PASSWORD_KDF;
 
 // session-only state. cleared on logout via clearPriv().
 let myPriv: Uint8Array | null = null;
@@ -66,6 +73,18 @@ const derivePriv = (password: string, identity: string): Uint8Array => {
 };
 
 const derivePub = (priv: Uint8Array): Uint8Array => x25519.getPublicKey(priv);
+
+// what /login and updatePassword get instead of the password
+const deriveAuthKey = (priv: Uint8Array): string =>
+    bytesToBase64(
+        hkdf(
+            sha256,
+            priv,
+            undefined,
+            new TextEncoder().encode(AUTH_KEY_INFO),
+            32
+        )
+    );
 
 // Derive priv from password+identity and verify it matches the user's
 // worker-backed async derivation (avoids freezing the main thread)
@@ -381,6 +400,7 @@ const openStreamed = async (key: CryptoKey, source: Blob): Promise<Blob> => {
 
 export {
     clearPriv,
+    deriveAuthKey,
     derivePriv,
     derivePrivAsync,
     derivePub,

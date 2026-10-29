@@ -1,6 +1,11 @@
 import { store } from '@/features/store';
 import { getUrlFromServer } from '@/helpers/get-file-url';
-import { forgetSessionKey, persistSessionKey } from '@/lib/e2ee';
+import {
+    deriveAuthKey,
+    derivePrivAsync,
+    forgetSessionKey,
+    persistSessionKey
+} from '@/lib/e2ee';
 import { getTRPCClient } from '@/lib/trpc';
 import { UserStatus, type TJoinedPublicUser } from '@caesar/shared';
 import { serverSliceActions } from '../slice';
@@ -76,7 +81,16 @@ export const updatePassword = async (values: {
     confirmNewPassword: string;
 }) => {
     const trpc = getTRPCClient();
-    const result = await trpc.users.updatePassword.mutate(values);
+    // authKeys are salted with the identity, which an auto-login session
+    // never typed
+    const { identity } = await trpc.users.me.query();
+    const authKeyFor = async (password: string) =>
+        deriveAuthKey(await derivePrivAsync(password, identity));
+
+    const result = await trpc.users.updatePassword.mutate({
+        currentAuthKey: await authKeyFor(values.currentPassword),
+        newAuthKey: await authKeyFor(values.newPassword)
+    });
 
     // A password change bumps sessionEpoch server-side, so the caller's old
     // cookie is now stale. Swap in the fresh one the server minted (same

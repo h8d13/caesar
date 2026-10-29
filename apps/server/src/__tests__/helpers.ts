@@ -2,6 +2,7 @@ import { Permission, UploadHeaders } from '@caesar/shared';
 import { roles, users } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { getJwtSecret } from '@server/utils/jwt-secret';
+import { deriveAuthKey } from '@server/utils/password';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import { appRouter } from '../routers';
@@ -51,6 +52,7 @@ const initTest = async (userId: number = 1) => {
   return { caller, mockedToken, initialData };
 };
 
+// derives the authKey like the client does; the password never goes out
 const login = async (identity: string, password: string, invite?: string) =>
   fetch(`${testsBaseUrl}/login`, {
     method: 'POST',
@@ -59,7 +61,7 @@ const login = async (identity: string, password: string, invite?: string) =>
     },
     body: JSON.stringify({
       identity,
-      password,
+      authKey: await deriveAuthKey(password, identity),
       invite
     })
   });

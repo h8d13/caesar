@@ -1,5 +1,6 @@
 import {
   ActivityLogType,
+  AUTH_KEY_REGEX,
   canonicalIdentity,
   DELETED_USER_IDENTITY_AND_NAME,
   IDENTITY_REGEX,
@@ -47,10 +48,9 @@ const zBody = z.object({
     .string()
     .transform(canonicalIdentity)
     .pipe(z.string().min(1, 'Identity must be at least 1 character long')),
-  password: z
-    .string()
-    .min(4, 'Password must be at least 4 characters long')
-    .max(128),
+  // derived client-side from the password (PASSWORD_KDF); the password
+  // itself never reaches the server
+  authKey: z.string().regex(AUTH_KEY_REGEX, 'Invalid auth key'),
   invite: z.string().optional(),
   // persistent session cookie vs one that ends with the browser session
   remember: z.boolean().optional().default(false)
@@ -102,11 +102,11 @@ const burnTimingBudget = async (): Promise<void> => {
 
 const registerUser = async (
   identity: string,
-  password: string,
+  authKey: string,
   invite?: TInvite,
   ip?: string
 ): Promise<TJoinedUser> => {
-  const hashedPassword = await hashPassword(password);
+  const hashedPassword = await hashPassword(authKey);
 
   const defaultRole = await getDefaultRole();
 
@@ -275,7 +275,7 @@ const loginRouteHandler = async (
     try {
       existingUser = await registerUser(
         data.identity,
-        data.password,
+        data.authKey,
         invite,
         connectionInfo?.ip
       );
@@ -310,7 +310,7 @@ const loginRouteHandler = async (
   }
 
   const passwordMatches = await verifyPassword(
-    data.password,
+    data.authKey,
     existingUser.password
   );
 

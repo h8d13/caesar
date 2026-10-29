@@ -25,3 +25,15 @@ export const DELETED_USER_IDENTITY_AND_NAME = '__deleted_user__'; // this will b
 
 export const DEFAULT_BITRATE = 6000; // kbps, screen share
 export const DEFAULT_WEBCAM_BITRATE = 2500; // kbps, top simulcast/SVC layer
+
+// Password KDF, run client-side: priv = argon2id(password, sha256(identity))
+// is the E2EE key, and authKey = HKDF-SHA256(priv, AUTH_KEY_INFO) is what
+// /login and updatePassword receive instead of the password. The server
+// re-derives it only for generated passwords (admin reset), so both sides
+// must use the same parameters. m is in KiB.
+export const PASSWORD_KDF = { t: 3, m: 64 * 1024, p: 1, dkLen: 32 } as const;
+// test suites only: correctness, not strength
+export const PASSWORD_KDF_TEST = { t: 1, m: 256, p: 1, dkLen: 32 } as const;
+export const AUTH_KEY_INFO = 'caesar-auth-v1';
+// base64 of the 32-byte authKey, with padding
+export const AUTH_KEY_REGEX = /^[A-Za-z0-9+/]{43}=$/;

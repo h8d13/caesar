@@ -10,6 +10,7 @@ import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
 import { getUserById } from '@server/db/queries/users';
 import { invariant } from '@server/utils/invariant';
+import { generateTemporaryPassword } from '@server/utils/password';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { closeUserSessions } from '@server/utils/wss';
 import { eq, sql } from 'drizzle-orm';
@@ -60,11 +61,17 @@ const renameIdentityRoute = rateLimitedProcedure(protectedProcedure, {
     // name.
     const nextName = target.name === target.identity ? next : target.name;
 
+    // The stored hash is of an authKey salted with the old identity, so the
+    // old password can't work anymore: hand back a fresh one, as in
+    // users.resetPassword.
+    const { temporaryPassword, hash } = await generateTemporaryPassword(next);
+
     await db
       .update(users)
       .set({
         identity: next,
         name: nextName,
+        password: hash,
         sessionEpoch: sql`${users.sessionEpoch} + 1`,
         updatedAt: Date.now()
       })
@@ -78,6 +85,8 @@ const renameIdentityRoute = rateLimitedProcedure(protectedProcedure, {
     );
 
     void publishUser(input.userId, 'update');
+
+    return { temporaryPassword };
   });
 
 export { renameIdentityRoute };
