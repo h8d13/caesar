@@ -1,7 +1,7 @@
 import { ChannelType, Permission, ServerEvents } from '@caesar/shared';
 import { getChannelByIdOrThrow } from '@server/db/queries/channels';
+import { assertCanModifyOwnerUser } from '@server/helpers/assert-can-modify-owner-user';
 import { logger } from '@server/logger';
-import { assertCanModifyOwnerUser } from '@server/routers/users/assert-can-modify-owner-user';
 import { VoiceRuntime } from '@server/runtimes/voice';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';

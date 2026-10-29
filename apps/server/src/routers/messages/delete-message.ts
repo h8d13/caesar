@@ -5,6 +5,7 @@ import { db } from '@server/db';
 import { removeFile } from '@server/db/mutations/files';
 import { publishMessage } from '@server/db/publishers';
 import { getFilesByMessageId } from '@server/db/queries/files';
+import { assertCanModifyOwnerUser } from '@server/helpers/assert-can-modify-owner-user';
 import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
@@ -35,14 +36,18 @@ const deleteMessageRoute = rateLimitedProcedure(protectedProcedure, {
 
     await assertChannelAccess(ctx, targetMessage.channelId);
 
-    invariant(
-      targetMessage.userId === ctx.user.id ||
-        (await ctx.hasPermission(Permission.MANAGE_MESSAGES)),
-      {
+    if (targetMessage.userId !== ctx.user.id) {
+      invariant(await ctx.hasPermission(Permission.MANAGE_MESSAGES), {
         code: 'FORBIDDEN',
         message: 'You do not have permission to delete this message'
-      }
-    );
+      });
+
+      await assertCanModifyOwnerUser(
+        ctx.userId,
+        targetMessage.userId,
+        'delete messages of'
+      );
+    }
 
     const files = await getFilesByMessageId(input.messageId);
 

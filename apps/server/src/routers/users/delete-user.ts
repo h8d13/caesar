@@ -15,6 +15,7 @@ import {
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
 import { getUserByIdentity } from '@server/db/queries/users';
+import { assertCanModifyOwnerUser } from '@server/helpers/assert-can-modify-owner-user';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { pubsub } from '@server/utils/pubsub';
@@ -24,7 +25,6 @@ import { and, eq, exists, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import type { WebSocket } from 'ws';
 import z from 'zod';
-import { assertCanModifyOwnerUser } from './assert-can-modify-owner-user';
 
 const ensureDeletedUser = async (): Promise<number> => {
   const existingDeletedUser = await getUserByIdentity(

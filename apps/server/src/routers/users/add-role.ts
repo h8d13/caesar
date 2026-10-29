@@ -7,13 +7,13 @@ import {
   publishUserChannelAccessDiff,
   snapshotUserChannelAccess
 } from '@server/db/publishers';
+import { assertCanModifyOwnerUser } from '@server/helpers/assert-can-modify-owner-user';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { assertCanAssignRole } from './assert-can-assign-role';
 import { assertCanModifyOwnerRole } from './assert-can-modify-owner-role';
-import { assertCanModifyOwnerUser } from './assert-can-modify-owner-user';
 
 const addRoleRoute = protectedProcedure
   .input(

@@ -9,13 +9,13 @@ import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
 import { getUserById } from '@server/db/queries/users';
+import { assertCanModifyOwnerUser } from '@server/helpers/assert-can-modify-owner-user';
 import { invariant } from '@server/utils/invariant';
 import { generateTemporaryPassword } from '@server/utils/password';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { closeUserSessions } from '@server/utils/wss';
 import { eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import { assertCanModifyOwnerUser } from './assert-can-modify-owner-user';
 
 const renameIdentityRoute = rateLimitedProcedure(protectedProcedure, {
   maxRequests: config.rateLimiters.renameIdentity.maxRequests,

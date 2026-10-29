@@ -2,7 +2,7 @@ import {
     useChannelById,
     useDmReadByPeer
 } from '@/features/server/channels/hooks';
-import { useCan } from '@/features/server/hooks';
+import { useCan, useIsOwnUserOwner } from '@/features/server/hooks';
 import { useLatestOwnMessageId } from '@/features/server/messages/hooks';
 import {
     useIsOwnUser,
@@ -12,7 +12,12 @@ import {
 import { E2EE_LOCKED_MESSAGE, hasPriv } from '@/lib/e2ee';
 import { useDecryptedMessage } from '@/lib/use-decrypted-message';
 import { cn } from '@/lib/utils';
-import { hasMention, Permission, type TJoinedMessage } from '@caesar/shared';
+import {
+    hasMention,
+    OWNER_ROLE_ID,
+    Permission,
+    type TJoinedMessage
+} from '@caesar/shared';
 import { format } from 'date-fns';
 import { Check, CornerUpRight } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
@@ -49,6 +54,8 @@ const Message = memo(
         const isFromOwnUser = useIsOwnUser(message.userId);
         const ownUserId = useOwnUserId();
         const can = useCan();
+        const isOwner = useIsOwnUserOwner();
+        const author = useUserById(message.userId);
         const channel = useChannelById(message.channelId);
         const dmReadByPeer = useDmReadByPeer(message.channelId);
         const latestOwnId = useLatestOwnMessageId(message.channelId);
@@ -71,10 +78,14 @@ const Message = memo(
             return message;
         }, [message, decrypted]);
 
-        // edit stays with the author (the server enforces it too)
+        // edit stays with the author; moderators can delete, but not the
+        // owner's messages unless they are the owner (both server-enforced)
         const canDelete = useMemo(
-            () => can(Permission.MANAGE_MESSAGES) || isFromOwnUser,
-            [can, isFromOwnUser]
+            () =>
+                isFromOwnUser ||
+                (can(Permission.MANAGE_MESSAGES) &&
+                    (isOwner || !author?.roleIds.includes(OWNER_ROLE_ID))),
+            [can, isFromOwnUser, isOwner, author]
         );
 
         // highlight bar when @mentioned. checks decrypted content if E2EE.

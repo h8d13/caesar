@@ -2,12 +2,12 @@ import { ActivityLogType, DisconnectCode, Permission } from '@caesar/shared';
 import { users } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
+import { assertCanModifyOwnerUser } from '@server/helpers/assert-can-modify-owner-user';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';
 import z from 'zod';
-import { assertCanModifyOwnerUser } from './assert-can-modify-owner-user';
 
 const banRoute = protectedProcedure
   .input(

@@ -354,6 +354,44 @@ describe('messages router', () => {
     ).toBeUndefined();
   });
 
+  test('should not let a non-owner moderator delete owner messages', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: moderator } = await initTest(2);
+
+    // user 2 moderates via their default role
+    await tdb.insert(rolePermissions).values({
+      roleId: 2,
+      permission: Permission.MANAGE_MESSAGES,
+      createdAt: Date.now()
+    });
+
+    await owner.messages.send({
+      channelId: 1,
+      content: 'Owner message',
+      files: []
+    });
+
+    const { messages: before } = await owner.messages.get({
+      channelId: 1,
+      cursor: null,
+      limit: 50
+    });
+
+    const messageId = before[0]!.id;
+
+    await expect(moderator.messages.delete({ messageId })).rejects.toThrow(
+      'You cannot delete messages of the server owner.'
+    );
+
+    const { messages: after } = await owner.messages.get({
+      channelId: 1,
+      cursor: null,
+      limit: 50
+    });
+
+    expect(after.find((m) => m.id === messageId)).toBeDefined();
+  });
+
   test('should throw when editing non-existing message', async () => {
     const { caller } = await initTest();
 

@@ -5,6 +5,7 @@ import { removeFile } from '@server/db/mutations/files';
 import { publishMessage } from '@server/db/publishers';
 import { getFilesByMessageId } from '@server/db/queries/files';
 import { getMessageByFileId } from '@server/db/queries/messages';
+import { assertCanModifyOwnerUser } from '@server/helpers/assert-can-modify-owner-user';
 import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
@@ -23,14 +24,18 @@ const deleteFileRoute = protectedProcedure
 
     await assertChannelAccess(ctx, message.channelId);
 
-    invariant(
-      message.userId === ctx.user.id ||
-        (await ctx.hasPermission(Permission.MANAGE_MESSAGES)),
-      {
+    if (message.userId !== ctx.user.id) {
+      invariant(await ctx.hasPermission(Permission.MANAGE_MESSAGES), {
         code: 'FORBIDDEN',
         message: 'You do not have permission to delete this file'
-      }
-    );
+      });
+
+      await assertCanModifyOwnerUser(
+        ctx.userId,
+        message.userId,
+        'delete files of'
+      );
+    }
 
     await removeFile(input.fileId);
 
