@@ -36,9 +36,17 @@ import { randomUUIDv7 } from '../utils/uuid';
 
 const TEST_SECRET_TOKEN = 'test-secret-token-for-unit-tests';
 
-// every seeded user's password is 'password123'
-const hashedPasswordFor = async (identity: string) =>
+// every seeded user's password is 'password123'. Hashed once per file:
+// seedDatabase runs before every test.
+const seedHash = async (identity: string) =>
   hashPassword(await deriveAuthKey('password123', identity));
+
+const [ownerHash, userHash, userAHash, userBHash] = await Promise.all([
+  seedHash('testowner'),
+  seedHash('testuser'),
+  seedHash('usera'),
+  seedHash('userb')
+]);
 
 /**
  * Current mocked data in the database after seeding (not complete, just a summary):
@@ -173,7 +181,7 @@ const seedDatabase = async (db: LibSQLDatabase) => {
   const ownerUser: TIUser = {
     name: 'Test Owner',
     identity: 'testowner',
-    password: await hashedPasswordFor('testowner'),
+    password: ownerHash,
     avatarId: null,
     bannerId: null,
     bio: null,
@@ -192,7 +200,7 @@ const seedDatabase = async (db: LibSQLDatabase) => {
   const regularUser: TIUser = {
     name: 'Test User',
     identity: 'testuser',
-    password: await hashedPasswordFor('testuser'),
+    password: userHash,
     avatarId: null,
     bannerId: null,
     bio: null,
@@ -222,7 +230,7 @@ const seedDatabase = async (db: LibSQLDatabase) => {
   const userA: TIUser = {
     name: 'User A',
     identity: 'usera',
-    password: await hashedPasswordFor('usera'),
+    password: userAHash,
     avatarId: null,
     bannerId: null,
     bio: null,
@@ -233,7 +241,7 @@ const seedDatabase = async (db: LibSQLDatabase) => {
   const userB: TIUser = {
     name: 'User B',
     identity: 'userb',
-    password: await hashedPasswordFor('userb'),
+    password: userBHash,
     avatarId: null,
     bannerId: null,
     bio: null,

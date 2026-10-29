@@ -8,7 +8,12 @@ import {
 } from '@/helpers/storage';
 import { useForm } from '@/hooks/use-form';
 import { cn } from '@/lib/utils';
-import { TestId } from '@caesar/shared';
+import {
+    PASSWORD_LENGTH_ERROR,
+    PASSWORD_MAX_LENGTH,
+    PASSWORD_MIN_LENGTH,
+    TestId
+} from '@caesar/shared';
 import {
     Alert,
     AlertDescription,
@@ -194,22 +199,22 @@ const Connect = memo(() => {
             return;
         }
 
-        if (values.password.length < 4 || values.password.length > 128) {
-            setErrors({
-                password: 'Password must be between 4 and 128 characters long'
-            });
+        if (
+            values.password.length < PASSWORD_MIN_LENGTH ||
+            values.password.length > PASSWORD_MAX_LENGTH
+        ) {
+            setErrors({ password: PASSWORD_LENGTH_ERROR });
             return;
         }
 
         setLoading(true);
 
         try {
-            const [{ deriveAuthKey, derivePrivAsync }] =
-                await loadSessionModules();
+            const [{ deriveCredentials }] = await loadSessionModules();
 
             // argon2id runs in a Web Worker, so the spinner stays
             // responsive. Only authKey leaves this browser.
-            const priv = await derivePrivAsync(
+            const { priv, authKey } = await deriveCredentials(
                 values.password,
                 values.identity
             );
@@ -222,7 +227,7 @@ const Connect = memo(() => {
                 },
                 body: JSON.stringify({
                     identity: values.identity,
-                    authKey: deriveAuthKey(priv),
+                    authKey,
                     invite: inviteCode || undefined,
                     remember: values.autoLogin
                 })

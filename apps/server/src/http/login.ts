@@ -1,6 +1,6 @@
 import {
   ActivityLogType,
-  AUTH_KEY_REGEX,
+  BASE64_32_BYTES_REGEX,
   canonicalIdentity,
   DELETED_USER_IDENTITY_AND_NAME,
   IDENTITY_REGEX,
@@ -50,7 +50,7 @@ const zBody = z.object({
     .pipe(z.string().min(1, 'Identity must be at least 1 character long')),
   // derived client-side from the password (PASSWORD_KDF); the password
   // itself never reaches the server
-  authKey: z.string().regex(AUTH_KEY_REGEX, 'Invalid auth key'),
+  authKey: z.string().regex(BASE64_32_BYTES_REGEX, 'Invalid auth key'),
   invite: z.string().optional(),
   // persistent session cookie vs one that ends with the browser session
   remember: z.boolean().optional().default(false)

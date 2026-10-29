@@ -7,9 +7,9 @@
 
 import { DELETED_USER_IDENTITY_AND_NAME } from '@caesar/shared';
 import { users } from '@caesar/shared/db/schema';
-import { createClient } from '@libsql/client';
 import { eq, ne, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/libsql';
+import { createDbClient, DB_PRAGMAS } from '../src/db/connection';
 import { generateTemporaryPassword } from '../src/utils/password';
 
 const dbPath = process.argv[2];
@@ -19,7 +19,7 @@ if (!dbPath) {
   process.exit(1);
 }
 
-const db = drizzle(createClient({ url: `file:${dbPath}` }));
+const db = drizzle(await createDbClient(`file:${dbPath}`, DB_PRAGMAS));
 
 const rows = await db
   .select({ id: users.id, identity: users.identity, name: users.name })

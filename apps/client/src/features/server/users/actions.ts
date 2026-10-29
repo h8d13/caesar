@@ -1,8 +1,7 @@
 import { store } from '@/features/store';
 import { getUrlFromServer } from '@/helpers/get-file-url';
 import {
-    deriveAuthKey,
-    derivePrivAsync,
+    deriveCredentials,
     forgetSessionKey,
     persistSessionKey
 } from '@/lib/e2ee';
@@ -78,18 +77,20 @@ export const signOutOtherSessions = async () => {
 export const updatePassword = async (values: {
     currentPassword: string;
     newPassword: string;
-    confirmNewPassword: string;
 }) => {
     const trpc = getTRPCClient();
     // authKeys are salted with the identity, which an auto-login session
     // never typed
     const { identity } = await trpc.users.me.query();
-    const authKeyFor = async (password: string) =>
-        deriveAuthKey(await derivePrivAsync(password, identity));
+    // queued together, so the worker isn't torn down between the two
+    const [current, next] = await Promise.all([
+        deriveCredentials(values.currentPassword, identity),
+        deriveCredentials(values.newPassword, identity)
+    ]);
 
     const result = await trpc.users.updatePassword.mutate({
-        currentAuthKey: await authKeyFor(values.currentPassword),
-        newAuthKey: await authKeyFor(values.newPassword)
+        currentAuthKey: current.authKey,
+        newAuthKey: next.authKey
     });
 
     // A password change bumps sessionEpoch server-side, so the caller's old

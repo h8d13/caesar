@@ -159,6 +159,13 @@ const derivePrivAsync = (
         });
     });
 
+// priv for E2EE plus the authKey /login and updatePassword take for it
+const deriveCredentials = async (password: string, identity: string) => {
+    const priv = await derivePrivAsync(password, identity);
+
+    return { priv, authKey: deriveAuthKey(priv) };
+};
+
 // per-DM symmetric key (HKDF over ECDH shared secret)
 const dmKey = async (
     peerPub: Uint8Array,
@@ -401,6 +408,7 @@ const openStreamed = async (key: CryptoKey, source: Blob): Promise<Blob> => {
 export {
     clearPriv,
     deriveAuthKey,
+    deriveCredentials,
     derivePriv,
     derivePrivAsync,
     derivePub,

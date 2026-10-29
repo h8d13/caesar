@@ -9,6 +9,7 @@
 import { beforeEach, describe, expect, test } from 'vite-plus/test';
 import {
     clearPriv,
+    deriveAuthKey,
     derivePriv,
     derivePub,
     dmKey,
@@ -28,6 +29,17 @@ let db: MockDB;
 beforeEach(() => {
     db = new Map();
     clearPriv();
+});
+
+// The server re-derives authKeys for passwords it generates
+// (apps/server/src/utils/__tests__/password.test.ts pins the same vector),
+// so both implementations must agree byte for byte.
+describe('authKey', () => {
+    test('matches the vector shared with the server', () => {
+        expect(deriveAuthKey(derivePriv('pässwörd123', 'testowner'))).toBe(
+            'A51r7dBGr0LdQjndqpFSB8zTT0jUxDny6B5K0npjqV4='
+        );
+    });
 });
 
 describe('e2ee determinism', () => {

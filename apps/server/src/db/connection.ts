@@ -73,6 +73,14 @@ const serializeTransactions = (client: Client) => {
   };
 };
 
+const DB_PRAGMAS = [
+  'PRAGMA journal_mode = WAL;',
+  'PRAGMA synchronous = NORMAL;',
+  'PRAGMA busy_timeout = 5000;',
+  'PRAGMA cache_size = -32000;',
+  'PRAGMA foreign_keys = ON;'
+];
+
 const createDbClient = async (url: string, pragmas: string[]) => {
   const client = createClient({ url, concurrency: POOL_SIZE });
   const init = pragmas.join('\n');
@@ -85,4 +93,4 @@ const createDbClient = async (url: string, pragmas: string[]) => {
   return client;
 };
 
-export { createDbClient };
+export { createDbClient, DB_PRAGMAS };

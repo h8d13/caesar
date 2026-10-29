@@ -2,6 +2,11 @@ import { SettingsFooterActions } from '@/components/server-screens/settings-foot
 import { updatePassword as updatePasswordAction } from '@/features/server/users/actions';
 import { useForm } from '@/hooks/use-form';
 import {
+    PASSWORD_LENGTH_ERROR,
+    PASSWORD_MAX_LENGTH,
+    PASSWORD_MIN_LENGTH
+} from '@caesar/shared';
+import {
     Card,
     CardContent,
     CardDescription,
@@ -22,11 +27,11 @@ const Password = memo(() => {
 
     const updatePassword = useCallback(async () => {
         // the server only sees authKeys, so it can't check these
-        if (values.newPassword.length < 4 || values.newPassword.length > 128) {
-            setError(
-                'newPassword',
-                'Password must be between 4 and 128 characters long'
-            );
+        if (
+            values.newPassword.length < PASSWORD_MIN_LENGTH ||
+            values.newPassword.length > PASSWORD_MAX_LENGTH
+        ) {
+            setError('newPassword', PASSWORD_LENGTH_ERROR);
             return;
         }
 

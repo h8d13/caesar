@@ -1,6 +1,6 @@
 import {
   ActivityLogType,
-  AUTH_KEY_REGEX,
+  BASE64_32_BYTES_REGEX,
   DisconnectCode
 } from '@caesar/shared';
 import { users } from '@caesar/shared/db/schema';
@@ -26,10 +26,10 @@ const updatePasswordRoute = rateLimitedProcedure(protectedProcedure, {
 })
   .input(
     z.object({
-      // authKeys derived client-side, as at /login; length and
-      // confirmation checks on the passwords happen there too
-      currentAuthKey: z.string().regex(AUTH_KEY_REGEX),
-      newAuthKey: z.string().regex(AUTH_KEY_REGEX)
+      // authKeys derived client-side, as at /login; password length and
+      // confirmation are checked in the client form
+      currentAuthKey: z.string().regex(BASE64_32_BYTES_REGEX),
+      newAuthKey: z.string().regex(BASE64_32_BYTES_REGEX)
     })
   )
   .mutation(async ({ ctx, input }) => {

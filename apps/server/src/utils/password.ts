@@ -20,7 +20,7 @@ const TEST_HASH_OPTIONS = {
 } as const;
 
 // Hashes the client-derived authKey (see PASSWORD_KDF), never a password.
-// Call sites read (plain, hash); argon2.verify takes (hash, plain). Tests
+// Call sites read (authKey, hash); argon2.verify takes (hash, plain). Tests
 // get cheap hashing params.
 const hashPassword = (authKey: string): Promise<string> =>
   IS_TEST ? argon2.hash(authKey, TEST_HASH_OPTIONS) : argon2.hash(authKey);

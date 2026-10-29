@@ -1,3 +1,4 @@
+import { BASE64_32_BYTES_REGEX } from '@caesar/shared';
 import { e2eeSessionKeys } from '@caesar/shared/db/schema';
 import { createHash } from 'crypto';
 import { and, eq, ne } from 'drizzle-orm';
@@ -20,9 +21,9 @@ const e2eeSessionKeyRateLimiter = createRateLimiter({
   windowMs: config.rateLimiters.e2eeSessionKey.windowMs
 });
 
-// 32 random bytes, base64 with padding
+// 32 random bytes
 const zBody = z.object({
-  wrapKey: z.string().regex(/^[A-Za-z0-9+/]{43}=$/)
+  wrapKey: z.string().regex(BASE64_32_BYTES_REGEX)
 });
 
 const hashToken = (token: string) =>
