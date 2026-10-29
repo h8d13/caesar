@@ -34,7 +34,7 @@ describe('messages router', () => {
         messageId,
         content: 'Edited message'
       })
-    ).rejects.toThrow('You do not have permission to edit this message');
+    ).rejects.toThrow('You can only edit your own messages');
   });
 
   test('should throw when user lacks permissions (delete - not own message)', async () => {
@@ -251,7 +251,7 @@ describe('messages router', () => {
     expect(row?.updatedAt).not.toBeNull();
   });
 
-  test('should allow admin to edit any message', async () => {
+  test('should not let an admin edit another user message', async () => {
     const { caller: caller2 } = await initTest(2);
     const { caller: caller1 } = await initTest(1);
 
@@ -269,10 +269,12 @@ describe('messages router', () => {
 
     const messageId = messages.messages[0]!.id;
 
-    await caller1.messages.edit({
-      messageId,
-      content: 'Edited by admin'
-    });
+    await expect(
+      caller1.messages.edit({
+        messageId,
+        content: 'Edited by admin'
+      })
+    ).rejects.toThrow('You can only edit your own messages');
 
     const messagesAfter = await caller1.messages.get({
       channelId: 1,
@@ -280,11 +282,9 @@ describe('messages router', () => {
       limit: 50
     });
 
-    const editedMessage = messagesAfter.messages.find(
-      (m) => m.id === messageId
-    );
+    const message = messagesAfter.messages.find((m) => m.id === messageId);
 
-    expect(editedMessage!.content).toBe('Edited by admin');
+    expect(message!.content).not.toContain('Edited by admin');
   });
 
   test('should delete own message', async () => {

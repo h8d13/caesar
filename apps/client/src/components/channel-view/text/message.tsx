@@ -71,7 +71,8 @@ const Message = memo(
             return message;
         }, [message, decrypted]);
 
-        const canManage = useMemo(
+        // edit stays with the author (the server enforces it too)
+        const canDelete = useMemo(
             () => can(Permission.MANAGE_MESSAGES) || isFromOwnUser,
             [can, isFromOwnUser]
         );
@@ -149,7 +150,8 @@ const Message = memo(
                             <MessageActions
                                 onEdit={() => setIsEditing(true)}
                                 onReply={onReply ? handleReply : undefined}
-                                canManage={canManage}
+                                canEdit={isFromOwnUser}
+                                canDelete={canDelete}
                                 messageId={message.id}
                                 channelId={message.channelId}
                                 editable={message.editable ?? false}

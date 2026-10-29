@@ -21,7 +21,8 @@ type TMessageActionsProps = {
     channelId: number;
     onEdit: () => void;
     onReply?: () => void;
-    canManage: boolean;
+    canEdit: boolean;
+    canDelete: boolean;
     editable: boolean;
     isPinned?: boolean;
     disablePin?: boolean;
@@ -33,7 +34,8 @@ const MessageActions = memo(
         onReply,
         messageId,
         channelId,
-        canManage,
+        canEdit,
+        canDelete,
         editable,
         isPinned,
         disablePin
@@ -115,25 +117,24 @@ const MessageActions = memo(
                         title="Reply"
                     />
                 )}
-                {canManage && (
-                    <>
-                        <IconButton
-                            size="sm"
-                            variant="ghost"
-                            icon={Pencil}
-                            onClick={onEdit}
-                            disabled={!editable}
-                            title="Edit Message"
-                        />
-
-                        <IconButton
-                            size="sm"
-                            variant="ghost"
-                            icon={Trash}
-                            onClick={onDeleteClick}
-                            title="Delete Message"
-                        />
-                    </>
+                {canEdit && (
+                    <IconButton
+                        size="sm"
+                        variant="ghost"
+                        icon={Pencil}
+                        onClick={onEdit}
+                        disabled={!editable}
+                        title="Edit Message"
+                    />
+                )}
+                {canDelete && (
+                    <IconButton
+                        size="sm"
+                        variant="ghost"
+                        icon={Trash}
+                        onClick={onDeleteClick}
+                        title="Delete Message"
+                    />
                 )}
                 {!disablePin && (
                     <Protect permission={Permission.PIN_MESSAGES}>

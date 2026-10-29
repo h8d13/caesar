@@ -1,4 +1,4 @@
-import { Permission, isEmptyMessage, MESSAGE_MAX_LENGTH } from '@caesar/shared';
+import { isEmptyMessage, MESSAGE_MAX_LENGTH } from '@caesar/shared';
 import { messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
@@ -50,14 +50,13 @@ const editMessageRoute = rateLimitedProcedure(protectedProcedure, {
       message: 'This message is not editable'
     });
 
-    invariant(
-      message.userId === ctx.user.id ||
-        (await ctx.hasPermission(Permission.MANAGE_MESSAGES)),
-      {
-        code: 'FORBIDDEN',
-        message: 'You do not have permission to edit this message'
-      }
-    );
+    // Author only, even for MANAGE_MESSAGES: an edit keeps the author's
+    // name on the message, so a moderator rewriting it would put words in
+    // their mouth. Moderation is delete.
+    invariant(message.userId === ctx.user.id, {
+      code: 'FORBIDDEN',
+      message: 'You can only edit your own messages'
+    });
 
     invariant(!isEmptyMessage(input.content), {
       code: 'BAD_REQUEST',
