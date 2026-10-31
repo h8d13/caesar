@@ -2,10 +2,16 @@ import type { CreateWSSContextFnOptions } from '@trpc/server/adapters/ws';
 import type { IncomingMessage } from 'http';
 import { createContext } from '../utils/wss';
 
-const createMockContextOptions = async (opts?: {
+type TMockContextOptions = {
   customToken?: string;
-}): Promise<CreateWSSContextFnOptions> => {
-  const { customToken } = opts ?? {};
+  // per-IP rate limits: simulated concurrent users need distinct addresses
+  remoteAddress?: string;
+};
+
+const createMockContextOptions = async (
+  opts?: TMockContextOptions
+): Promise<CreateWSSContextFnOptions> => {
+  const { customToken, remoteAddress = '127.0.0.1' } = opts ?? {};
 
   const token = customToken;
 
@@ -24,14 +30,14 @@ const createMockContextOptions = async (opts?: {
     req: {
       headers: {},
       socket: {
-        remoteAddress: '127.0.0.1'
+        remoteAddress
       }
     } as IncomingMessage,
     res: undefined as any
   };
 };
 
-const createMockContext = async (opts?: { customToken?: string }) => {
+const createMockContext = async (opts?: TMockContextOptions) => {
   const contextOpts = await createMockContextOptions(opts);
   const ctx = await createContext(contextOpts);
 

@@ -17,3 +17,6 @@ data-test/
 # local deploy customization, see wiki Home#custom-caddyfile
 docker-compose.override.yaml
 caddy/Caddyfile
+
+# machine-specific bench baselines (WRITE_BENCH=1 pnpm bench)
+apps/server/benchmarks/
