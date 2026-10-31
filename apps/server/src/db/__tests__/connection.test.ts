@@ -11,11 +11,14 @@ let client: Client;
 let yielded: Error[] = [];
 
 // Only this database's handles: the fork is shared with other test files
-// (isolate: false), whose sockets and files open and close meanwhile.
+// (isolate: false), whose sockets and files open and close meanwhile. Exact
+// paths, since the previous test's closed client can hold its deleted files
+// ("<path> (deleted)") until GC finalizes the native connections.
+const dbFiles = new Set(['', '-wal', '-shm'].map((suffix) => dbPath + suffix));
 const openFds = () =>
   fs.readdirSync('/proc/self/fd').filter((fd) => {
     try {
-      return fs.readlinkSync(`/proc/self/fd/${fd}`).startsWith(dbPath);
+      return dbFiles.has(fs.readlinkSync(`/proc/self/fd/${fd}`));
     } catch {
       return false;
     }
