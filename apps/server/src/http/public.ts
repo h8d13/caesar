@@ -1,21 +1,33 @@
-import { channels, files } from '@caesar/shared/db/schema';
-import { eq } from 'drizzle-orm';
+import { files } from '@caesar/shared/db/schema';
+import { eq, sql } from 'drizzle-orm';
 import fs from 'fs';
 import type http from 'http';
 import path from 'path';
 import { config } from '../config';
 import { db } from '../db';
-import { isFileOrphaned } from '../db/queries/files';
-import { getMessageByFileId } from '../db/queries/messages';
+import { prepared } from '../db/prepared';
+import { getFileChannel, isFileOrphaned } from '../db/queries/files';
 import { getSettings } from '../db/queries/server';
-import { getUserByToken } from '../db/queries/users';
+import { getSessionUserByToken } from '../db/queries/users';
 import { verifyFileToken } from '../helpers/files-crypto';
 import { PUBLIC_PATH } from '../helpers/paths';
 import { getSessionToken } from '../helpers/session-token';
-import { logger } from '../logger';
 import { createRateLimiter } from '../utils/rate-limiters/rate-limiter';
-import { buildEtag, safeDecodeURIComponent, sendNotModified } from './helpers';
+import {
+  buildEtag,
+  safeDecodeURIComponent,
+  sendNotModified,
+  sendJson,
+  pipeFile
+} from './helpers';
 import { enforceHttpRateLimit } from './rate-limit';
+
+const fileByNameQuery = prepared(() =>
+  db
+    .select()
+    .from(files)
+    .where(eq(files.name, sql.placeholder('name')))
+);
 
 const publicFileRateLimiter = createRateLimiter({
   maxRequests: config.rateLimiters.publicFile.maxRequests,
@@ -40,31 +52,35 @@ const inlineMimeAllowlist = new Set([
   'audio/mp4'
 ]);
 
-const pipeFileStream = (
-  filePath: string,
-  res: http.ServerResponse,
-  streamOptions?: { start: number; end: number }
-) => {
-  const fileStream = fs.createReadStream(filePath, streamOptions);
+type ByteRange = { start: number; end: number };
 
-  fileStream.pipe(res);
+// RFC 9110 14.1.2: a suffix range ("-N") is the last N bytes and an end
+// past EOF is clamped. Returns null to ignore Range (multi-range, which
+// would need multipart/byteranges) and 'unsatisfiable' for a 416.
+const parseRange = (
+  header: string,
+  size: number
+): ByteRange | 'unsatisfiable' | null => {
+  if (header.includes(',')) return null;
 
-  fileStream.on('error', (err) => {
-    logger.error('Error serving file:', err);
+  const match = /^bytes=(\d*)-(\d*)$/.exec(header);
 
-    if (!res.headersSent) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Internal server error' }));
-    }
-  });
+  if (!match || (!match[1] && !match[2])) return 'unsatisfiable';
 
-  res.on('close', () => {
-    fileStream.destroy();
-  });
+  if (!match[1]) {
+    const suffix = Number(match[2]);
 
-  fileStream.on('end', () => {
-    res.end();
-  });
+    if (suffix === 0 || size === 0) return 'unsatisfiable';
+
+    return { start: Math.max(0, size - suffix), end: size - 1 };
+  }
+
+  const start = Number(match[1]);
+  const end = match[2] ? Math.min(Number(match[2]), size - 1) : size - 1;
+
+  if (start >= size || start > end) return 'unsatisfiable';
+
+  return { start, end };
 };
 
 const publicRouteHandler = async (
@@ -72,8 +88,7 @@ const publicRouteHandler = async (
   res: http.ServerResponse
 ) => {
   if (!req.url) {
-    res.writeHead(400, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Bad request' }));
+    sendJson(res, 400, { error: 'Bad request' });
     return;
   }
 
@@ -86,81 +101,68 @@ const publicRouteHandler = async (
   const fileName = safeDecodeURIComponent(path.basename(url.pathname));
 
   if (fileName === null) {
-    res.writeHead(400, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Bad request' }));
+    sendJson(res, 400, { error: 'Bad request' });
     return;
   }
 
-  const dbFile = await db
-    .select()
-    .from(files)
-    .where(eq(files.name, fileName))
-    .get();
+  const dbFile = await fileByNameQuery().get({ name: fileName });
 
   if (!dbFile) {
-    res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'File not found' }));
-    return;
-  }
-
-  const isOrphaned = await isFileOrphaned(dbFile.id);
-
-  if (isOrphaned) {
-    res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'File not found' }));
+    sendJson(res, 404, { error: 'File not found' });
     return;
   }
 
   // server logo is the only truly public file (shown on login screen)
-  const serverSettings = await getSettings();
-  const isServerLogo = serverSettings.logoId === dbFile.id;
+  const isServerLogo = (await getSettings()).logoId === dbFile.id;
 
+  // Avatars, emojis and attachments arrive by the hundred after a join, so
+  // the gate reads only what it decides on. Status order stays orphan 404,
+  // then 401, then 403.
   if (!isServerLogo) {
-    // all non-logo files require authentication
-    const user = await getUserByToken(getSessionToken(req));
+    const [channel, user] = await Promise.all([
+      getFileChannel(dbFile.id),
+      getSessionUserByToken(getSessionToken(req))
+    ]);
+
+    // a message link already references the file, so the full orphan
+    // check only runs for everything else
+    if (!channel && (await isFileOrphaned(dbFile.id))) {
+      sendJson(res, 404, { error: 'File not found' });
+      return;
+    }
 
     if (!user) {
-      res.writeHead(401, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      sendJson(res, 401, { error: 'Unauthorized' });
       return;
     }
 
     // private channel files additionally require a file-specific access token
-    const associatedMessage = await getMessageByFileId(dbFile.id);
+    if (channel?.private) {
+      const accessToken = url.searchParams.get('accessToken');
+      const isValidToken = verifyFileToken(
+        dbFile.id,
+        channel.fileAccessToken,
+        accessToken || ''
+      );
 
-    if (associatedMessage) {
-      const channel = await db
-        .select()
-        .from(channels)
-        .where(eq(channels.id, associatedMessage.channelId))
-        .get();
-
-      if (channel && channel.private) {
-        const accessToken = url.searchParams.get('accessToken');
-        const isValidToken = verifyFileToken(
-          dbFile.id,
-          channel.fileAccessToken,
-          accessToken || ''
-        );
-
-        if (!isValidToken) {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Forbidden' }));
-          return;
-        }
+      if (!isValidToken) {
+        sendJson(res, 403, { error: 'Forbidden' });
+        return;
       }
     }
   }
 
   const filePath = path.join(PUBLIC_PATH, dbFile.name);
 
-  if (!fs.existsSync(filePath)) {
-    res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'File not found on disk' }));
+  const stat = await fs.promises.stat(filePath).catch((err) => {
+    if (err.code === 'ENOENT') return null;
+    throw err;
+  });
+
+  if (!stat) {
+    sendJson(res, 404, { error: 'File not found on disk' });
     return;
   }
-
-  const stat = fs.statSync(filePath);
 
   // Uploaded files are content-immutable: the name is server-assigned and a
   // re-upload produces a new name. private (not public) because access is
@@ -169,11 +171,21 @@ const publicRouteHandler = async (
   const lastModified = stat.mtime.toUTCString();
   const cacheControl = 'private, max-age=31536000, immutable';
 
-  const rangeHeader = req.headers.range;
+  const range = req.headers.range
+    ? parseRange(req.headers.range, stat.size)
+    : null;
+
+  if (range === 'unsatisfiable') {
+    res.writeHead(416, {
+      'Content-Range': `bytes */${stat.size}`
+    });
+    res.end();
+    return;
+  }
 
   // 304 only applies to full responses; range requests get fresh 206 bodies.
   if (
-    !rangeHeader &&
+    !range &&
     sendNotModified(req, res, {
       etag,
       lastModified,
@@ -204,28 +216,8 @@ const publicRouteHandler = async (
 
   const dispositionHeader = `${contentDisposition}; filename="${safeFileName}"; filename*=UTF-8''${encodedFileName}`;
 
-  if (rangeHeader) {
-    const match = rangeHeader.match(/^bytes=(\d+)-(\d*)$/);
-
-    if (!match) {
-      res.writeHead(416, {
-        'Content-Range': `bytes */${stat.size}`
-      });
-      res.end();
-      return;
-    }
-
-    const start = parseInt(match[1]!, 10);
-    const end = match[2] ? parseInt(match[2], 10) : stat.size - 1;
-
-    if (start >= stat.size || end >= stat.size || start > end) {
-      res.writeHead(416, {
-        'Content-Range': `bytes */${stat.size}`
-      });
-      res.end();
-      return;
-    }
-
+  if (range) {
+    const { start, end } = range;
     const contentLength = end - start + 1;
 
     res.writeHead(206, {
@@ -239,7 +231,7 @@ const publicRouteHandler = async (
       'Last-Modified': lastModified
     });
 
-    pipeFileStream(filePath, res, { start, end });
+    pipeFile(res, filePath, { range });
   } else {
     res.writeHead(200, {
       'Content-Type': dbFile.mimeType,
@@ -251,7 +243,7 @@ const publicRouteHandler = async (
       'Last-Modified': lastModified
     });
 
-    pipeFileStream(filePath, res);
+    pipeFile(res, filePath);
   }
 
   return res;

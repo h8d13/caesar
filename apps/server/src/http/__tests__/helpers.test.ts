@@ -132,6 +132,22 @@ describe('http helpers', () => {
       );
     });
 
+    test('decodes a multi-byte character split across chunks', async () => {
+      const bytes = Buffer.from(JSON.stringify({ name: 'é' }));
+      const split = bytes.indexOf(0xc3) + 1; // between the two bytes of é
+      const req = createMockRequest('/login', 'localhost:9999');
+
+      queueMicrotask(() => {
+        req.emit('data', bytes.subarray(0, split));
+        req.emit('data', bytes.subarray(split));
+        req.emit('end');
+      });
+
+      const body = await getJsonBody<{ name: string }>(req);
+
+      expect(body.name).toBe('é');
+    });
+
     test('accepts a body exactly at the max size', async () => {
       const payload = JSON.stringify({ a: 'b' });
       const req = createMockRequest('/login', 'localhost:9999');

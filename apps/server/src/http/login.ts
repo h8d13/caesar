@@ -24,7 +24,7 @@ import { consumeInvite, refundInvite } from '../db/mutations/invites';
 import { publishUser } from '../db/publishers';
 import { getDefaultRole } from '../db/queries/roles';
 import { getUserByIdentity } from '../db/queries/users';
-import { getWsInfo } from '../helpers/get-ws-info';
+import { getRequestIp } from '../helpers/get-ws-info';
 import { getIpBlockKey } from '../helpers/network';
 import { isAtUserCap } from '../helpers/user-cap';
 import { logger } from '../logger';
@@ -38,7 +38,7 @@ import {
   generateLoginOptions,
   hasWebauthnCredentials
 } from '../utils/webauthn';
-import { getJsonBody } from './helpers';
+import { getJsonBody, sendJson } from './helpers';
 import { enforceHttpRateLimit, sendTooManyRequests } from './rate-limit';
 import { issueSession } from './session';
 import { HttpValidationError } from './utils';
@@ -195,13 +195,11 @@ const loginRouteHandler = async (
     return;
   }
 
-  const connectionInfo = getWsInfo(undefined, req);
+  const ip = getRequestIp(req);
 
   // Key for the failed-login lockout. Lifted to handler scope so the
   // lockout can be updated after the credential check below.
-  const lockoutKey = connectionInfo?.ip
-    ? getIpBlockKey(connectionInfo.ip)
-    : undefined;
+  const lockoutKey = ip ? getIpBlockKey(ip) : undefined;
 
   const recordLoginFailure = () => {
     if (lockoutKey) loginLockout.recordFailure(lockoutKey);
@@ -250,7 +248,7 @@ const loginRouteHandler = async (
       // bypasses, so cap=1 still lets the first admin in.
       if (await isAtUserCap()) {
         logger.info(
-          `[Auth] Signup blocked for "${data.identity}": user cap reached (IP: ${connectionInfo?.ip || 'unknown'})`
+          `[Auth] Signup blocked for "${data.identity}": user cap reached (IP: ${ip || 'unknown'})`
         );
         throw new HttpValidationError(
           'invite',
@@ -266,7 +264,7 @@ const loginRouteHandler = async (
         recordLoginFailure();
 
         logger.info(
-          `[Auth] Signup failed for "${data.identity}": invite missing, expired or used up (IP: ${connectionInfo?.ip || 'unknown'})`
+          `[Auth] Signup failed for "${data.identity}": invite missing, expired or used up (IP: ${ip || 'unknown'})`
         );
         throw new HttpValidationError('identity', GENERIC_AUTH_ERROR);
       }
@@ -277,7 +275,7 @@ const loginRouteHandler = async (
         data.identity,
         data.authKey,
         invite,
-        connectionInfo?.ip
+        ip
       );
     } catch (error) {
       // e.g. a parallel signup won the identity: the use was never redeemed
@@ -318,7 +316,7 @@ const loginRouteHandler = async (
     recordLoginFailure();
 
     logger.info(
-      `[Auth] Failed login for "${existingUser.identity}" (IP: ${connectionInfo?.ip || 'unknown'})`
+      `[Auth] Failed login for "${existingUser.identity}" (IP: ${ip || 'unknown'})`
     );
 
     throw new HttpValidationError('identity', GENERIC_AUTH_ERROR);
@@ -335,7 +333,7 @@ const loginRouteHandler = async (
   // gets a useful message.
   if (existingUser.banned) {
     logger.info(
-      `[Auth] Banned user login attempt: "${existingUser.identity}" reason="${existingUser.banReason || 'none'}" (IP: ${connectionInfo?.ip || 'unknown'})`
+      `[Auth] Banned user login attempt: "${existingUser.identity}" reason="${existingUser.banReason || 'none'}" (IP: ${ip || 'unknown'})`
     );
 
     throw new HttpValidationError(
@@ -360,8 +358,7 @@ const loginRouteHandler = async (
       { expiresIn: '300s' /* 5 minutes */ }
     );
 
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ needs2fa: true, preAuthToken, options }));
+    sendJson(res, 200, { needs2fa: true, preAuthToken, options });
 
     return res;
   }

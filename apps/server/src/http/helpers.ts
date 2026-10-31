@@ -1,12 +1,13 @@
-import type fs from 'fs';
+import fs from 'fs';
 import type http from 'http';
 import path from 'path';
+import { pipeline } from 'stream';
+import { logger } from '../logger';
 import { PayloadTooLargeError } from './utils';
 
-type HttpRouteHandler<TContext = undefined> = (
+type HttpRouteHandler = (
   req: http.IncomingMessage,
-  res: http.ServerResponse,
-  ctx: TContext
+  res: http.ServerResponse
 ) => unknown;
 
 // Fallback cap when a caller doesn't pass one. Callers should pass
@@ -19,26 +20,31 @@ const getJsonBody = async <T = unknown>(
   maxBytes: number = DEFAULT_MAX_JSON_BODY_BYTES
 ): Promise<T> => {
   return new Promise((resolve, reject) => {
-    let body = '';
+    // Buffers, decoded once at the end: a per-chunk toString splits
+    // multi-byte UTF-8 characters that straddle a chunk boundary
+    const chunks: Buffer[] = [];
     let size = 0;
     let settled = false;
 
-    req.on('data', (chunk) => {
+    req.on('data', (chunk: Buffer | string) => {
       if (settled) return;
 
+      const buffer = typeof chunk === 'string' ? Buffer.from(chunk) : chunk;
+
       // Count actual received bytes, not the spoofable Content-Length.
-      size +=
-        typeof chunk === 'string' ? Buffer.byteLength(chunk) : chunk.length;
+      size += buffer.length;
 
       if (size > maxBytes) {
         settled = true;
-        // Stop reading so an attacker can't keep streaming into memory.
-        if (typeof req.destroy === 'function') req.destroy();
+        // Stop buffering but keep the socket: destroying req would reset
+        // the connection before the 413 is written. Node discards the
+        // unread rest once the response ends.
+        chunks.length = 0;
         reject(new PayloadTooLargeError());
         return;
       }
 
-      body += chunk;
+      chunks.push(buffer);
     });
 
     req.on('end', () => {
@@ -46,8 +52,8 @@ const getJsonBody = async <T = unknown>(
       settled = true;
 
       try {
-        const json = body ? JSON.parse(body) : {};
-        resolve(json);
+        const body = Buffer.concat(chunks).toString('utf8');
+        resolve(body ? JSON.parse(body) : {});
       } catch (err) {
         reject(err);
       }
@@ -220,14 +226,52 @@ const sendNotModified = (
   return true;
 };
 
+const sendJson = (
+  res: http.ServerResponse,
+  status: number,
+  body: unknown,
+  headers?: http.OutgoingHttpHeaders
+) => {
+  res.writeHead(status, { 'Content-Type': 'application/json', ...headers });
+  res.end(JSON.stringify(body));
+};
+
+// Streams a file into a response whose headers are already written.
+// pipeline destroys every stream on failure, where pipe() leaves the
+// destination open on a source error (Node stream docs), so a read error
+// mid-body ends the response instead of leaving the client waiting.
+const pipeFile = (
+  res: http.ServerResponse,
+  filePath: string,
+  {
+    range,
+    transform
+  }: {
+    range?: { start: number; end: number };
+    transform?: NodeJS.ReadWriteStream;
+  } = {}
+) => {
+  const source = fs.createReadStream(filePath, range);
+  const done = (err: NodeJS.ErrnoException | null) => {
+    if (err && err.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
+      logger.error('Error serving file:', err);
+    }
+  };
+
+  if (transform) pipeline(source, transform, res, done);
+  else pipeline(source, res, done);
+};
+
 export {
   buildCsp,
   buildEtag,
   getJsonBody,
   getRequestPathname,
   hasPrefixPathSegment,
+  pipeFile,
   safeDecodeURIComponent,
   sanitizeFileName,
+  sendJson,
   sendNotModified
 };
 export type { HttpRouteHandler };

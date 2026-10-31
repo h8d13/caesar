@@ -1,13 +1,23 @@
 import { UploadHeaders, type TTempFile } from '@caesar/shared';
-import { settings, users } from '@caesar/shared/db/schema';
+import { users } from '@caesar/shared/db/schema';
 import { loginToken, uploadFile } from '@server/__tests__/helpers';
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
-import { TMP_PATH } from '@server/helpers/paths';
+import { updateSettings } from '@server/db/mutations/server';
+import { TMP_PATH, UPLOADS_PATH } from '@server/helpers/paths';
+import { createHash } from 'crypto';
 import { eq } from 'drizzle-orm';
 import { existsSync } from 'fs';
 import fs from 'fs/promises';
+import http from 'http';
 import path from 'path';
-import { afterAll, beforeEach, describe, expect, test } from 'vite-plus/test';
+import {
+  afterAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi
+} from 'vite-plus/test';
 import { sanitizeFileName } from '../helpers';
 
 const getMockFile = (content: string): File => {
@@ -48,7 +58,11 @@ describe('/upload', () => {
     expect(data.id).toBeDefined();
     expect(data.originalName).toBe(file.name);
     expect(data.size).toBe(file.size);
-    expect(data.md5).toBeDefined();
+    expect(data.md5).toBe(
+      createHash('md5')
+        .update('Hello, this is a test file for upload.')
+        .digest('hex')
+    );
     expect(data.extension).toBe('.txt');
     expect(data.userId).toBe(1);
     expect(data.path).toBe(expectedPath);
@@ -99,7 +113,7 @@ describe('/upload', () => {
   });
 
   test('should throw when uploads are disabled', async () => {
-    await tdb.update(settings).set({ storageUploadEnabled: false });
+    await updateSettings({ storageUploadEnabled: false });
 
     const file = getMockFile('gonna fail');
     const response = await uploadFile(file, token);
@@ -115,9 +129,7 @@ describe('/upload', () => {
   });
 
   test('should throw when file exceeds max size', async () => {
-    await tdb
-      .update(settings)
-      .set({ storageUploadMaxFileSize: 5 * 1024 * 1024 }); // 5 MB
+    await updateSettings({ storageUploadMaxFileSize: 5 * 1024 * 1024 }); // 5 MB
 
     const largeContent = 'A'.repeat(5 * 1024 * 1024 + 1); // 5 MB + 1 byte
     const file = getMockFile(largeContent);
@@ -131,6 +143,65 @@ describe('/upload', () => {
       'error',
       `File ${file.name} exceeds the maximum allowed size`
     );
+  });
+
+  test('should enforce the size limit on the stream, not the header', async () => {
+    await updateSettings({ storageUploadMaxFileSize: 1024 });
+
+    const before = await fs.readdir(UPLOADS_PATH);
+    const body = 'A'.repeat(64 * 1024);
+    const response = await fetch(`${testsBaseUrl}/upload`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        // lies about the size to get past the early check
+        [UploadHeaders.CONTENT_LENGTH]: '10',
+        [UploadHeaders.ORIGINAL_NAME]: 'liar.txt',
+        [UploadHeaders.TOKEN]: token
+      },
+      body
+    });
+
+    expect(response.status).toBe(413);
+    expect(await response.json()).toHaveProperty(
+      'error',
+      'File liar.txt exceeds the maximum allowed size'
+    );
+    expect(await fs.readdir(UPLOADS_PATH)).toEqual(before);
+  });
+
+  test('should drop the partial file when the client aborts', async () => {
+    const before = await fs.readdir(UPLOADS_PATH);
+    const { port } = new URL(testsBaseUrl);
+
+    // declare 1 MB, send 64 KB, then cut the connection mid-body
+    await new Promise<void>((resolve) => {
+      const req = http.request({
+        port,
+        method: 'POST',
+        path: '/upload',
+        headers: {
+          'Content-Type': 'application/octet-stream',
+          'Content-Length': String(1024 * 1024),
+          [UploadHeaders.CONTENT_LENGTH]: String(1024 * 1024),
+          [UploadHeaders.ORIGINAL_NAME]: 'aborted.bin',
+          [UploadHeaders.TOKEN]: token
+        }
+      });
+
+      req.on('error', () => resolve());
+      req.write(Buffer.alloc(64 * 1024), () => {
+        setTimeout(() => {
+          req.destroy();
+          resolve();
+        }, 100);
+      });
+    });
+
+    // the server learns of the abort asynchronously
+    await vi.waitFor(async () => {
+      expect(await fs.readdir(UPLOADS_PATH)).toEqual(before);
+    });
   });
 
   test('should handle files with special characters in name', async () => {

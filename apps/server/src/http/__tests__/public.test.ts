@@ -3,9 +3,16 @@ import {
   channels,
   files,
   messageFiles,
-  messages
+  messages,
+  settings,
+  users
 } from '@caesar/shared/db/schema';
-import { initTest, loginToken, uploadFile } from '@server/__tests__/helpers';
+import {
+  getMockedToken,
+  initTest,
+  loginToken,
+  uploadFile
+} from '@server/__tests__/helpers';
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
 import { cleanupFiles } from '@server/crons/cleanup-files';
 import { generateFileToken } from '@server/helpers/files-crypto';
@@ -195,6 +202,127 @@ describe('/public', () => {
     const data = (await response.json()) as { error: string };
 
     expect(data).toHaveProperty('error', 'File not found');
+  });
+
+  test('orphaned file is a 404 even without auth', async () => {
+    const dbFile = await tdb
+      .select()
+      .from(files)
+      .where(eq(files.md5, filesToCreate[2]!.tempFile!.md5))
+      .get();
+
+    const response = await fetch(
+      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`
+    );
+
+    expect(response.status).toBe(404);
+  });
+
+  test('serves the server logo without auth, under its stored name', async () => {
+    const { caller } = await initTest();
+    const tempFile = await upload(
+      new File(['logo'], 'my-logo.png', { type: 'image/png' }),
+      token
+    );
+
+    await caller.others.changeLogo({ fileId: tempFile.id });
+
+    const row = await tdb
+      .select({ name: files.name })
+      .from(settings)
+      .innerJoin(files, eq(files.id, settings.logoId))
+      .get();
+
+    const response = await fetch(
+      `${testsBaseUrl}/public/${encodeURIComponent(row!.name)}`
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Disposition')).toContain(
+      `filename="${row!.name}"`
+    );
+  });
+
+  test('a non-message file (avatar) requires auth', async () => {
+    const tempFile = await upload(
+      new File(['avatar'], 'avatar.png', { type: 'image/png' }),
+      token
+    );
+    const saved = await fileManager.saveFile(tempFile.id, 1);
+
+    await tdb.update(users).set({ avatarId: saved.id }).where(eq(users.id, 1));
+
+    const url = `${testsBaseUrl}/public/${encodeURIComponent(saved.name)}`;
+    const anonymous = await fetch(url);
+    const authed = await fetch(url, { headers: { 'x-token': token } });
+
+    expect(anonymous.status).toBe(401);
+    expect(authed.status).toBe(200);
+  });
+
+  test.each([
+    {
+      label: 'banned user',
+      revoke: () =>
+        tdb.update(users).set({ banned: true }).where(eq(users.id, 2))
+    },
+    {
+      label: 'superseded session',
+      revoke: () =>
+        tdb.update(users).set({ sessionEpoch: 99 }).where(eq(users.id, 2))
+    }
+  ])('returns 401 for a $label', async ({ revoke }) => {
+    const dbFile = await getFileByMessageId(filesToCreate[0]!.messageId!);
+    const userToken = await getMockedToken(2);
+    const url = `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`;
+
+    const before = await fetch(url, { headers: { 'x-token': userToken } });
+
+    expect(before.status).toBe(200);
+
+    await revoke();
+
+    const after = await fetch(url, { headers: { 'x-token': userToken } });
+
+    expect(after.status).toBe(401);
+    expect(await after.json()).toHaveProperty('error', 'Unauthorized');
+  });
+
+  test('DM file needs the file token: 403 for a non-participant', async () => {
+    const { caller } = await initTest(1);
+    await initTest(2);
+
+    const { channelId } = await caller.dms.open({ userId: 2 });
+    const tempFile = await upload(
+      new File(['dm secret'], 'dm.txt', { type: 'text/plain' }),
+      token
+    );
+    const messageId = await caller.messages.send({
+      content: 'dm file',
+      channelId,
+      files: [tempFile.id]
+    });
+    const dbFile = await getFileByMessageId(messageId);
+    const channel = await tdb
+      .select()
+      .from(channels)
+      .where(eq(channels.id, channelId))
+      .get();
+    const url = `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`;
+
+    const outsider = await fetch(url, {
+      headers: { 'x-token': await getMockedToken(3) }
+    });
+
+    expect(outsider.status).toBe(403);
+
+    const fileToken = generateFileToken(dbFile!.id, channel!.fileAccessToken);
+    const participant = await fetch(`${url}?accessToken=${fileToken}`, {
+      headers: { 'x-token': await getMockedToken(2) }
+    });
+
+    expect(participant.status).toBe(200);
+    expect(await participant.text()).toBe('dm secret');
   });
 
   test('should return 404 when file exists in database but not on disk', async () => {
@@ -812,6 +940,56 @@ describe('/public', () => {
     const body = await response.text();
 
     expect(body).toBe(file!.content.charAt(lastByteIndex));
+  });
+
+  test('should return 206 for a suffix Range (last N bytes)', async () => {
+    const file = filesToCreate[0];
+    const dbFile = await getFileByMessageId(file!.messageId!);
+    const totalSize = dbFile!.size;
+
+    const response = await fetch(
+      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
+      { headers: { Range: 'bytes=-5', 'x-token': token } }
+    );
+
+    expect(response.status).toBe(206);
+    expect(response.headers.get('Content-Range')).toBe(
+      `bytes ${totalSize - 5}-${totalSize - 1}/${totalSize}`
+    );
+    expect(await response.text()).toBe(file!.content.slice(-5));
+  });
+
+  test('should clamp a Range end past the last byte', async () => {
+    const file = filesToCreate[0];
+    const dbFile = await getFileByMessageId(file!.messageId!);
+    const totalSize = dbFile!.size;
+
+    // media players probe with a fixed-size window larger than small files
+    const response = await fetch(
+      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
+      { headers: { Range: 'bytes=5-1048575', 'x-token': token } }
+    );
+
+    expect(response.status).toBe(206);
+    expect(response.headers.get('Content-Range')).toBe(
+      `bytes 5-${totalSize - 1}/${totalSize}`
+    );
+    expect(await response.text()).toBe(file!.content.slice(5));
+  });
+
+  test('should serve the full file for a multi-range request', async () => {
+    const file = filesToCreate[0];
+    const dbFile = await getFileByMessageId(file!.messageId!);
+
+    // multipart/byteranges is not implemented; RFC 9110 lets a server
+    // ignore Range instead, which beats a 416 for a satisfiable request
+    const response = await fetch(
+      `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}`,
+      { headers: { Range: 'bytes=0-1,3-4', 'x-token': token } }
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe(file!.content);
   });
 
   test('should return 416 for Range request beyond file size', async () => {

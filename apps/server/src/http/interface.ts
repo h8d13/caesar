@@ -11,7 +11,8 @@ import {
   buildCsp,
   buildEtag,
   safeDecodeURIComponent,
-  sendNotModified
+  sendNotModified,
+  pipeFile
 } from './helpers';
 
 const COMPRESSIBLE_TYPES = new Set([
@@ -235,95 +236,29 @@ const interfaceRouteHandler = (
     // Prefer the build-time sibling: no compression work, and Content-Length
     // is known so the response is not chunked.
     if (precompressedStats) {
-      const fileStream = fs.createReadStream(
-        requestedPath + ENCODING_EXTENSIONS[compressWith]
-      );
-
-      fileStream.on('open', () => {
-        res.writeHead(200, {
-          'Content-Type': contentType,
-          'Content-Encoding': compressWith,
-          'Content-Length': precompressedStats.size
-        });
-        fileStream.pipe(res);
+      res.writeHead(200, {
+        'Content-Type': contentType,
+        'Content-Encoding': compressWith,
+        'Content-Length': precompressedStats.size
       });
-
-      fileStream.on('error', (err) => {
-        logger.error('Error serving precompressed file:', err);
-        if (!res.headersSent) {
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Internal server error' }));
-        } else {
-          res.destroy();
-        }
-      });
-
-      res.on('close', () => {
-        fileStream.destroy();
-      });
+      pipeFile(res, requestedPath + ENCODING_EXTENSIONS[compressWith]);
 
       return res;
     }
 
-    const compress = createCompressor(compressWith, stats.size);
-    const fileStream = fs.createReadStream(requestedPath);
-
-    fileStream.on('open', () => {
-      res.writeHead(200, {
-        'Content-Type': contentType,
-        'Content-Encoding': compressWith
-      });
-      fileStream.pipe(compress).pipe(res);
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'Content-Encoding': compressWith
     });
-
-    fileStream.on('error', (err) => {
-      logger.error('Error serving file:', err);
-      if (!res.headersSent) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Internal server error' }));
-      } else {
-        res.destroy();
-      }
-    });
-
-    compress.on('error', (err) => {
-      logger.error('Compression error:', err);
-      if (!res.headersSent) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Internal server error' }));
-      } else {
-        res.destroy();
-      }
-    });
-
-    res.on('close', () => {
-      fileStream.destroy();
-      compress.destroy();
+    pipeFile(res, requestedPath, {
+      transform: createCompressor(compressWith, stats.size)
     });
   } else {
-    const fileStream = fs.createReadStream(requestedPath);
-
-    fileStream.on('open', () => {
-      res.writeHead(200, {
-        'Content-Type': contentType,
-        'Content-Length': stats.size
-      });
-      fileStream.pipe(res);
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'Content-Length': stats.size
     });
-
-    fileStream.on('error', (err) => {
-      logger.error('Error serving file:', err);
-      if (!res.headersSent) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Internal server error' }));
-      } else {
-        res.destroy();
-      }
-    });
-
-    res.on('close', () => {
-      fileStream.destroy();
-    });
+    pipeFile(res, requestedPath);
   }
 
   return res;

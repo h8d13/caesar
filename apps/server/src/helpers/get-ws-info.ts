@@ -181,6 +181,10 @@ const getWsIp = (
   });
 };
 
+// Plain HTTP routes only need the IP; skips the User-Agent parse.
+const getRequestIp = (req: http.IncomingMessage): string | undefined =>
+  getWsIp(undefined, req);
+
 const getWsInfo = (
   ws: unknown,
   req: http.IncomingMessage | undefined
@@ -217,4 +221,4 @@ const getWsInfo = (
   return { ip, os, device, userAgent };
 };
 
-export { getWsInfo, resolveClientIp };
+export { getRequestIp, getWsInfo, resolveClientIp };

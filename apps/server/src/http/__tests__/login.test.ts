@@ -374,6 +374,17 @@ describe('/login', () => {
     expect(data).toHaveProperty('errors');
   });
 
+  test('answers an oversized body with 413 instead of a reset', async () => {
+    const response = await fetch(`${testsBaseUrl}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identity: 'x'.repeat(256 * 1024) })
+    });
+
+    expect(response.status).toBe(413);
+    expect(await response.json()).toHaveProperty('error', 'Payload too large');
+  });
+
   test('refuses a plaintext password in place of the authKey', async () => {
     const response = await fetch(`${testsBaseUrl}/login`, {
       method: 'POST',

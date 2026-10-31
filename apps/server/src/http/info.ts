@@ -1,6 +1,7 @@
 import type { TServerInfo } from '@caesar/shared';
 import type http from 'http';
 import { getSettings } from '../db/queries/server';
+import { sendJson } from './helpers';
 
 const infoRouteHandler = async (
   req: http.IncomingMessage,
@@ -14,8 +15,7 @@ const infoRouteHandler = async (
     logo: settings.logo ? { name: settings.logo.name } : null
   };
 
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify(info));
+  sendJson(res, 200, info);
 };
 
 export { infoRouteHandler };

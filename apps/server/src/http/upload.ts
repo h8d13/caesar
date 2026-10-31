@@ -1,16 +1,20 @@
 import { UploadHeaders } from '@caesar/shared';
+import { createHash } from 'crypto';
 import fs from 'fs';
 import type http from 'http';
+import { finished, Transform } from 'stream';
+import { pipeline } from 'stream/promises';
 import z from 'zod';
 import { config } from '../config';
 import { getSettings } from '../db/queries/server';
-import { getUserByToken } from '../db/queries/users';
+import { getSessionUserByToken } from '../db/queries/users';
 import { getSessionToken } from '../helpers/session-token';
 import { logger } from '../logger';
 import { fileManager } from '../utils/file-manager';
 import { createRateLimiter } from '../utils/rate-limiters/rate-limiter';
-import { sanitizeFileName } from './helpers';
+import { sanitizeFileName, sendJson } from './helpers';
 import { enforceHttpRateLimit } from './rate-limit';
+import { PayloadTooLargeError } from './utils';
 
 const zHeaders = z.object({
   // browsers authenticate with the session cookie; API clients may still
@@ -46,17 +50,15 @@ const uploadFileRouteHandler = async (
 
   if (!originalName) {
     req.resume();
-    res.writeHead(400, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Invalid file name' }));
+    sendJson(res, 400, { error: 'Invalid file name' });
     return;
   }
 
-  const user = await getUserByToken(token);
+  const user = await getSessionUserByToken(token);
 
   if (!user) {
     req.resume();
-    res.writeHead(401, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Unauthorized' }));
+    sendJson(res, 401, { error: 'Unauthorized' });
     return;
   }
 
@@ -65,12 +67,9 @@ const uploadFileRouteHandler = async (
   if (contentLength > settings.storageUploadMaxFileSize) {
     req.resume();
     req.on('end', () => {
-      res.writeHead(413, { 'Content-Type': 'application/json' });
-      res.end(
-        JSON.stringify({
-          error: `File ${originalName} exceeds the maximum allowed size`
-        })
-      );
+      sendJson(res, 413, {
+        error: `File ${originalName} exceeds the maximum allowed size`
+      });
     });
 
     return;
@@ -79,69 +78,72 @@ const uploadFileRouteHandler = async (
   if (!settings.storageUploadEnabled) {
     req.resume();
     req.on('end', () => {
-      res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(
-        JSON.stringify({ error: 'File uploads are disabled on this server' })
-      );
+      sendJson(res, 403, { error: 'File uploads are disabled on this server' });
     });
 
     return;
   }
 
   const safePath = await fileManager.getSafeUploadPath(originalName);
-  const fileStream = fs.createWriteStream(safePath);
   const maxSize = settings.storageUploadMaxFileSize;
+  const hash = createHash('md5');
   let bytesReceived = 0;
-  let limitExceeded = false;
 
-  req.on('data', (chunk: Buffer) => {
-    bytesReceived += chunk.length;
+  const meter = new Transform({
+    transform(chunk: Buffer, _encoding, callback) {
+      bytesReceived += chunk.length;
 
-    if (!limitExceeded && bytesReceived > maxSize) {
-      limitExceeded = true;
-      req.unpipe(fileStream);
-      req.resume();
-      fileStream.destroy();
-      fs.unlink(safePath, () => {});
-      res.writeHead(413, { 'Content-Type': 'application/json' });
-      res.end(
-        JSON.stringify({
-          error: `File ${originalName} exceeds the maximum allowed size`
-        })
-      );
+      // the header is client-supplied; this is the real limit
+      if (bytesReceived > maxSize) {
+        callback(
+          new PayloadTooLargeError(
+            `File ${originalName} exceeds the maximum allowed size`
+          )
+        );
+        return;
+      }
+
+      hash.update(chunk);
+      callback(null, chunk);
     }
   });
 
-  req.pipe(fileStream);
-
-  fileStream.on('finish', async () => {
-    if (limitExceeded) return;
-
-    try {
-      const tempFile = await fileManager.addTemporaryFile({
-        originalName,
-        filePath: safePath,
-        size: bytesReceived,
-        userId: user.id
-      });
-
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(tempFile));
-    } catch (error) {
-      logger.error('Error processing uploaded file:', error);
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'File processing failed' }));
-    }
+  // req stays out of the pipeline: destroying it would close the socket
+  // before the 413/500 is written. Node drains the unread rest after the
+  // response; a client abort still tears the pipeline down.
+  finished(req, (err) => {
+    if (err) meter.destroy(err);
   });
+  req.pipe(meter);
 
-  fileStream.on('error', (err) => {
-    if (limitExceeded) return;
+  try {
+    await pipeline(meter, fs.createWriteStream(safePath));
+  } catch (error) {
+    await fs.promises.rm(safePath, { force: true });
 
-    logger.error('Error uploading file:', err);
+    // client went away: nobody left to answer
+    if (req.destroyed) return;
+    if (error instanceof PayloadTooLargeError) throw error;
 
-    res.writeHead(500, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'File upload failed' }));
-  });
+    logger.error('Error uploading file:', error);
+    sendJson(res, 500, { error: 'File upload failed' });
+    return;
+  }
+
+  try {
+    const tempFile = await fileManager.addTemporaryFile({
+      originalName,
+      filePath: safePath,
+      size: bytesReceived,
+      md5: hash.digest('hex'),
+      userId: user.id
+    });
+
+    sendJson(res, 200, tempFile);
+  } catch (error) {
+    logger.error('Error processing uploaded file:', error);
+    sendJson(res, 500, { error: 'File processing failed' });
+  }
 };
 
 export { sanitizeFileName, uploadFileRouteHandler };

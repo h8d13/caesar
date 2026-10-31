@@ -3,7 +3,7 @@ import type http from 'http';
 import z from 'zod';
 import { config } from '../config';
 import { getUserById } from '../db/queries/users';
-import { getWsInfo } from '../helpers/get-ws-info';
+import { getRequestIp } from '../helpers/get-ws-info';
 import { logger } from '../logger';
 import { verifyJwt } from '../utils/jwt-secret';
 import { createRateLimiter } from '../utils/rate-limiters/rate-limiter';
@@ -65,13 +65,13 @@ const login2faRouteHandler = async (
     return;
   }
 
-  const connectionInfo = getWsInfo(undefined, req);
+  const ip = getRequestIp(req);
 
   const claims = await verifyPreAuthToken(data.preAuthToken);
 
   if (!claims) {
     logger.info(
-      `[Auth] /login/2fa rejected: invalid or expired preAuthToken (IP: ${connectionInfo?.ip || 'unknown'})`
+      `[Auth] /login/2fa rejected: invalid or expired preAuthToken (IP: ${ip || 'unknown'})`
     );
     throw new HttpValidationError('preAuthToken', GENERIC_2FA_ERROR);
   }
@@ -101,7 +101,7 @@ const login2faRouteHandler = async (
 
   if (!result.verified) {
     logger.info(
-      `[Auth] /login/2fa verification failed for user ${claims.userId}: ${result.reason} (IP: ${connectionInfo?.ip || 'unknown'})`
+      `[Auth] /login/2fa verification failed for user ${claims.userId}: ${result.reason} (IP: ${ip || 'unknown'})`
     );
     throw new HttpValidationError('response', GENERIC_2FA_ERROR);
   }

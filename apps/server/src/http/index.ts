@@ -1,7 +1,7 @@
 import http from 'http';
 import z from 'zod';
 import { config } from '../config';
-import { getWsInfo } from '../helpers/get-ws-info';
+import { getRequestIp } from '../helpers/get-ws-info';
 import { isCrossOrigin } from '../helpers/session-token';
 import { logger } from '../logger';
 import {
@@ -13,7 +13,8 @@ import {
   buildCsp,
   getRequestPathname,
   hasPrefixPathSegment,
-  type HttpRouteHandler
+  type HttpRouteHandler,
+  sendJson
 } from './helpers';
 import { infoRouteHandler } from './info';
 import { interfaceRouteHandler } from './interface';
@@ -25,44 +26,42 @@ import { sessionRefreshRouteHandler } from './session-refresh';
 import { uploadFileRouteHandler } from './upload';
 import { HttpValidationError, PayloadTooLargeError } from './utils';
 
-type RouteContext = {
-  info: ReturnType<typeof getWsInfo>;
-};
-
 type SupportedMethod = 'GET' | 'POST';
 
 const routeHandlers: Partial<
   Record<
     SupportedMethod,
     {
-      exact: Record<string, HttpRouteHandler<RouteContext>>;
-      prefix: Record<string, HttpRouteHandler<RouteContext>>;
+      exact: Record<string, HttpRouteHandler>;
+      prefix: Record<string, HttpRouteHandler>;
     }
   >
 > = {
   GET: {
     exact: {
-      '/healthz': (req, res) => healthRouteHandler(req, res),
-      '/info': (req, res) => infoRouteHandler(req, res),
-      '/e2ee/session-key': (req, res) => getE2eeSessionKeyRouteHandler(req, res)
+      '/healthz': healthRouteHandler,
+      '/info': infoRouteHandler,
+      '/e2ee/session-key': getE2eeSessionKeyRouteHandler
     },
     prefix: {
-      '/public': (req, res) => publicRouteHandler(req, res)
+      '/public': publicRouteHandler
     }
   },
   POST: {
     exact: {
-      '/upload': (req, res) => uploadFileRouteHandler(req, res),
-      '/login': (req, res) => loginRouteHandler(req, res),
-      '/login/2fa': (req, res) => login2faRouteHandler(req, res),
-      '/logout': (req, res) => logoutRouteHandler(req, res),
-      '/session/refresh': (req, res) => sessionRefreshRouteHandler(req, res),
-      '/e2ee/session-key': (req, res) =>
-        storeE2eeSessionKeyRouteHandler(req, res)
+      '/upload': uploadFileRouteHandler,
+      '/login': loginRouteHandler,
+      '/login/2fa': login2faRouteHandler,
+      '/logout': logoutRouteHandler,
+      '/session/refresh': sessionRefreshRouteHandler,
+      '/e2ee/session-key': storeE2eeSessionKeyRouteHandler
     },
     prefix: {}
   }
 };
+
+// constant without a nonce; only index.html gets a per-response policy
+const CSP = buildCsp();
 
 // this http server implementation is temporary and will be moved to a more capable framework later
 
@@ -82,7 +81,7 @@ const createHttpServer = async (port: number = config.server.port) => {
           'Strict-Transport-Security',
           'max-age=31536000; includeSubDomains'
         );
-        res.setHeader('Content-Security-Policy', buildCsp());
+        res.setHeader('Content-Security-Policy', CSP);
         // Restrict powerful features. caesar uses mic + cam + screen
         // capture; everything else is explicitly denied so nested iframes
         // (e.g. the youtube embed) can't request them.
@@ -104,9 +103,11 @@ const createHttpServer = async (port: number = config.server.port) => {
           return;
         }
 
-        const info = getWsInfo(undefined, req);
-
-        logger.debug(`[HTTP] ${req.method} ${req.url} - ${info?.ip}`);
+        if (config.server.debug) {
+          logger.debug(
+            `[HTTP] ${req.method} ${req.url} - ${getRequestIp(req)}`
+          );
+        }
 
         if (req.method === 'OPTIONS') {
           res.writeHead(204);
@@ -117,8 +118,7 @@ const createHttpServer = async (port: number = config.server.port) => {
         const pathname = getRequestPathname(req);
 
         if (!pathname) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Bad request' }));
+          sendJson(res, 400, { error: 'Bad request' });
           return;
         }
 
@@ -127,8 +127,7 @@ const createHttpServer = async (port: number = config.server.port) => {
         // may send one. API clients send no Origin and pass.
         if (req.method === 'POST' && isCrossOrigin(req)) {
           req.resume();
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Forbidden origin' }));
+          sendJson(res, 403, { error: 'Forbidden origin' });
           return;
         }
 
@@ -142,14 +141,14 @@ const createHttpServer = async (port: number = config.server.port) => {
               const exactHandler = methodHandlers.exact[pathname];
 
               if (exactHandler) {
-                return await exactHandler(req, res, { info });
+                return await exactHandler(req, res);
               }
 
               for (const [prefix, prefixHandler] of Object.entries(
                 methodHandlers.prefix
               )) {
                 if (hasPrefixPathSegment(pathname, prefix)) {
-                  return await prefixHandler(req, res, { info });
+                  return await prefixHandler(req, res);
                 }
               }
             }
@@ -171,32 +170,32 @@ const createHttpServer = async (port: number = config.server.port) => {
               }
             }
 
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ errors: errorsMap }));
+            sendJson(res, 400, { errors: errorsMap });
             return;
           } else if (error instanceof HttpValidationError) {
             errorsMap[error.field] = error.message;
 
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ errors: errorsMap }));
+            sendJson(res, 400, { errors: errorsMap });
             return;
           } else if (error instanceof PayloadTooLargeError) {
-            res.writeHead(413, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: error.message }));
+            sendJson(res, 413, { error: error.message });
             return;
           }
 
           logger.error('HTTP route error:', error);
 
-          res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Internal server error' }));
+          sendJson(res, 500, { error: 'Internal server error' });
           return;
         }
 
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Not found' }));
+        sendJson(res, 404, { error: 'Not found' });
       }
     );
+
+    // Caddy reuses idle upstream connections for up to 2m; Node's 5s
+    // default closes them first, and a request racing that close fails
+    // with a 502 (POSTs are not retried). Let the proxy close first.
+    server.keepAliveTimeout = 125_000;
 
     server.on('listening', () => {
       logger.debug('HTTP server is listening on port %d', port);

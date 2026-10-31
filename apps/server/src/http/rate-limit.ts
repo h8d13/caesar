@@ -1,11 +1,12 @@
 import type http from 'http';
-import { getWsInfo } from '../helpers/get-ws-info';
+import { getRequestIp } from '../helpers/get-ws-info';
 import { logger } from '../logger';
 import {
   getClientRateLimitKey,
   getRateLimitRetrySeconds,
   type FixedWindowRateLimiter
 } from '../utils/rate-limiters/rate-limiter';
+import { sendJson } from './helpers';
 
 const sendTooManyRequests = (
   res: http.ServerResponse,
@@ -13,8 +14,7 @@ const sendTooManyRequests = (
   message: string
 ) => {
   res.setHeader('Retry-After', getRateLimitRetrySeconds(retryAfterMs));
-  res.writeHead(429, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ error: message }));
+  sendJson(res, 429, { error: message });
 };
 
 // IP-keyed burst limit for plain HTTP routes. Returns whether the request
@@ -28,7 +28,7 @@ const enforceHttpRateLimit = (
   route: string,
   message = 'Too many requests'
 ): boolean => {
-  const ip = getWsInfo(undefined, req)?.ip;
+  const ip = getRequestIp(req);
 
   if (!ip) {
     logger.warn(

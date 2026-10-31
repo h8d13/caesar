@@ -15,23 +15,21 @@ import { generateFileToken } from '@server/helpers/files-crypto';
 import { and, asc, eq, exists, lt, notExists, sql, sum } from 'drizzle-orm';
 import type { SQLiteColumn } from 'drizzle-orm/sqlite-core';
 import { db } from '..';
+import { prepared } from '../prepared';
 import { getSettings } from './server';
 
-const getExceedingOldFiles = async (newFileSize: number) => {
+// currentTotalSize comes from the caller: a batch save counts its files
+// ahead of this one, which are not in the table yet
+const getExceedingOldFiles = async (
+  newFileSize: number,
+  currentTotalSize: number
+) => {
   const { storageQuota, storageUploadMaxFileSize } = await getSettings();
 
   if (newFileSize > storageUploadMaxFileSize) {
     throw new Error('File size exceeds the maximum allowed file size');
   }
 
-  const currentUsage = await db
-    .select({
-      totalSize: sum(files.size)
-    })
-    .from(files)
-    .get();
-
-  const currentTotalSize = Number(currentUsage?.totalSize ?? 0);
   const wouldExceedBy = currentTotalSize + newFileSize - storageQuota;
 
   if (wouldExceedBy <= 0) {
@@ -113,6 +111,22 @@ const getFilesByUserId = async (userId: number): Promise<TFile[]> => {
   return results;
 };
 
+const fileChannelQuery = prepared(() =>
+  db
+    .select({
+      private: channels.private,
+      fileAccessToken: channels.fileAccessToken
+    })
+    .from(messageFiles)
+    .innerJoin(messages, eq(messages.id, messageFiles.messageId))
+    .innerJoin(channels, eq(channels.id, messages.channelId))
+    .where(eq(messageFiles.fileId, sql.placeholder('fileId')))
+);
+
+// channel of the message a file is attached to; undefined when the file is
+// not a message attachment (avatar, emoji, logo, ...)
+const getFileChannel = (fileId: number) => fileChannelQuery().get({ fileId });
+
 const getUsedFileQuota = async (): Promise<number> => {
   const result = await db
     .select({
@@ -167,19 +181,23 @@ const getOrphanedFileIds = async ({ minAgeMs = 0 } = {}): Promise<number[]> => {
   return rows.map(({ id }) => id);
 };
 
-const isFileOrphaned = async (fileId: number): Promise<boolean> => {
-  const row = await db
+// every non-attachment file GET (avatars, emojis, sounds) runs it
+const orphanQuery = prepared(() =>
+  db
     .select({ id: files.id })
     .from(files)
-    .where(and(eq(files.id, fileId), isUnreferenced(files.id)))
-    .get();
+    .where(
+      and(eq(files.id, sql.placeholder('fileId')), isUnreferenced(files.id))
+    )
+);
 
-  return row !== undefined;
-};
+const isFileOrphaned = async (fileId: number): Promise<boolean> =>
+  (await orphanQuery().get({ fileId })) !== undefined;
 
 export {
   FILE_REFERENCES,
   getExceedingOldFiles,
+  getFileChannel,
   getFilesByMessageId,
   getFilesByUserId,
   getOrphanedFileIds,

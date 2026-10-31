@@ -1,11 +1,11 @@
 import type http from 'http';
+import { sendJson } from './helpers';
 
 const healthRouteHandler = (
   req: http.IncomingMessage,
   res: http.ServerResponse
 ) => {
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ status: 'ok', timestamp: Date.now() }));
+  sendJson(res, 200, { status: 'ok', timestamp: Date.now() });
 };
 
 export { healthRouteHandler };
