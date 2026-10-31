@@ -6,6 +6,7 @@ import {
   type TActivityLogDetailsMap,
   type TMessageMetadata
 } from '@caesar/shared';
+import { sql } from 'drizzle-orm';
 import {
   blob,
   index,
@@ -189,6 +190,10 @@ const users = sqliteTable(
     // unless the user has allowMultipleSessions set. JWTs carry the epoch
     // they were minted at and are rejected on mismatch.
     sessionEpoch: integer('session_epoch').notNull().default(0),
+    // SUM(social_credit_ledger.amount) for this target, maintained by the
+    // sc_ledger_balance_* triggers (0031) on every ledger write, cascades
+    // included. Read-only for app code: never set it directly.
+    socialCredit: integer('social_credit').notNull().default(0),
     // invite provenance: who vouched for this user. null for the bootstrap
     // owner (genesis). delete-user re-points children to the deleted-user
     // placeholder; set null is only a safety net. Which code was used
@@ -205,7 +210,9 @@ const users = sqliteTable(
     index('users_name_idx').on(t.name),
     index('users_banned_idx').on(t.banned),
     index('users_last_login_idx').on(t.lastLoginAt),
-    index('users_invited_by_idx').on(t.invitedBy)
+    index('users_invited_by_idx').on(t.invitedBy),
+    index('users_avatar_idx').on(t.avatarId),
+    index('users_banner_idx').on(t.bannerId)
   ]
 );
 
@@ -331,7 +338,14 @@ const messages = sqliteTable(
     index('messages_channel_idx').on(t.channelId),
     index('messages_created_idx').on(t.createdAt),
     index('messages_channel_created_idx').on(t.channelId, t.createdAt),
-    index('messages_reply_to_idx').on(t.replyToMessageId)
+    index('messages_reply_to_idx').on(t.replyToMessageId),
+    // partial: the prune cron and pinned list touch few rows of a big table
+    index('messages_expires_idx')
+      .on(t.expiresAt)
+      .where(sql`${t.expiresAt} IS NOT NULL`),
+    index('messages_channel_pinned_idx')
+      .on(t.channelId, t.createdAt)
+      .where(sql`${t.pinned} = 1`)
   ]
 );
 
@@ -433,7 +447,8 @@ const messageReactions = sqliteTable(
     index('reaction_msg_idx').on(t.messageId),
     index('reaction_emoji_idx').on(t.emoji),
     index('reaction_user_idx').on(t.userId),
-    index('reaction_msg_emoji_idx').on(t.messageId, t.emoji)
+    index('reaction_msg_emoji_idx').on(t.messageId, t.emoji),
+    index('reaction_file_idx').on(t.fileId)
   ]
 );
 
@@ -809,7 +824,8 @@ const statusImages = sqliteTable(
   },
   (t) => [
     index('status_images_user_idx').on(t.userId),
-    index('status_images_expires_idx').on(t.expiresAt)
+    index('status_images_expires_idx').on(t.expiresAt),
+    index('status_images_file_idx').on(t.fileId)
   ]
 );
 
