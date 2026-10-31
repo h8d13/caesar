@@ -8,8 +8,8 @@ import { IS_PRODUCTION } from './env.js';
 
 type WorkerSlot = {
   index: number;
-  worker: mediasoup.types.Worker<mediasoup.types.AppData>;
-  webRtcServer: mediasoup.types.WebRtcServer<mediasoup.types.AppData>;
+  worker: mediasoup.types.Worker;
+  webRtcServer: mediasoup.types.WebRtcServer;
 };
 
 const workers: WorkerSlot[] = [];
@@ -65,7 +65,7 @@ const buildListenInfos = (port: number, announcedAddress: string) => {
 };
 
 const loadMediasoup = async () => {
-  const basePort = +config.webRtc.port;
+  const basePort = config.webRtc.port;
   const count = resolveWorkerCount();
   const logLevel = resolveLogLevel();
   const announcedAddress = await resolveAnnouncedAddress();
@@ -80,7 +80,7 @@ const loadMediasoup = async () => {
       disableLiburing: true
     };
 
-    let worker: mediasoup.types.Worker<mediasoup.types.AppData>;
+    let worker: mediasoup.types.Worker;
     try {
       worker = await mediasoup.createWorker(workerConfig);
     } catch (error) {

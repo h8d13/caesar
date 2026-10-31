@@ -12,7 +12,7 @@ const Protect = memo(
     ({ children, fallback = null, permission }: TProtectProps) => {
         const can = useCan();
 
-        return can(permission) ? <>{children}</> : <>{fallback}</>;
+        return can(permission) ? children : fallback;
     }
 );
 

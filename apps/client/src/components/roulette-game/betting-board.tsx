@@ -159,11 +159,11 @@ const BettingBoard = memo(() => {
                             <BoardCell
                                 label="← 3:1"
                                 onClick={() =>
-                                    onPlaceBet(columnBetTypes[rowIndex]!, null)
+                                    onPlaceBet(columnBetTypes[rowIndex], null)
                                 }
                                 disabled={disabled}
                                 hasChip={hasBetOn(
-                                    columnBetTypes[rowIndex]!,
+                                    columnBetTypes[rowIndex],
                                     null
                                 )}
                             />

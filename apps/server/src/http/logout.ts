@@ -1,7 +1,7 @@
 import { DisconnectCode } from '@caesar/shared';
 import { e2eeSessionKeys, users } from '@caesar/shared/db/schema';
 import { eq, sql } from 'drizzle-orm';
-import http from 'http';
+import type http from 'http';
 import { db } from '../db';
 import { getUserByToken } from '../db/queries/users';
 import {

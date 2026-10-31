@@ -1,5 +1,5 @@
 import type { AuthenticationResponseJSON } from '@simplewebauthn/server';
-import http from 'http';
+import type http from 'http';
 import z from 'zod';
 import { config } from '../config';
 import { getUserById } from '../db/queries/users';

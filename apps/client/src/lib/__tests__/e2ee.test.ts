@@ -128,7 +128,7 @@ describe('e2ee integrity & freshness', () => {
 
         // ciphertext output is base64 nonce||ct; flip the last base64 char
         // to alphabetic-equivalent so decode-then-decrypt yields wrong bytes.
-        const last = sealed[sealed.length - 1]!;
+        const last = sealed[sealed.length - 1];
         const tampered = sealed.slice(0, -1) + (last === 'A' ? 'B' : 'A');
 
         setPriv(bPriv);

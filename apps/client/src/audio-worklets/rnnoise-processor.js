@@ -38,10 +38,8 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
 
       if (!data || typeof data !== 'object') return;
 
-      if (data.type === 'config') {
-        if (typeof data.enabled === 'boolean') {
-          this.enabled = data.enabled;
-        }
+      if (data.type === 'config' && typeof data.enabled === 'boolean') {
+        this.enabled = data.enabled;
       }
 
       if (data.type === 'wasm-binary') {

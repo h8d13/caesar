@@ -89,7 +89,7 @@ const useForm = <T extends Record<string, unknown>>(initialValues: T) => {
     );
 
     const setError = useCallback(
-        <K extends keyof T>(key: K | '_general', errorMessage: string) => {
+        (key: keyof T | '_general', errorMessage: string) => {
             setErrors((prev) => ({ ...prev, [key]: errorMessage }));
         },
         [setErrors]

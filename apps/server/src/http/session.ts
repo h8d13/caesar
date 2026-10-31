@@ -1,7 +1,7 @@
 import { DisconnectCode, type TJoinedUser } from '@caesar/shared';
 import { users } from '@caesar/shared/db/schema';
 import { eq, sql } from 'drizzle-orm';
-import http from 'http';
+import type http from 'http';
 import { db } from '../db';
 import {
   mintSessionToken,

@@ -46,7 +46,8 @@ const useGroupedMessages = (messages: TJoinedMessage[]) =>
                 }
             }
 
-            return [...acc, [message]];
+            acc.push([message]);
+            return acc;
         }, [] as TJoinedMessage[][]);
 
         return grouped;

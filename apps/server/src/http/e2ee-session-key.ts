@@ -2,7 +2,7 @@ import { BASE64_32_BYTES_REGEX } from '@caesar/shared';
 import { e2eeSessionKeys } from '@caesar/shared/db/schema';
 import { createHash } from 'crypto';
 import { and, eq, ne } from 'drizzle-orm';
-import http from 'http';
+import type http from 'http';
 import z from 'zod';
 import { config } from '../config';
 import { db } from '../db';
@@ -49,7 +49,7 @@ const authenticate = async (
       '/e2ee/session-key'
     )
   ) {
-    return undefined;
+    return;
   }
 
   const token = getSessionToken(req);
@@ -57,7 +57,7 @@ const authenticate = async (
 
   if (!token || !user) {
     sendJson(res, 401, { error: 'Unauthorized' });
-    return undefined;
+    return;
   }
 
   return { user, tokenHash: hashToken(token) };

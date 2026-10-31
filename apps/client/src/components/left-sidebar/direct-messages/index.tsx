@@ -136,7 +136,7 @@ const DirectMessages = memo(() => {
             (c) => c.channelId === selectedDmChannelId
         );
         if (!stillExists) {
-            setSelectedDmChannelId(visibleConversations[0]!.channelId);
+            setSelectedDmChannelId(visibleConversations[0].channelId);
         }
     }, [loading, visibleConversations, selectedDmChannelId]);
 

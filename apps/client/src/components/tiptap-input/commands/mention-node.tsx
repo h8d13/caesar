@@ -25,8 +25,7 @@ const MentionNode = Node.create({
             },
             label: {
                 default: '',
-                parseHTML: (el) =>
-                    (el as HTMLElement).textContent?.replace(/^@/, '') ?? '',
+                parseHTML: (el) => el.textContent?.replace(/^@/, '') ?? '',
                 renderHTML: () => ({})
             }
         };
@@ -37,7 +36,7 @@ const MentionNode = Node.create({
             {
                 tag: 'span[data-type="mention"]',
                 getAttrs: (dom) => {
-                    const el = dom as HTMLElement;
+                    const el = dom;
                     const userId = el.getAttribute('data-user-id')?.trim();
                     const label = el.textContent?.replace(/^@/, '') ?? '';
                     return userId ? { userId, label } : false;

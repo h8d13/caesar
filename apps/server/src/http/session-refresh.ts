@@ -1,4 +1,4 @@
-import http from 'http';
+import type http from 'http';
 import z from 'zod';
 import { getUserByToken } from '../db/queries/users';
 import {

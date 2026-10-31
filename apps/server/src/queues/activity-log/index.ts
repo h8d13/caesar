@@ -34,7 +34,7 @@ const enqueueActivityLog = <T extends ActivityLogType>({
 
     await db.insert(activityLog).values({
       userId,
-      type: type,
+      type,
       details,
       ip: hashIp(ip || getUserIp(userId)),
       createdAt: date

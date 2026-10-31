@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Permission, permissionLabels } from '@caesar/shared';
+import { type Permission, permissionLabels } from '@caesar/shared';
 import { Badge } from '@caesar/ui';
 import { memo } from 'react';
 

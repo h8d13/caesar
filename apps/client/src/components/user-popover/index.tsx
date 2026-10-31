@@ -169,7 +169,7 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
         }
     }, [userId]);
 
-    if (!user) return <>{children}</>;
+    if (!user) return children;
 
     const isDeleted = user.name === DELETED_USER_IDENTITY_AND_NAME;
     const hasStatus = (user.activeStatusCount ?? 0) > 0;

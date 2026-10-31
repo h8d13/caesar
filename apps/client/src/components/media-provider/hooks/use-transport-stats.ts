@@ -1,5 +1,5 @@
 import { logVoice } from '@/helpers/browser-logger';
-import type { AppData, Producer, Transport } from 'mediasoup-client/types';
+import type { Producer, Transport } from 'mediasoup-client/types';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type TransportStats = {
@@ -59,7 +59,7 @@ const useTransportStats = () => {
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
     const producerTransportRef = useRef<Transport | null>(null);
     const consumerTransportRef = useRef<Transport | null>(null);
-    const screenShareProducerRef = useRef<Producer<AppData> | null>(null);
+    const screenShareProducerRef = useRef<Producer | null>(null);
     const previousStatsRef = useRef<{
         producer: TransportStats | null;
         consumer: TransportStats | null;
@@ -385,7 +385,7 @@ const useTransportStats = () => {
         (
             producerTransport?: Transport | null,
             consumerTransport?: Transport | null,
-            intervalMs: number = 1000
+            intervalMs = 1000
         ) => {
             producerTransportRef.current = producerTransport || null;
             consumerTransportRef.current = consumerTransport || null;
@@ -403,7 +403,7 @@ const useTransportStats = () => {
     );
 
     const setScreenShareProducer = useCallback(
-        (producer: Producer<AppData> | null | undefined) => {
+        (producer: Producer | null | undefined) => {
             screenShareProducerRef.current = producer || null;
 
             if (!producer) {

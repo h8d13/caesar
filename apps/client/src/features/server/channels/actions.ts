@@ -67,7 +67,7 @@ export const setChannelPermissions = (
 
     // user is in a channel that is private, so we need to check if their permissions changed
     const canViewChannel =
-        permissions[selectedChannel]?.permissions['VIEW_CHANNEL'] === true;
+        permissions[selectedChannel]?.permissions['VIEW_CHANNEL'];
 
     if (!canViewChannel) {
         // user lost VIEW_CHANNEL permission, deselect the channel

@@ -320,7 +320,7 @@ const sealStreamed = async (key: CryptoKey, source: Blob): Promise<Blob> => {
     view.setUint32(5, CHUNK_SIZE, true);
     view.setBigUint64(9, BigInt(total), true);
 
-    const parts: BlobPart[] = [header as BlobPart];
+    const parts: BlobPart[] = [header];
     let offset = 0;
     let chunkIndex = 0;
     while (offset < total) {
@@ -336,9 +336,9 @@ const sealStreamed = async (key: CryptoKey, source: Blob): Promise<Blob> => {
                 additionalData: aad as BufferSource
             },
             key,
-            buf as BufferSource
+            buf
         );
-        parts.push(nonce as BlobPart, new Uint8Array(ct) as BlobPart);
+        parts.push(nonce, new Uint8Array(ct));
         offset = end;
         chunkIndex++;
     }
@@ -392,9 +392,9 @@ const openStreamed = async (key: CryptoKey, source: Blob): Promise<Blob> => {
                 additionalData: aad as BufferSource
             },
             key,
-            ct as BufferSource
+            ct
         );
-        parts.push(new Uint8Array(pt) as BlobPart);
+        parts.push(new Uint8Array(pt));
         plainProduced += pt.byteLength;
         offset = ctEnd;
         chunkIndex++;

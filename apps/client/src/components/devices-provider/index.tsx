@@ -84,10 +84,7 @@ const DevicesProvider = memo(({ children }: TDevicesProviderProps) => {
 
     const saveDevices = useCallback((newDevices: TDeviceSettings) => {
         setResolved(newDevices);
-        setLocalStorageItemAsJSON<TDeviceSettings>(
-            LocalStorageKey.DEVICES_SETTINGS,
-            newDevices
-        );
+        setLocalStorageItemAsJSON(LocalStorageKey.DEVICES_SETTINGS, newDevices);
     }, []);
 
     const contextValue = useMemo<TDevicesProvider>(

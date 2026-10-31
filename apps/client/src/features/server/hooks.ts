@@ -1,4 +1,4 @@
-import { ChannelPermission, Permission } from '@caesar/shared';
+import { ChannelPermission, type Permission } from '@caesar/shared';
 import { useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import type { IRootState } from '../store';
@@ -83,13 +83,10 @@ export const useChannelCan = (channelId: number | undefined) => {
             if (isOwner || !channel || !channel?.private) return true;
 
             // if VIEW is false, no other permission matters
-            if (
-                ownUserRoles.permissions[ChannelPermission.VIEW_CHANNEL] ===
-                false
-            )
+            if (!ownUserRoles.permissions[ChannelPermission.VIEW_CHANNEL])
                 return false;
 
-            return ownUserRoles.permissions[permission] === true;
+            return ownUserRoles.permissions[permission];
         },
         [ownUserRoles, isOwner, channel]
     );
@@ -113,11 +110,9 @@ export const useAccessibleChannels = () => {
 
                 if (isOwner || !channel.private) return true;
 
-                return (
-                    channelPermissions[channel.id]?.permissions[
-                        ChannelPermission.VIEW_CHANNEL
-                    ] === true
-                );
+                return channelPermissions[channel.id]?.permissions[
+                    ChannelPermission.VIEW_CHANNEL
+                ];
             }),
         [channels, channelPermissions, isOwner]
     );

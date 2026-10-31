@@ -28,7 +28,7 @@ type TDisplayItem = {
 const useUploadFiles = (
     channelId: number,
     containerRef: RefObject<HTMLElement | null>,
-    disabled: boolean = false
+    disabled = false
 ) => {
     const [files, setFiles] = useState<TTempFile[]>([]);
     const filesRef = useRef<TTempFile[]>([]);

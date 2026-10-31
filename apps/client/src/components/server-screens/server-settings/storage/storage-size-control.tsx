@@ -30,7 +30,7 @@ const StorageSizeControl = memo(
         preview,
         presets
     }: TStorageSizeControlProps) => {
-        const valueInMb = Math.round(Number(value) / MEGABYTE);
+        const valueInMb = Math.round(value / MEGABYTE);
 
         // Clamping on every keystroke made values unreachable whenever the
         // minimum exceeds a partial entry (quota min is 1024 MB: typing "2"
@@ -52,7 +52,7 @@ const StorageSizeControl = memo(
         return (
             <div className="max-w-150 space-y-2">
                 <Slider
-                    value={[Number(value)]}
+                    value={[value]}
                     max={max}
                     min={min}
                     step={FILE_SIZE_STEP}

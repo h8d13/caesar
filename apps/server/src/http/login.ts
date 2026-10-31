@@ -15,7 +15,7 @@ import {
   users
 } from '@caesar/shared/db/schema';
 import { count, max } from 'drizzle-orm';
-import http from 'http';
+import type http from 'http';
 import jwt from 'jsonwebtoken';
 import z from 'zod';
 import { config } from '../config';

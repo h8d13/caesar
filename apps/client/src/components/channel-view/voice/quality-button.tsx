@@ -1,6 +1,6 @@
 import { useMedia } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
-import { StreamKind, type TStreamQualityLayer } from '@caesar/shared';
+import { type StreamKind, type TStreamQualityLayer } from '@caesar/shared';
 import {
     IconButton,
     Popover,

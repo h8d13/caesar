@@ -124,7 +124,34 @@ export default defineConfig({
       'typescript/no-empty-object-type': 'error',
       // Node exits on an unhandled rejection (a publisher whose DB query
       // fails is a crash); in the client it is a silently lost error.
-      'typescript/no-floating-promises': 'error'
+      'typescript/no-floating-promises': 'error',
+      // picked from suspicious/pedantic/style/perf: dead or redundant code
+      // with near-zero false positives, most auto-fixable (`vp lint --fix`)
+      'typescript/no-unnecessary-type-assertion': 'error',
+      'typescript/no-unnecessary-type-conversion': 'error',
+      'typescript/no-unnecessary-type-arguments': 'error',
+      'typescript/no-unnecessary-boolean-literal-compare': 'error',
+      'typescript/no-inferrable-types': 'error',
+      'typescript/prefer-ts-expect-error': 'error',
+      'typescript/consistent-type-imports': [
+        'error',
+        { fixStyle: 'inline-type-imports' }
+      ],
+      'no-duplicate-imports': ['error', { allowSeparateTypeImports: true }],
+      // arguments off: dropping `undefined` breaks required-param calls
+      'unicorn/no-useless-undefined': ['error', { checkArguments: false }],
+      'unicorn/no-useless-switch-case': 'error',
+      'unicorn/no-lonely-if': 'error',
+      'no-else-return': 'error',
+      'no-useless-return': 'error',
+      'object-shorthand': 'error',
+      'react/jsx-no-useless-fragment': 'error',
+      'react/self-closing-comp': 'error',
+      'unicorn/prefer-set-has': 'error',
+      'unicorn/prefer-array-flat-map': 'error',
+      'unicorn/prefer-array-some': 'error',
+      'unicorn/prefer-regexp-test': 'error',
+      'oxc/no-accumulating-spread': 'error'
     },
     overrides: [
       {
@@ -140,6 +167,13 @@ export default defineConfig({
           'react/only-export-components': 'warn',
           'no-restricted-imports': avoidDeepRelative('@/', '@/components/foo')
         }
+      },
+      {
+        // html-react-parser's `replace` renders the node raw unless it gets
+        // a React element back: `<></>` drops a node, `<>{children}</>`
+        // unwraps it, so these fragments are load-bearing
+        files: ['apps/client/src/components/channel-view/text/renderer/**'],
+        rules: { 'react/jsx-no-useless-fragment': 'off' }
       },
       {
         files: ['**/__tests__/**/*.ts'],

@@ -1,4 +1,4 @@
-import http from 'http';
+import type http from 'http';
 
 const healthRouteHandler = (
   req: http.IncomingMessage,

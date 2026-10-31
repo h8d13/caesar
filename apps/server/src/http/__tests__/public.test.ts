@@ -366,7 +366,7 @@ describe('/public', () => {
     });
 
     await caller.channels.update({
-      channelId: channelId,
+      channelId,
       private: true
     });
 
@@ -418,7 +418,7 @@ describe('/public', () => {
     });
 
     await caller.channels.update({
-      channelId: channelId,
+      channelId,
       private: true
     });
 
@@ -461,7 +461,7 @@ describe('/public', () => {
     });
 
     await caller.channels.update({
-      channelId: channelId,
+      channelId,
       private: true
     });
 

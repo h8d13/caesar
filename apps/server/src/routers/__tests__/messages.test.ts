@@ -712,11 +712,9 @@ describe('messages router', () => {
 
     // ensure no overlap between pages
     const firstPageIds = firstPage.messages.map((m) => m.id);
-    const secondPageIds = secondPage.messages.map((m) => m.id);
+    const secondPageIds = new Set(secondPage.messages.map((m) => m.id));
 
-    const intersection = firstPageIds.filter((id) =>
-      secondPageIds.includes(id)
-    );
+    const intersection = firstPageIds.filter((id) => secondPageIds.has(id));
 
     expect(intersection.length).toBe(0);
   });

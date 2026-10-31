@@ -2,15 +2,13 @@ import { useOwnUser } from '@/features/server/users/hooks';
 import { throttle } from '@/helpers/throttle';
 import { getTRPCClient } from '@/lib/trpc';
 import {
-    type ArrowLayer,
     CanvasMode,
     type Color,
     getTrpcError,
     type Layer,
     LayerType,
-    type LineLayer,
     type Point,
-    Side,
+    type Side,
     type WhiteboardCursor,
     type XYWH
 } from '@caesar/shared';
@@ -163,7 +161,7 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
                 onData: (data) => {
                     setLayers((prev) => ({
                         ...prev,
-                        [data.layerId]: data.layer as Layer
+                        [data.layerId]: data.layer
                     }));
                     setLayerIds((prev) =>
                         prev.includes(data.layerId)
@@ -454,7 +452,7 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
                 for (const id of selection) {
                     const layer = prev[id];
                     if (!layer) continue;
-                    next[id] = { ...layer, fill: color } as Layer;
+                    next[id] = { ...layer, fill: color };
                     trpc.whiteboard.updateLayer
                         .mutate({
                             layerId: id,
@@ -479,7 +477,7 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
             trpc.whiteboard.updateLayer
                 .mutate({
                     layerId,
-                    layer: { value } as Partial<Layer>
+                    layer: { value }
                 })
                 .catch(reportCommitError);
         },
@@ -582,7 +580,7 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
 
                     return {
                         ...prev,
-                        [layerId]: { ...layer, x2: sp.x, y2: sp.y } as Layer
+                        [layerId]: { ...layer, x2: sp.x, y2: sp.y }
                     };
                 });
                 return;
@@ -609,7 +607,7 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
                     const y = sp.y >= origin.y ? origin.y : origin.y - height;
                     return {
                         ...prev,
-                        [layerId]: { ...layer, x, y, width, height } as Layer
+                        [layerId]: { ...layer, x, y, width, height }
                     };
                 });
                 return;
@@ -678,7 +676,7 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
                             layer.type === LayerType.Line ||
                             layer.type === LayerType.Arrow
                         ) {
-                            const line = layer as LineLayer | ArrowLayer;
+                            const line = layer;
                             next[id] = {
                                 ...line,
                                 x: newX,
@@ -720,10 +718,9 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
                             y: newBounds.y,
                             width: newBounds.width,
                             height: newBounds.height
-                        } as Layer
+                        }
                     };
                 });
-                return;
             }
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -814,7 +811,7 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
                             layer.type === LayerType.Line ||
                             layer.type === LayerType.Arrow
                         ) {
-                            const line = layer as LineLayer | ArrowLayer;
+                            const line = layer;
                             update.x2 = line.x2;
                             update.y2 = line.y2;
                         }
@@ -1000,15 +997,15 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
                 ...original,
                 x: original.x + PASTE_OFFSET,
                 y: original.y + PASTE_OFFSET
-            } as Layer;
+            };
 
             // Offset line/arrow endpoints too
             if (
                 cloned.type === LayerType.Line ||
                 cloned.type === LayerType.Arrow
             ) {
-                (cloned as LineLayer | ArrowLayer).x2 += PASTE_OFFSET;
-                (cloned as LineLayer | ArrowLayer).y2 += PASTE_OFFSET;
+                cloned.x2 += PASTE_OFFSET;
+                cloned.y2 += PASTE_OFFSET;
             }
 
             addedLayers[newId] = cloned;

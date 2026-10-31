@@ -12,8 +12,7 @@ import {
     isEmojiOnlyMessage,
     videoExtensions,
     type TFile,
-    type TJoinedMessage,
-    type TMessageMetadata
+    type TJoinedMessage
 } from '@caesar/shared';
 import { Tooltip } from '@caesar/ui';
 import { memo, useCallback, useMemo } from 'react';
@@ -69,9 +68,9 @@ const MessageRenderer = memo(
                 }
                 try {
                     const key = await dmKey(
-                        e2eeCtx!.peerPublicKey!,
-                        ownUserId!,
-                        e2eeCtx!.peerUserId!
+                        e2eeCtx.peerPublicKey!,
+                        ownUserId,
+                        e2eeCtx.peerUserId!
                     );
                     const res = await fetch(getFileUrl(file));
                     if (!res.ok) throw new Error(`fetch ${res.status}`);
@@ -148,7 +147,7 @@ const MessageRenderer = memo(
         // direct media (image/video/audio in the message body). Hash is
         // stripped for comparison since OG fetch usually drops fragments.
         const embeds = useMemo(() => {
-            const raw = (message.metadata as TMessageMetadata[] | null) ?? [];
+            const raw = message.metadata ?? [];
 
             const normalize = (href: string) => {
                 try {
@@ -207,7 +206,7 @@ const MessageRenderer = memo(
                             </span>
                         </Tooltip>
                     ) : (
-                        <span></span>
+                        <span />
                     )}
                 </div>
 

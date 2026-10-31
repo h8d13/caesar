@@ -1,4 +1,4 @@
-import type { AppData, Producer } from 'mediasoup-client/types';
+import type { Producer } from 'mediasoup-client/types';
 import { useCallback, useRef, useState } from 'react';
 
 const useLocalStreams = () => {
@@ -15,12 +15,10 @@ const useLocalStreams = () => {
         MediaStream | undefined
     >(undefined);
 
-    const localVideoProducer = useRef<Producer<AppData> | undefined>(undefined);
-    const localAudioProducer = useRef<Producer<AppData> | undefined>(undefined);
-    const localScreenShareProducer = useRef<Producer<AppData> | undefined>(
-        undefined
-    );
-    const localScreenShareAudioProducer = useRef<Producer<AppData> | undefined>(
+    const localVideoProducer = useRef<Producer | undefined>(undefined);
+    const localAudioProducer = useRef<Producer | undefined>(undefined);
+    const localScreenShareProducer = useRef<Producer | undefined>(undefined);
+    const localScreenShareAudioProducer = useRef<Producer | undefined>(
         undefined
     );
 

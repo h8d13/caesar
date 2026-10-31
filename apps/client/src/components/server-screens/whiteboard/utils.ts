@@ -62,7 +62,7 @@ export function pointerEventToCanvasPoint(
 export function penPointsToPathLayer(
     points: number[][],
     color: Color,
-    strokeSize: number = 16
+    strokeSize = 16
 ): PathLayer {
     let minX = Number.POSITIVE_INFINITY;
     let minY = Number.POSITIVE_INFINITY;

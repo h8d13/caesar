@@ -8,7 +8,7 @@ import { LinkOverride } from './link';
 function getYoutubeVideoId(url: string): string | null {
     try {
         const u = new URL(url);
-        if (!u.hostname.match(/youtube\.com|youtu\.be/)) return null;
+        if (!/youtube\.com|youtu\.be/.test(u.hostname)) return null;
 
         // youtu.be/VIDEO_ID
         if (u.hostname.includes('youtu.be')) {

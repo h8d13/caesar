@@ -29,7 +29,7 @@ const applyEnvOverrides = <T>(
       }
 
       try {
-        current[finalKey] = JSON.parse(envValue!);
+        current[finalKey] = JSON.parse(envValue);
       } catch {
         current[finalKey] = envValue;
       }

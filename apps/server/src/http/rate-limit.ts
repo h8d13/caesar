@@ -1,4 +1,4 @@
-import http from 'http';
+import type http from 'http';
 import { getWsInfo } from '../helpers/get-ws-info';
 import { logger } from '../logger';
 import {

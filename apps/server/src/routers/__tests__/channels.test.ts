@@ -852,7 +852,7 @@ describe('channels router', () => {
     expect(newToken).toBeDefined();
     expect(newToken).not.toBe(originalToken);
     expect(channelAfter.fileAccessTokenUpdatedAt).toBeGreaterThan(
-      channelBefore.fileAccessTokenUpdatedAt!
+      channelBefore.fileAccessTokenUpdatedAt
     );
   });
 

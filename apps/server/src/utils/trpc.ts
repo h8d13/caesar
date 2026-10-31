@@ -1,6 +1,6 @@
 import {
-  ChannelPermission,
-  UserStatus,
+  type ChannelPermission,
+  type UserStatus,
   type Permission,
   type TChannelAccess,
   type TUser
@@ -12,7 +12,7 @@ import { logger } from '../logger';
 import type { TConnectionInfo } from '../types';
 import { IS_DEVELOPMENT } from './env';
 import { invariant } from './invariant';
-import { pubsub } from './pubsub';
+import { type pubsub } from './pubsub';
 import {
   createRateLimiter,
   getClientRateLimitKey

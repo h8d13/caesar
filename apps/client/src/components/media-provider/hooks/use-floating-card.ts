@@ -50,12 +50,12 @@ export const useFloatingCard = (
 
     useEffect(() => {
         if (position) {
-            setLocalStorageItemAsJSON<TPosition>(positionKey, position);
+            setLocalStorageItemAsJSON(positionKey, position);
         }
     }, [position, positionKey]);
 
     useEffect(() => {
-        setLocalStorageItemAsJSON<TSize>(sizeKey, size);
+        setLocalStorageItemAsJSON(sizeKey, size);
     }, [size, sizeKey]);
 
     const handleMouseDown = useCallback((e: React.MouseEvent) => {

@@ -86,10 +86,9 @@ const serializer = (
                 pushMedia({ type: 'audio', url: href });
 
                 return sanitizeElement(domNode, options);
-            } else {
-                const label = getTextContent(domNode);
-                return <LinkOverride link={href} label={label || undefined} />;
             }
+            const label = getTextContent(domNode);
+            return <LinkOverride link={href} label={label || undefined} />;
         } else if (
             domNode instanceof Element &&
             domNode.name === 'span' &&

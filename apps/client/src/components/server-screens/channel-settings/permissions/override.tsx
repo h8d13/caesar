@@ -4,7 +4,11 @@ import { useChannelById } from '@/features/server/channels/hooks';
 import { useRoleById } from '@/features/server/roles/hooks';
 import { useUserById } from '@/features/server/users/hooks';
 import { getTRPCClient } from '@/lib/trpc';
-import { ChannelPermission, ChannelType, getTrpcError } from '@caesar/shared';
+import {
+    type ChannelPermission,
+    ChannelType,
+    getTrpcError
+} from '@caesar/shared';
 import { CardTitle } from '@caesar/ui';
 import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';

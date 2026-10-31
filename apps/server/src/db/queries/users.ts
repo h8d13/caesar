@@ -121,27 +121,27 @@ const getUserByIdentity = async (
 
 const getUserByToken = async (token: string | undefined) => {
   try {
-    if (!token) return undefined;
+    if (!token) return;
 
     const decoded = await verifyJwt<TTokenPayload & { type?: string }>(token);
 
     // Reject pre-2FA tokens. They share the JWT secret but must never grant
     // a session: their only valid use is exchange via /login/2fa.
-    if (decoded.type === 'pre-2fa') return undefined;
+    if (decoded.type === 'pre-2fa') return;
 
     const user = await getUserById(decoded.userId);
 
     // reject tokens minted before the user's current session: superseded
     // by a newer login, a logout, or a password change.
-    if (!user || decoded.sessionEpoch !== user.sessionEpoch) return undefined;
+    if (!user || decoded.sessionEpoch !== user.sessionEpoch) return;
 
     // banned users keep a valid epoch; every HTTP route (upload, private
     // files) and the WS handshake gate on this, so refuse them here.
-    if (user.banned) return undefined;
+    if (user.banned) return;
 
     return user;
   } catch {
-    return undefined;
+    // malformed, expired or forged token: no user
   }
 };
 

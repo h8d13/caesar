@@ -74,9 +74,7 @@ const searchMessagesRoute = rateLimitedProcedure(protectedProcedure, {
     }
 
     const accessibleIds = searchable.map((c) => c.id);
-    const isDmByChannelId = new Map(
-      searchable.map((c) => [c.id, c.isDm === true])
-    );
+    const isDmByChannelId = new Map(searchable.map((c) => [c.id, c.isDm]));
 
     const rows = await db
       .select({

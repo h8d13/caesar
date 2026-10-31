@@ -79,8 +79,7 @@ export const EmojiSuggestion = {
                             component = destroySuggestion(component);
                         }
                     },
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    editor: props.editor as any
+                    editor: props.editor
                 });
 
                 document.body.appendChild(component.element);

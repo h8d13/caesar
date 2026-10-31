@@ -73,7 +73,7 @@ const envConfig = zEnvConfig.parse(
 // absent file = defaults, bad file = boot error naming the keys.
 // ---------------------------------------------------------------------------
 const loadIniConfig = async () => {
-  const stat = await fs.stat(CONFIG_INI_PATH).catch(() => undefined);
+  const stat = await fs.stat(CONFIG_INI_PATH).catch(() => {});
 
   if (!stat) return iniDefaults;
 

@@ -20,11 +20,14 @@ export const latestOwnMessageIdSelector = createCachedSelector(
         (state: IRootState, _channelId: number) => state.server.ownUserId
     ],
     (messages, ownUserId) => {
-        if (!ownUserId) return undefined;
+        if (!ownUserId) return;
         let latest: number | undefined;
         for (const m of messages) {
-            if (m.userId === ownUserId) {
-                if (latest === undefined || m.id > latest) latest = m.id;
+            if (
+                m.userId === ownUserId &&
+                (latest === undefined || m.id > latest)
+            ) {
+                latest = m.id;
             }
         }
         return latest;

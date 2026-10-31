@@ -99,7 +99,7 @@ const ConnectionStatus = memo(() => {
                     text: 'Connection failed',
                     color: 'text-red-500'
                 };
-            case 'disconnected':
+
             default:
                 return {
                     icon: <WifiOff className="h-4 w-4 text-red-500" />,

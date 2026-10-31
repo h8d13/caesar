@@ -56,8 +56,8 @@ const publishMessage = logFailures(
       );
 
       pubsub.publishFor(affectedUserIds, ServerEvents.MESSAGE_DELETE, {
-        messageId: messageId,
-        channelId: channelId
+        messageId,
+        channelId
       });
 
       return;

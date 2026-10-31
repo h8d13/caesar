@@ -80,7 +80,7 @@ const VoiceUserContextMenu = memo(
         } = useMediaControl();
 
         // Own streams have no local consumer to control.
-        if (user.id === ownUserId) return <>{children}</>;
+        if (user.id === ownUserId) return children;
 
         const videoKey = getUserVideoKey(user.id);
         const screenVideoKey = getUserScreenVideoKey(user.id);

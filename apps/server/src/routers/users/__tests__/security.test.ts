@@ -34,7 +34,7 @@ const insertUser = async (identity: string): Promise<number> => {
     .returning({ id: users.id })
     .get();
 
-  return row!.id;
+  return row.id;
 };
 
 // trade a staged refresh nonce for the new session cookie, presenting the

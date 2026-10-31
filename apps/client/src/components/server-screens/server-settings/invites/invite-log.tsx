@@ -12,7 +12,7 @@ const eventLabels: Record<string, string> = {
 };
 
 const getCode = (entry: TActivityLogEntry) =>
-    entry.details && 'code' in entry.details ? String(entry.details.code) : '';
+    entry.details && 'code' in entry.details ? entry.details.code : '';
 
 const InviteLog = memo(({ log }: { log: TActivityLogEntry[] }) => {
     const searchFilter = useCallback(

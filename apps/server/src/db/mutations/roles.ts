@@ -1,7 +1,7 @@
 import type { Permission } from '@caesar/shared';
 import { rolePermissions } from '@caesar/shared/db/schema';
 import { eq } from 'drizzle-orm';
-import { db } from '..';
+import { type db } from '..';
 
 type TTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 

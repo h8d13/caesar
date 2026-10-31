@@ -59,7 +59,7 @@ const Emoji = memo(
         );
 
         const onError = useCallback(
-            (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+            (e: React.SyntheticEvent<HTMLImageElement>) => {
                 const target = e.target as HTMLImageElement;
 
                 target.outerHTML = `<span class="text-xs text-muted-foreground">:${emoji}:</span>`;

@@ -10,7 +10,7 @@ import {
     STORAGE_MAX_QUOTA_PER_USER,
     STORAGE_OVERFLOW_ACTION,
     STORAGE_QUOTA,
-    StorageOverflowAction,
+    type StorageOverflowAction,
     type TCategory,
     type TChannel,
     type TStorageSettings,
@@ -22,7 +22,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 const toVoid =
-    <T>(refetch: () => Promise<QueryObserverResult<T, Error>>) =>
+    <T>(refetch: () => Promise<QueryObserverResult<T>>) =>
     async (): Promise<void> => {
         await refetch();
     };
@@ -338,37 +338,31 @@ export const useAdminStorage = () => {
     const labels = useMemo(() => {
         return {
             storageUploadMaxFileSize: filesize(
-                Number(values.storageUploadMaxFileSize ?? 0),
+                values.storageUploadMaxFileSize ?? 0,
                 {
                     output: 'object',
                     standard: 'jedec'
                 }
             ),
             storageSpaceQuotaByUser: filesize(
-                Number(values.storageSpaceQuotaByUser ?? 0),
+                values.storageSpaceQuotaByUser ?? 0,
                 {
                     output: 'object',
                     standard: 'jedec'
                 }
             ),
-            storageQuota: filesize(Number(values.storageQuota ?? 0), {
+            storageQuota: filesize(values.storageQuota ?? 0, {
                 output: 'object',
                 standard: 'jedec'
             }),
-            storageMaxAvatarSize: filesize(
-                Number(values.storageMaxAvatarSize ?? 0),
-                {
-                    output: 'object',
-                    standard: 'jedec'
-                }
-            ),
-            storageMaxBannerSize: filesize(
-                Number(values.storageMaxBannerSize ?? 0),
-                {
-                    output: 'object',
-                    standard: 'jedec'
-                }
-            )
+            storageMaxAvatarSize: filesize(values.storageMaxAvatarSize ?? 0, {
+                output: 'object',
+                standard: 'jedec'
+            }),
+            storageMaxBannerSize: filesize(values.storageMaxBannerSize ?? 0, {
+                output: 'object',
+                standard: 'jedec'
+            })
         };
     }, [values]);
 

@@ -1,5 +1,5 @@
 import type { TServerInfo } from '@caesar/shared';
-import http from 'http';
+import type http from 'http';
 import { getSettings } from '../db/queries/server';
 
 const infoRouteHandler = async (

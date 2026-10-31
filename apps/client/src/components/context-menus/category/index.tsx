@@ -52,7 +52,7 @@ const CategoryContextMenu = memo(
         }, [categoryId]);
 
         if (!can(Permission.MANAGE_CATEGORIES)) {
-            return <>{children}</>;
+            return children;
         }
 
         return (

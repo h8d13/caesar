@@ -73,7 +73,7 @@ class TemporaryFileManager {
   };
 
   public temporaryFileExists = (id: string): boolean => {
-    return !!this.temporaryFiles.find((file) => file.id === id);
+    return this.temporaryFiles.some((file) => file.id === id);
   };
 
   public temporaryFileHasMimeType = (

@@ -90,7 +90,7 @@ const MediaProviderContext = createContext<TMediaProvider>({
         screenShareRef: { current: null },
         screenShareAudioRef: { current: null }
     }),
-    getConsumerCodec: () => undefined,
+    getConsumerCodec: () => {},
     isSimulcastConsumer: () => false,
     getStreamQualityLayers: () => [],
     getStreamQuality: () => ({ mode: 'auto' }),

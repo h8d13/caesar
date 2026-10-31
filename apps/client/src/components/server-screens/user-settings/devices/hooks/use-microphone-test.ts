@@ -171,7 +171,7 @@ const useMicrophoneTest = ({
                 analyser.getFloatTimeDomainData(floatDataArray);
 
                 for (let index = 0; index < floatDataArray.length; index++) {
-                    const sample = floatDataArray[index]!;
+                    const sample = floatDataArray[index];
 
                     sum += sample * sample;
                 }
@@ -508,7 +508,7 @@ const useMicrophoneTest = ({
         };
 
         navigator.permissions
-            .query({ name: 'microphone' as PermissionName })
+            .query({ name: 'microphone' })
             .then((status) => {
                 permissionStatus = status;
                 updatePermissionState();

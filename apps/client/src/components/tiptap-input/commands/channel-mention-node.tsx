@@ -40,7 +40,7 @@ const ChannelMentionNode = Node.create({
             {
                 tag: 'span[data-type="channel-mention"]',
                 getAttrs: (dom) => {
-                    const el = dom as HTMLElement;
+                    const el = dom;
                     const channelId = el
                         .getAttribute('data-channel-id')
                         ?.trim();

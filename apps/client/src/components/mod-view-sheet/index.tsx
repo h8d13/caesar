@@ -4,7 +4,11 @@ import { useAdminUserInfo } from '@/features/server/admin/hooks';
 import { extractUrls } from '@caesar/shared';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@caesar/ui';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { ModViewContext, ModViewScreen, type TModViewContext } from './context';
+import {
+    ModViewContext,
+    type ModViewScreen,
+    type TModViewContext
+} from './context';
 import { ModViewContent } from './mod-view-content';
 
 type TContentWrapperProps = {
@@ -28,8 +32,7 @@ const ContentWrapper = memo(({ userId }: TContentWrapperProps) => {
 
     const contextValue = useMemo<TModViewContext>(() => {
         const links: string[] = messages
-            .map((msg) => extractUrls(msg.content ?? ''))
-            .flat()
+            .flatMap((msg) => extractUrls(msg.content ?? ''))
             .filter((value, index, self) => self.indexOf(value) === index);
 
         return {

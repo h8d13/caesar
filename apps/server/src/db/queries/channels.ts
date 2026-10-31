@@ -218,7 +218,7 @@ const getAllChannelUserPermissions = async (
 
     channelPermissions[channel.id] = {
       channelId: channel.id,
-      permissions: permissions as Record<ChannelPermission, boolean>
+      permissions
     };
   }
 

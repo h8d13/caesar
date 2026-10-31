@@ -1,7 +1,7 @@
 import { channels, files } from '@caesar/shared/db/schema';
 import { eq } from 'drizzle-orm';
 import fs from 'fs';
-import http from 'http';
+import type http from 'http';
 import path from 'path';
 import { config } from '../config';
 import { db } from '../db';
@@ -26,7 +26,7 @@ const publicFileRateLimiter = createRateLimiter({
 // `attachment` so a direct navigation cannot execute uploaded content
 // (see f0bb0150). Never add a type the browser can script from: no
 // text/html, no image/svg+xml, no application/*.
-const inlineMimeAllowlist = [
+const inlineMimeAllowlist = new Set([
   'image/png',
   'image/jpeg',
   'image/gif',
@@ -38,7 +38,7 @@ const inlineMimeAllowlist = [
   'audio/webm',
   'audio/ogg',
   'audio/mp4'
-];
+]);
 
 const pipeFileStream = (
   filePath: string,
@@ -82,7 +82,7 @@ const publicRouteHandler = async (
     return;
   }
 
-  const url = new URL(req.url!, `http://${req.headers.host}`);
+  const url = new URL(req.url, `http://${req.headers.host}`);
   const fileName = safeDecodeURIComponent(path.basename(url.pathname));
 
   if (fileName === null) {
@@ -184,7 +184,7 @@ const publicRouteHandler = async (
     return res;
   }
 
-  const contentDisposition = inlineMimeAllowlist.includes(dbFile.mimeType)
+  const contentDisposition = inlineMimeAllowlist.has(dbFile.mimeType)
     ? 'inline'
     : 'attachment';
 

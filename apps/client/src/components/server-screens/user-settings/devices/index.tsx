@@ -17,7 +17,7 @@ import {
     subscribeRNNoiseWorkletAvailability
 } from '@/helpers/audio-worklet/rnnoise-worklet';
 import { useForm } from '@/hooks/use-form';
-import { NoiseSuppressionMode, Resolution, VideoCodec } from '@/types';
+import { NoiseSuppressionMode, type Resolution, VideoCodec } from '@/types';
 import { DEFAULT_BITRATE, DEFAULT_WEBCAM_BITRATE } from '@caesar/shared';
 import {
     Alert,
@@ -104,10 +104,10 @@ const Devices = memo(() => {
     } = useMicrophoneTest({
         microphoneId: values.microphoneId,
         playbackId: values.playbackId,
-        autoGainControl: !!values.autoGainControl,
-        echoCancellation: !!values.echoCancellation,
-        noiseSuppression: !!values.noiseSuppression,
-        noiseGateEnabled: !!values.noiseGateEnabled,
+        autoGainControl: values.autoGainControl,
+        echoCancellation: values.echoCancellation,
+        noiseSuppression: values.noiseSuppression,
+        noiseGateEnabled: values.noiseGateEnabled,
         noiseGateThresholdDb:
             values.noiseGateThresholdDb ?? MICROPHONE_GATE_DEFAULT_THRESHOLD_DB
     });
@@ -253,7 +253,7 @@ const Devices = memo(() => {
                             <div className="grid grid-cols-2 gap-4 sm:flex sm:items-center">
                                 <Group label="Echo cancellation">
                                     <Switch
-                                        checked={!!values.echoCancellation}
+                                        checked={values.echoCancellation}
                                         onCheckedChange={(checked) =>
                                             onChange(
                                                 'echoCancellation',
@@ -266,7 +266,7 @@ const Devices = memo(() => {
                                 <Group label="Noise suppression">
                                     <Switch
                                         checked={
-                                            !!values.noiseSuppression &&
+                                            values.noiseSuppression &&
                                             !advancedNsActive
                                         }
                                         disabled={advancedNsActive}
@@ -281,7 +281,7 @@ const Devices = memo(() => {
 
                                 <Group label="Gain control">
                                     <Switch
-                                        checked={!!values.autoGainControl}
+                                        checked={values.autoGainControl}
                                         onCheckedChange={(checked) =>
                                             onChange('autoGainControl', checked)
                                         }
@@ -577,7 +577,7 @@ const Devices = memo(() => {
 
                             <Group label="Mirror own video">
                                 <Switch
-                                    checked={!!values.mirrorOwnVideo}
+                                    checked={values.mirrorOwnVideo}
                                     onCheckedChange={(checked) =>
                                         onChange('mirrorOwnVideo', checked)
                                     }
@@ -589,7 +589,7 @@ const Devices = memo(() => {
                                 description="Send video and screen share in multiple quality layers so viewers on slower connections get a smoother stream."
                             >
                                 <Switch
-                                    checked={!!values.simulcastEnabled}
+                                    checked={values.simulcastEnabled}
                                     onCheckedChange={(checked) =>
                                         onChange('simulcastEnabled', checked)
                                     }

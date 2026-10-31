@@ -39,9 +39,9 @@ type ActiveBetInternal = {
 class RouletteRuntime {
   private callbacks: TRouletteLedgerCallbacks;
   private phase: RoulettePhase = RoulettePhase.BETTING;
-  private roundId: number = 0;
-  private winningNumber: number = 0;
-  private phaseStartedAt: number = 0;
+  private roundId = 0;
+  private winningNumber = 0;
+  private phaseStartedAt = 0;
   private activeBets: ActiveBetInternal[] = [];
   private lightningNumbers: TLightningNumber[] = [];
 
@@ -86,7 +86,7 @@ class RouletteRuntime {
     };
   }
 
-  async getHistory(limit: number = 20): Promise<TRouletteRoundHistory[]> {
+  async getHistory(limit = 20): Promise<TRouletteRoundHistory[]> {
     const rows = await db
       .select({
         id: rouletteRounds.id,

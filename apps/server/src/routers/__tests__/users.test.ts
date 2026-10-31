@@ -344,7 +344,7 @@ describe('users router', () => {
     const userInfo = await caller.users.getInfo({ userId: 1 });
 
     expect(userInfo).toBeDefined();
-    expect(userInfo!.user.avatarId).toBeDefined();
+    expect(userInfo.user.avatarId).toBeDefined();
   });
 
   test('should remove avatar', async () => {
@@ -371,7 +371,7 @@ describe('users router', () => {
     const userInfo = await caller.users.getInfo({ userId: 1 });
 
     expect(userInfo).toBeDefined();
-    expect(userInfo!.user.avatarId).toBeNull();
+    expect(userInfo.user.avatarId).toBeNull();
   });
 
   test('should enforce configured avatar size limit', async () => {
@@ -449,7 +449,7 @@ describe('users router', () => {
     const userInfo = await caller.users.getInfo({ userId: 1 });
 
     expect(userInfo).toBeDefined();
-    expect(userInfo!.user.bannerId).toBeDefined();
+    expect(userInfo.user.bannerId).toBeDefined();
   });
 
   test('should remove banner', async () => {
@@ -471,7 +471,7 @@ describe('users router', () => {
     const userInfo = await caller.users.getInfo({ userId: 1 });
 
     expect(userInfo).toBeDefined();
-    expect(userInfo!.user.bannerId).toBeNull();
+    expect(userInfo.user.bannerId).toBeNull();
   });
 
   test('should enforce configured banner size limit', async () => {
@@ -929,7 +929,7 @@ describe('users router', () => {
 
     await tdb.insert(emojis).values({
       name: emojiName,
-      fileId: insertedEmojiFile!.id,
+      fileId: insertedEmojiFile.id,
       userId: targetUserId,
       createdAt: now,
       updatedAt: now
@@ -985,7 +985,7 @@ describe('users router', () => {
     const emojiFileAfterDelete = await tdb
       .select({ userId: files.userId })
       .from(files)
-      .where(eq(files.id, insertedEmojiFile!.id))
+      .where(eq(files.id, insertedEmojiFile.id))
       .get();
 
     expect(emojiFileAfterDelete).toBeDefined();
@@ -1056,7 +1056,7 @@ describe('users router', () => {
 
     await tdb.insert(emojis).values({
       name: `wipe_emoji_${now}`,
-      fileId: insertedEmojiFile!.id,
+      fileId: insertedEmojiFile.id,
       userId: targetUserId,
       createdAt: now,
       updatedAt: now
@@ -1148,7 +1148,7 @@ describe('users router', () => {
     const wipedMessageFile = await tdb
       .select({ id: files.id, userId: files.userId })
       .from(files)
-      .where(eq(files.id, insertedMessageFile!.id))
+      .where(eq(files.id, insertedMessageFile.id))
       .get();
 
     expect(wipedMessageFile).toBeDefined();
@@ -1157,7 +1157,7 @@ describe('users router', () => {
     const wipedEmojiFile = await tdb
       .select({ id: files.id, userId: files.userId })
       .from(files)
-      .where(eq(files.id, insertedEmojiFile!.id))
+      .where(eq(files.id, insertedEmojiFile.id))
       .get();
 
     expect(wipedEmojiFile).toBeDefined();

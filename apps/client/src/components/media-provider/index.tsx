@@ -355,7 +355,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             logVoice('Starting microphone stream');
             cleanupMicProcessingResources();
 
-            const shouldUseNoiseGate = !!devices.noiseGateEnabled;
+            const shouldUseNoiseGate = devices.noiseGateEnabled;
             const shouldUseRNNoise =
                 devices.noiseSuppressionMode === NoiseSuppressionMode.RNNOISE;
             const shouldUseDTLN =
@@ -1034,9 +1034,8 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                 }
 
                 return videoTrack;
-            } else {
-                throw new Error('No video track obtained for screen share');
             }
+            throw new Error('No video track obtained for screen share');
         } catch (error) {
             // state was set before produce(); a throw here would otherwise
             // leave a live stream and half-built producers behind

@@ -24,7 +24,7 @@ const recordSql = async (fn: () => Promise<unknown>): Promise<string[]> => {
   const original = sqlite.execute.bind(sqlite);
   const statements: string[] = [];
 
-  (sqlite as unknown as { execute: unknown }).execute = ((
+  (sqlite as unknown as { execute: unknown }).execute = (
     ...args: Parameters<Client['execute']>
   ) => {
     const stmt = args[0];
@@ -34,7 +34,7 @@ const recordSql = async (fn: () => Promise<unknown>): Promise<string[]> => {
     );
 
     return original(...args);
-  }) as Client['execute'];
+  };
 
   try {
     await fn();

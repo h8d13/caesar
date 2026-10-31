@@ -26,7 +26,7 @@ import {
 
 const voiceRuntimes = new Map<number, VoiceRuntime>();
 
-const defaultRouterOptions: RouterOptions<AppData> = {
+const defaultRouterOptions: RouterOptions = {
   mediaCodecs: [
     {
       kind: 'video',
@@ -99,16 +99,16 @@ const defaultUserState: TVoiceUserState = {
 };
 
 type TTransportMap = {
-  [userId: number]: WebRtcTransport<AppData>;
+  [userId: number]: WebRtcTransport;
 };
 
 type TProducerMap = {
-  [userId: number]: Producer<AppData>;
+  [userId: number]: Producer;
 };
 
 type TConsumerMap = {
   [userId: number]: {
-    [key: string]: Consumer<AppData>;
+    [key: string]: Consumer;
   };
 };
 
@@ -119,7 +119,7 @@ class VoiceRuntime {
     activeSince: null
   };
   // one router per worker slot, keyed by worker index
-  private routers: Map<number, Router<AppData>> = new Map();
+  private routers: Map<number, Router> = new Map();
   // per-user assignment to a worker (round-robin within this channel)
   private userWorkerIndex: Map<number, number> = new Map();
   // producers piped to non-owner routers: producerId -> set of dest worker idx
@@ -313,7 +313,7 @@ class VoiceRuntime {
 
   // rtpCapabilities are identical across all routers in this channel (same
   // mediaCodecs), so any router answers join.ts. Keep for backward-compat.
-  public getRouter = (): Router<AppData> => {
+  public getRouter = (): Router => {
     const first = this.routers.values().next().value;
     if (!first) throw new Error('Router not initialized yet');
     return first;
@@ -329,7 +329,7 @@ class VoiceRuntime {
     return idx;
   };
 
-  public getRouterForUser = (userId: number): Router<AppData> => {
+  public getRouterForUser = (userId: number): Router => {
     const idx = this.getWorkerIndexForUser(userId);
     const router = this.routers.get(idx);
     if (!router) throw new Error(`Router for worker ${idx} not initialized`);
@@ -377,7 +377,7 @@ class VoiceRuntime {
   // pipe a producer from its owning router to the destination worker's router
   // idempotent: tracks completed pipes per producer to avoid redundant calls
   public ensureProducerOnRouter = async (
-    producer: Producer<AppData>,
+    producer: Producer,
     destWorkerIndex: number
   ): Promise<void> => {
     const appData = producer.appData as AppData & { workerIndex?: number };
@@ -515,8 +515,6 @@ class VoiceRuntime {
         return this.screenProducers[id];
       case StreamKind.SCREEN_AUDIO:
         return this.screenAudioProducers[id];
-      default:
-        return undefined;
     }
   };
 
@@ -613,7 +611,7 @@ class VoiceRuntime {
     userId: number,
     remoteId: number,
     kind: string
-  ): Consumer<AppData> | undefined => {
+  ): Consumer | undefined => {
     return this.consumers[userId]?.[`${remoteId}-${kind}`];
   };
 
@@ -621,7 +619,7 @@ class VoiceRuntime {
     userId: number,
     remoteId: number,
     kind: string,
-    consumer: Consumer<AppData>
+    consumer: Consumer
   ) => {
     if (!this.consumers[userId]) {
       this.consumers[userId] = {};

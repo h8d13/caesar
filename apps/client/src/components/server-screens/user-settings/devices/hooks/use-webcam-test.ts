@@ -1,5 +1,5 @@
 import { getResWidthHeight } from '@/helpers/get-res-with-height';
-import { Resolution } from '@/types';
+import { type Resolution } from '@/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type TUseWebcamTestParams = {

@@ -56,7 +56,7 @@ const ChannelContextMenu = memo(
         // channel settings also hold the permissions tab, which a user can
         // manage without MANAGE_CHANNELS
         if (!canManageChannels && !can(Permission.MANAGE_CHANNEL_PERMISSIONS)) {
-            return <>{children}</>;
+            return children;
         }
 
         return (

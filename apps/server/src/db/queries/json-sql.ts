@@ -1,5 +1,5 @@
 import { files } from '@caesar/shared/db/schema';
-import { Column, getTableColumns, is, sql, SQL } from 'drizzle-orm';
+import { Column, getTableColumns, is, sql, type SQL } from 'drizzle-orm';
 import { alias, SQLiteAsyncDialect } from 'drizzle-orm/sqlite-core';
 
 // Builders for queries that let SQLite assemble the nested wire shape

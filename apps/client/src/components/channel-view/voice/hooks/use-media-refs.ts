@@ -50,7 +50,7 @@ const useMediaRefs = (remoteId: number) => {
     }, [userStreams, isOwnUser, localVideoStream, videoHidden]);
 
     const audioStream = useMemo(() => {
-        if (isOwnUser) return undefined;
+        if (isOwnUser) return;
 
         return userStreams?.[StreamKind.AUDIO];
     }, [userStreams, isOwnUser]);
@@ -62,7 +62,7 @@ const useMediaRefs = (remoteId: number) => {
     }, [userStreams, isOwnUser, localScreenShareStream]);
 
     const screenShareAudioStream = useMemo(() => {
-        if (isOwnUser) return undefined;
+        if (isOwnUser) return;
 
         return userStreams?.[StreamKind.SCREEN_AUDIO];
     }, [userStreams, isOwnUser]);

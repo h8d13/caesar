@@ -8,7 +8,6 @@ import {
 } from '@caesar/shared';
 import { TRPCClientError } from '@trpc/client';
 import {
-    type AppData,
     type Consumer,
     type Device,
     type RtpCapabilities,
@@ -40,11 +39,11 @@ const useTransports = ({
     addRemoteUserStream,
     removeRemoteUserStream
 }: TUseTransportParams) => {
-    const producerTransport = useRef<Transport<AppData> | undefined>(undefined);
-    const consumerTransport = useRef<Transport<AppData> | undefined>(undefined);
+    const producerTransport = useRef<Transport | undefined>(undefined);
+    const consumerTransport = useRef<Transport | undefined>(undefined);
     const consumers = useRef<{
         [userId: number]: {
-            [kind: string]: Consumer<AppData>;
+            [kind: string]: Consumer;
         };
     }>({});
     const consumerCodecs = useRef<Map<string, string>>(new Map());
@@ -58,7 +57,7 @@ const useTransports = ({
     >(new Map());
 
     const startPacketLossMonitor = useCallback(
-        (remoteId: number, kind: StreamKind, consumer: Consumer<AppData>) => {
+        (remoteId: number, kind: StreamKind, consumer: Consumer) => {
             if (!VIDEO_KINDS.has(kind)) return;
 
             const monitorKey = `${remoteId}-${kind}`;
@@ -196,19 +195,20 @@ const useTransports = ({
 
                         callback({ id: producerId });
                     } catch (error) {
-                        if (error instanceof TRPCClientError) {
-                            if (error.data.code === 'FORBIDDEN') {
-                                logVoice('Permission denied to produce track', {
-                                    kind
-                                });
-                                errback(
-                                    new Error(
-                                        `You don't have permission to ${kind} in this channel`
-                                    )
-                                );
+                        if (
+                            error instanceof TRPCClientError &&
+                            error.data.code === 'FORBIDDEN'
+                        ) {
+                            logVoice('Permission denied to produce track', {
+                                kind
+                            });
+                            errback(
+                                new Error(
+                                    `You don't have permission to ${kind} in this channel`
+                                )
+                            );
 
-                                return;
-                            }
+                            return;
                         }
 
                         logVoice('Error producing new track', { error });
@@ -352,7 +352,7 @@ const useTransports = ({
 
                 const newConsumer = await consumerTransport.current.consume({
                     id: consumerId,
-                    producerId: producerId,
+                    producerId,
                     kind: getMediasoupKind(consumerKind),
                     rtpParameters: consumerRtpParameters
                 });

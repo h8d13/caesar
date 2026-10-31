@@ -2,7 +2,7 @@ import {
   ActivityLogType,
   ChannelPermission,
   OWNER_ROLE_ID,
-  Permission,
+  type Permission,
   ServerEvents,
   UserStatus,
   type TConnectionParams
@@ -14,7 +14,7 @@ import {
   type CreateWSSContextFnOptions
 } from '@trpc/server/adapters/ws';
 import { eq } from 'drizzle-orm';
-import http from 'http';
+import type http from 'http';
 import { type RawData, WebSocket, WebSocketServer } from 'ws';
 import { db } from '../db';
 import { getAllChannelUserPermissions } from '../db/queries/channels';
@@ -219,9 +219,7 @@ const createContext = async ({
     if (!channelInfo.permissions[ChannelPermission.VIEW_CHANNEL])
       return 'denied';
 
-    return channelInfo.permissions[targetPermission] === true
-      ? 'allowed'
-      : 'denied';
+    return channelInfo.permissions[targetPermission] ? 'allowed' : 'denied';
   };
 
   const hasChannelPermission = async (

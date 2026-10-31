@@ -1,4 +1,9 @@
-import { ChannelPermission, type TFile, type TSettings, type TUser } from '.';
+import {
+  type ChannelPermission,
+  type TFile,
+  type TSettings,
+  type TUser
+} from '.';
 
 export enum ChannelType {
   TEXT = 'TEXT',

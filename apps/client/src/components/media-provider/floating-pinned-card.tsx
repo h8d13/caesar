@@ -41,7 +41,7 @@ const FloatingPinnedCard = memo(
         const pinnedUser = useUserById(pinnedCard?.userId || -1);
 
         const pinnedCardVideoStream = useMemo(() => {
-            if (!pinnedCard) return undefined;
+            if (!pinnedCard) return;
 
             if (pinnedCard.userId === ownUserId) {
                 return localScreenShareStream || localVideoStream || undefined;
@@ -49,7 +49,7 @@ const FloatingPinnedCard = memo(
 
             const streamInfo = remoteUserStreams[pinnedCard.userId];
 
-            if (!streamInfo) return undefined;
+            if (!streamInfo) return;
 
             return streamInfo.screen || streamInfo.video || undefined;
         }, [

@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import http from 'http';
+import type http from 'http';
 import jwt from 'jsonwebtoken';
 import { getJwtSecret } from '../utils/jwt-secret';
 
@@ -107,7 +107,7 @@ const takeSessionRefresh = (nonce: string) => {
 
   pendingRefreshes.delete(nonce);
 
-  if (!entry || entry.expiresAt <= Date.now()) return undefined;
+  if (!entry || entry.expiresAt <= Date.now()) return;
 
   return entry;
 };

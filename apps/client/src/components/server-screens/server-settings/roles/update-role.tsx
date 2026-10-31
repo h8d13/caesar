@@ -48,13 +48,10 @@ const UpdateRole = memo(
         });
 
         const isOwnerRole = selectedRole.id === OWNER_ROLE_ID;
-        const storageQuotaLabel = filesize(
-            Number(values.storageSpaceQuota ?? 0),
-            {
-                output: 'object',
-                standard: 'jedec'
-            }
-        );
+        const storageQuotaLabel = filesize(values.storageSpaceQuota ?? 0, {
+            output: 'object',
+            standard: 'jedec'
+        });
 
         const onDeleteRole = useCallback(async () => {
             const choice = await requestConfirmation({
@@ -234,7 +231,7 @@ const UpdateRole = memo(
                             </div>
                             <Switch
                                 id="role-storage-override"
-                                checked={!!values.storageQuotaOverrideEnabled}
+                                checked={values.storageQuotaOverrideEnabled}
                                 onCheckedChange={(checked) =>
                                     onChange(
                                         'storageQuotaOverrideEnabled',
@@ -247,7 +244,7 @@ const UpdateRole = memo(
                         <div className="space-y-2">
                             <Label>Storage quota</Label>
                             <StorageSizeControl
-                                value={Number(values.storageSpaceQuota)}
+                                value={values.storageSpaceQuota}
                                 max={STORAGE_MAX_QUOTA_PER_USER}
                                 min={STORAGE_MIN_QUOTA_PER_USER}
                                 disabled={!values.storageQuotaOverrideEnabled}
@@ -255,7 +252,7 @@ const UpdateRole = memo(
                                     onChange('storageSpaceQuota', value)
                                 }
                                 preview={
-                                    Number(values.storageSpaceQuota) === 0 ? (
+                                    values.storageSpaceQuota === 0 ? (
                                         'Unlimited'
                                     ) : (
                                         <>

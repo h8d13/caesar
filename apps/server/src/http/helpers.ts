@@ -1,5 +1,5 @@
 import type fs from 'fs';
-import http from 'http';
+import type http from 'http';
 import path from 'path';
 import { PayloadTooLargeError } from './utils';
 
@@ -159,9 +159,11 @@ const hasMatchingEtag = (
     return false;
   }
 
-  const candidates = ifNoneMatchHeader.split(',').map((part) => part.trim());
+  const candidates = new Set(
+    ifNoneMatchHeader.split(',').map((part) => part.trim())
+  );
 
-  return candidates.includes('*') || candidates.includes(etag);
+  return candidates.has('*') || candidates.has(etag);
 };
 
 const isNotModifiedByDate = (

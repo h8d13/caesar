@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import fs from 'fs';
-import http from 'http';
+import type http from 'http';
 import mime from 'mime-types';
 import path from 'path';
 import zlib from 'zlib';

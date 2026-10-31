@@ -16,17 +16,15 @@ export const usersSelector = createSelector(
     (state: IRootState) => state.server.users,
     (users) => {
         return [...users].sort((a, b) => {
-            const aBanned = Boolean(a.banned);
-            const bBanned = Boolean(b.banned);
+            const aBanned = a.banned;
+            const bBanned = b.banned;
 
             if (aBanned !== bBanned) {
                 return aBanned ? 1 : -1;
             }
 
-            const aStatus =
-                STATUS_ORDER[String(a.status ?? UserStatus.OFFLINE)] ?? 3;
-            const bStatus =
-                STATUS_ORDER[String(b.status ?? UserStatus.OFFLINE)] ?? 3;
+            const aStatus = STATUS_ORDER[a.status ?? UserStatus.OFFLINE] ?? 3;
+            const bStatus = STATUS_ORDER[b.status ?? UserStatus.OFFLINE] ?? 3;
 
             if (aStatus !== bStatus) {
                 return aStatus - bStatus;

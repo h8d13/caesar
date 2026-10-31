@@ -35,12 +35,12 @@ type ActiveBetInternal = {
 class CrashRuntime {
   private callbacks: TCrashLedgerCallbacks;
   private phase: CrashPhase = CrashPhase.BETTING;
-  private roundId: number = 0;
-  private crashPoint: number = 1;
-  private multiplier: number = 1;
-  private phaseStartedAt: number = 0;
-  private flyingStartedAt: number = 0;
-  private crashedAt: number = 0;
+  private roundId = 0;
+  private crashPoint = 1;
+  private multiplier = 1;
+  private phaseStartedAt = 0;
+  private flyingStartedAt = 0;
+  private crashedAt = 0;
   private activeBets: ActiveBetInternal[] = [];
   private tickInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -81,7 +81,7 @@ class CrashRuntime {
     };
   }
 
-  async getHistory(limit: number = 20): Promise<TCrashRoundHistory[]> {
+  async getHistory(limit = 20): Promise<TCrashRoundHistory[]> {
     const rows = await db
       .select({
         id: crashRounds.id,

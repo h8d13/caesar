@@ -1,6 +1,6 @@
 import { UploadHeaders } from '@caesar/shared';
 import fs from 'fs';
-import http from 'http';
+import type http from 'http';
 import z from 'zod';
 import { config } from '../config';
 import { getSettings } from '../db/queries/server';

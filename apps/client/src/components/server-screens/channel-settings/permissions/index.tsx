@@ -1,6 +1,6 @@
 import { useAdminChannelPermissions } from '@/features/server/admin/hooks';
 import { useChannelById } from '@/features/server/channels/hooks';
-import { ChannelPermission } from '@caesar/shared';
+import { type ChannelPermission } from '@caesar/shared';
 import {
     Alert,
     AlertDescription,
@@ -43,14 +43,13 @@ const ChannelPermissions = memo(({ channelId }: TChannelPermissionsProps) => {
                     permission: perm.permission as ChannelPermission,
                     allow: perm.allow
                 }));
-        } else {
-            return userPermissions
-                .filter((perm) => perm.userId === id)
-                .map((perm) => ({
-                    permission: perm.permission as ChannelPermission,
-                    allow: perm.allow
-                }));
         }
+        return userPermissions
+            .filter((perm) => perm.userId === id)
+            .map((perm) => ({
+                permission: perm.permission as ChannelPermission,
+                allow: perm.allow
+            }));
     }, [selectedOverrideId, rolePermissions, userPermissions]);
 
     if (loading) {

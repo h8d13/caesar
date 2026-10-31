@@ -74,7 +74,7 @@ const Storage = memo(() => {
                     description="Allows users to upload files to the server. Existing files won't be affected."
                 >
                     <Switch
-                        checked={!!values.storageUploadEnabled}
+                        checked={values.storageUploadEnabled}
                         onCheckedChange={(checked) =>
                             onChange('storageUploadEnabled', checked)
                         }
@@ -86,7 +86,7 @@ const Storage = memo(() => {
                     description="Allows users to share files in direct messages. This setting only applies if uploads are enabled, and it does not affect existing files in direct messages."
                 >
                     <Switch
-                        checked={!!values.storageFileSharingInDirectMessages}
+                        checked={values.storageFileSharingInDirectMessages}
                         onCheckedChange={(checked) =>
                             onChange(
                                 'storageFileSharingInDirectMessages',
@@ -103,7 +103,7 @@ const Storage = memo(() => {
                     help="This is not a hard limit, meaning that files will still be written to disk temporarily even if the quota is exceeded. The overflow action will be applied after the upload is complete. Make sure you have more disk space available than the quota you set here."
                 >
                     <StorageSizeControl
-                        value={Number(values.storageQuota)}
+                        value={values.storageQuota}
                         max={STORAGE_MAX_QUOTA}
                         min={STORAGE_MIN_QUOTA}
                         disabled={!values.storageUploadEnabled}
@@ -123,7 +123,7 @@ const Storage = memo(() => {
                     description="The maximum size of a single file that can be uploaded to the server."
                 >
                     <StorageSizeControl
-                        value={Number(values.storageUploadMaxFileSize)}
+                        value={values.storageUploadMaxFileSize}
                         max={STORAGE_MAX_FILE_SIZE}
                         min={STORAGE_MIN_FILE_SIZE}
                         disabled={!values.storageUploadEnabled}
@@ -145,7 +145,7 @@ const Storage = memo(() => {
                     description="The maximum file size users are allowed to set for their avatar and status images."
                 >
                     <StorageSizeControl
-                        value={Number(values.storageMaxAvatarSize)}
+                        value={values.storageMaxAvatarSize}
                         max={STORAGE_MAX_AVATAR_SIZE}
                         min={STORAGE_MIN_FILE_SIZE}
                         disabled={!values.storageUploadEnabled}
@@ -167,7 +167,7 @@ const Storage = memo(() => {
                     description="The maximum profile banner file size users are allowed to set."
                 >
                     <StorageSizeControl
-                        value={Number(values.storageMaxBannerSize)}
+                        value={values.storageMaxBannerSize}
                         max={STORAGE_MAX_BANNER_SIZE}
                         min={STORAGE_MIN_FILE_SIZE}
                         disabled={!values.storageUploadEnabled}
@@ -189,7 +189,7 @@ const Storage = memo(() => {
                     description="The maximum amount of storage space each user can use on the server. Use 0 for unlimited."
                 >
                     <StorageSizeControl
-                        value={Number(values.storageSpaceQuotaByUser)}
+                        value={values.storageSpaceQuotaByUser}
                         max={STORAGE_MAX_QUOTA_PER_USER}
                         min={STORAGE_MIN_QUOTA_PER_USER}
                         disabled={!values.storageUploadEnabled}
@@ -197,7 +197,7 @@ const Storage = memo(() => {
                             onChange('storageSpaceQuotaByUser', value)
                         }
                         preview={
-                            Number(values.storageSpaceQuotaByUser) === 0 ? (
+                            values.storageSpaceQuotaByUser === 0 ? (
                                 'Unlimited'
                             ) : (
                                 <>
@@ -222,7 +222,7 @@ const Storage = memo(() => {
                                 min={STORAGE_MIN_FILES_PER_MESSAGE}
                                 max={STORAGE_MAX_FILES_PER_MESSAGE}
                                 step={1}
-                                value={Number(values.storageMaxFilesPerMessage)}
+                                value={values.storageMaxFilesPerMessage}
                                 disabled={!values.storageUploadEnabled}
                                 onChange={(e) => {
                                     const nextValue = Number(e.target.value);

@@ -45,7 +45,7 @@ const getLocalStorageItem = (key: LocalStorageKey): string | null =>
 
 const getLocalStorageItemBool = (
     key: LocalStorageKey,
-    defaultValue: boolean = false
+    defaultValue = false
 ): boolean => {
     const item = getLocalStorageItem(key);
 
@@ -72,8 +72,10 @@ const getLocalStorageItemAsJSON = <T>(
     return defaultValue;
 };
 
-const setLocalStorageItemAsJSON = <T>(key: LocalStorageKey, value: T): void =>
-    setLocalStorageItem(key, JSON.stringify(value));
+const setLocalStorageItemAsJSON = (
+    key: LocalStorageKey,
+    value: unknown
+): void => setLocalStorageItem(key, JSON.stringify(value));
 
 const setLocalStorageItem = (key: LocalStorageKey, value: string): void =>
     tryStorage(() => localStorage.setItem(key, value), undefined);

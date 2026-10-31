@@ -72,8 +72,7 @@ export const hasVisibleChannelsInCategorySelector = createCachedSelector(
             const permissions =
                 channelPermissions[channel.id]?.permissions ??
                 ({} as Record<string, boolean>);
-            if (permissions[ChannelPermission.VIEW_CHANNEL] === true)
-                return true;
+            if (permissions[ChannelPermission.VIEW_CHANNEL]) return true;
         }
         return false;
     }
@@ -134,7 +133,7 @@ export const ownVoiceUserSelector = createSelector(
         (state: IRootState) => {
             const channelId = currentVoiceChannelIdSelector(state);
 
-            if (channelId === undefined) return undefined;
+            if (channelId === undefined) return;
 
             return voiceUsersByChannelIdSelector(state, channelId);
         }

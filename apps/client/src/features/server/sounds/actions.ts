@@ -501,8 +501,5 @@ export const playSound = (type: SoundType) => {
 
         case SoundType.INCOMING_CALL_RING:
             return sfxIncomingCallRing();
-
-        default:
-            return;
     }
 };

@@ -41,12 +41,12 @@ const getCaller = async (userId: number) => {
 };
 
 // this will basically simulate a specific user connecting to the server
-const initTest = async (userId: number = 1) => {
+const initTest = async (userId = 1) => {
   const { caller, mockedToken } = await getCaller(userId);
   const { handshakeHash } = await caller.others.handshake();
 
   const initialData = await caller.others.joinServer({
-    handshakeHash: handshakeHash
+    handshakeHash
   });
 
   return { caller, mockedToken, initialData };

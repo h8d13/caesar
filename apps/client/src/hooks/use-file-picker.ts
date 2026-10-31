@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 
 const useFilePicker = () => {
     const openFilePicker = useCallback(
-        (accept: string = '*', multiple: boolean = false): Promise<File[]> => {
+        (accept = '*', multiple = false): Promise<File[]> => {
             return new Promise((resolve, reject) => {
                 try {
                     const input = document.createElement('input');
