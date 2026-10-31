@@ -1069,7 +1069,14 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         devices.simulcastEnabled
     ]);
 
+    // set by init, cleared here: every teardown path (leave, unmount,
+    // init's own pre-clean) is a no-op when nothing was set up
+    const sessionActive = useRef(false);
+
     const cleanup = useCallback(() => {
+        if (!sessionActive.current) return;
+
+        sessionActive.current = false;
         logVoice('Running voice provider cleanup');
 
         stopMonitoring();
@@ -1100,6 +1107,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
             });
 
             cleanup();
+            sessionActive.current = true;
 
             try {
                 setLoading(true);
@@ -1193,19 +1201,14 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         rtpCapabilities: routerRtpCapabilities.current
     });
 
-    const prevVoiceChannelId = useRef(currentVoiceChannelId);
-
     // logout/disconnect unmounts before the channel id clears, so the
-    // left-channel effect below never fires; tear down only a live session
+    // left-channel effect below never fires for it
     useEffect(() => {
-        return () => {
-            if (prevVoiceChannelId.current === undefined) return;
-
-            logVoice('Voice provider unmounting, cleaning up resources');
-            cleanup();
-        };
+        return () => cleanup();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    const prevVoiceChannelId = useRef(currentVoiceChannelId);
 
     useEffect(() => {
         const wasInChannel = prevVoiceChannelId.current !== undefined;

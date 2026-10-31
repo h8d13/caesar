@@ -419,8 +419,6 @@ const useTransportStats = () => {
     );
 
     const stopMonitoring = useCallback(() => {
-        const wasMonitoring = intervalRef.current !== null;
-
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
@@ -434,7 +432,7 @@ const useTransportStats = () => {
             prev.isMonitoring ? { ...prev, isMonitoring: false } : prev
         );
 
-        if (wasMonitoring) logVoice('Stopped transport stats monitoring');
+        logVoice('Stopped transport stats monitoring');
     }, []);
 
     const resetStats = useCallback(() => {

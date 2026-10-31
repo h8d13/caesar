@@ -1,5 +1,5 @@
 import { closeServerScreens } from '@/features/server-screens/actions';
-import { versionSelector } from '@/features/server/selectors';
+import { useVersion } from '@/features/server/hooks';
 import {
     Button,
     Card,
@@ -11,10 +11,9 @@ import {
 } from '@caesar/ui';
 import { CheckCircle, ExternalLink } from 'lucide-react';
 import { memo } from 'react';
-import { useSelector } from 'react-redux';
 
 const Version = memo(() => {
-    const version = useSelector(versionSelector);
+    const version = useVersion();
 
     return (
         <Card>

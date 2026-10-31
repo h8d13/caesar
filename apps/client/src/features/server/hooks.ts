@@ -22,6 +22,7 @@ import {
     serverNameSelector,
     typingUsersByChannelIdSelector,
     userRolesSelector,
+    versionSelector,
     voiceUsersByChannelIdSelector
 } from './selectors';
 import { hasSharingScreenUsersSelector } from './voice/selectors';
@@ -38,6 +39,8 @@ export const usePublicServerSettings = () =>
 export const useOwnUserRoles = () => useSelector(ownUserRolesSelector);
 
 export const useInfo = () => useSelector(infoSelector);
+
+export const useVersion = () => useSelector(versionSelector);
 
 export const useIsOwnUserOwner = () => useSelector(isOwnUserOwnerSelector);
 
