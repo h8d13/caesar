@@ -4,6 +4,7 @@ import {
   type Transaction,
   type TransactionMode
 } from '@libsql/client';
+import { logger } from '../logger';
 
 // libsql's local client is a pool: each call borrows one of `concurrency`
 // connections, opened lazily with SQLite defaults and no open hook. PRAGMAs
@@ -37,11 +38,37 @@ const createLock = () => {
 // transaction needs to commit: a freeze until busy_timeout, then
 // SQLITE_BUSY. A db.transaction() nested in another's callback therefore
 // waits forever: use the outer tx.
-const serializeTransactions = (client: Client) => {
+//
+// Plain writes take no turn: a callback awaiting only tx queries finishes
+// within one event-loop turn (measured), so no other request can run, let
+// alone write, before COMMIT. Awaiting real I/O (fs, fetch, timers) inside
+// a callback breaks that: other requests then run while the write lock is
+// held and their writes busy-wait the main thread. onYield gets such a
+// transaction's error, with the stack of the code that opened it.
+//
+// A batch (db.batch) is a BEGIN..COMMIT run synchronously on another
+// pooled connection, so it would busy-wait the same way on an open
+// transaction: it takes the same turns (so never db.batch inside a tx).
+type TOnYield = (error: Error) => void;
+
+const serializeTransactions = (client: Client, onYield: TOnYield) => {
   const lock = createLock();
   const transaction = client.transaction.bind(client);
+  const batch = client.batch.bind(client);
+
+  client.batch = async (stmts, mode) => {
+    const release = await lock();
+
+    try {
+      return await batch(stmts, mode);
+    } finally {
+      release();
+    }
+  };
 
   client.transaction = async (mode?: TransactionMode) => {
+    // before any await, so the stack still names the caller
+    const openedAt = new Error('transaction held across non-database I/O');
     const release = await lock();
     let tx: Transaction;
 
@@ -51,6 +78,10 @@ const serializeTransactions = (client: Client) => {
       release();
       throw error;
     }
+
+    setImmediate(() => {
+      if (!tx.closed) onYield(openedAt);
+    });
 
     // a failed COMMIT leaves it open: the turn ends with the rollback
     const endsTurn = (fn: () => Promise<void>) => async () => {
@@ -81,14 +112,18 @@ const DB_PRAGMAS = [
   'PRAGMA foreign_keys = ON;'
 ];
 
-const createDbClient = async (url: string, pragmas: string[]) => {
+const createDbClient = async (
+  url: string,
+  pragmas: string[],
+  onYield: TOnYield = (error) => logger.error(error)
+) => {
   const client = createClient({ url, concurrency: POOL_SIZE });
   const init = pragmas.join('\n');
 
   await Promise.all(
     Array.from({ length: POOL_SIZE }, () => client.executeMultiple(init))
   );
-  serializeTransactions(client);
+  serializeTransactions(client, onYield);
 
   return client;
 };
