@@ -14,6 +14,7 @@ import {
 } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
+import { invalidateSettings } from '@server/db/queries/server';
 import { getUserByIdentity } from '@server/db/queries/users';
 import { assertCanModifyOwnerUser } from '@server/helpers/assert-can-modify-owner-user';
 import { enqueueActivityLog } from '@server/queues/activity-log';
@@ -162,6 +163,9 @@ const performUserDeletion = async ({
 
     await tx.delete(users).where(eq(users.id, targetUserId));
   });
+
+  // files moved to the deleted-user owner may include the cached logo row
+  invalidateSettings();
 
   pubsub.publish(ServerEvents.USER_DELETE, {
     isWipe: wipe,

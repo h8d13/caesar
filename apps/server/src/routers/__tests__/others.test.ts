@@ -1,5 +1,4 @@
 import type { TTempFile } from '@caesar/shared';
-import { settings } from '@caesar/shared/db/schema';
 import {
   getCaller,
   initTest,
@@ -7,7 +6,7 @@ import {
   uploadFile
 } from '@server/__tests__/helpers';
 import { TEST_SECRET_TOKEN } from '@server/__tests__/seed';
-import { tdb } from '@server/__tests__/setup';
+import { updateSettings } from '@server/db/mutations/server';
 import { describe, expect, test } from 'vite-plus/test';
 
 describe('others router', () => {
@@ -62,6 +61,9 @@ describe('others router', () => {
       storageMaxFilesPerMessage: 6
     };
 
+    // warm the settings cache: the update must still show on the next read
+    expect((await caller.others.getSettings()).name).not.toBe(newSettings.name);
+
     await caller.others.updateSettings(newSettings);
 
     const settings = await caller.others.getSettings();
@@ -94,9 +96,7 @@ describe('others router', () => {
     const { caller } = await initTest(2);
 
     await expect(
-      caller.others.updateSettings({
-        name: 'Attempted Update'
-      })
+      caller.others.updateSettings({ name: 'Attempted Update' })
     ).rejects.toThrow('Insufficient permissions');
   });
 
@@ -182,7 +182,7 @@ describe('others router', () => {
   test('blocks game routes and bank/history when gamesEnabled is false', async () => {
     const { caller } = await initTest(1);
 
-    await tdb.update(settings).set({ gamesEnabled: false }).execute();
+    await updateSettings({ gamesEnabled: false });
 
     await expect(caller.coinflip.getState()).rejects.toThrow(
       'Games are disabled on this server'

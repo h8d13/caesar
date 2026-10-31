@@ -13,14 +13,14 @@ import {
   messages,
   rolePermissions,
   roles,
-  settings,
   statusImages,
   userRoles,
   users
 } from '@caesar/shared/db/schema';
-import { initTest, uploadFile } from '@server/__tests__/helpers';
+import { initTest, type TCaller, uploadFile } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { pruneExpiredStatuses } from '@server/crons/prune-expired-statuses';
+import { updateSettings } from '@server/db/mutations/server';
 import { getOrphanedFileIds } from '@server/db/queries/files';
 import { deriveAuthKey, verifyPassword } from '@server/utils/password';
 import { and, eq } from 'drizzle-orm';
@@ -377,12 +377,7 @@ describe('users router', () => {
   test('should enforce configured avatar size limit', async () => {
     const { caller, mockedToken } = await initTest();
 
-    await tdb
-      .update(settings)
-      .set({
-        storageMaxAvatarSize: 10
-      })
-      .execute();
+    await updateSettings({ storageMaxAvatarSize: 10 });
 
     const file = new File(
       ['avatar content bigger than ten bytes'],
@@ -418,7 +413,7 @@ describe('users router', () => {
 
     const before = (await caller.users.getInfo({ userId: 1 })).user.avatarId;
 
-    await tdb.update(settings).set({ storageMaxAvatarSize: 10 }).execute();
+    await updateSettings({ storageMaxAvatarSize: 10 });
 
     await expect(
       caller.users.changeAvatar({
@@ -477,12 +472,7 @@ describe('users router', () => {
   test('should enforce configured banner size limit', async () => {
     const { caller, mockedToken } = await initTest();
 
-    await tdb
-      .update(settings)
-      .set({
-        storageMaxBannerSize: 10
-      })
-      .execute();
+    await updateSettings({ storageMaxBannerSize: 10 });
 
     const file = new File(
       ['banner content bigger than ten bytes'],
@@ -502,10 +492,7 @@ describe('users router', () => {
     ).rejects.toThrow('Banner file exceeds the configured maximum size');
   });
 
-  const addStatus = async (
-    caller: Awaited<ReturnType<typeof initTest>>['caller'],
-    mockedToken: string
-  ) => {
+  const addStatus = async (caller: TCaller, mockedToken: string) => {
     const file = new File(['status content'], 'status.png', {
       type: 'image/png'
     });

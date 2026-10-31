@@ -1,7 +1,8 @@
-import { messages, settings } from '@caesar/shared/db/schema';
+import { messages } from '@caesar/shared/db/schema';
 import { initTest } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { pruneExpiredMessages } from '@server/crons/prune-expired';
+import { updateSettings } from '@server/db/mutations/server';
 import { eq } from 'drizzle-orm';
 import { describe, expect, test } from 'vite-plus/test';
 
@@ -272,12 +273,7 @@ describe('dms router', () => {
   test('should reject open and list when direct messages are disabled', async () => {
     const { caller } = await initTest(1);
 
-    await tdb
-      .update(settings)
-      .set({
-        directMessagesEnabled: false
-      })
-      .execute();
+    await updateSettings({ directMessagesEnabled: false });
 
     await expect(caller.dms.open({ userId: 2 })).rejects.toThrow(
       'Direct messages are disabled on this server'
