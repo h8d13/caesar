@@ -3,6 +3,7 @@ import { users } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
 import { assertCanModifyOwnerUser } from '@server/helpers/assert-can-modify-owner-user';
+import { toCloseReason } from '@server/helpers/close-reason';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
@@ -27,7 +28,7 @@ const banRoute = protectedProcedure
     await assertCanModifyOwnerUser(ctx.userId, input.userId, 'ban');
 
     for (const userWs of ctx.getUserWsList(input.userId)) {
-      userWs.close(DisconnectCode.BANNED, input.reason);
+      userWs.close(DisconnectCode.BANNED, toCloseReason(input.reason));
     }
 
     await db

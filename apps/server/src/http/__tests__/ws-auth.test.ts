@@ -1,5 +1,9 @@
-import { loginToken } from '@server/__tests__/helpers';
+import { DisconnectCode } from '@caesar/shared';
+import { users } from '@caesar/shared/db/schema';
+import { initTest, loginToken } from '@server/__tests__/helpers';
+import { tdb } from '@server/__tests__/setup';
 import { createWsServer } from '@server/utils/wss';
+import { eq } from 'drizzle-orm';
 import http from 'http';
 import { afterAll, beforeAll, describe, expect, test } from 'vite-plus/test';
 import { WebSocket, type WebSocketServer } from 'ws';
@@ -18,6 +22,8 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  // a failed test can leave its socket open, which blocks server.close
+  for (const client of wss.clients) client.terminate();
   wss.close();
   await new Promise((resolve) => server.close(resolve));
 });
@@ -79,5 +85,65 @@ describe('WebSocket session auth', () => {
 
     expect(reply?.result).toBeUndefined();
     expect(code).toBe(1008);
+  });
+});
+
+// one raw tRPC call on an already open socket, matched by id
+const call = <T>(ws: WebSocket, id: number, path: string, input?: unknown) =>
+  new Promise<T>((resolve, reject) => {
+    const onMessage = (data: Buffer) => {
+      const reply = JSON.parse(data.toString());
+
+      if (reply.id !== id) return;
+
+      ws.off('message', onMessage);
+
+      if (reply.result) resolve(reply.result.data);
+      else reject(new Error(JSON.stringify(reply.error)));
+    };
+
+    ws.on('message', onMessage);
+    ws.send(JSON.stringify({ id, method: 'query', params: { path, input } }));
+  });
+
+describe('WebSocket close frames', () => {
+  // ws throws RangeError past 123 bytes (RFC 6455 control frame limit)
+  test('a ban reason longer than a close frame still bans', async () => {
+    const token = await loginToken('testuser', 'password123');
+    const ws = open({
+      origin: `https://${host()}`,
+      cookie: `caesar-session=${token}`
+    });
+    const closed = new Promise<number>((resolve) =>
+      ws.on('close', (code) => resolve(code))
+    );
+
+    await new Promise((resolve) => ws.on('open', resolve));
+
+    const { handshakeHash } = await call<{ handshakeHash: string }>(
+      ws,
+      1,
+      'others.handshake'
+    );
+    const { ownUserId: userId } = await call<{ ownUserId: number }>(
+      ws,
+      2,
+      'others.joinServer',
+      { handshakeHash }
+    );
+
+    const { caller: owner } = await initTest(1);
+
+    await owner.users.ban({ userId, reason: 'é'.repeat(200) });
+
+    const row = await tdb
+      .select({ banned: users.banned, banReason: users.banReason })
+      .from(users)
+      .where(eq(users.id, userId))
+      .get();
+
+    expect(row?.banned).toBe(true);
+    expect(row?.banReason).toBe('é'.repeat(200));
+    expect(await closed).toBe(DisconnectCode.BANNED);
   });
 });

@@ -1,5 +1,6 @@
 import { ActivityLogType, DisconnectCode, Permission } from '@caesar/shared';
 import { assertCanModifyOwnerUser } from '@server/helpers/assert-can-modify-owner-user';
+import { toCloseReason } from '@server/helpers/close-reason';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
@@ -25,7 +26,7 @@ const kickRoute = protectedProcedure
     });
 
     for (const userWs of userWsList) {
-      userWs.close(DisconnectCode.KICKED, input.reason);
+      userWs.close(DisconnectCode.KICKED, toCloseReason(input.reason));
     }
 
     enqueueActivityLog({
