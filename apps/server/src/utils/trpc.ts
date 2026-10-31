@@ -10,6 +10,7 @@ import type WebSocket from 'ws';
 import { config } from '../config';
 import { logger } from '../logger';
 import type { TConnectionInfo } from '../types';
+import { IS_DEVELOPMENT } from './env';
 import { invariant } from './invariant';
 import { pubsub } from './pubsub';
 import {
@@ -58,7 +59,9 @@ export type Context = {
   saveUserIp: (userId: number, ip: string) => void;
 };
 
-const t = initTRPC.context<Context>().create();
+// tRPC defaults isDev to NODE_ENV !== 'production', but prod only sets
+// CAESAR_ENV: left implicit, every error shape sent its stack to clients
+const t = initTRPC.context<Context>().create({ isDev: IS_DEVELOPMENT });
 
 const timingMiddleware = t.middleware(async ({ path, next }) => {
   if (!config.server.debug) {

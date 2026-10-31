@@ -469,6 +469,13 @@ const createWsServer = async (server: http.Server) => {
       wss,
       router: appRouter,
       createContext,
+      // expected errors (auth, validation, permissions) are the client's
+      // concern; unexpected ones were otherwise never logged server-side
+      onError: ({ error, path, type }) => {
+        if (error.code !== 'INTERNAL_SERVER_ERROR') return;
+
+        logger.error(`[tRPC] ${type} ${path ?? '<no path>'} failed:`, error);
+      },
       keepAlive: {
         enabled: true,
         pingMs: 30_000,
