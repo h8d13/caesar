@@ -20,10 +20,10 @@ import { queryClient } from '@/lib/query-client';
 // so the inline form pulls the real server router tree (and its Node-only
 // imports like @libsql/client) into the client bundle.
 import type { AppRouter } from '@server/routers';
-import { createTRPCProxyClient, createWSClient, wsLink } from '@trpc/client';
+import { createTRPCClient, createWSClient, wsLink } from '@trpc/client';
 
 let wsClient: ReturnType<typeof createWSClient> | null = null;
-let trpc: ReturnType<typeof createTRPCProxyClient<AppRouter>> | null = null;
+let trpc: ReturnType<typeof createTRPCClient<AppRouter>> | null = null;
 let currentHost: string | null = null;
 let isCleaningUp = false;
 
@@ -65,7 +65,7 @@ const initializeTRPC = (host: string) => {
         }
     });
 
-    trpc = createTRPCProxyClient<AppRouter>({
+    trpc = createTRPCClient<AppRouter>({
         links: [wsLink({ client: wsClient })]
     });
 
