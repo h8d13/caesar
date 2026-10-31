@@ -15,7 +15,7 @@ const subscribeToMessages = () => {
     const onMessageSub = trpc.messages.onNew.subscribe(undefined, {
         onData: (message: TJoinedMessage) => {
             logDebug('[EVENTS] messages.onNew', { message });
-            addMessages(message.channelId, [message], {}, true);
+            addMessages(message.channelId, [message], true);
         },
         onError: (err) => console.error('onMessage subscription error:', err)
     });

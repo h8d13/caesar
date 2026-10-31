@@ -16,6 +16,13 @@ import type {
     TVoiceUserState
 } from '@caesar/shared';
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import {
+    appendNewerPage,
+    dropJumpWindow,
+    merge,
+    placeJumpWindow,
+    type TMessageWindow
+} from './messages/window';
 import type { TDisconnectInfo, TMessagesMap } from './types';
 
 export interface IServerState {
@@ -32,6 +39,9 @@ export interface IServerState {
     selectedChannelId: number | undefined;
     currentVoiceChannelId: number | undefined;
     messagesMap: TMessagesMap;
+    // set while a channel shows a jump window detached from its live tail
+    // (see messages/window.ts)
+    newerCursorMap: { [channelId: number]: number };
     users: TJoinedPublicUser[];
     roles: TJoinedRole[];
     publicSettings: TPublicServerSettings | undefined;
@@ -81,6 +91,7 @@ const initialState: IServerState = {
     selectedChannelId: undefined,
     currentVoiceChannelId: undefined,
     messagesMap: {},
+    newerCursorMap: {},
     users: [],
     roles: [],
     publicSettings: undefined,
@@ -108,6 +119,25 @@ const initialState: IServerState = {
         true
     ),
     speakingMap: {}
+};
+
+const updateWindow = (
+    state: IServerState,
+    channelId: number,
+    update: (current: TMessageWindow) => TMessageWindow
+) => {
+    const { messages, newerCursor } = update({
+        messages: state.messagesMap[channelId] ?? [],
+        newerCursor: state.newerCursorMap[channelId]
+    });
+
+    state.messagesMap[channelId] = messages;
+
+    if (newerCursor === undefined) {
+        delete state.newerCursorMap[channelId];
+    } else {
+        state.newerCursorMap[channelId] = newerCursor;
+    }
 };
 
 export const serverSlice = createSlice({
@@ -191,26 +221,13 @@ export const serverSlice = createSlice({
             action: PayloadAction<{
                 channelId: number;
                 messages: TJoinedMessage[];
-                opts?: { prepend?: boolean };
             }>
         ) => {
-            const { channelId, messages, opts } = action.payload;
-            const existing = state.messagesMap[channelId] ?? [];
+            const { channelId, messages } = action.payload;
 
-            // dedupe: only add new IDs
-            const existingIds = new Set(existing.map((m) => m.id));
-            const filtered = messages.filter((m) => !existingIds.has(m.id));
-
-            let merged: TJoinedMessage[];
-            if (opts?.prepend) {
-                merged = [...filtered, ...existing];
-            } else {
-                merged = [...existing, ...filtered];
-            }
-
-            // store in chronological asc order (oldest → newest)
-            state.messagesMap[channelId] = merged.sort(
-                (a, b) => a.createdAt - b.createdAt
+            state.messagesMap[channelId] = merge(
+                state.messagesMap[channelId] ?? [],
+                messages
             );
         },
         updateMessage: (
@@ -249,6 +266,44 @@ export const serverSlice = createSlice({
             action: PayloadAction<{ channelId: number }>
         ) => {
             state.messagesMap[action.payload.channelId] = [];
+            delete state.newerCursorMap[action.payload.channelId];
+        },
+        setJumpWindow: (
+            state,
+            action: PayloadAction<{
+                channelId: number;
+                messages: TJoinedMessage[];
+                newerCursor: number | null;
+            }>
+        ) => {
+            const { channelId, messages, newerCursor } = action.payload;
+
+            updateWindow(state, channelId, (w) =>
+                placeJumpWindow(w, messages, newerCursor)
+            );
+        },
+        addNewerMessages: (
+            state,
+            action: PayloadAction<{
+                channelId: number;
+                messages: TJoinedMessage[];
+                from: number;
+                newerCursor: number | null;
+            }>
+        ) => {
+            const { channelId, messages, from, newerCursor } = action.payload;
+
+            updateWindow(state, channelId, (w) =>
+                appendNewerPage(w, messages, from, newerCursor)
+            );
+        },
+        dropJumpWindow: (
+            state,
+            action: PayloadAction<{ channelId: number }>
+        ) => {
+            const { channelId } = action.payload;
+
+            updateWindow(state, channelId, dropJumpWindow);
         },
 
         clearTypingUsers: (state, action: PayloadAction<number>) => {

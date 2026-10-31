@@ -83,7 +83,6 @@ const getTypingKey = (channelId: number, userId: number) =>
 export const addMessages = (
     channelId: number,
     messages: TJoinedMessage[],
-    opts: { prepend?: boolean } = {},
     isSubscriptionMessage = false
 ) => {
     const state = store.getState();
@@ -92,13 +91,7 @@ export const addMessages = (
     const dmsOpen = dmsOpenSelector(state);
 
     if (messages.length > 0) {
-        store.dispatch(
-            serverSliceActions.addMessages({
-                channelId,
-                messages,
-                opts
-            })
-        );
+        store.dispatch(serverSliceActions.addMessages({ channelId, messages }));
     }
 
     messages.forEach((message) => {
@@ -169,6 +162,36 @@ export const updateMessage = (channelId: number, message: TJoinedMessage) => {
 
 export const clearChannelMessages = (channelId: number) => {
     store.dispatch(serverSliceActions.clearChannelMessages({ channelId }));
+};
+
+export const setJumpWindow = (
+    channelId: number,
+    messages: TJoinedMessage[],
+    newerCursor: number | null
+) => {
+    store.dispatch(
+        serverSliceActions.setJumpWindow({ channelId, messages, newerCursor })
+    );
+};
+
+export const addNewerMessages = (
+    channelId: number,
+    messages: TJoinedMessage[],
+    from: number,
+    newerCursor: number | null
+) => {
+    store.dispatch(
+        serverSliceActions.addNewerMessages({
+            channelId,
+            messages,
+            from,
+            newerCursor
+        })
+    );
+};
+
+export const dropJumpWindow = (channelId: number) => {
+    store.dispatch(serverSliceActions.dropJumpWindow({ channelId }));
 };
 
 export const deleteMessage = (channelId: number, messageId: number) => {

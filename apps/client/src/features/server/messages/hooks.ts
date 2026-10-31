@@ -1,4 +1,4 @@
-import type { IRootState } from '@/features/store';
+import { store, type IRootState } from '@/features/store';
 import { getTRPCClient } from '@/lib/trpc';
 import {
     DEFAULT_MESSAGES_LIMIT,
@@ -8,17 +8,26 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { toast } from 'sonner';
-import { addMessages } from './actions';
+import {
+    addMessages,
+    addNewerMessages,
+    dropJumpWindow,
+    setJumpWindow
+} from './actions';
 import { lockAutoScroll } from './scroll-lock';
 import {
     latestOwnMessageIdSelector,
-    messagesByChannelIdSelector
+    newerCursorSelector,
+    visibleMessagesSelector
 } from './selectors';
 
 export const useMessagesByChannelId = (channelId: number) =>
     useSelector((state: IRootState) =>
-        messagesByChannelIdSelector(state, channelId)
+        visibleMessagesSelector(state, channelId)
     );
+
+const oldestVisibleCreatedAt = (channelId: number) =>
+    visibleMessagesSelector(store.getState(), channelId)[0]?.createdAt;
 
 export const useLatestOwnMessageId = (channelId: number) =>
     useSelector((state: IRootState) =>
@@ -53,31 +62,23 @@ const useGroupedMessages = (messages: TJoinedMessage[]) =>
         return grouped;
     }, [messages]);
 
+// undefined: the page went stale before it arrived and was dropped
 type TFetchPage = (
     cursor: number | null
-) => Promise<{ nextCursor: number | null }>;
+) => Promise<{ nextCursor: number | null } | undefined>;
 
-// fetch a page of channel messages from the server
+// a page of channel messages, oldest first like the store (the server
+// sends newest first)
 const fetchChannelMessagesPage = async (input: {
     channelId: number;
-    cursor: number | null;
+    cursor?: number | null;
     limit: number;
+    newerCursor?: number;
     targetMessageId?: number;
 }) => {
-    const trpcClient = getTRPCClient();
+    const page = await getTRPCClient().messages.get.query(input);
 
-    return trpcClient.messages.get.query(input);
-};
-
-// reverse (newest-first -> oldest-first) and store messages
-const storeChannelMessages = (
-    channelId: number,
-    rawPage: TJoinedMessage[],
-    opts?: { prepend?: boolean }
-) => {
-    const page = [...rawPage].reverse();
-
-    addMessages(channelId, page, opts);
+    return { ...page, messages: page.messages.reverse() };
 };
 
 const getMessagesContainer = () =>
@@ -146,18 +147,19 @@ const usePaginatedMessages = (
 ) => {
     const [fetching, setFetching] = useState(false);
     const [loading, setLoading] = useState(messages.length === 0);
-    const [cursor, setCursor] = useState<number | null>(null);
     const [hasMore, setHasMore] = useState(true);
+    // older pages continue from the oldest shown message: a jump can move
+    // that edge, so a cursor kept from the last page would go stale
+    const cursor = messages[0]?.createdAt ?? null;
 
     const fetchMessages = useCallback(
         async (cursorToFetch: number | null) => {
             setFetching(true);
 
             try {
-                const { nextCursor } = await fetchPage(cursorToFetch);
+                const page = await fetchPage(cursorToFetch);
 
-                setCursor(nextCursor);
-                setHasMore(nextCursor !== null);
+                if (page) setHasMore(page.nextCursor !== null);
             } catch (error) {
                 toast.error(getTrpcError(error, 'Failed to load messages'));
             } finally {
@@ -187,10 +189,10 @@ const usePaginatedMessages = (
         hasMore,
         messages,
         loadMore,
-        cursor,
         groupedMessages,
         isEmpty,
-        fetchMessages
+        fetchMessages,
+        setHasMore
     };
 };
 
@@ -198,33 +200,82 @@ export const useMessages = (channelId: number) => {
     const messages = useMessagesByChannelId(channelId);
     const inited = useRef(false);
 
+    const newerCursor = useSelector((state: IRootState) =>
+        newerCursorSelector(state, channelId)
+    );
+    const fetchingNewer = useRef(false);
+
     const fetchPage = useCallback(
         async (cursorToFetch: number | null) => {
-            const { messages: rawPage, nextCursor } =
+            const { messages: page, nextCursor } =
                 await fetchChannelMessagesPage({
                     channelId,
                     cursor: cursorToFetch,
                     limit: DEFAULT_MESSAGES_LIMIT
                 });
 
-            storeChannelMessages(channelId, rawPage, {
-                prepend: cursorToFetch !== null
-            });
+            // a jump moved the oldest edge meanwhile: this page would sit
+            // below it with a hole in between
+            if (
+                cursorToFetch !== null &&
+                oldestVisibleCreatedAt(channelId) !== cursorToFetch
+            ) {
+                return;
+            }
+
+            addMessages(channelId, page);
 
             return { nextCursor };
         },
         [channelId]
     );
 
-    const paginated = usePaginatedMessages(messages, fetchPage);
+    const { fetchMessages, setHasMore, ...paginated } = usePaginatedMessages(
+        messages,
+        fetchPage
+    );
 
     useEffect(() => {
         if (inited.current) return;
 
-        void paginated.fetchMessages(null);
+        // a jump window left from an earlier visit reopens at the present
+        dropJumpWindow(channelId);
+        void fetchMessages(null);
 
         inited.current = true;
-    }, [paginated]);
+    }, [channelId, fetchMessages]);
+
+    // pages from a jump window back toward the live tail
+    const loadNewer = useCallback(async () => {
+        if (newerCursor === undefined || fetchingNewer.current) return;
+
+        fetchingNewer.current = true;
+
+        try {
+            const { messages: page, newerCursor: next } =
+                await fetchChannelMessagesPage({
+                    channelId,
+                    newerCursor,
+                    limit: DEFAULT_MESSAGES_LIMIT
+                });
+
+            addNewerMessages(channelId, page, newerCursor, next);
+        } catch (error) {
+            toast.error(getTrpcError(error, 'Failed to load messages'));
+        } finally {
+            fetchingNewer.current = false;
+        }
+    }, [channelId, newerCursor]);
+
+    // the tail kept following live messages, so it is shown as is
+    const jumpToPresent = useCallback(async () => {
+        dropJumpWindow(channelId);
+        setHasMore(true);
+
+        if (oldestVisibleCreatedAt(channelId) === undefined) {
+            await fetchMessages(null);
+        }
+    }, [channelId, fetchMessages, setHasMore]);
 
     const scrollToMessage = useCallback(
         async (messageId: number) => {
@@ -241,16 +292,24 @@ export const useMessages = (channelId: number) => {
             // generous: the lock must survive the fetch + render below
             lockAutoScroll(10_000);
 
-            // message not loaded yet fetch all messages down to the target
+            // not loaded: fetch a window around the target
             try {
-                const { messages: rawPage } = await fetchChannelMessagesPage({
+                const {
+                    messages: page,
+                    nextCursor,
+                    newerCursor: windowNewerCursor
+                } = await fetchChannelMessagesPage({
                     channelId,
-                    cursor: null,
                     limit: DEFAULT_MESSAGES_LIMIT,
                     targetMessageId: messageId
                 });
 
-                storeChannelMessages(channelId, rawPage, { prepend: true });
+                setJumpWindow(channelId, page, windowNewerCursor);
+
+                // the window now is the oldest edge: its cursor applies
+                if (oldestVisibleCreatedAt(channelId) === page[0]?.createdAt) {
+                    setHasMore(nextCursor !== null);
+                }
             } catch (error) {
                 lockAutoScroll(0);
                 toast.error(getTrpcError(error, 'Failed to jump to message'));
@@ -267,8 +326,14 @@ export const useMessages = (channelId: number) => {
                 void highlightMessageElement(element);
             }
         },
-        [channelId]
+        [channelId, setHasMore]
     );
 
-    return { ...paginated, scrollToMessage };
+    return {
+        ...paginated,
+        scrollToMessage,
+        hasNewer: newerCursor !== undefined,
+        loadNewer,
+        jumpToPresent
+    };
 };

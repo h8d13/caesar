@@ -56,7 +56,10 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
         loading,
         fetching,
         groupedMessages,
-        scrollToMessage
+        scrollToMessage,
+        hasNewer,
+        loadNewer,
+        jumpToPresent
     } = useMessages(channelId);
 
     const draftChannelKey = getChannelDraftKey(channelId);
@@ -114,13 +117,21 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
     const typingUsers = useTypingUsersByChannelId(channelId);
     const composeRef = useRef<TMessageComposeHandle>(null);
 
-    const { containerRef, onScroll } = useScrollController({
+    const { containerRef, onScroll, scrollToBottom } = useScrollController({
         messages,
         fetching,
         hasMore,
         loadMore,
+        hasNewer,
+        loadNewer,
         hasTypingUsers: typingUsers.length > 0
     });
+
+    const onJumpToPresent = useCallback(async () => {
+        await jumpToPresent();
+        // once the tail has rendered
+        setTimeout(scrollToBottom, 10);
+    }, [jumpToPresent, scrollToBottom]);
 
     const channelCan = useChannelCan(channelId);
 
@@ -242,6 +253,10 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
 
             setReplyingTo(null);
             setNewMessageHandler('');
+
+            // the sent message lands in the live tail, not the jump window
+            if (hasNewer) void onJumpToPresent();
+
             return true;
         },
         [
@@ -251,7 +266,9 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
             replyingTo,
             e2eeContext,
             ownUserId,
-            channel?.isDm
+            channel?.isDm,
+            hasNewer,
+            onJumpToPresent
         ]
     );
 
@@ -296,6 +313,21 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
                             ))}
                         </div>
                     </div>
+
+                    {hasNewer && (
+                        <div className="flex items-center gap-2 px-4 py-2 border-t border-border bg-secondary/30 text-sm">
+                            <span className="text-muted-foreground">
+                                Viewing older messages
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => void onJumpToPresent()}
+                                className="ml-auto shrink-0 font-medium hover:underline"
+                            >
+                                Jump to present
+                            </button>
+                        </div>
+                    )}
 
                     {replyingTo && (
                         <div className="flex items-center gap-2 px-4 py-2 border-t border-border bg-secondary/30 text-sm">

@@ -8,6 +8,10 @@ type TUseScrollControllerProps = {
     fetching: boolean;
     hasMore: boolean;
     loadMore: () => Promise<unknown>;
+    // a jump window detached from the live tail: the bottom pages newer
+    // messages in instead of sticking to it
+    hasNewer: boolean;
+    loadNewer: () => Promise<unknown>;
     hasTypingUsers?: boolean;
 };
 
@@ -24,6 +28,8 @@ const useScrollController = ({
     fetching,
     hasMore,
     loadMore,
+    hasNewer,
+    loadNewer,
     hasTypingUsers = false
 }: TUseScrollControllerProps): TUseScrollControllerReturn => {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -52,7 +58,12 @@ const useScrollController = ({
 
         if (!container) return;
 
-        shouldStickToBottom.current = isNearBottom(container);
+        const nearBottom = isNearBottom(container);
+
+        // sticking would chase each appended page down to the live tail
+        shouldStickToBottom.current = nearBottom && !hasNewer;
+
+        if (nearBottom && hasNewer) void loadNewer();
 
         if (fetching) return;
 
@@ -64,10 +75,11 @@ const useScrollController = ({
 
                 container.scrollTop =
                     newScrollHeight - prevScrollHeight + container.scrollTop;
-                shouldStickToBottom.current = isNearBottom(container);
+                shouldStickToBottom.current =
+                    isNearBottom(container) && !hasNewer;
             });
         }
-    }, [loadMore, hasMore, fetching, isNearBottom]);
+    }, [loadMore, hasMore, fetching, isNearBottom, hasNewer, loadNewer]);
 
     // Handle initial scroll after messages load
     useEffect(() => {
@@ -120,6 +132,11 @@ const useScrollController = ({
             onScroll();
         }
     }, [fetching, hasMore, messages.length, onScroll]);
+
+    // a jump may detach before any scroll event re-evaluates the flag
+    useEffect(() => {
+        if (hasNewer) shouldStickToBottom.current = false;
+    }, [hasNewer]);
 
     // auto-scroll on new messages if user is near bottom
     useEffect(() => {

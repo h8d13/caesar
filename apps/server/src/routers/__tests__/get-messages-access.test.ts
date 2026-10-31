@@ -1,7 +1,7 @@
 import { DEFAULT_MESSAGES_LIMIT } from '@caesar/shared';
 import { channelReadStates } from '@caesar/shared/db/schema';
 import type { Client } from '@libsql/client';
-import { initTest } from '@server/__tests__/helpers';
+import { initTest, type TCaller } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { and, eq } from 'drizzle-orm';
 import { describe, expect, test } from 'vite-plus/test';
@@ -10,8 +10,6 @@ import { describe, expect, test } from 'vite-plus/test';
 // DM check, the permission check, and the handler's own fileAccessToken
 // lookup) and re-query the channel's newest message even when the first page
 // already contained it. These tests pin both down.
-
-type Caller = Awaited<ReturnType<typeof initTest>>['caller'];
 
 // Records the SQL issued while fn runs. libsql is the only path to the DB, so
 // wrapping execute catches every statement drizzle emits.
@@ -70,7 +68,7 @@ const getReadState = async (userId: number, channelId: number) =>
     )
     .get();
 
-const sendMessages = async (caller: Caller, channelId: number, n: number) => {
+const sendMessages = async (caller: TCaller, channelId: number, n: number) => {
   const ids: number[] = [];
 
   for (let i = 0; i < n; i++) {
@@ -136,7 +134,7 @@ describe('messages.get channel access', () => {
     expect(countMatching(statements, LATEST_MESSAGE_LOOKUP)).toBe(0);
   });
 
-  test('does re-query the newest message on a cursor page', async () => {
+  test('leaves read state alone on a cursor page', async () => {
     const { caller } = await initTest(1);
 
     await sendMessages(caller, 1, 5);
@@ -155,9 +153,11 @@ describe('messages.get channel access', () => {
       })
     );
 
-    // Paging back, rows[0] is not the channel's newest, so the lookup is
-    // required -- this is the query the first-page test asserts is absent.
-    expect(countMatching(statements, LATEST_MESSAGE_LOOKUP)).toBe(1);
+    // Opening the channel already marked it read and live messages mark
+    // themselves, so paging back neither looks up the newest message nor
+    // writes read state.
+    expect(countMatching(statements, LATEST_MESSAGE_LOOKUP)).toBe(0);
+    expect(countMatching(statements, /channel_read_states/)).toBe(0);
   });
 
   test('reads the channel row once on pinned reads', async () => {
