@@ -70,6 +70,14 @@ const usersIpMap = new Map<number, string>();
 const connectedAt = new Map<number, number>();
 const dailyPassiveCredit = new Map<number, { earned: number; day: number }>();
 
+const AUTH_TIMEOUT_MS = 5_000;
+
+// same check tRPC's ws adapter uses to wait for a connectionParams message
+const expectsConnectionParams = (req: http.IncomingMessage) =>
+  new URL(req.url ?? '/', 'http://localhost').searchParams.get(
+    'connectionParams'
+  ) === '1';
+
 const PASSIVE_CREDIT_PER_15_MIN = 1;
 const PASSIVE_CREDIT_DAILY_CAP = 50;
 
@@ -353,6 +361,18 @@ const createWsServer = async (server: http.Server) => {
         return;
       }
 
+      // tRPC defers createContext to the first message when the URL asks for
+      // connectionParams, then accepts or closes; it never times out itself
+      if (expectsConnectionParams(req)) {
+        const authTimer = setTimeout(
+          () => ws.close(1008, 'Authentication timeout'),
+          AUTH_TIMEOUT_MS
+        );
+
+        ws.once('close', () => clearTimeout(authTimer));
+        ws.once('message', () => clearTimeout(authTimer));
+      }
+
       // the token closeUserSessions matches on; non-browser clients send it
       // as connectionParams in their first message instead of a cookie
       const cookieToken = getCookie(req, SESSION_COOKIE);
@@ -488,6 +508,7 @@ const createWsServer = async (server: http.Server) => {
 };
 
 export {
+  AUTH_TIMEOUT_MS,
   closeUserSessions,
   createContext,
   createWsServer,

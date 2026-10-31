@@ -1193,15 +1193,19 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         rtpCapabilities: routerRtpCapabilities.current
     });
 
+    const prevVoiceChannelId = useRef(currentVoiceChannelId);
+
+    // logout/disconnect unmounts before the channel id clears, so the
+    // left-channel effect below never fires; tear down only a live session
     useEffect(() => {
         return () => {
+            if (prevVoiceChannelId.current === undefined) return;
+
             logVoice('Voice provider unmounting, cleaning up resources');
             cleanup();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    const prevVoiceChannelId = useRef(currentVoiceChannelId);
 
     useEffect(() => {
         const wasInChannel = prevVoiceChannelId.current !== undefined;

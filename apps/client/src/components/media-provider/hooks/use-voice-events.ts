@@ -31,10 +31,8 @@ const useVoiceEvents = ({
     const ownUserId = useOwnUserId();
 
     useEffect(() => {
-        if (!currentVoiceChannelId) {
-            logVoice('Voice events not initialized - missing channelId');
-            return;
-        }
+        // not in a voice channel: idle, nothing to subscribe to
+        if (!currentVoiceChannelId) return;
 
         if (!rtpCapabilities) {
             logVoice('Voice events not initialized - missing RTP capabilities');

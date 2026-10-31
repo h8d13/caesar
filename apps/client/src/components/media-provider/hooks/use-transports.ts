@@ -566,7 +566,11 @@ const useTransports = ({
     );
 
     const cleanupTransports = useCallback(() => {
-        logVoice('Cleaning up transports');
+        const hadTransports = Boolean(
+            producerTransport.current || consumerTransport.current
+        );
+
+        if (hadTransports) logVoice('Cleaning up transports');
 
         Object.values(consumers.current).forEach((userConsumers) => {
             Object.values(userConsumers).forEach((consumer) => {
@@ -600,7 +604,7 @@ const useTransports = ({
 
         consumerTransport.current = undefined;
 
-        logVoice('Transports cleanup complete');
+        if (hadTransports) logVoice('Transports cleanup complete');
     }, []);
 
     // All ref objects (producerTransport, consumerTransport, consumers) are

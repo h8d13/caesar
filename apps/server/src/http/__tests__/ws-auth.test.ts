@@ -2,7 +2,7 @@ import { DisconnectCode } from '@caesar/shared';
 import { users } from '@caesar/shared/db/schema';
 import { initTest, loginToken } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
-import { createWsServer } from '@server/utils/wss';
+import { AUTH_TIMEOUT_MS, createWsServer } from '@server/utils/wss';
 import { eq } from 'drizzle-orm';
 import http from 'http';
 import { afterAll, beforeAll, describe, expect, test } from 'vite-plus/test';
@@ -86,6 +86,39 @@ describe('WebSocket session auth', () => {
     expect(reply?.result).toBeUndefined();
     expect(code).toBe(1008);
   });
+
+  test('connectionParams with a valid token authenticates', async () => {
+    const token = await loginToken('testowner', 'password123');
+    const ws = new WebSocket(`ws://${host()}/?connectionParams=1`, {
+      headers: { host: host(), origin: `https://${host()}` }
+    });
+
+    ws.on('open', () =>
+      ws.send(JSON.stringify({ method: 'connectionParams', data: { token } }))
+    );
+
+    const { reply } = await query(ws, 'others.handshake');
+
+    expect(reply?.result).toBeDefined();
+  });
+
+  // ?connectionParams=1 makes tRPC wait for a first message with no limit;
+  // any cookie value skips the connectionParams branch, so cover both
+  test.for([{}, { cookie: 'caesar-session=junk' }])(
+    'a socket that never sends connectionParams is closed (%o)',
+    async (cookie) => {
+      const ws = new WebSocket(`ws://${host()}/?connectionParams=1`, {
+        headers: { host: host(), origin: `https://${host()}`, ...cookie }
+      });
+      const start = Date.now();
+      const code = await new Promise<number>((resolve) =>
+        ws.on('close', (closeCode) => resolve(closeCode))
+      );
+
+      expect(code).toBe(1008);
+      expect(Date.now() - start).toBeLessThan(AUTH_TIMEOUT_MS + 1000);
+    }
+  );
 });
 
 // one raw tRPC call on an already open socket, matched by id
