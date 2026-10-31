@@ -11,7 +11,9 @@ ENV PNPM_HOME=/pnpm \
     COREPACK_HOME=/pnpm/corepack \
     COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     pnpm_config_store_dir=/app/node_modules/.pnpm-store
-ENV PATH=$PNPM_HOME:$PATH
+# root workspace bins (vp, vpr, vpx, knip) callable as-is from any package
+# dir, instead of through `pnpm exec`
+ENV PATH=/app/node_modules/.bin:$PNPM_HOME:$PATH
 
 # Node 25+ no longer bundles corepack; pnpm still comes from packageManager
 RUN npm install -g corepack@0.36.0 && corepack enable
