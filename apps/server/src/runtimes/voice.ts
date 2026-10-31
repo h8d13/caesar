@@ -114,6 +114,8 @@ type TConsumerMap = {
 
 class VoiceRuntime {
   public readonly id: number;
+  // DM call runtimes follow DM rules, see voiceRuntimeMiddleware
+  public readonly isDm: boolean;
   private state: TChannelState = {
     users: [],
     activeSince: null
@@ -140,8 +142,9 @@ class VoiceRuntime {
   // producerId -> simulcast quality layers metadata (labels match producer encodings)
   private producerQualityLayers: Map<string, TStreamQualityLayer[]> = new Map();
 
-  constructor(channelId: number) {
+  constructor(channelId: number, isDm = false) {
     this.id = channelId;
+    this.isDm = isDm;
     voiceRuntimes.set(channelId, this);
   }
 

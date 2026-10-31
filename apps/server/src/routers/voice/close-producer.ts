@@ -1,4 +1,4 @@
-import { Permission, ServerEvents, StreamKind } from '@caesar/shared';
+import { ServerEvents, StreamKind } from '@caesar/shared';
 import { logger } from '@server/logger';
 import { VoiceRuntime } from '@server/runtimes/voice';
 import { invariant } from '@server/utils/invariant';
@@ -12,8 +12,9 @@ const closeProducerRoute = protectedProcedure
     })
   )
   .mutation(async ({ ctx, input }) => {
-    await ctx.needsPermission(Permission.JOIN_VOICE_CHANNELS);
-
+    // Closing your own stream is cleanup, so it needs no voice permission:
+    // a user whose JOIN_VOICE_CHANNELS was revoked mid-call can still turn
+    // their camera or mic off.
     if (!ctx.currentVoiceChannelId) {
       logger.debug(
         'Ignoring closeProducer for %s/%s: user already left voice',

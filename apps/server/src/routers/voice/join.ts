@@ -40,7 +40,9 @@ const joinVoiceRoute = rateLimitedProcedure(protectedProcedure, {
       });
       await Promise.all([
         ctx.needsPermission(Permission.JOIN_VOICE_CHANNELS),
-        ctx.needsChannelPermission(input.channelId, ChannelPermission.JOIN)
+        ctx.needsChannelPermission(input.channelId, ChannelPermission.JOIN, {
+          channel
+        })
       ]);
     }
 

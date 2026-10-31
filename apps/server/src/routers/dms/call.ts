@@ -53,7 +53,7 @@ const callRoute = protectedProcedure
 
     // Lazy-init the VoiceRuntime for this DM channel if not already running.
     if (!VoiceRuntime.findById(input.channelId)) {
-      const runtime = new VoiceRuntime(input.channelId);
+      const runtime = new VoiceRuntime(input.channelId, true);
       await runtime.init();
     }
 

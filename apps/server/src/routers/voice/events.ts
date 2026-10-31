@@ -1,8 +1,10 @@
 import {
   ChannelPermission,
   ServerEvents,
-  type StreamKind
+  type StreamKind,
+  type TChannelAccess
 } from '@caesar/shared';
+import { getChannelAccessRow } from '@server/db/queries/channels';
 import { type Context, protectedProcedure } from '@server/utils/trpc';
 import { observable } from '@trpc/server/observable';
 
@@ -23,6 +25,24 @@ type TVoiceProducerEvent = {
 // just trusted from the join-time check): permissions can be revoked
 // while a user is still in voice, and the equality with
 // currentVoiceChannelId alone wouldn't reflect that.
+//
+// One publish hands the same payload object to every listener, so keying
+// on it reads the channel row once per event instead of once per socket in
+// the channel. Each user's own grants are still resolved per event.
+const channelByEvent = new WeakMap<
+  TVoiceProducerEvent,
+  Promise<TChannelAccess | undefined>
+>();
+
+const getEventChannel = (data: TVoiceProducerEvent) => {
+  let channel = channelByEvent.get(data);
+
+  if (!channel)
+    channelByEvent.set(data, (channel = getChannelAccessRow(data.channelId)));
+
+  return channel;
+};
+
 const subscribeVoiceProducerEvent = (
   topic:
     | typeof ServerEvents.VOICE_NEW_PRODUCER
@@ -33,9 +53,11 @@ const subscribeVoiceProducerEvent = (
     const sub = ctx.pubsub.subscribeAcrossChannels(topic).subscribe({
       next: async (data) => {
         if (data.channelId !== ctx.currentVoiceChannelId) return;
+        const channel = await getEventChannel(data);
         const allowed = await ctx.hasChannelPermission(
           data.channelId,
-          ChannelPermission.JOIN
+          ChannelPermission.JOIN,
+          { channel }
         );
         if (!allowed) return;
         observer.next(data);

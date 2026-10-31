@@ -14,24 +14,17 @@ const updateVoiceStateRoute = voiceProcedure
   .mutation(async ({ input, ctx }) => {
     const validatedInput = { ...input };
 
-    const [canSpeak, canUseWebcam, canShareScreen] = await Promise.all([
-      ctx.hasChannelPermission(ctx.voiceChannelId, ChannelPermission.SPEAK),
-      ctx.hasChannelPermission(ctx.voiceChannelId, ChannelPermission.WEBCAM),
-      ctx.hasChannelPermission(
-        ctx.voiceChannelId,
-        ChannelPermission.SHARE_SCREEN
-      )
-    ]);
+    const permissions = await ctx.getChannelPermissions(ctx.voiceChannelId);
 
-    if (!canSpeak) {
+    if (!permissions[ChannelPermission.SPEAK]) {
       delete validatedInput.micMuted;
     }
 
-    if (!canUseWebcam) {
+    if (!permissions[ChannelPermission.WEBCAM]) {
       delete validatedInput.webcamEnabled;
     }
 
-    if (!canShareScreen) {
+    if (!permissions[ChannelPermission.SHARE_SCREEN]) {
       delete validatedInput.sharingScreen;
     }
 
