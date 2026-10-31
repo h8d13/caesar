@@ -10,7 +10,16 @@ let client: Client;
 // transactions held across non-database I/O, reported by the guard
 let yielded: Error[] = [];
 
-const openFds = () => fs.readdirSync('/proc/self/fd').length;
+// Only this database's handles: the fork is shared with other test files
+// (isolate: false), whose sockets and files open and close meanwhile.
+const openFds = () =>
+  fs.readdirSync('/proc/self/fd').filter((fd) => {
+    try {
+      return fs.readlinkSync(`/proc/self/fd/${fd}`).startsWith(dbPath);
+    } catch {
+      return false;
+    }
+  }).length;
 
 // More parallel reads than the pool has connections: every connection gets
 // borrowed, waiters reuse released ones.
