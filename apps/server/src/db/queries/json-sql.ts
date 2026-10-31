@@ -90,12 +90,29 @@ const precompile = (fragment: SQL): SQL => {
 
 const parseJson = <T>(value: unknown): T => JSON.parse(value as string) as T;
 
+type TPlaceholders = Record<string, unknown>;
+
+// Prepared JSON selects (one JSON column first) read through values():
+// drizzle's per-row mapping cost more than the saved build on 200 users.
+const jsonRows = async <T>(
+  query: { values: (params?: TPlaceholders) => Promise<unknown[][]> },
+  params?: TPlaceholders
+): Promise<T[]> =>
+  (await query.values(params)).map((row) => parseJson<T>(row[0]));
+
+const jsonRow = async <T>(
+  query: Parameters<typeof jsonRows>[0],
+  params?: TPlaceholders
+): Promise<T | undefined> => (await jsonRows<T>(query, params))[0];
+
 export {
   fileByIdJson,
   fileJson,
   jsonArrayOf,
   jsonObject,
   jsonOneOf,
+  jsonRow,
+  jsonRows,
   parseJson,
   precompile
 };

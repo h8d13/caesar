@@ -6,25 +6,22 @@ import {
 import { files, userRoles, users } from '@caesar/shared/db/schema';
 import type { TTokenPayload } from '@server/types';
 import { verifyJwt } from '@server/utils/jwt-secret';
-import { count, eq, sql, sum, type SQL } from 'drizzle-orm';
+import { type Column, count, eq, sql, sum, type SQL } from 'drizzle-orm';
 import { db } from '..';
+import { prepared } from '../prepared';
 import {
   fileByIdJson,
   jsonArrayOf,
   jsonObject,
-  parseJson,
+  jsonRow,
+  jsonRows,
   precompile
 } from './json-sql';
-import {
-  joinedUserBaseFields,
-  publicUserBaseFields,
-  socialCreditSubquery
-} from './user-fields';
+import { joinedUserBaseFields, publicUserBaseFields } from './user-fields';
 
 const userRelationsJson = {
   avatar: fileByIdJson('avatar_file', users.avatarId),
   banner: fileByIdJson('banner_file', users.bannerId),
-  socialCredit: socialCreditSubquery,
   roleIds: jsonArrayOf(
     sql`${userRoles.roleId} ORDER BY ${userRoles.roleId}`,
     sql`FROM ${userRoles} WHERE ${userRoles.userId} = ${users.id}`
@@ -55,28 +52,33 @@ const joinedUserWithPasswordJson = precompile(
   })
 );
 
-const selectUsersJson = async <T>(json: SQL, where?: SQL): Promise<T[]> => {
-  const rows = await db.all<{ user: string }>(
-    sql`SELECT ${json} AS user FROM ${users}
-      ${where ? sql`WHERE ${where}` : sql``}`
+const usersJsonQuery = (json: SQL) =>
+  prepared(() => db.select({ user: sql`${json}` }).from(users));
+
+const userJsonByQuery = (json: SQL, key: Column) =>
+  prepared(() =>
+    db
+      .select({ user: sql`${json}` })
+      .from(users)
+      .where(eq(key, sql.placeholder('key')))
   );
 
-  return rows.map((row) => parseJson<T>(row.user));
-};
+const publicUsersQuery = usersJsonQuery(publicUserJson);
+const publicUserByIdQuery = userJsonByQuery(publicUserJson, users.id);
+const usersQuery = usersJsonQuery(joinedUserJson);
+const userByIdQuery = userJsonByQuery(joinedUserJson, users.id);
+const userByIdentityQuery = userJsonByQuery(
+  joinedUserWithPasswordJson,
+  users.identity
+);
 
 const getPublicUserById = async (
   userId: number
-): Promise<TJoinedPublicUser | undefined> => {
-  const [user] = await selectUsersJson<TJoinedPublicUser>(
-    publicUserJson,
-    eq(users.id, userId)
-  );
-
-  return user;
-};
+): Promise<TJoinedPublicUser | undefined> =>
+  jsonRow<TJoinedPublicUser>(publicUserByIdQuery(), { key: userId });
 
 const getPublicUsers = async (): Promise<TJoinedPublicUser[]> =>
-  selectUsersJson<TJoinedPublicUser>(publicUserJson);
+  jsonRows<TJoinedPublicUser>(publicUsersQuery());
 
 const getStorageUsageByUserId = async (
   userId: number
@@ -97,29 +99,34 @@ const getStorageUsageByUserId = async (
   };
 };
 
-const getUserById = async (
-  userId: number
-): Promise<TJoinedUser | undefined> => {
-  const [user] = await selectUsersJson<TJoinedUser>(
-    joinedUserJson,
-    eq(users.id, userId)
-  );
-
-  return user;
-};
+const getUserById = async (userId: number): Promise<TJoinedUser | undefined> =>
+  jsonRow<TJoinedUser>(userByIdQuery(), { key: userId });
 
 const getUserByIdentity = async (
   identity: string
-): Promise<TJoinedUser | undefined> => {
-  const [user] = await selectUsersJson<TJoinedUser>(
-    joinedUserWithPasswordJson,
-    eq(users.identity, identity)
-  );
+): Promise<TJoinedUser | undefined> =>
+  jsonRow<TJoinedUser>(userByIdentityQuery(), { key: identity });
 
-  return user;
-};
+const sessionByIdQuery = prepared(() =>
+  db
+    .select({
+      id: users.id,
+      sessionEpoch: users.sessionEpoch,
+      banned: users.banned
+    })
+    .from(users)
+    .where(eq(users.id, sql.placeholder('id')))
+);
 
-const getUserByToken = async (token: string | undefined) => {
+// The one session gate. `load` only picks how much of the user to read:
+// HTTP routes only authorize and skip the joined user JSON; the WS
+// handshake loads it once for ctx.user.
+const resolveSessionToken = async <
+  T extends { sessionEpoch: number; banned: boolean }
+>(
+  token: string | undefined,
+  load: (userId: number) => Promise<T | undefined>
+) => {
   try {
     if (!token) return;
 
@@ -129,7 +136,7 @@ const getUserByToken = async (token: string | undefined) => {
     // a session: their only valid use is exchange via /login/2fa.
     if (decoded.type === 'pre-2fa') return;
 
-    const user = await getUserById(decoded.userId);
+    const user = await load(decoded.userId);
 
     // reject tokens minted before the user's current session: superseded
     // by a newer login, a logout, or a password change.
@@ -145,8 +152,14 @@ const getUserByToken = async (token: string | undefined) => {
   }
 };
 
+const getUserByToken = (token: string | undefined) =>
+  resolveSessionToken(token, getUserById);
+
+const getSessionUserByToken = (token: string | undefined) =>
+  resolveSessionToken(token, (id) => sessionByIdQuery().get({ id }));
+
 const getUsers = async (): Promise<TJoinedUser[]> =>
-  selectUsersJson<TJoinedUser>(joinedUserJson);
+  jsonRows<TJoinedUser>(usersQuery());
 
 const getAllUserIds = async (): Promise<number[]> => {
   const results = await db.select({ id: users.id }).from(users);
@@ -160,6 +173,7 @@ export {
   getStorageUsageByUserId,
   getUserById,
   getUserByIdentity,
+  getSessionUserByToken,
   getUserByToken,
   getUsers
 };

@@ -2,7 +2,14 @@ import type { TJoinedEmoji } from '@caesar/shared';
 import { emojis, files, users } from '@caesar/shared/db/schema';
 import { eq, getTableColumns, sql, type SQL } from 'drizzle-orm';
 import { db } from '..';
-import { fileJson, jsonObject, parseJson, precompile } from './json-sql';
+import { prepared } from '../prepared';
+import {
+  fileJson,
+  jsonObject,
+  jsonRow,
+  jsonRows,
+  precompile
+} from './json-sql';
 import { publicUserBaseFields } from './user-fields';
 
 // The uploader ships as its public base columns only (no avatar/banner),
@@ -15,24 +22,24 @@ const joinedEmojiJson = precompile(
   })
 );
 
-const selectJoinedEmojis = async (where?: SQL): Promise<TJoinedEmoji[]> => {
-  const rows = await db.all<{ emoji: string }>(
-    sql`SELECT ${joinedEmojiJson} AS emoji FROM ${emojis}
-      INNER JOIN ${files} ON ${files.id} = ${emojis.fileId}
-      INNER JOIN ${users} ON ${users.id} = ${emojis.userId}
-      ${where ? sql`WHERE ${where}` : sql``}`
+const joinedEmojisQuery = (where: SQL | undefined) =>
+  prepared(() =>
+    db
+      .select({ emoji: sql`${joinedEmojiJson}` })
+      .from(emojis)
+      .innerJoin(files, eq(files.id, emojis.fileId))
+      .innerJoin(users, eq(users.id, emojis.userId))
+      .where(where)
   );
 
-  return rows.map((row) => parseJson<TJoinedEmoji>(row.emoji));
-};
+const allEmojisQuery = joinedEmojisQuery(undefined);
+const emojiByIdQuery = joinedEmojisQuery(eq(emojis.id, sql.placeholder('id')));
 
-const getEmojiById = async (id: number): Promise<TJoinedEmoji | undefined> => {
-  const [emoji] = await selectJoinedEmojis(eq(emojis.id, id));
+const getEmojiById = async (id: number): Promise<TJoinedEmoji | undefined> =>
+  jsonRow<TJoinedEmoji>(emojiByIdQuery(), { id });
 
-  return emoji;
-};
-
-const getEmojis = async (): Promise<TJoinedEmoji[]> => selectJoinedEmojis();
+const getEmojis = async (): Promise<TJoinedEmoji[]> =>
+  jsonRows<TJoinedEmoji>(allEmojisQuery());
 
 const emojiExists = async (name: string): Promise<boolean> => {
   const emoji = await db

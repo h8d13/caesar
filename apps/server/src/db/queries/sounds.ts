@@ -2,7 +2,14 @@ import type { TJoinedSound } from '@caesar/shared';
 import { files, sounds, users } from '@caesar/shared/db/schema';
 import { eq, getTableColumns, sql, type SQL } from 'drizzle-orm';
 import { db } from '..';
-import { fileJson, jsonObject, parseJson, precompile } from './json-sql';
+import { prepared } from '../prepared';
+import {
+  fileJson,
+  jsonObject,
+  jsonRow,
+  jsonRows,
+  precompile
+} from './json-sql';
 import { publicUserBaseFields } from './user-fields';
 
 // The uploader ships as its public base columns only (no avatar/banner),
@@ -15,24 +22,24 @@ const joinedSoundJson = precompile(
   })
 );
 
-const selectJoinedSounds = async (where?: SQL): Promise<TJoinedSound[]> => {
-  const rows = await db.all<{ sound: string }>(
-    sql`SELECT ${joinedSoundJson} AS sound FROM ${sounds}
-      INNER JOIN ${files} ON ${files.id} = ${sounds.fileId}
-      INNER JOIN ${users} ON ${users.id} = ${sounds.userId}
-      ${where ? sql`WHERE ${where}` : sql``}`
+const joinedSoundsQuery = (where: SQL | undefined) =>
+  prepared(() =>
+    db
+      .select({ sound: sql`${joinedSoundJson}` })
+      .from(sounds)
+      .innerJoin(files, eq(files.id, sounds.fileId))
+      .innerJoin(users, eq(users.id, sounds.userId))
+      .where(where)
   );
 
-  return rows.map((row) => parseJson<TJoinedSound>(row.sound));
-};
+const allSoundsQuery = joinedSoundsQuery(undefined);
+const soundByIdQuery = joinedSoundsQuery(eq(sounds.id, sql.placeholder('id')));
 
-const getSoundById = async (id: number): Promise<TJoinedSound | undefined> => {
-  const [sound] = await selectJoinedSounds(eq(sounds.id, id));
+const getSoundById = async (id: number): Promise<TJoinedSound | undefined> =>
+  jsonRow<TJoinedSound>(soundByIdQuery(), { id });
 
-  return sound;
-};
-
-const getSounds = async (): Promise<TJoinedSound[]> => selectJoinedSounds();
+const getSounds = async (): Promise<TJoinedSound[]> =>
+  jsonRows<TJoinedSound>(allSoundsQuery());
 
 const soundExists = async (name: string): Promise<boolean> => {
   const sound = await db
