@@ -4,7 +4,6 @@ import {
   type TTempFile
 } from '@caesar/shared';
 import { files } from '@caesar/shared/db/schema';
-import { createHash } from 'crypto';
 import fs from 'fs/promises';
 import mime from 'mime-types';
 import path from 'path';
@@ -27,15 +26,6 @@ import { randomUUIDv7 } from './uuid';
  */
 
 const TEMP_FILE_TTL = 1000 * 60 * 1; // 1 minute
-
-const md5File = async (path: string): Promise<string> => {
-  const file = await fs.readFile(path);
-  const hash = createHash('md5');
-
-  hash.update(file);
-
-  return hash.digest('hex');
-};
 
 const moveFile = async (src: string, dest: string) => {
   try {
@@ -91,14 +81,16 @@ class TemporaryFileManager {
     filePath,
     size,
     originalName,
-    userId
+    userId,
+    md5
   }: {
     filePath: string;
     size: number;
     originalName: string;
     userId: number;
+    // hashed by /upload while it streams the body
+    md5: string;
   }): Promise<TTempFile> => {
-    const md5 = await md5File(filePath);
     const fileId = randomUUIDv7();
     const ext = getNormalizedExtension(originalName);
 
@@ -171,46 +163,73 @@ class FileManager {
   public temporaryFileHasMimeType =
     this.tempFileManager.temporaryFileHasMimeType;
 
-  private handleStorageLimits = async (tempFile: TTempFile) => {
+  // Looks up and quota-checks the whole batch from one usage snapshot,
+  // walking files in order with running totals: errors and evictions match
+  // saving them one by one, without re-reading usage per file. Throws
+  // before any file is moved, so a rejected batch leaves no orphans.
+  private resolveBatch = async (
+    tempFileIds: string[],
+    userId: number
+  ): Promise<TTempFile[]> => {
     const [settings, userStorage, serverStorage] = await Promise.all([
       getSettings(),
-      getStorageUsageByUserId(tempFile.userId),
+      getStorageUsageByUserId(userId),
       getUsedFileQuota()
     ]);
 
     const userStorageQuota = await getEffectiveStorageSpaceQuotaByUserId(
-      tempFile.userId,
+      userId,
       settings.storageSpaceQuotaByUser
     );
 
-    const newTotalStorage = userStorage.usedStorage + tempFile.size;
+    let userUsed = userStorage.usedStorage;
+    let serverUsed = serverStorage;
 
-    if (userStorageQuota > 0 && newTotalStorage > userStorageQuota) {
-      throw new Error('User storage limit exceeded');
-    }
+    const tempFiles: TTempFile[] = [];
 
-    const newServerStorage = serverStorage + tempFile.size;
+    for (const tempFileId of tempFileIds) {
+      const tempFile = this.getTemporaryFile(tempFileId);
 
-    if (settings.storageQuota > 0 && newServerStorage > settings.storageQuota) {
-      if (
-        settings.storageOverflowAction === StorageOverflowAction.PREVENT_UPLOADS
-      ) {
+      // a repeated id was consumed by its first save in a one-by-one loop
+      if (!tempFile || tempFiles.includes(tempFile)) {
+        throw new Error('File not found');
+      }
+
+      if (tempFile.userId !== userId) {
+        throw new Error("You don't have permission to access this file");
+      }
+
+      if (userStorageQuota > 0 && userUsed + tempFile.size > userStorageQuota) {
+        throw new Error('User storage limit exceeded');
+      }
+
+      const overflows =
+        settings.storageQuota > 0 &&
+        serverUsed + tempFile.size > settings.storageQuota;
+      const action = settings.storageOverflowAction;
+
+      if (overflows && action === StorageOverflowAction.PREVENT_UPLOADS) {
         throw new Error('Server storage limit exceeded.');
       }
 
-      if (
-        settings.storageOverflowAction ===
-        StorageOverflowAction.DELETE_OLD_FILES
-      ) {
-        const filesToDelete = await getExceedingOldFiles(tempFile.size);
+      if (overflows && action === StorageOverflowAction.DELETE_OLD_FILES) {
+        const evicted = await getExceedingOldFiles(tempFile.size, serverUsed);
 
-        const promises = filesToDelete.map(async (file) => {
-          await removeFile(file.id);
-        });
+        await Promise.all(evicted.map((file) => removeFile(file.id)));
 
-        await Promise.all(promises);
+        // evicted files may be the user's own and free their quota too
+        for (const file of evicted) {
+          serverUsed -= file.size;
+          if (file.userId === userId) userUsed -= file.size;
+        }
       }
+
+      userUsed += tempFile.size;
+      serverUsed += tempFile.size;
+      tempFiles.push(tempFile);
     }
+
+    return tempFiles;
   };
 
   private getUniqueName = (originalName: string): string => {
@@ -219,38 +238,50 @@ class FileManager {
   };
 
   public async saveFile(tempFileId: string, userId: number): Promise<TFile> {
-    const tempFile = this.getTemporaryFile(tempFileId);
+    const [file] = await this.saveFiles([tempFileId], userId);
 
-    if (!tempFile) {
-      throw new Error('File not found');
+    return file!;
+  }
+
+  public async saveFiles(
+    tempFileIds: string[],
+    userId: number
+  ): Promise<TFile[]> {
+    if (tempFileIds.length === 0) return [];
+
+    const tempFiles = await this.resolveBatch(tempFileIds, userId);
+    const rows: (typeof files.$inferInsert)[] = [];
+    let saved: TFile[] = [];
+
+    try {
+      for (const tempFile of tempFiles) {
+        const fileName = this.getUniqueName(tempFile.originalName);
+        const destinationPath = path.join(PUBLIC_PATH, fileName);
+
+        await moveFile(tempFile.path, destinationPath);
+        await this.removeTemporaryFile(tempFile.id, true);
+
+        rows.push({
+          name: fileName,
+          extension: tempFile.extension,
+          md5: tempFile.md5,
+          size: tempFile.size,
+          originalName: tempFile.originalName,
+          userId,
+          mimeType: mime.lookup(destinationPath) || 'application/octet-stream',
+          createdAt: Date.now()
+        });
+      }
+    } finally {
+      // one INSERT (one commit) for the lot; a failed move still records
+      // the files moved before it, so the orphan sweep can reclaim them
+      if (rows.length > 0) {
+        saved = await db.insert(files).values(rows).returning();
+      }
     }
 
-    if (tempFile.userId !== userId) {
-      throw new Error("You don't have permission to access this file");
-    }
-
-    await this.handleStorageLimits(tempFile);
-
-    const fileName = this.getUniqueName(tempFile.originalName);
-    const destinationPath = path.join(PUBLIC_PATH, fileName);
-
-    await moveFile(tempFile.path, destinationPath);
-    await this.removeTemporaryFile(tempFileId, true);
-
-    return await db
-      .insert(files)
-      .values({
-        name: fileName,
-        extension: tempFile.extension,
-        md5: tempFile.md5,
-        size: tempFile.size,
-        originalName: tempFile.originalName,
-        userId,
-        mimeType: mime.lookup(destinationPath) || 'application/octet-stream',
-        createdAt: Date.now()
-      })
-      .returning()
-      .get();
+    // RETURNING order is unspecified; ids follow VALUES order
+    return saved.sort((a, b) => a.id - b.id);
   }
 }
 
