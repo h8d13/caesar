@@ -14,7 +14,7 @@ import { desc, eq, inArray } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/sqlite-core';
 import { db } from '..';
 import { getAllUserRoleIdsMap } from './roles';
-import { publicUserBaseFields, socialCreditSubquery } from './user-fields';
+import { publicUserBaseFields } from './user-fields';
 
 const getInvites = async (): Promise<TJoinedInvite[]> => {
   const avatarFiles = alias(files, 'avatarFiles');
@@ -23,10 +23,7 @@ const getInvites = async (): Promise<TJoinedInvite[]> => {
   const rows = await db
     .select({
       invite: invites,
-      creator: {
-        ...publicUserBaseFields,
-        socialCredit: socialCreditSubquery
-      },
+      creator: publicUserBaseFields,
       avatar: avatarFiles,
       banner: bannerFiles,
       role: {

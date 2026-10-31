@@ -1,10 +1,10 @@
-import { socialCreditLedger } from '@caesar/shared/db/schema';
+import { socialCreditLedger, users } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
 import { getSettings } from '@server/db/queries/server';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, t } from '@server/utils/trpc';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 const assertGamesEnabled = async (): Promise<void> => {
   const settings = await getSettings();
@@ -86,11 +86,9 @@ const createGameLedgerBindings = (ledgerableType: string) => ({
   },
   getBalance: async (userId: number) => {
     const result = await db
-      .select({
-        balance: sql<number>`COALESCE(SUM(${socialCreditLedger.amount}), 0)`
-      })
-      .from(socialCreditLedger)
-      .where(eq(socialCreditLedger.targetId, userId))
+      .select({ balance: users.socialCredit })
+      .from(users)
+      .where(eq(users.id, userId))
       .get();
     return result?.balance ?? 0;
   }

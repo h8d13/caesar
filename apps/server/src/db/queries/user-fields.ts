@@ -3,7 +3,7 @@ import { sql } from 'drizzle-orm';
 
 // Common columns shared by every query that returns a TPublicUser-shaped
 // record. Spread this into a drizzle .select({ ... }) and add the rest
-// (avatar/banner joins, socialCredit) as needed.
+// (avatar/banner joins) as needed.
 //
 // When TPublicUser gains a new field, add it here once instead of patching
 // every caller.
@@ -16,6 +16,7 @@ const publicUserBaseFields = {
   banned: users.banned,
   avatarId: users.avatarId,
   bannerId: users.bannerId,
+  socialCredit: users.socialCredit,
   // count of non-expired status images ("stories"). drives the avatar ring
   // for every user without shipping the images; the list itself is fetched
   // lazily when a viewer opens. unixepoch()*1000 matches our ms timestamps.
@@ -31,7 +32,7 @@ const publicUserBaseFields = {
 // Superset for TJoinedUser-shaped queries: every public field plus the
 // owner-only / admin-only columns (identity, ban metadata, session epoch,
 // timestamps). Spread into a drizzle .select({ ... }) and add avatar/
-// banner joins + socialCredit (+ optionally password) at the call site.
+// banner joins (+ optionally password) at the call site.
 const joinedUserBaseFields = {
   ...publicUserBaseFields,
   identity: users.identity,
@@ -43,6 +44,4 @@ const joinedUserBaseFields = {
   invitedBy: users.invitedBy
 };
 
-const socialCreditSubquery = sql<number>`(SELECT COALESCE(SUM(amount), 0) FROM social_credit_ledger WHERE target_id = ${users.id})`;
-
-export { joinedUserBaseFields, publicUserBaseFields, socialCreditSubquery };
+export { joinedUserBaseFields, publicUserBaseFields };

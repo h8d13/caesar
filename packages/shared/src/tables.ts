@@ -182,7 +182,6 @@ export type TJoinedUser = TUser & {
   avatar: TFile | null;
   banner: TFile | null;
   roleIds: number[];
-  socialCredit: number;
   // count of this user's non-expired status images; drives the "has a story"
   // ring without shipping the images themselves (fetched lazily on view).
   activeStatusCount: number;
