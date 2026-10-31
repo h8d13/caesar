@@ -41,6 +41,8 @@ export const publicServerSettingsSelector = (state: IRootState) =>
 
 export const infoSelector = (state: IRootState) => state.server.info;
 
+export const versionSelector = (state: IRootState) => state.server.version;
+
 export const ownUserRolesSelector = createSelector(
     [ownUserSelector, rolesSelector],
     (ownUser, roles) => {

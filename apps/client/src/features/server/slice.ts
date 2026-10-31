@@ -23,6 +23,7 @@ export interface IServerState {
     connecting: boolean;
     disconnectInfo?: TDisconnectInfo;
     serverId?: string;
+    version?: string;
     categories: TCategory[];
     channels: TChannel[];
     emojis: TJoinedEmoji[];
@@ -71,6 +72,7 @@ const initialState: IServerState = {
     connecting: false,
     disconnectInfo: undefined,
     serverId: undefined,
+    version: undefined,
     ownUserId: undefined,
     categories: [],
     channels: [],
@@ -155,6 +157,7 @@ export const serverSlice = createSlice({
             state,
             action: PayloadAction<{
                 serverId: string;
+                version: string;
                 categories: TCategory[];
                 channels: TChannel[];
                 users: TJoinedPublicUser[];
@@ -179,6 +182,7 @@ export const serverSlice = createSlice({
             state.publicSettings = action.payload.publicSettings;
             state.voiceMap = action.payload.voiceMap;
             state.serverId = action.payload.serverId;
+            state.version = action.payload.version;
             state.channelPermissions = action.payload.channelPermissions;
             state.readStatesMap = action.payload.readStates;
         },

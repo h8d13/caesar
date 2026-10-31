@@ -188,13 +188,16 @@ const publicRouteHandler = async (
     ? 'inline'
     : 'attachment';
 
+  // the logo is served pre-auth: keep the uploader's original name private
+  const dispositionName = isServerLogo ? dbFile.name : dbFile.originalName;
+
   // plain filename= is the ASCII fallback (filename* carries the real name):
   // Node rejects header chars outside latin1, so a CJK/emoji name 500'd
-  const safeFileName = dbFile.originalName
+  const safeFileName = dispositionName
     .replace(/[^\x20-\x7e]/g, '_') // also strips CR/LF (header injection)
     .replace(/"/g, '\\"'); // escape double quotes for header safety
 
-  const encodedFileName = encodeURIComponent(dbFile.originalName).replace(
+  const encodedFileName = encodeURIComponent(dispositionName).replace(
     /'/g,
     '%27'
   );

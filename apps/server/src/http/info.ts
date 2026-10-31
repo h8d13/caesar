@@ -1,7 +1,6 @@
 import type { TServerInfo } from '@caesar/shared';
 import http from 'http';
 import { getSettings } from '../db/queries/server';
-import { SERVER_VERSION } from '../utils/env';
 
 const infoRouteHandler = async (
   req: http.IncomingMessage,
@@ -10,11 +9,9 @@ const infoRouteHandler = async (
   const settings = await getSettings();
 
   const info: TServerInfo = {
-    serverId: settings.serverId,
-    version: SERVER_VERSION,
     name: settings.name,
     description: settings.description,
-    logo: settings.logo
+    logo: settings.logo ? { name: settings.logo.name } : null
   };
 
   res.writeHead(200, { 'Content-Type': 'application/json' });

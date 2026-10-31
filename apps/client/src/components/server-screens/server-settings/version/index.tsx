@@ -1,5 +1,5 @@
 import { closeServerScreens } from '@/features/server-screens/actions';
-import { infoSelector } from '@/features/server/selectors';
+import { versionSelector } from '@/features/server/selectors';
 import {
     Button,
     Card,
@@ -14,7 +14,7 @@ import { memo } from 'react';
 import { useSelector } from 'react-redux';
 
 const Version = memo(() => {
-    const info = useSelector(infoSelector);
+    const version = useSelector(versionSelector);
 
     return (
         <Card>
@@ -29,7 +29,7 @@ const Version = memo(() => {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <CheckCircle className="h-4 w-4" />
                         <span className="font-mono">
-                            {info?.version || 'Unknown'}
+                            {version || 'Unknown'}
                         </span>
                     </div>
                 </Group>

@@ -79,12 +79,11 @@ export type TTempFile = {
   userId: number;
 };
 
-export type TServerInfo = Pick<
-  TSettings,
-  'serverId' | 'name' | 'description'
-> & {
-  logo: TFile | null;
-  version: string;
+// pre-auth (/info): only what the login screen renders; anything else
+// belongs in the joinServer payload
+export type TServerInfo = Pick<TSettings, 'name' | 'description'> & {
+  // the stored name builds the URL, uploader metadata stays out
+  logo: Pick<TFile, 'name'> | null;
 };
 
 export type TChannelPermissionsMap = Record<ChannelPermission, boolean>;

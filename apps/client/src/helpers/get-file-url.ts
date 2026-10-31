@@ -23,7 +23,9 @@ const getUrlFromServer = () => {
     return finalUrl;
 };
 
-const getFileUrl = (file: TFile | undefined | null) => {
+const getFileUrl = (
+    file: Pick<TFile, 'name' | '_accessToken'> | undefined | null
+) => {
     if (!file) return '';
 
     const url = getUrlFromServer();

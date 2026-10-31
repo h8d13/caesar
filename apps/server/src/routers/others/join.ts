@@ -16,6 +16,7 @@ import { logger } from '@server/logger';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { enqueueLogin } from '@server/queues/logins';
 import { VoiceRuntime } from '@server/runtimes/voice';
+import { SERVER_VERSION } from '@server/utils/env';
 import { invariant } from '@server/utils/invariant';
 import { rateLimitedProcedure, t } from '@server/utils/trpc';
 import { getOnlineUserIds, trackUserConnect } from '@server/utils/wss';
@@ -159,6 +160,7 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
       users: processedPublicUsers,
       serverId: settings.serverId,
       serverName: settings.name,
+      version: SERVER_VERSION,
       ownUserId: ctx.user.id,
       voiceMap,
       roles,
