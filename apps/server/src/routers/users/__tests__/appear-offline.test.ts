@@ -1,6 +1,7 @@
-import { UserStatus } from '@caesar/shared';
+import { ServerEvents, UserStatus } from '@caesar/shared';
 import { initTest } from '@server/__tests__/helpers';
-import { describe, expect, test } from 'vite-plus/test';
+import { pubsub } from '@server/utils/pubsub';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 describe('users.setAppearOffline', () => {
   test('persists the flag and surfaces it on the next joinServer for self', async () => {
@@ -43,5 +44,30 @@ describe('users.setAppearOffline', () => {
     const ownRow = reJoined.initialData.users.find((u) => u.id === 3);
 
     expect(ownRow?.appearOffline).toBe(false);
+  });
+  test('typing follows a toggle made mid-session, on every tab', async () => {
+    // two live connections of user 3, both opened while visible
+    const { caller: tabA } = await initTest(3);
+    const { caller: tabB } = await initTest(3);
+    const publishFor = vi.spyOn(pubsub, 'publishFor');
+    const typingEvents = () =>
+      publishFor.mock.calls.filter(
+        ([, event]) => event === ServerEvents.MESSAGE_TYPING
+      ).length;
+
+    try {
+      await tabA.users.setAppearOffline({ value: true });
+      await tabA.messages.signalTyping({ channelId: 1 });
+      await tabB.messages.signalTyping({ channelId: 1 });
+
+      expect(typingEvents()).toBe(0);
+
+      await tabB.users.setAppearOffline({ value: false });
+      await tabA.messages.signalTyping({ channelId: 1 });
+
+      expect(typingEvents()).toBe(1);
+    } finally {
+      publishFor.mockRestore();
+    }
   });
 });

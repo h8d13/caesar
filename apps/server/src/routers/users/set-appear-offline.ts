@@ -3,6 +3,7 @@ import { users } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { getPublicUserById } from '@server/db/queries/users';
 import { protectedProcedure } from '@server/utils/trpc';
+import { setAppearOffline } from '@server/utils/wss';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -13,6 +14,8 @@ const setAppearOfflineRoute = protectedProcedure
       .update(users)
       .set({ appearOffline: input.value })
       .where(eq(users.id, ctx.userId));
+
+    setAppearOffline(ctx.userId, input.value);
 
     // peers reflect the change live: turning on -> they see USER_LEAVE
     // (offline); turning off -> they see USER_JOIN at the user's real
