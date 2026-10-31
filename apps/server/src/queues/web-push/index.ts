@@ -1,11 +1,10 @@
 import { ChannelPermission, hasMention } from '@caesar/shared';
-import { pushSubscriptions } from '@caesar/shared/db/schema';
+import { pushSubscriptions, users } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import {
-  getAffectedUserIdsForChannel,
+  getChannelAudience,
   getChannelByIdOrThrow
 } from '@server/db/queries/channels';
-import { getPublicUserById } from '@server/db/queries/users';
 import { logger } from '@server/logger';
 import { sendWebPush } from '@server/utils/web-push';
 import { getOnlineUserIds } from '@server/utils/wss';
@@ -17,6 +16,24 @@ const webPushQueue = new Queue({
   autostart: true,
   timeout: 15_000
 });
+
+const getUserName = async (userId: number) => {
+  const user = await db
+    .select({ name: users.name })
+    .from(users)
+    .where(eq(users.id, userId))
+    .get();
+
+  return user?.name ?? 'Unknown';
+};
+
+const selectSubscriptions = async (userIds: number[]) =>
+  userIds.length === 0
+    ? []
+    : db
+        .select()
+        .from(pushSubscriptions)
+        .where(inArray(pushSubscriptions.userId, userIds));
 
 type TEnqueueMessagePush = {
   channelId: number;
@@ -38,30 +55,31 @@ const enqueueMessagePush = ({
 }: TEnqueueMessagePush) => {
   webPushQueue.push(async (callback) => {
     try {
-      const [affectedUserIds, channel, sender] = await Promise.all([
-        getAffectedUserIdsForChannel(channelId, {
-          permission: ChannelPermission.VIEW_CHANNEL
-        }),
-        getChannelByIdOrThrow(channelId),
-        getPublicUserById(messageUserId)
-      ]);
+      const channel = await getChannelByIdOrThrow(channelId);
+      const audience = await getChannelAudience(channelId, {
+        permission: ChannelPermission.VIEW_CHANNEL,
+        channel
+      });
 
-      const onlineUserIds = getOnlineUserIds();
-      const offlineUserIds = affectedUserIds.filter(
-        (id) => id !== messageUserId && !onlineUserIds.includes(id)
-      );
+      const onlineUserIds = new Set(getOnlineUserIds());
+      const isRecipient = (userId: number) =>
+        userId !== messageUserId && !onlineUserIds.has(userId);
 
-      if (offlineUserIds.length === 0) {
+      // "everyone": subscriptions are far fewer rows than users, so read
+      // them all and filter here instead of binding every offline user id
+      const subscriptions =
+        audience === 'everyone'
+          ? (await db.select().from(pushSubscriptions)).filter((sub) =>
+              isRecipient(sub.userId)
+            )
+          : await selectSubscriptions(audience.filter(isRecipient));
+
+      if (subscriptions.length === 0) {
         callback?.();
         return;
       }
 
-      const subscriptions = await db
-        .select()
-        .from(pushSubscriptions)
-        .where(inArray(pushSubscriptions.userId, offlineUserIds));
-
-      const senderName = sender?.name ?? 'Unknown';
+      const senderName = await getUserName(messageUserId);
       const title = channel.isDm
         ? senderName
         : `${senderName} in #${channel.name}`;
@@ -120,16 +138,13 @@ const enqueueCallPush = ({ callerId, peerId }: TEnqueueCallPush) => {
         return;
       }
 
-      const [subscriptions, caller] = await Promise.all([
-        db
-          .select()
-          .from(pushSubscriptions)
-          .where(eq(pushSubscriptions.userId, peerId)),
-        getPublicUserById(callerId)
+      const [subscriptions, callerName] = await Promise.all([
+        selectSubscriptions([peerId]),
+        getUserName(callerId)
       ]);
 
       const payload = {
-        title: caller?.name ?? 'Unknown',
+        title: callerName,
         body: 'Incoming call.'
       };
 
