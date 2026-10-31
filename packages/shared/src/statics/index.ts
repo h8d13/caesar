@@ -4,6 +4,10 @@ export * from './storage';
 
 export const DEFAULT_MESSAGES_LIMIT = 50;
 
+// Unread badges show exact counts up to this, then "<max>+". The server
+// stops counting at max + 1, which is all the badge can tell apart.
+export const UNREAD_COUNT_MAX = 99;
+
 // Sized for E2EE: ciphertext is base64 (~1.37x the HTML it encrypts).
 export const MESSAGE_MAX_LENGTH = 32_000;
 

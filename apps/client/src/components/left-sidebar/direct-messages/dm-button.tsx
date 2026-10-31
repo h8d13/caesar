@@ -1,3 +1,4 @@
+import { UnreadCount } from '@/components/unread-count';
 import { setDmsOpen } from '@/features/app/actions';
 import { useDmsOpen } from '@/features/app/hooks';
 import { useDirectMessagesUnreadCount } from '@/features/server/channels/hooks';
@@ -28,13 +29,7 @@ const DmButton = memo(() => {
                     <MessageCircleMore className="h-4 w-4" />
                     <span className="flex-1 text-left">Direct Messages</span>
                     {dmsOpen && <X className="h-4 w-4" />}
-                    {directMessagesUnreadCount > 0 && (
-                        <div className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-medium text-primary-foreground">
-                            {directMessagesUnreadCount > 99
-                                ? '99+'
-                                : directMessagesUnreadCount}
-                        </div>
-                    )}
+                    <UnreadCount count={directMessagesUnreadCount} />
                 </button>
             </Tooltip>
         </div>

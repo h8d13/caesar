@@ -1,3 +1,4 @@
+import { UNREAD_COUNT_MAX } from '@caesar/shared';
 import { cn } from '@caesar/ui';
 import { memo } from 'react';
 
@@ -16,7 +17,7 @@ const UnreadCount = memo(({ count, hasMention }: TUnreadCountProps) => {
                 hasMention && 'bg-red-500 text-white'
             )}
         >
-            {count > 99 ? '99+' : count}
+            {count > UNREAD_COUNT_MAX ? `${UNREAD_COUNT_MAX}+` : count}
         </div>
     );
 });
