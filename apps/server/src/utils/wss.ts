@@ -5,20 +5,26 @@ import {
   type Permission,
   ServerEvents,
   UserStatus,
+  type TChannelPermissionsMap,
   type TConnectionParams
 } from '@caesar/shared';
-import { channels, socialCreditLedger } from '@caesar/shared/db/schema';
+import { socialCreditLedger } from '@caesar/shared/db/schema';
 import { TRPCError } from '@trpc/server';
 import {
   applyWSSHandler,
   type CreateWSSContextFnOptions
 } from '@trpc/server/adapters/ws';
-import { eq } from 'drizzle-orm';
 import type http from 'http';
 import { type RawData, WebSocket, WebSocketServer } from 'ws';
 import { db } from '../db';
-import { getAllChannelUserPermissions } from '../db/queries/channels';
+import {
+  ALL_PERMISSIONS,
+  getChannelAccessRow,
+  getChannelPermissionsForUser,
+  NO_PERMISSIONS
+} from '../db/queries/channels';
 import { isUserDmParticipant } from '../db/queries/dms';
+import { getUserRoleIds } from '../db/queries/roles';
 import { getUserById, getUserByToken } from '../db/queries/users';
 import { getWsInfo } from '../helpers/get-ws-info';
 import {
@@ -69,6 +75,9 @@ const authedClients = (): Set<AuthedWebSocket> => {
 const usersIpMap = new Map<number, string>();
 const connectedAt = new Map<number, number>();
 const dailyPassiveCredit = new Map<number, { earned: number; day: number }>();
+// latest appear-offline flag per user: ctx.user is a snapshot taken when
+// the socket connected, and every tab must follow a toggle made in another
+const appearOfflineByUser = new Map<number, boolean>();
 
 const AUTH_TIMEOUT_MS = 5_000;
 
@@ -83,6 +92,13 @@ const PASSIVE_CREDIT_DAILY_CAP = 50;
 
 const trackUserConnect = (userId: number) => {
   connectedAt.set(userId, Date.now());
+};
+
+const isAppearingOffline = (userId: number) =>
+  appearOfflineByUser.get(userId) ?? false;
+
+const setAppearOffline = (userId: number, value: boolean) => {
+  appearOfflineByUser.set(userId, value);
 };
 
 // Close all open WS sessions for a user (except optionally one token). Used
@@ -144,8 +160,10 @@ const createContext = async ({
     message: 'Invalid authentication token'
   });
 
+  setAppearOffline(decodedUser.id, decodedUser.appearOffline);
+
   // Roles alone decide: a deleted user has none, so the full user row
-  // (avatar/banner joins, social credit SUM) is not worth loading per check.
+  // (avatar/banner and role joins) is not worth loading per check.
   const hasPermission = async (targetPermission: Permission | Permission[]) => {
     const roles = await getUserRoles(decodedUser.id);
 
@@ -168,28 +186,19 @@ const createContext = async ({
     return permissionsSet.has(targetPermission);
   };
 
-  // 'dm-outsider' is kept apart from 'denied' so needsChannelPermission can
-  // name the reason: callers run it in Promise.all next to assertDmChannel,
-  // and whichever rejects first must not change the error a client sees.
-  const resolveChannelAccess = async (
+  // Every permission the user holds in one channel, from one read of the
+  // row and its grants. 'dm-outsider' is kept apart from a denied record so
+  // needsChannelPermission can name the reason: callers run it in
+  // Promise.all next to assertDmChannel, and whichever rejects first must
+  // not change the error a client sees.
+  const resolveChannelPermissions = async (
     channelId: number,
-    targetPermission: ChannelPermission,
     // assertChannelAccess passes what it already looked up.
     opts?: TChannelPermissionHints
-  ): Promise<'allowed' | 'denied' | 'dm-outsider'> => {
-    const channel =
-      opts?.channel ??
-      (await db
-        .select({
-          private: channels.private,
-          isDm: channels.isDm
-        })
-        .from(channels)
-        .where(eq(channels.id, channelId))
-        .limit(1)
-        .get());
+  ): Promise<TChannelPermissionsMap | 'dm-outsider'> => {
+    const channel = opts?.channel ?? (await getChannelAccessRow(channelId));
 
-    if (!channel) return 'denied';
+    if (!channel) return NO_PERMISSIONS;
 
     // DMs are decided by participation alone: the owner bypass below
     // must never reach another pair's conversation.
@@ -198,37 +207,42 @@ const createContext = async ({
         opts?.isDmParticipant ??
         (await isUserDmParticipant(channelId, decodedUser.id));
 
-      return isParticipant ? 'allowed' : 'dm-outsider';
+      return isParticipant ? ALL_PERMISSIONS : 'dm-outsider';
     }
 
-    if (!channel.private) return 'allowed';
+    if (!channel.private) return ALL_PERMISSIONS;
 
-    const roles = await getUserRoles(decodedUser.id);
+    // the queries are synchronous, so the owner check runs first and owners
+    // skip the per-channel rows entirely
+    const roleIds = await getUserRoleIds(decodedUser.id);
 
-    const hasOwnerRole = roles.some((r) => r.id === OWNER_ROLE_ID);
+    if (roleIds.includes(OWNER_ROLE_ID)) return ALL_PERMISSIONS;
 
-    if (hasOwnerRole) return 'allowed'; // owner always has all permissions
-
-    const userChannelPermissions = await getAllChannelUserPermissions(
-      decodedUser.id
+    const permissions = await getChannelPermissionsForUser(
+      decodedUser.id,
+      channelId
     );
 
-    const channelInfo = userChannelPermissions[channelId];
+    // a private channel the user cannot see grants nothing in it
+    return permissions[ChannelPermission.VIEW_CHANNEL]
+      ? permissions
+      : NO_PERMISSIONS;
+  };
 
-    if (!channelInfo) return 'denied';
-    if (!channelInfo.permissions[ChannelPermission.VIEW_CHANNEL])
-      return 'denied';
+  const getChannelPermissions = async (
+    channelId: number,
+    opts?: TChannelPermissionHints
+  ) => {
+    const permissions = await resolveChannelPermissions(channelId, opts);
 
-    return channelInfo.permissions[targetPermission] ? 'allowed' : 'denied';
+    return permissions === 'dm-outsider' ? NO_PERMISSIONS : permissions;
   };
 
   const hasChannelPermission = async (
     channelId: number,
     targetPermission: ChannelPermission,
     opts?: TChannelPermissionHints
-  ) =>
-    (await resolveChannelAccess(channelId, targetPermission, opts)) ===
-    'allowed';
+  ) => (await getChannelPermissions(channelId, opts))[targetPermission];
 
   // tRPC passes the connection's own socket; a token lookup scanned every
   // client and could match another tab sharing the token.
@@ -278,18 +292,14 @@ const createContext = async ({
     targetPermission: ChannelPermission,
     opts?: TChannelPermissionHints
   ) => {
-    const access = await resolveChannelAccess(
-      channelId,
-      targetPermission,
-      opts
-    );
+    const permissions = await resolveChannelPermissions(channelId, opts);
 
-    invariant(access !== 'dm-outsider', {
+    invariant(permissions !== 'dm-outsider', {
       code: 'FORBIDDEN',
       message: 'You are not a participant in this DM channel'
     });
 
-    invariant(access === 'allowed', {
+    invariant(permissions[targetPermission], {
       code: 'FORBIDDEN',
       message: 'Insufficient channel permissions'
     });
@@ -323,6 +333,7 @@ const createContext = async ({
     currentVoiceChannelId: undefined,
     hasPermission,
     needsPermission,
+    getChannelPermissions,
     hasChannelPermission,
     needsChannelPermission,
     getOwnWs,
@@ -512,5 +523,7 @@ export {
   createWsServer,
   getOnlineUserIds,
   getUserIp,
+  isAppearingOffline,
+  setAppearOffline,
   trackUserConnect
 };

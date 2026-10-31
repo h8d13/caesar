@@ -10,15 +10,16 @@ import {
 } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishChannelPermissions } from '@server/db/publishers';
-import { getAffectedOnlineUserIdsForChannel } from '@server/db/queries/channels';
+import {
+  allPermissionTypes,
+  getAffectedOnlineUserIdsForChannel
+} from '@server/db/queries/channels';
 import { isDirectMessageChannel } from '@server/db/queries/dms';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { and, eq } from 'drizzle-orm';
 import { z } from 'zod';
-
-const allPermissions = Object.values(ChannelPermission);
 
 const updatePermissionsRoute = protectedProcedure
   .input(
@@ -65,7 +66,7 @@ const updatePermissionsRoute = protectedProcedure
             )
           );
 
-        const values = allPermissions.map((perm) => ({
+        const values = allPermissionTypes.map((perm) => ({
           channelId: input.channelId,
           userId: input.userId!,
           permission: perm,
@@ -84,7 +85,7 @@ const updatePermissionsRoute = protectedProcedure
             )
           );
 
-        const values = allPermissions.map((perm) => ({
+        const values = allPermissionTypes.map((perm) => ({
           channelId: input.channelId,
           roleId: input.roleId!,
           permission: perm,
@@ -108,7 +109,7 @@ const updatePermissionsRoute = protectedProcedure
         channelId: input.channelId,
         targetUserId: input.userId,
         targetRoleId: input.roleId,
-        permissions: allPermissions.map((perm) => ({
+        permissions: allPermissionTypes.map((perm) => ({
           permission: perm,
           allow: permissions.includes(perm)
         }))

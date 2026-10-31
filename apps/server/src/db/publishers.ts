@@ -1,6 +1,7 @@
 import {
   ChannelPermission,
   ServerEvents,
+  type TChannelAccess,
   type TChannelUserPermissionsMap
 } from '@caesar/shared';
 import { categories, channels, users } from '@caesar/shared/db/schema';
@@ -12,8 +13,7 @@ import { enqueueMessagePush } from '../queues/web-push';
 import { pubsub } from '../utils/pubsub';
 import {
   getAffectedOnlineUserIdsForChannel,
-  getAllChannelUserPermissions,
-  getChannelsForUser
+  getChannelAccess
 } from './queries/channels';
 import { getEmojiById } from './queries/emojis';
 import { getMessage } from './queries/messages';
@@ -43,16 +43,20 @@ const publishMessage = logFailures(
   async (
     messageId: number | undefined,
     channelId: number | undefined,
-    type: 'create' | 'update' | 'delete'
+    type: 'create' | 'update' | 'delete',
+    channel?: Pick<TChannelAccess, 'isDm' | 'private'>
   ) => {
     if (!messageId || !channelId) return;
+
+    const audience = {
+      permission: ChannelPermission.VIEW_CHANNEL,
+      channel
+    };
 
     if (type === 'delete') {
       const affectedUserIds = await getAffectedOnlineUserIdsForChannel(
         channelId,
-        {
-          permission: ChannelPermission.VIEW_CHANNEL
-        }
+        audience
       );
 
       pubsub.publishFor(affectedUserIds, ServerEvents.MESSAGE_DELETE, {
@@ -74,9 +78,7 @@ const publishMessage = logFailures(
 
     const affectedUserIds = await getAffectedOnlineUserIdsForChannel(
       channelId,
-      {
-        permission: ChannelPermission.VIEW_CHANNEL
-      }
+      audience
     );
 
     pubsub.publishFor(affectedUserIds, targetEvent, message);
@@ -338,7 +340,7 @@ const publishCategory = logFailures(
 const snapshotUserChannelAccess = async (
   userId: number
 ): Promise<Set<number>> => {
-  const visible = await getChannelsForUser(userId);
+  const { channels: visible } = await getChannelAccess(userId);
   return new Set(visible.map((c) => c.id));
 };
 
@@ -375,9 +377,9 @@ const publishChannelPermissions = logFailures(
   async (affectedUserIds: number[]) => {
     const permissionsMap = new Map<number, TChannelUserPermissionsMap>();
     const promises = affectedUserIds.map(async (userId) => {
-      const updatedPermissions = await getAllChannelUserPermissions(userId);
+      const { permissions } = await getChannelAccess(userId);
 
-      permissionsMap.set(userId, updatedPermissions);
+      permissionsMap.set(userId, permissions);
     });
 
     await Promise.all(promises);

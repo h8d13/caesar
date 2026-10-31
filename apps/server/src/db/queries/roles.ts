@@ -2,6 +2,7 @@ import type { Permission, TJoinedRole, TRole } from '@caesar/shared';
 import { rolePermissions, roles, userRoles } from '@caesar/shared/db/schema';
 import { and, eq, getTableColumns, sql } from 'drizzle-orm';
 import { db } from '..';
+import { prepared } from '../prepared';
 type TQueryResult = TRole & {
   permissions: string | null;
 };
@@ -38,21 +39,31 @@ const getRole = async (roleId: number): Promise<TJoinedRole | undefined> => {
   return parseRole(role);
 };
 
-const getRoles = async (): Promise<TJoinedRole[]> => {
-  const results = await db
+const rolesQuery = prepared(() =>
+  db
     .select(roleSelectFields)
     .from(roles)
     .leftJoin(rolePermissions, sql`${roles.id} = ${rolePermissions.roleId}`)
-    .groupBy(roles.id);
+    .groupBy(roles.id)
+);
+
+// also a subquery: keeps the role-permission queries a fixed shape
+const userRoleIdsSelect = () =>
+  db
+    .select({ roleId: userRoles.roleId })
+    .from(userRoles)
+    .where(eq(userRoles.userId, sql.placeholder('userId')));
+
+const userRoleIdsQuery = prepared(userRoleIdsSelect);
+
+const getRoles = async (): Promise<TJoinedRole[]> => {
+  const results = await rolesQuery().all();
 
   return results.map(parseRole);
 };
 
 const getUserRoleIds = async (userId: number): Promise<number[]> => {
-  const userRoleRecords = await db
-    .select({ roleId: userRoles.roleId })
-    .from(userRoles)
-    .where(eq(userRoles.userId, userId));
+  const userRoleRecords = await userRoleIdsQuery().all({ userId });
 
   return userRoleRecords.map((ur) => ur.roleId);
 };
@@ -112,5 +123,6 @@ export {
   getEffectiveStorageSpaceQuotaByUserId,
   getRole,
   getRoles,
-  getUserRoleIds
+  getUserRoleIds,
+  userRoleIdsSelect
 };

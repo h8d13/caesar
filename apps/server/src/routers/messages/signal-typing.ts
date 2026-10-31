@@ -1,8 +1,9 @@
 import { ChannelPermission, Permission, ServerEvents } from '@caesar/shared';
 import { config } from '@server/config';
 import { getAffectedOnlineUserIdsForChannel } from '@server/db/queries/channels';
-import { assertDmChannel } from '@server/db/queries/dms';
+import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
+import { isAppearingOffline } from '@server/utils/wss';
 import { z } from 'zod';
 
 const signalTypingRoute = rateLimitedProcedure(protectedProcedure, {
@@ -16,21 +17,18 @@ const signalTypingRoute = rateLimitedProcedure(protectedProcedure, {
     })
   )
   .mutation(async ({ input, ctx }) => {
-    const [, , , affectedUserIds] = await Promise.all([
+    const [, channel] = await Promise.all([
       ctx.needsPermission(Permission.SEND_MESSAGES),
-      ctx.needsChannelPermission(
-        input.channelId,
-        ChannelPermission.SEND_MESSAGES
-      ),
-      assertDmChannel(input.channelId, ctx.userId),
-      getAffectedOnlineUserIdsForChannel(input.channelId, {
-        permission: ChannelPermission.VIEW_CHANNEL
-      })
+      assertChannelAccess(ctx, input.channelId, ChannelPermission.SEND_MESSAGES)
     ]);
+    const affectedUserIds = await getAffectedOnlineUserIdsForChannel(
+      input.channelId,
+      { permission: ChannelPermission.VIEW_CHANNEL, channel }
+    );
 
     // appear-offline users don't leak presence via the typing channel.
     // Permission checks above still run so this can't be used to probe.
-    if (ctx.user.appearOffline) return;
+    if (isAppearingOffline(ctx.userId)) return;
 
     ctx.pubsub.publishFor(affectedUserIds, ServerEvents.MESSAGE_TYPING, {
       channelId: input.channelId,

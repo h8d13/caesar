@@ -1,10 +1,12 @@
 import type { Permission, TJoinedRole } from '@caesar/shared';
 import { rolePermissions, roles, userRoles } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import { eq } from 'drizzle-orm';
+import { prepared } from '@server/db/prepared';
+import { eq, sql } from 'drizzle-orm';
 
-const getUserRoles = async (userId: number): Promise<TJoinedRole[]> => {
-  const result = await db
+// runs on every ctx.hasPermission, so every voice procedure call
+const userRolesQuery = prepared(() =>
+  db
     .select({
       role: roles,
       permission: rolePermissions.permission
@@ -12,7 +14,11 @@ const getUserRoles = async (userId: number): Promise<TJoinedRole[]> => {
     .from(userRoles)
     .innerJoin(roles, eq(userRoles.roleId, roles.id))
     .leftJoin(rolePermissions, eq(roles.id, rolePermissions.roleId))
-    .where(eq(userRoles.userId, userId));
+    .where(eq(userRoles.userId, sql.placeholder('userId')))
+);
+
+const getUserRoles = async (userId: number): Promise<TJoinedRole[]> => {
+  const result = await userRolesQuery().all({ userId });
 
   if (result.length === 0) return [];
 

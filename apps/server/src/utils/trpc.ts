@@ -3,6 +3,7 @@ import {
   type UserStatus,
   type Permission,
   type TChannelAccess,
+  type TChannelPermissionsMap,
   type TUser
 } from '@caesar/shared';
 import { initTRPC, TRPCError } from '@trpc/server';
@@ -40,6 +41,10 @@ export type Context = {
   needsPermission: (
     targetPermission: Permission | Permission[]
   ) => Promise<void>;
+  getChannelPermissions: (
+    channelId: number,
+    opts?: TChannelPermissionHints
+  ) => Promise<TChannelPermissionsMap>;
   hasChannelPermission: (
     channelId: number,
     targetPermission: ChannelPermission,

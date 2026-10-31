@@ -2,11 +2,8 @@ import { ActivityLogType, ServerEvents, UserStatus } from '@caesar/shared';
 import { categories, users } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
-import {
-  getAllChannelUserPermissions,
-  getChannelsForUser,
-  getUnreadCounts
-} from '@server/db/queries/channels';
+import { prepared } from '@server/db/prepared';
+import { getChannelAccess, getUnreadCounts } from '@server/db/queries/channels';
 import { getEmojis } from '@server/db/queries/emojis';
 import { getRoles } from '@server/db/queries/roles';
 import { getPublicSettings, getSettings } from '@server/db/queries/server';
@@ -22,6 +19,8 @@ import { rateLimitedProcedure, t } from '@server/utils/trpc';
 import { getOnlineUserIds, trackUserConnect } from '@server/utils/wss';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+
+const categoriesQuery = prepared(() => db.select().from(categories));
 
 const joinServerRoute = rateLimitedProcedure(t.procedure, {
   maxRequests: config.rateLimiters.joinServer.maxRequests,
@@ -56,32 +55,30 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
     ctx.setWsUserId(ctx.user.id);
     trackUserConnect(ctx.user.id);
 
-    // filter channels based on permissions and DM participation; the
-    // unread counts reuse it instead of resolving visibility again
-    const channelsPromise = getChannelsForUser(ctx.user.id);
+    // visible channels and their permissions come from one resolution;
+    // the unread counts reuse it instead of resolving visibility again
+    const accessPromise = getChannelAccess(ctx.user.id);
 
     const [
       allCategories,
-      channelsForUser,
+      { channels: channelsForUser, permissions: channelPermissions },
       publicUsers,
       roles,
       emojis,
       sounds,
-      channelPermissions,
       readStates,
       publicSettings
     ] = await Promise.all([
-      db.select().from(categories),
-      channelsPromise,
+      categoriesQuery().all(),
+      accessPromise,
       getPublicUsers(),
       getRoles(),
       getEmojis(),
       getSounds(),
-      getAllChannelUserPermissions(ctx.user.id),
-      channelsPromise.then((visible) =>
+      accessPromise.then(({ channels }) =>
         getUnreadCounts(
           ctx.user.id,
-          visible.map((c) => c.id)
+          channels.map((c) => c.id)
         )
       ),
       getPublicSettings()

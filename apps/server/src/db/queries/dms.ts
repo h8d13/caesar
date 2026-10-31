@@ -1,9 +1,10 @@
 import type { TDirectMessageConversation } from '@caesar/shared';
-import { channels, directMessages, messages } from '@caesar/shared/db/schema';
+import { directMessages, messages } from '@caesar/shared/db/schema';
 import { TRPCError } from '@trpc/server';
-import { and, eq, inArray, max, or } from 'drizzle-orm';
+import { and, eq, inArray, max, or, sql } from 'drizzle-orm';
 import { db } from '..';
-import { getUnreadCounts } from './channels';
+import { prepared } from '../prepared';
+import { getChannelAccessRow, getUnreadCounts } from './channels';
 import { getSettings } from './server';
 
 const normalizePair = (a: number, b: number): [number, number] =>
@@ -26,21 +27,24 @@ const getDirectMessageChannel = async (
     .get();
 };
 
-// returns all DM channel IDs the user is a participant in
-const getDirectMessageChannelIdsForUser = async (
-  userId: number
-): Promise<number[]> => {
-  const rows = await db
+const dmChannelIdsQuery = prepared(() =>
+  db
     .select({
       channelId: directMessages.channelId
     })
     .from(directMessages)
     .where(
       or(
-        eq(directMessages.userOneId, userId),
-        eq(directMessages.userTwoId, userId)
+        eq(directMessages.userOneId, sql.placeholder('userId')),
+        eq(directMessages.userTwoId, sql.placeholder('userId'))
       )
-    );
+    )
+);
+
+const getDirectMessageChannelIdsForUser = async (
+  userId: number
+): Promise<number[]> => {
+  const rows = await dmChannelIdsQuery().all({ userId });
 
   return rows.map((row) => row.channelId);
 };
@@ -104,16 +108,8 @@ const getDirectMessageConversations = async (
 };
 
 // checks if a channel is a DM channel by looking for it in the directMessages table
-const isDirectMessageChannel = async (channelId: number): Promise<boolean> => {
-  const channel = await db
-    .select({ isDm: channels.isDm })
-    .from(channels)
-    .where(eq(channels.id, channelId))
-    .limit(1)
-    .get();
-
-  return !!channel?.isDm;
-};
+const isDirectMessageChannel = async (channelId: number): Promise<boolean> =>
+  !!(await getChannelAccessRow(channelId))?.isDm;
 
 // checks if the user is a participant in the DM channel by looking for a matching row in the directMessages table
 const isUserDmParticipant = async (

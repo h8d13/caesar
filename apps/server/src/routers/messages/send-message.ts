@@ -2,19 +2,15 @@ import {
   ChannelPermission,
   isEmptyMessage,
   MESSAGE_MAX_LENGTH,
-  Permission,
-  type TFile
+  Permission
 } from '@caesar/shared';
 import { messageFiles, messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishMessage } from '@server/db/publishers';
-import {
-  assertDmChannel,
-  getDmEphemeralMs,
-  isDirectMessageChannel
-} from '@server/db/queries/dms';
+import { getDmEphemeralMs } from '@server/db/queries/dms';
 import { getSettings } from '@server/db/queries/server';
+import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { sanitizeMessageHtml } from '@server/helpers/sanitize-html';
 import { enqueueProcessMetadata } from '@server/queues/message-metadata';
 import { fileManager } from '@server/utils/file-manager';
@@ -40,13 +36,16 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
     })
   )
   .mutation(async ({ input, ctx }) => {
-    await Promise.all([
+    const [, channel, settings] = await Promise.all([
       ctx.needsPermission(Permission.SEND_MESSAGES),
-      ctx.needsChannelPermission(
+      assertChannelAccess(
+        ctx,
         input.channelId,
         ChannelPermission.SEND_MESSAGES
-      )
+      ),
+      getSettings()
     ]);
+    const isDmChannel = channel?.isDm ?? false;
 
     if (input.replyToMessageId) {
       const replyToMessage = await db
@@ -69,12 +68,6 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
         message: 'Reply target message must be in the same channel.'
       });
     }
-
-    const [settings, isDmChannel] = await Promise.all([
-      getSettings(),
-      isDirectMessageChannel(input.channelId),
-      assertDmChannel(input.channelId, ctx.userId)
-    ]);
 
     if (isDmChannel) {
       invariant(await ctx.hasPermission(Permission.USE_DMS), {
@@ -137,16 +130,13 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
         'Your message only contained unsupported or removed content, so there was nothing to send.'
     });
 
-    // save files before the message exists: saveFile throws (expired temp
+    // save files before the message exists: saveFiles throws (expired temp
     // file, quota), and a failure mid-way used to leave a stored but never
     // published message. Files saved before a failure are swept as orphans.
-    // (No transaction: they only serialize against each other, and this hot
-    // path would contend with plain writes like the metadata queue.)
-    const savedFiles: TFile[] = [];
-
-    for (const tempFileId of limitedFiles) {
-      savedFiles.push(await fileManager.saveFile(tempFileId, ctx.userId));
-    }
+    // (No transaction: saving moves files on disk, and a transaction held
+    // across that I/O lets other requests' writes busy-wait the main thread
+    // on the write lock, see db/connection.ts.)
+    const savedFiles = await fileManager.saveFiles(limitedFiles, ctx.userId);
 
     const message = await db
       .insert(messages)
@@ -171,7 +161,7 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
       );
     }
 
-    void publishMessage(message.id, input.channelId, 'create');
+    void publishMessage(message.id, input.channelId, 'create', channel);
 
     enqueueProcessMetadata(targetContent, message.id);
 

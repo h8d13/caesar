@@ -1,9 +1,7 @@
 import { ChannelPermission, type TChannelAccess } from '@caesar/shared';
-import { channels } from '@caesar/shared/db/schema';
-import { db } from '@server/db';
+import { getChannelAccessRow } from '@server/db/queries/channels';
 import { assertDmChannel } from '@server/db/queries/dms';
 import type { Context } from '@server/utils/trpc';
-import { eq } from 'drizzle-orm';
 
 // Reads the channel row once and hands it to both checks, then returns it so
 // callers (which need fileAccessToken) do not select it again.
@@ -17,18 +15,10 @@ import { eq } from 'drizzle-orm';
 // error every caller surfaces.
 const assertChannelAccess = async (
   ctx: Context,
-  channelId: number
+  channelId: number,
+  permission = ChannelPermission.VIEW_CHANNEL
 ): Promise<TChannelAccess | undefined> => {
-  const channel = await db
-    .select({
-      private: channels.private,
-      isDm: channels.isDm,
-      fileAccessToken: channels.fileAccessToken
-    })
-    .from(channels)
-    .where(eq(channels.id, channelId))
-    .limit(1)
-    .get();
+  const channel = await getChannelAccessRow(channelId);
 
   const isDmParticipant = await assertDmChannel(
     channelId,
@@ -36,7 +26,7 @@ const assertChannelAccess = async (
     channel?.isDm ?? false
   );
 
-  await ctx.needsChannelPermission(channelId, ChannelPermission.VIEW_CHANNEL, {
+  await ctx.needsChannelPermission(channelId, permission, {
     channel,
     isDmParticipant
   });
