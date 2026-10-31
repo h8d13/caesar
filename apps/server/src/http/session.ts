@@ -8,9 +8,10 @@ import {
   sessionCookieHeaders
 } from '../helpers/session-token';
 import { closeUserSessions } from '../utils/wss';
+import { sendJson } from './helpers';
 
 // Single-session by default: bump sessionEpoch so prior tokens fail the
-// equality check in getUserByToken and prior WS connections get kicked.
+// equality check in resolveSessionToken and prior WS connections get kicked.
 // Users opted in to multi-session keep the current epoch so their existing
 // tokens remain valid alongside the new one.
 // The token only ever leaves in the HttpOnly cookie, never in the body.
@@ -46,8 +47,7 @@ const issueSession = async (
   }
 
   res.setHeader('Set-Cookie', sessionCookieHeaders(token, remember));
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ success: true }));
+  sendJson(res, 200, { success: true });
 
   return res;
 };

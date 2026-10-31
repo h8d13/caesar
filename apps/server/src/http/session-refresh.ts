@@ -1,6 +1,6 @@
 import type http from 'http';
 import z from 'zod';
-import { getUserByToken } from '../db/queries/users';
+import { getSessionUserByToken } from '../db/queries/users';
 import {
   getSessionToken,
   isRememberedToken,
@@ -9,7 +9,7 @@ import {
 } from '../helpers/session-token';
 import type { TTokenPayload } from '../types';
 import { verifyJwt } from '../utils/jwt-secret';
-import { getJsonBody } from './helpers';
+import { getJsonBody, sendJson } from './helpers';
 
 const zBody = z.object({ nonce: z.string().min(1).max(128) });
 
@@ -41,10 +41,9 @@ const sessionRefreshRouteHandler = async (
   if (
     !entry ||
     currentUserId !== entry.userId ||
-    !(await getUserByToken(entry.token))
+    !(await getSessionUserByToken(entry.token))
   ) {
-    res.writeHead(401, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Unauthorized' }));
+    sendJson(res, 401, { error: 'Unauthorized' });
     return;
   }
 
@@ -52,8 +51,7 @@ const sessionRefreshRouteHandler = async (
     'Set-Cookie',
     sessionCookieHeaders(entry.token, isRememberedToken(entry.token))
   );
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ success: true }));
+  sendJson(res, 200, { success: true });
 };
 
 export { sessionRefreshRouteHandler };

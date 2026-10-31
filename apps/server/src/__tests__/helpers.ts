@@ -12,7 +12,7 @@ import { testsBaseUrl } from './setup';
 const getMockedToken = async (userId: number) => {
   // mirror the current sessionEpoch so tests that interleave manual
   // tokens with real /login calls (which bump the epoch) don't get
-  // rejected by getUserByToken's epoch check.
+  // rejected by resolveSessionToken's epoch check.
   const row = await db
     .select({ sessionEpoch: users.sessionEpoch })
     .from(users)
@@ -99,8 +99,10 @@ const uploadFile = async (file: File, token: string) =>
 // Stand up a non-owner moderator: user 2 gets a fresh role carrying only the
 // listed permissions, then acts via their own caller. `initTest(2)` must run
 // AFTER the role is assigned so the permission middleware sees it live.
+type TCaller = Awaited<ReturnType<typeof initTest>>['caller'];
+
 const makeModerator = async (
-  ownerCaller: Awaited<ReturnType<typeof initTest>>['caller'],
+  ownerCaller: TCaller,
   permissions: Permission[] = [Permission.MANAGE_USERS]
 ) => {
   const roleId = await ownerCaller.roles.add();
@@ -138,5 +140,6 @@ export {
   login,
   loginToken,
   makeModerator,
+  type TCaller,
   uploadFile
 };

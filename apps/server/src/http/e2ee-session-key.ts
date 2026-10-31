@@ -6,10 +6,12 @@ import type http from 'http';
 import z from 'zod';
 import { config } from '../config';
 import { db } from '../db';
-import { getUserByToken } from '../db/queries/users';
+import { getSessionUserByToken } from '../db/queries/users';
 import { getSessionToken } from '../helpers/session-token';
 import { createRateLimiter } from '../utils/rate-limiters/rate-limiter';
-import { getJsonBody } from './helpers';
+import { getJsonBody, sendJson } from './helpers';
+
+const NO_STORE = { 'Cache-Control': 'no-store' };
 import { enforceHttpRateLimit } from './rate-limit';
 
 // Wrap key half of the auto-login E2EE unlock (see e2eeSessionKeys). Plain
@@ -29,14 +31,6 @@ const zBody = z.object({
 const hashToken = (token: string) =>
   createHash('sha256').update(token).digest('hex');
 
-const sendJson = (res: http.ServerResponse, status: number, body: object) => {
-  res.writeHead(status, {
-    'Content-Type': 'application/json',
-    'Cache-Control': 'no-store'
-  });
-  res.end(JSON.stringify(body));
-};
-
 const authenticate = async (
   req: http.IncomingMessage,
   res: http.ServerResponse
@@ -53,10 +47,10 @@ const authenticate = async (
   }
 
   const token = getSessionToken(req);
-  const user = await getUserByToken(token);
+  const user = await getSessionUserByToken(token);
 
   if (!token || !user) {
-    sendJson(res, 401, { error: 'Unauthorized' });
+    sendJson(res, 401, { error: 'Unauthorized' }, NO_STORE);
     return;
   }
 
@@ -99,7 +93,7 @@ const storeE2eeSessionKeyRouteHandler = async (
       )
     );
 
-  sendJson(res, 200, { success: true });
+  sendJson(res, 200, { success: true }, NO_STORE);
 };
 
 const getE2eeSessionKeyRouteHandler = async (
@@ -112,8 +106,8 @@ const getE2eeSessionKeyRouteHandler = async (
 
   const { user, tokenHash } = auth;
 
-  // getUserByToken already enforces the epoch for the token; matching it on
-  // the row as well keeps a stale row dead even if that check ever changes
+  // the session lookup already enforces the epoch for the token; matching
+  // it on the row as well keeps a stale row dead even if that check changes
   const row = await db
     .select({ wrapKey: e2eeSessionKeys.wrapKey })
     .from(e2eeSessionKeys)
@@ -127,11 +121,11 @@ const getE2eeSessionKeyRouteHandler = async (
     .get();
 
   if (!row) {
-    sendJson(res, 404, { error: 'Not found' });
+    sendJson(res, 404, { error: 'Not found' }, NO_STORE);
     return;
   }
 
-  sendJson(res, 200, { wrapKey: row.wrapKey });
+  sendJson(res, 200, { wrapKey: row.wrapKey }, NO_STORE);
 };
 
 export { getE2eeSessionKeyRouteHandler, storeE2eeSessionKeyRouteHandler };

@@ -1,5 +1,5 @@
 import { messages, userRoles, users } from '@caesar/shared/db/schema';
-import { initTest } from '@server/__tests__/helpers';
+import { initTest, type TCaller } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { clearRateLimitersForTests } from '@server/utils/rate-limiters/rate-limiter';
 import { eq } from 'drizzle-orm';
@@ -13,8 +13,6 @@ const BENCH_USERS = 200;
 const BENCH_MESSAGES = 10_000;
 const GENERAL_CHANNEL_ID = 1;
 const INSERT_CHUNK = 500;
-
-type TCaller = Awaited<ReturnType<typeof initTest>>['caller'];
 
 const insertChunked = async <T>(
   rows: T[],

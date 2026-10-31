@@ -3,12 +3,13 @@ import { e2eeSessionKeys, users } from '@caesar/shared/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import type http from 'http';
 import { db } from '../db';
-import { getUserByToken } from '../db/queries/users';
+import { getSessionUserByToken } from '../db/queries/users';
 import {
   clearSessionCookieHeaders,
   getSessionToken
 } from '../helpers/session-token';
 import { closeUserSessions } from '../utils/wss';
+import { sendJson } from './helpers';
 
 // Idempotent: unknown/expired token still gets 200 + clearing Set-Cookie so
 // the client can call this against stale state without branching. When the
@@ -18,7 +19,7 @@ const logoutRouteHandler = async (
   req: http.IncomingMessage,
   res: http.ServerResponse
 ) => {
-  const user = await getUserByToken(getSessionToken(req));
+  const user = await getSessionUserByToken(getSessionToken(req));
 
   if (user) {
     // the epoch bump below already revokes every session; also drop their
@@ -34,8 +35,7 @@ const logoutRouteHandler = async (
   }
 
   res.setHeader('Set-Cookie', clearSessionCookieHeaders());
-  res.writeHead(200, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ success: true }));
+  sendJson(res, 200, { success: true });
 };
 
 export { logoutRouteHandler };

@@ -56,9 +56,9 @@ const resetPasswordRoute = rateLimitedProcedure(protectedProcedure, {
     );
 
     // Same write shape as users.updatePassword: bumping sessionEpoch is what
-    // actually revokes tokens (getUserByToken is the only gate), so a reset
-    // for a compromised account takes effect immediately. No token is spared
-    // here: unlike a self-service change, the caller is not the target.
+    // actually revokes tokens (resolveSessionToken is the only gate), so a
+    // reset for a compromised account takes effect immediately. No token is
+    // spared here: unlike a self-service change, the caller is not the target.
     await db
       .update(users)
       .set({

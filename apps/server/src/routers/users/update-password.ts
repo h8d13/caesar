@@ -62,7 +62,7 @@ const updatePasswordRoute = rateLimitedProcedure(protectedProcedure, {
 
     // Bump sessionEpoch in the same write: a password change must revoke
     // any token an attacker may already hold, and sessionEpoch is the only
-    // gate getUserByToken checks. The caller's own WS stays alive (gets a
+    // gate resolveSessionToken checks. The caller's own WS stays alive (gets a
     // fresh token below); every other session is booted.
     const updated = await db
       .update(users)

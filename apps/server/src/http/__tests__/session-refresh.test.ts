@@ -1,5 +1,7 @@
+import { users } from '@caesar/shared/db/schema';
 import { getSessionCookie, initTest } from '@server/__tests__/helpers';
-import { testsBaseUrl } from '@server/__tests__/setup';
+import { tdb, testsBaseUrl } from '@server/__tests__/setup';
+import { eq } from 'drizzle-orm';
 import { describe, expect, test } from 'vite-plus/test';
 
 const redeem = (nonce: string, currentToken?: string) =>
@@ -50,5 +52,18 @@ describe('/session/refresh', () => {
     await caller.users.signOutOtherSessions();
 
     expect((await redeem(refreshNonce, mockedToken)).status).toBe(401);
+  });
+
+  test('a ban after staging kills the staged session', async () => {
+    const { caller, mockedToken } = await initTest(1);
+    const { refreshNonce } = await caller.users.signOutOtherSessions();
+
+    await tdb.update(users).set({ banned: true }).where(eq(users.id, 1));
+
+    const res = await redeem(refreshNonce, mockedToken);
+
+    expect(res.status).toBe(401);
+    expect(await res.json()).toEqual({ error: 'Unauthorized' });
+    expect(getSessionCookie(res)).toBeUndefined();
   });
 });
