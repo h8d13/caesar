@@ -3,9 +3,10 @@ import {
   MESSAGE_MAX_LENGTH,
   Permission
 } from '@caesar/shared';
-import { messages, rolePermissions, settings } from '@caesar/shared/db/schema';
-import { initTest, uploadFile } from '@server/__tests__/helpers';
+import { messages, rolePermissions } from '@caesar/shared/db/schema';
+import { initTest, type TCaller, uploadFile } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
+import { updateSettings } from '@server/db/mutations/server';
 import { setRateLimitingDisabled } from '@server/utils/rate-limiters';
 import { and, eq } from 'drizzle-orm';
 import { describe, expect, test } from 'vite-plus/test';
@@ -179,28 +180,43 @@ describe('messages router', () => {
     ).toBe(undefined);
   });
 
-  test('should throw when user lacks channel permissions (getPinned)', async () => {
-    const { caller: caller1 } = await initTest(1);
-    const { caller: caller2 } = await initTest(2);
-
-    await caller1.channels.update({
+  // channel 1 (with the seeded message 1) goes private, unviewable for user 2
+  const hideGeneralFromMembers = async (owner: TCaller) => {
+    await owner.channels.update({
       channelId: 1,
       name: 'General',
       topic: 'General text channel',
       private: true
     });
-
-    await caller1.channels.updatePermissions({
+    await owner.channels.updatePermissions({
       channelId: 1,
       roleId: 2,
       permissions: [ChannelPermission.SEND_MESSAGES]
     });
+  };
 
-    await expect(
-      caller2.messages.getPinned({
-        channelId: 1
-      })
-    ).rejects.toThrow('Insufficient channel permissions');
+  test.each([
+    [
+      'fetching pinned messages of',
+      (c: TCaller) => c.messages.getPinned({ channelId: 1 })
+    ],
+    [
+      'voting on a message in',
+      (c: TCaller) => c.messages.toggleScVote({ messageId: 1, type: 'upvote' })
+    ],
+    [
+      'listing members of',
+      (c: TCaller) => c.channels.getMembers({ channelId: 1 })
+    ]
+  ])('should throw when %s a channel the user cannot view', async (_, call) => {
+    const { caller: caller1 } = await initTest(1);
+    const { caller: caller2 } = await initTest(2);
+
+    await hideGeneralFromMembers(caller1);
+
+    await expect(call(caller2)).rejects.toThrow(
+      'Insufficient channel permissions'
+    );
   });
 
   test('should edit own message', async () => {
@@ -719,7 +735,7 @@ describe('messages router', () => {
     expect(intersection.length).toBe(0);
   });
 
-  test('should fetch all messages until targetMessageId plus 20 older', async () => {
+  test('should fetch a window around targetMessageId', async () => {
     setRateLimitingDisabled(true);
 
     const { caller } = await initTest();
@@ -736,52 +752,40 @@ describe('messages router', () => {
       sentMessageIds.push(messageId);
     }
 
-    // target the newest message should return all 10 + up to 20 older (0 exist)
-    const newestId = sentMessageIds[9]!;
+    // limit 4: up to 2 older + target + 2 newer
+    const window = async (targetMessageId: number) => {
+      const result = await caller.messages.get({
+        channelId: 2,
+        cursor: null,
+        targetMessageId,
+        limit: 4
+      });
 
-    const result = await caller.messages.get({
-      channelId: 2,
-      cursor: null,
-      targetMessageId: newestId,
-      limit: 1
-    });
+      expect(result.messages.map((m) => m.id)).toContain(targetMessageId);
 
-    // only the target itself + 0 newer + 9 older (capped by available)
-    expect(result.messages.length).toBe(10);
-    expect(result.nextCursor).toBeNull();
-    expect(result.messages.some((message) => message.id === newestId)).toBe(
-      true
-    );
+      return result;
+    };
 
-    // target the 3rd message (index 2) 7 newer + target + 2 older = 10
-    const middleId = sentMessageIds[2]!;
+    // newest: 2 older + target, attached to the tail
+    const result = await window(sentMessageIds[9]!);
 
-    const result2 = await caller.messages.get({
-      channelId: 2,
-      cursor: null,
-      targetMessageId: middleId,
-      limit: 1
-    });
+    expect(result.messages.length).toBe(3);
+    expect(result.nextCursor).not.toBeNull();
+    expect(result.newerCursor).toBeNull();
 
-    expect(result2.messages.length).toBe(10);
-    expect(result2.messages.some((message) => message.id === middleId)).toBe(
-      true
-    );
+    // middle: 2 older + target + 2 newer, more on both sides
+    const result2 = await window(sentMessageIds[4]!);
 
-    // target the oldest 9 newer + target + 0 older = 10
-    const oldestId = sentMessageIds[0]!;
+    expect(result2.messages.length).toBe(5);
+    expect(result2.nextCursor).not.toBeNull();
+    expect(result2.newerCursor).not.toBeNull();
 
-    const result3 = await caller.messages.get({
-      channelId: 2,
-      cursor: null,
-      targetMessageId: oldestId,
-      limit: 1
-    });
+    // oldest: target + 2 newer, nothing older
+    const result3 = await window(sentMessageIds[0]!);
 
-    expect(result3.messages.length).toBe(10);
-    expect(result3.messages.some((message) => message.id === oldestId)).toBe(
-      true
-    );
+    expect(result3.messages.length).toBe(3);
+    expect(result3.nextCursor).toBeNull();
+    expect(result3.newerCursor).not.toBeNull();
 
     setRateLimitingDisabled(false);
   });
@@ -844,12 +848,7 @@ describe('messages router', () => {
   test('should trim attached files to configured max files per message', async () => {
     const { caller, mockedToken } = await initTest();
 
-    await tdb
-      .update(settings)
-      .set({
-        storageMaxFilesPerMessage: 2
-      })
-      .execute();
+    await updateSettings({ storageMaxFilesPerMessage: 2 });
 
     const file1 = new File(['file one'], 'one.txt', { type: 'text/plain' });
     const file2 = new File(['file two'], 'two.txt', { type: 'text/plain' });
@@ -890,12 +889,7 @@ describe('messages router', () => {
   test('should discard all attached files when max files per message is 0', async () => {
     const { caller, mockedToken } = await initTest();
 
-    await tdb
-      .update(settings)
-      .set({
-        storageMaxFilesPerMessage: 0
-      })
-      .execute();
+    await updateSettings({ storageMaxFilesPerMessage: 0 });
 
     const file1 = new File(['file one'], 'one.txt', { type: 'text/plain' });
     const file2 = new File(['file two'], 'two.txt', { type: 'text/plain' });
@@ -1029,12 +1023,7 @@ describe('messages router', () => {
 
     const { channelId } = await caller1.dms.open({ userId: 2 });
 
-    await tdb
-      .update(settings)
-      .set({
-        storageFileSharingInDirectMessages: false
-      })
-      .execute();
+    await updateSettings({ storageFileSharingInDirectMessages: false });
 
     const file = new File(['dm attachment'], 'dm.txt', {
       type: 'text/plain'
@@ -1059,12 +1048,7 @@ describe('messages router', () => {
 
     const { channelId } = await caller1.dms.open({ userId: 2 });
 
-    await tdb
-      .update(settings)
-      .set({
-        directMessagesEnabled: false
-      })
-      .execute();
+    await updateSettings({ directMessagesEnabled: false });
 
     await expect(
       caller1.messages.send({
@@ -1172,7 +1156,7 @@ describe('messages router', () => {
       createdAt: Date.now()
     });
 
-    await tdb.update(settings).set({ directMessagesEnabled: false }).execute();
+    await updateSettings({ directMessagesEnabled: false });
 
     await expect(caller.messages.togglePin({ messageId: 2 })).rejects.toThrow(
       'Direct messages are disabled on this server'
@@ -1190,7 +1174,7 @@ describe('messages router', () => {
   test('should throw when fetching pinned DM messages with DMs disabled', async () => {
     const { caller } = await initTest(3);
 
-    await tdb.update(settings).set({ directMessagesEnabled: false }).execute();
+    await updateSettings({ directMessagesEnabled: false });
 
     await expect(caller.messages.getPinned({ channelId: 3 })).rejects.toThrow(
       'Direct messages are disabled on this server'
@@ -1200,7 +1184,7 @@ describe('messages router', () => {
   test('should throw when fetching a single DM message with DMs disabled', async () => {
     const { caller } = await initTest(3);
 
-    await tdb.update(settings).set({ directMessagesEnabled: false }).execute();
+    await updateSettings({ directMessagesEnabled: false });
 
     await expect(caller.messages.getOne({ messageId: 2 })).rejects.toThrow(
       'Direct messages are disabled on this server'
@@ -1210,7 +1194,7 @@ describe('messages router', () => {
   test('should throw when editing a DM message with DMs disabled', async () => {
     const { caller } = await initTest(3);
 
-    await tdb.update(settings).set({ directMessagesEnabled: false }).execute();
+    await updateSettings({ directMessagesEnabled: false });
 
     await expect(
       caller.messages.edit({ messageId: 2, content: 'edited' })
@@ -1220,7 +1204,7 @@ describe('messages router', () => {
   test('should throw when deleting a DM message with DMs disabled', async () => {
     const { caller } = await initTest(3);
 
-    await tdb.update(settings).set({ directMessagesEnabled: false }).execute();
+    await updateSettings({ directMessagesEnabled: false });
 
     await expect(caller.messages.delete({ messageId: 2 })).rejects.toThrow(
       'Direct messages are disabled on this server'
@@ -1237,7 +1221,7 @@ describe('messages router', () => {
       createdAt: Date.now()
     });
 
-    await tdb.update(settings).set({ directMessagesEnabled: false }).execute();
+    await updateSettings({ directMessagesEnabled: false });
 
     await expect(
       caller.messages.toggleReaction({ messageId: 2, emoji: '👍' })
@@ -1258,13 +1242,10 @@ describe('messages router', () => {
     const uploaded = (await uploadResponse.json()) as { id: string };
 
     // disable uploads but keep DM file sharing enabled
-    await tdb
-      .update(settings)
-      .set({
-        storageUploadEnabled: false,
-        storageFileSharingInDirectMessages: true
-      })
-      .execute();
+    await updateSettings({
+      storageUploadEnabled: false,
+      storageFileSharingInDirectMessages: true
+    });
 
     await expect(
       caller1.messages.send({
@@ -1287,7 +1268,7 @@ describe('messages router', () => {
     const uploaded = (await uploadResponse.json()) as { id: string };
 
     // disable uploads globally
-    await tdb.update(settings).set({ storageUploadEnabled: false }).execute();
+    await updateSettings({ storageUploadEnabled: false });
 
     await expect(
       caller.messages.send({

@@ -2,6 +2,7 @@ import { messages, socialCreditLedger } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishMessage, publishUser } from '@server/db/publishers';
+import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { and, count, eq, gte } from 'drizzle-orm';
@@ -41,6 +42,9 @@ const toggleMessageScVoteRoute = rateLimitedProcedure(protectedProcedure, {
       code: 'NOT_FOUND',
       message: 'Message not found'
     });
+
+    // a message id alone must not let a user vote in a channel they can't see
+    const channel = await assertChannelAccess(ctx, message.channelId);
 
     invariant(message.userId !== ctx.user.id, {
       code: 'BAD_REQUEST',
@@ -106,7 +110,7 @@ const toggleMessageScVoteRoute = rateLimitedProcedure(protectedProcedure, {
     }
 
     await publishUser(message.userId, 'update');
-    void publishMessage(input.messageId, message.channelId, 'update');
+    void publishMessage(input.messageId, message.channelId, 'update', channel);
   });
 
 export { toggleMessageScVoteRoute };
