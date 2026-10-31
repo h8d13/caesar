@@ -676,13 +676,12 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
                             layer.type === LayerType.Line ||
                             layer.type === LayerType.Arrow
                         ) {
-                            const line = layer;
                             next[id] = {
-                                ...line,
+                                ...layer,
                                 x: newX,
                                 y: newY,
-                                x2: line.x2 + (newX - line.x),
-                                y2: line.y2 + (newY - line.y)
+                                x2: layer.x2 + (newX - layer.x),
+                                y2: layer.y2 + (newY - layer.y)
                             };
                         } else {
                             next[id] = { ...layer, x: newX, y: newY } as Layer;
@@ -811,9 +810,8 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
                             layer.type === LayerType.Line ||
                             layer.type === LayerType.Arrow
                         ) {
-                            const line = layer;
-                            update.x2 = line.x2;
-                            update.y2 = line.y2;
+                            update.x2 = layer.x2;
+                            update.y2 = layer.y2;
                         }
                         trpc.whiteboard.updateLayer
                             .mutate({
