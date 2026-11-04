@@ -5,7 +5,7 @@ import { enGB } from 'date-fns/locale';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
-import { DebugInfo } from './components/debug-info/index.tsx';
+import { printConsoleBanner } from './components/debug-info/index.tsx';
 import { StoreDebug } from './components/debug/store-debug.tsx';
 import { DevicesProvider } from './components/devices-provider/index.tsx';
 import { DialogsProvider } from './components/dialogs/index.tsx';
@@ -23,6 +23,7 @@ import { queryClient } from './lib/query-client.ts';
 import { registerServiceWorker } from './lib/service-worker.ts';
 
 removeLegacySessionTokens();
+printConsoleBanner();
 registerServiceWorker();
 // once per page load, before render: tied to the loading screen it re-ran
 // (second /info) whenever that screen remounted
@@ -39,7 +40,6 @@ createRoot(document.getElementById('root')!).render(
                 defaultTheme="system"
                 storageKey={LocalStorageKey.VITE_UI_THEME}
             >
-                <DebugInfo />
                 <Provider store={store}>
                     {/* Toaster must live INSIDE Provider so custom toast
                         content (e.g., DmIncomingCall) can call useSelector

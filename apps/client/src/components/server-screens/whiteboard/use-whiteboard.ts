@@ -150,8 +150,7 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
             .catch((error) => {
                 toast.error(getTrpcError(error, 'Failed to load whiteboard'));
             });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [trpc]);
+    }, [trpc, pushToHistory]);
 
     useEffect(() => {
         const subs = [

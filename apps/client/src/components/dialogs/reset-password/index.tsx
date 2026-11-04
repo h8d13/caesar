@@ -44,9 +44,9 @@ const ResetPasswordDialog = memo(
             } catch (error) {
                 toast.error(getTrpcError(error, 'Failed to reset password'));
                 close();
-            } finally {
-                setIsResetting(false);
             }
+            // not `finally`: the React Compiler skips try/finally
+            setIsResetting(false);
         }, [user.id, refetch, close]);
 
         const onCopy = useCallback(() => {

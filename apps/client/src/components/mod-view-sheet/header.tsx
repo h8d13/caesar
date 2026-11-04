@@ -53,9 +53,9 @@ const Header = memo(() => {
                 toast.success('Role removed successfully');
             } catch (error) {
                 toast.error(getTrpcError(error, 'Failed to remove role'));
-            } finally {
-                refetch();
             }
+            // not `finally`: the React Compiler skips try/finally
+            refetch();
         },
         [user.id, refetch]
     );
@@ -84,9 +84,9 @@ const Header = memo(() => {
             toast.success('User kicked successfully');
         } catch (error) {
             toast.error(getTrpcError(error, 'Failed to kick user'));
-        } finally {
-            refetch();
         }
+        // not `finally`: the React Compiler skips try/finally
+        refetch();
     }, [user.id, refetch]);
 
     const onBan = useCallback(async () => {
@@ -117,9 +117,9 @@ const Header = memo(() => {
             toast.success('User banned successfully');
         } catch (error) {
             toast.error(getTrpcError(error, 'Failed to ban user'));
-        } finally {
-            refetch();
         }
+        // not `finally`: the React Compiler skips try/finally
+        refetch();
     }, [user.id, refetch, isDeletedUser]);
 
     const onUnban = useCallback(async () => {
@@ -147,9 +147,9 @@ const Header = memo(() => {
             toast.success('User unbanned successfully');
         } catch (error) {
             toast.error(getTrpcError(error, 'Failed to unban user'));
-        } finally {
-            refetch();
         }
+        // not `finally`: the React Compiler skips try/finally
+        refetch();
     }, [user.id, refetch, isDeletedUser]);
 
     return (

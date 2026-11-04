@@ -9,6 +9,12 @@ import {
 import { useIsPageVisible } from '@/hooks/use-is-page-visible';
 import { memo, useEffect, useRef } from 'react';
 
+// loaded on demand rather than imported, so the login page an anonymous
+// visitor gets ships without tRPC and the e2ee crypto. Module level: the
+// React Compiler skips components containing import().
+const loadSessionModules = () =>
+    Promise.all([import('@/lib/e2ee'), import('@/features/server/actions')]);
+
 const AutoLoginController = memo(() => {
     const isConnected = useIsConnected();
     const isAppLoading = useIsAppLoading();
@@ -39,9 +45,7 @@ const AutoLoginController = memo(() => {
 
         setIsAutoConnecting(true);
 
-        // loaded here rather than imported, so the login page an anonymous
-        // visitor gets ships without tRPC and the e2ee crypto
-        Promise.all([import('@/lib/e2ee'), import('@/features/server/actions')])
+        loadSessionModules()
             .then(([{ forgetSessionKey, restoreSessionKey }, { connect }]) =>
                 // unlock before connecting, like the password flow, so the key
                 // is fixed for the session; a failed unlock only locks

@@ -22,9 +22,9 @@ const ChallengeList = memo(() => {
             toast.error(
                 e instanceof Error ? e.message : 'Failed to accept challenge'
             );
-        } finally {
-            setLoadingId(null);
         }
+        // not `finally`: the React Compiler skips try/finally
+        setLoadingId(null);
     }, []);
 
     const handleCancel = useCallback(async (challengeId: number) => {
@@ -35,9 +35,9 @@ const ChallengeList = memo(() => {
             toast.error(
                 e instanceof Error ? e.message : 'Failed to cancel challenge'
             );
-        } finally {
-            setLoadingId(null);
         }
+        // not `finally`: the React Compiler skips try/finally
+        setLoadingId(null);
     }, []);
 
     if (challenges.length === 0) {

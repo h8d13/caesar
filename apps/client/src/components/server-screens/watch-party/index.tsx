@@ -51,9 +51,9 @@ const WatchParty = memo(({ close }: TWatchPartyProps) => {
             setUrl('');
         } catch {
             toast.error('Not a recognizable YouTube link');
-        } finally {
-            setSubmitting(false);
         }
+        // not `finally`: the React Compiler skips try/finally
+        setSubmitting(false);
     }, [url]);
 
     const handleStop = useCallback(async () => {

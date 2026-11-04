@@ -60,9 +60,9 @@ const CreatePoolForm = memo(
                 onCreated(res);
             } catch {
                 toast.error('Could not open the pool');
-            } finally {
-                setSubmitting(false);
             }
+            // not `finally`: the React Compiler skips try/finally
+            setSubmitting(false);
         }, [question, options, minutes, challenge, onCreated]);
 
         return (

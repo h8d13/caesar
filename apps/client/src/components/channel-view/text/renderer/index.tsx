@@ -34,6 +34,14 @@ type TMessageRendererProps = {
     disableVotes?: boolean;
 };
 
+// module level: the React Compiler skips components with a throw inside
+// try/catch. Throws on a failed fetch; the caller catches.
+const fetchDecrypted = async (file: TFile, key: CryptoKey) => {
+    const res = await fetch(getFileUrl(file));
+    if (!res.ok) throw new Error(`fetch ${res.status}`);
+    return openStreamed(key, await res.blob());
+};
+
 const MessageRenderer = memo(
     ({
         message,
@@ -72,10 +80,7 @@ const MessageRenderer = memo(
                         ownUserId,
                         e2eeCtx.peerUserId!
                     );
-                    const res = await fetch(getFileUrl(file));
-                    if (!res.ok) throw new Error(`fetch ${res.status}`);
-                    const cipher = await res.blob();
-                    const plain = await openStreamed(key, cipher);
+                    const plain = await fetchDecrypted(file, key);
                     // re-tag with octet-stream so the browser triggers a
                     // download rather than guessing from any MIME the
                     // server happened to attach.

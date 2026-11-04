@@ -26,9 +26,9 @@ const CreateChallenge = memo(() => {
             toast.error(
                 e instanceof Error ? e.message : 'Failed to create challenge'
             );
-        } finally {
-            setLoading(false);
         }
+        // not `finally`: the React Compiler skips try/finally
+        setLoading(false);
     }, [side, amount]);
 
     return (

@@ -122,9 +122,9 @@ const SearchDialog = ({ open, onClose }: TSearchDialogProps) => {
                 setResults(data);
             } catch {
                 setResults([]);
-            } finally {
-                setLoading(false);
             }
+            // not `finally`: the React Compiler skips try/finally
+            setLoading(false);
         },
         [scopedChannelId]
     );

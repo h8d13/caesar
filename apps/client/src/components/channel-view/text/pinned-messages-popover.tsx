@@ -135,10 +135,10 @@ const PinnedMessagesPopover = memo(
                             )
                         );
                     }
-                } finally {
-                    if (!isCancelled) {
-                        setLoading(false);
-                    }
+                }
+                // not `finally`: the React Compiler skips try/finally
+                if (!isCancelled) {
+                    setLoading(false);
                 }
             };
 

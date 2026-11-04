@@ -72,9 +72,9 @@ const useVoiceControls = ({
                     ? 'Could not start microphone. Check your input device in Settings.'
                     : getTrpcError(error, 'Failed to update microphone state')
             );
-        } finally {
-            isTogglingMic.current = false;
         }
+        // not `finally`: the React Compiler skips try/finally
+        isTogglingMic.current = false;
     }, [
         ownVoiceState.micMuted,
         startMicStream,
@@ -107,9 +107,9 @@ const useVoiceControls = ({
             });
         } catch (error) {
             toast.error(getTrpcError(error, 'Failed to update sound state'));
-        } finally {
-            isTogglingSound.current = false;
         }
+        // not `finally`: the React Compiler skips try/finally
+        isTogglingSound.current = false;
     }, [ownVoiceState.soundMuted, currentVoiceChannelId]);
 
     const toggleWebcam = useCallback(async () => {
@@ -151,9 +151,9 @@ const useVoiceControls = ({
                     ? 'Could not start webcam. Check your camera in Settings.'
                     : 'Failed to update webcam state.'
             );
-        } finally {
-            isTogglingWebcam.current = false;
         }
+        // not `finally`: the React Compiler skips try/finally
+        isTogglingWebcam.current = false;
     }, [
         ownVoiceState.webcamEnabled,
         currentVoiceChannelId,
@@ -216,9 +216,9 @@ const useVoiceControls = ({
                     ? 'Could not start screen share.'
                     : getTrpcError(error, 'Failed to update screen share state')
             );
-        } finally {
-            isTogglingScreenShare.current = false;
         }
+        // not `finally`: the React Compiler skips try/finally
+        isTogglingScreenShare.current = false;
     }, [
         ownVoiceState.sharingScreen,
         startScreenShareStream,

@@ -49,30 +49,31 @@ const useAvailableDevices = () => {
             return;
         }
 
-        try {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-
-            const inputDevices = normalizeDevices(
-                devices.filter((device) => device.kind === 'audioinput'),
-                'audioinput'
-            );
-
-            const playbackDevices = normalizeDevices(
-                devices.filter((device) => device.kind === 'audiooutput'),
-                'audiooutput'
-            );
-
-            const videoDevices = normalizeDevices(
-                devices.filter((device) => device.kind === 'videoinput'),
-                'videoinput'
-            );
-
-            setInputDevices(inputDevices);
-            setPlaybackDevices(playbackDevices);
-            setVideoDevices(videoDevices);
-        } finally {
-            setLoading(false);
-        }
+        // promise .finally, not try/finally: the React Compiler skips the
+        // latter. Errors still reach the caller.
+        await navigator.mediaDevices
+            .enumerateDevices()
+            .then((devices) => {
+                setInputDevices(
+                    normalizeDevices(
+                        devices.filter((d) => d.kind === 'audioinput'),
+                        'audioinput'
+                    )
+                );
+                setPlaybackDevices(
+                    normalizeDevices(
+                        devices.filter((d) => d.kind === 'audiooutput'),
+                        'audiooutput'
+                    )
+                );
+                setVideoDevices(
+                    normalizeDevices(
+                        devices.filter((d) => d.kind === 'videoinput'),
+                        'videoinput'
+                    )
+                );
+            })
+            .finally(() => setLoading(false));
     }, [normalizeDevices]);
 
     useEffect(() => {

@@ -165,10 +165,10 @@ const usePaginatedMessages = (
                 if (page) setHasMore(page.nextCursor !== null);
             } catch (error) {
                 toast.error(getTrpcError(error, 'Failed to load messages'));
-            } finally {
-                setFetching(false);
-                setLoading(false);
             }
+            // not `finally`: the React Compiler skips try/finally
+            setFetching(false);
+            setLoading(false);
         },
         [fetchPage]
     );
@@ -265,9 +265,9 @@ export const useMessages = (channelId: number) => {
             addNewerMessages(channelId, page, newerCursor, next);
         } catch (error) {
             toast.error(getTrpcError(error, 'Failed to load messages'));
-        } finally {
-            fetchingNewer.current = false;
         }
+        // not `finally`: the React Compiler skips try/finally
+        fetchingNewer.current = false;
     }, [channelId, newerCursor]);
 
     // the tail kept following live messages, so it is shown as is

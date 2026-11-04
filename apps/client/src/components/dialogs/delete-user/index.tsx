@@ -48,9 +48,9 @@ const DeleteUserDialog = memo(
                 onDelete?.();
             } catch (error) {
                 toast.error(getTrpcError(error, 'Failed to delete user'));
-            } finally {
-                setIsDeleting(false);
             }
+            // not `finally`: the React Compiler skips try/finally
+            setIsDeleting(false);
         }, [close, refetch, wipe, user.name, user.id, onDelete]);
 
         return (

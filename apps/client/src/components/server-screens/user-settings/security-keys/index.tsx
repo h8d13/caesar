@@ -73,9 +73,9 @@ const SecurityKeys = memo(() => {
             const message =
                 error instanceof Error ? error.message : String(error);
             toast.error(`Failed to register key: ${message}`);
-        } finally {
-            setLoading(false);
         }
+        // not `finally`: the React Compiler skips try/finally
+        setLoading(false);
     }, [newKeyName, refresh]);
 
     const removeKey = useCallback(

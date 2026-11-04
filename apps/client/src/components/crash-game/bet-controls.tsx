@@ -28,9 +28,9 @@ const BetControls = memo(() => {
         } catch (e) {
             toast.error(e instanceof Error ? e.message : 'Failed to place bet');
             setAutoBet(false);
-        } finally {
-            setLoading(false);
         }
+        // not `finally`: the React Compiler skips try/finally
+        setLoading(false);
     }, [amount]);
 
     const handleCashOut = useCallback(async () => {
@@ -39,9 +39,9 @@ const BetControls = memo(() => {
             await cashOut();
         } catch (e) {
             toast.error(e instanceof Error ? e.message : 'Failed to cash out');
-        } finally {
-            setLoading(false);
         }
+        // not `finally`: the React Compiler skips try/finally
+        setLoading(false);
     }, []);
 
     useEffect(() => {
@@ -62,9 +62,9 @@ const BetControls = memo(() => {
                         e instanceof Error ? e.message : 'Auto-bet failed'
                     );
                     setAutoBet(false);
-                } finally {
-                    setLoading(false);
                 }
+                // not `finally`: the React Compiler skips try/finally
+                setLoading(false);
             })();
         }
     }, [autoBet, phase]);

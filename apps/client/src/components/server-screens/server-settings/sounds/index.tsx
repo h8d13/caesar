@@ -43,9 +43,9 @@ const Sounds = memo(() => {
             console.error('Error uploading sound:', error);
 
             toast.error('Failed to upload sound');
-        } finally {
-            setIsUploading(false);
         }
+        // not `finally`: the React Compiler skips try/finally
+        setIsUploading(false);
     }, [openFilePicker, refetch]);
 
     const selectedSound = useMemo(

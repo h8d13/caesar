@@ -43,9 +43,9 @@ const Emojis = memo(() => {
             console.error('Error uploading emoji:', error);
 
             toast.error('Failed to upload emoji');
-        } finally {
-            setIsUploading(false);
         }
+        // not `finally`: the React Compiler skips try/finally
+        setIsUploading(false);
     }, [openFilePicker, refetch]);
 
     const selectedEmoji = useMemo(

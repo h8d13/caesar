@@ -210,75 +210,78 @@ const Connect = memo(() => {
         setLoading(true);
 
         try {
-            const [{ deriveCredentials }] = await loadSessionModules();
+            // early returns stay inside: the reset below still runs
+            await (async () => {
+                const [{ deriveCredentials }] = await loadSessionModules();
 
-            // argon2id runs in a Web Worker, so the spinner stays
-            // responsive. Only authKey leaves this browser.
-            const { priv, authKey } = await deriveCredentials(
-                values.password,
-                values.identity
-            );
+                // argon2id runs in a Web Worker, so the spinner stays
+                // responsive. Only authKey leaves this browser.
+                const { priv, authKey } = await deriveCredentials(
+                    values.password,
+                    values.identity
+                );
 
-            const url = getUrlFromServer();
-            const response = await fetch(`${url}/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    identity: values.identity,
-                    authKey,
-                    invite: inviteCode || undefined,
-                    remember: values.autoLogin
-                })
-            });
-
-            // Burst limit and failed-login lockout reply 429 with a plain
-            // { error } body rather than per-field errors.
-            if (response.status === 429) {
-                const data = await response.json().catch(() => ({}));
-
-                setErrors({
-                    identity:
-                        data.error ||
-                        'Too many attempts. Please try again later.'
+                const url = getUrlFromServer();
+                const response = await fetch(`${url}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        identity: values.identity,
+                        authKey,
+                        invite: inviteCode || undefined,
+                        remember: values.autoLogin
+                    })
                 });
-                return;
-            }
 
-            if (!response.ok) {
-                const data = await response.json();
+                // Burst limit and failed-login lockout reply 429 with a plain
+                // { error } body rather than per-field errors.
+                if (response.status === 429) {
+                    const data = await response.json().catch(() => ({}));
 
-                setErrors(data.errors || {});
-                return;
-            }
+                    setErrors({
+                        identity:
+                            data.error ||
+                            'Too many attempts. Please try again later.'
+                    });
+                    return;
+                }
 
-            const data = (await response.json()) as
-                | { success: true }
-                | {
-                      needs2fa: true;
-                      preAuthToken: string;
-                      options: PublicKeyCredentialRequestOptionsJSON;
-                  };
+                if (!response.ok) {
+                    const data = await response.json();
 
-            if ('needs2fa' in data) {
-                setPending2fa({
-                    preAuthToken: data.preAuthToken,
-                    options: data.options,
-                    priv
-                });
-                return;
-            }
+                    setErrors(data.errors || {});
+                    return;
+                }
 
-            await completeLogin(priv);
+                const data = (await response.json()) as
+                    | { success: true }
+                    | {
+                          needs2fa: true;
+                          preAuthToken: string;
+                          options: PublicKeyCredentialRequestOptionsJSON;
+                      };
+
+                if ('needs2fa' in data) {
+                    setPending2fa({
+                        preAuthToken: data.preAuthToken,
+                        options: data.options,
+                        priv
+                    });
+                    return;
+                }
+
+                await completeLogin(priv);
+            })();
         } catch (error) {
             const errorMessage =
                 error instanceof Error ? error.message : String(error);
 
             toast.error(`Could not connect: ${errorMessage}`);
-        } finally {
-            setLoading(false);
         }
+        // not `finally`: the React Compiler skips try/finally
+        setLoading(false);
     }, [
         values.identity,
         values.password,
@@ -296,41 +299,44 @@ const Connect = memo(() => {
         setLoading(true);
 
         try {
-            const assertion = await startAuthentication({
-                optionsJSON: pending2fa.options
-            });
+            // early returns stay inside: the reset below still runs
+            await (async () => {
+                const assertion = await startAuthentication({
+                    optionsJSON: pending2fa.options
+                });
 
-            const url = getUrlFromServer();
-            const response = await fetch(`${url}/login/2fa`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    preAuthToken: pending2fa.preAuthToken,
-                    response: assertion
-                })
-            });
+                const url = getUrlFromServer();
+                const response = await fetch(`${url}/login/2fa`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        preAuthToken: pending2fa.preAuthToken,
+                        response: assertion
+                    })
+                });
 
-            if (!response.ok) {
-                const errData = await response.json();
-                const message =
-                    errData.errors?.preAuthToken ||
-                    errData.errors?.response ||
-                    errData.error ||
-                    'Two-factor authentication failed.';
-                toast.error(message);
-                // Burn the preAuthToken; user must re-enter password.
-                setPending2fa(null);
-                return;
-            }
+                if (!response.ok) {
+                    const errData = await response.json();
+                    const message =
+                        errData.errors?.preAuthToken ||
+                        errData.errors?.response ||
+                        errData.error ||
+                        'Two-factor authentication failed.';
+                    toast.error(message);
+                    // Burn the preAuthToken; user must re-enter password.
+                    setPending2fa(null);
+                    return;
+                }
 
-            await completeLogin(pending2fa.priv);
+                await completeLogin(pending2fa.priv);
+            })();
         } catch (error) {
             const message =
                 error instanceof Error ? error.message : String(error);
             toast.error(`Key auth failed: ${message}`);
-        } finally {
-            setLoading(false);
         }
+        // not `finally`: the React Compiler skips try/finally
+        setLoading(false);
     }, [pending2fa, completeLogin]);
 
     const logoSrc = useMemo(() => {
