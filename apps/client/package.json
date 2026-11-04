@@ -40,7 +40,7 @@
     "mediasoup-client": "^3.26.0",
     "perfect-freehand": "^1.2.3",
     "prosemirror-view": "^1.42.9",
-    "re-reselect": "^5.1.1",
+    "re-reselect": "^6.0.0",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-lite-youtube-embed": "^3.7.0",
