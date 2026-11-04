@@ -5,7 +5,6 @@ import { enGB } from 'date-fns/locale';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
-import { printConsoleBanner } from './components/debug-info/index.tsx';
 import { StoreDebug } from './components/debug/store-debug.tsx';
 import { DevicesProvider } from './components/devices-provider/index.tsx';
 import { DialogsProvider } from './components/dialogs/index.tsx';
@@ -15,6 +14,7 @@ import { ServerScreensProvider } from './components/server-screens/index.tsx';
 import { ThemeProvider } from './components/theme-provider/index.tsx';
 import { loadApp } from './features/app/pre-auth-actions.ts';
 import { store } from './features/store.ts';
+import { printConsoleBanner } from './helpers/print-console-banner';
 import {
     LocalStorageKey,
     removeLegacySessionTokens

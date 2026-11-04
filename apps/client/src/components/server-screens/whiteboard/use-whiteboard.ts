@@ -439,9 +439,9 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         pushToHistory({}, []);
     }, [trpc, pushToHistory]);
 
-    const toggleSnapToGrid = useCallback(() => {
+    const toggleSnapToGrid = () => {
         setSnapToGridEnabled((v) => !v);
-    }, []);
+    };
 
     const updateColor = useCallback(
         (color: Color) => {
