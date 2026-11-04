@@ -13,6 +13,7 @@ import {
     markNoiseGateWorkletUnavailable,
     postNoiseGateWorkletConfig
 } from '@/helpers/audio-worklet/noise-gate-worklet';
+import { useLatestCallback } from '@/hooks/use-latest-callback';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type TPermissionState = 'unknown' | 'granted' | 'denied';
@@ -420,7 +421,7 @@ const useMicrophoneTest = ({
         ]
     );
 
-    const requestPermission = useCallback(
+    const requestPermission = useLatestCallback(
         async ({ silent = false }: TRequestPermissionOptions = {}) => {
             if (!silent) {
                 setError(undefined);
@@ -443,16 +444,15 @@ const useMicrophoneTest = ({
                     setError(getMicrophoneErrorMessage(error));
                 }
             }
-        },
-        [getAudioConstraints, stopStreamTracks]
+        }
     );
 
-    const startTest = useCallback(async () => {
+    const startTest = useLatestCallback(async () => {
         isTestRequestedRef.current = true;
         testRequestIdRef.current += 1;
 
         return startTestPipeline(testRequestIdRef.current);
-    }, [startTestPipeline]);
+    });
 
     const stopTest = useCallback(() => {
         isTestRequestedRef.current = false;

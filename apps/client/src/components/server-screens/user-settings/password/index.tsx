@@ -1,6 +1,7 @@
 import { SettingsFooterActions } from '@/components/server-screens/settings-footer-actions';
 import { updatePassword as updatePasswordAction } from '@/features/server/users/actions';
 import { useForm } from '@/hooks/use-form';
+import { useLatestCallback } from '@/hooks/use-latest-callback';
 import {
     PASSWORD_LENGTH_ERROR,
     PASSWORD_MAX_LENGTH,
@@ -15,7 +16,7 @@ import {
     Group,
     Input
 } from '@caesar/ui';
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
 import { toast } from 'sonner';
 
 const Password = memo(() => {
@@ -25,7 +26,7 @@ const Password = memo(() => {
         confirmNewPassword: ''
     });
 
-    const updatePassword = useCallback(async () => {
+    const updatePassword = useLatestCallback(async () => {
         // the server only sees authKeys, so it can't check these
         if (
             values.newPassword.length < PASSWORD_MIN_LENGTH ||
@@ -49,7 +50,7 @@ const Password = memo(() => {
         } catch (error) {
             setTrpcErrors(error);
         }
-    }, [values, setTrpcErrors, setError]);
+    });
 
     return (
         <Card>

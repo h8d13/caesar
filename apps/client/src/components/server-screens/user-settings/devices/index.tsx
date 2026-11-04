@@ -17,6 +17,7 @@ import {
     subscribeRNNoiseWorkletAvailability
 } from '@/helpers/audio-worklet/rnnoise-worklet';
 import { useForm } from '@/hooks/use-form';
+import { useLatestCallback } from '@/hooks/use-latest-callback';
 import { NoiseSuppressionMode, type Resolution, VideoCodec } from '@/types';
 import { DEFAULT_BITRATE, DEFAULT_WEBCAM_BITRATE } from '@caesar/shared';
 import {
@@ -125,10 +126,10 @@ const Devices = memo(() => {
         webcamFramerate: values.webcamFramerate
     });
 
-    const saveDeviceSettings = useCallback(() => {
+    const saveDeviceSettings = useLatestCallback(() => {
         saveDevices(values);
         toast.success('Device settings saved');
-    }, [saveDevices, values]);
+    });
 
     // Device settings (codec, simulcast, resolution, etc.) only bind when a
     // producer is created on join, so editing them is incompatible with an

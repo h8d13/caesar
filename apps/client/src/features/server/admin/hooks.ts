@@ -1,4 +1,5 @@
 import { useForm } from '@/hooks/use-form';
+import { useLatestCallback } from '@/hooks/use-latest-callback';
 import { getTRPCClient } from '@/lib/trpc';
 import {
     DELETED_USER_IDENTITY_AND_NAME,
@@ -57,7 +58,7 @@ export const useAdminGeneral = () => {
         });
     }, [data]);
 
-    const submit = useCallback(async () => {
+    const submit = useLatestCallback(async () => {
         const trpc = getTRPCClient();
 
         try {
@@ -76,7 +77,7 @@ export const useAdminGeneral = () => {
             console.error('Error updating settings:', error);
             setErrors(parseTrpcErrors(error));
         }
-    }, [settings, refetch]);
+    });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const onChange = useCallback((field: keyof typeof settings, value: any) => {
@@ -114,7 +115,7 @@ export const useAdminChannelGeneral = (channelId: number) => {
         if (data) setChannel(data);
     }, [data]);
 
-    const submit = useCallback(async () => {
+    const submit = useLatestCallback(async () => {
         const trpc = getTRPCClient();
 
         try {
@@ -130,15 +131,15 @@ export const useAdminChannelGeneral = (channelId: number) => {
             console.error('Error updating channel:', error);
             setErrors(parseTrpcErrors(error));
         }
-    }, [channel, channelId]);
+    });
 
     const onChange = useCallback(
+        // functional update: no dependency on channel, stable for fields
         (field: keyof TChannel, value: string | null | boolean) => {
-            if (!channel) return;
             setChannel((c) => (c ? { ...c, [field]: value } : c));
             setErrors((e) => ({ ...e, [field]: undefined }));
         },
-        [channel]
+        []
     );
 
     return {
@@ -170,7 +171,7 @@ export const useAdminCategoryGeneral = (categoryId: number) => {
         if (data) setCategory(data);
     }, [data]);
 
-    const submit = useCallback(async () => {
+    const submit = useLatestCallback(async () => {
         const trpc = getTRPCClient();
 
         try {
@@ -184,15 +185,15 @@ export const useAdminCategoryGeneral = (categoryId: number) => {
             console.error('Error updating category:', error);
             setErrors(parseTrpcErrors(error));
         }
-    }, [category, categoryId]);
+    });
 
     const onChange = useCallback(
+        // functional update: no dependency on category, stable for fields
         (field: keyof TCategory, value: string | null) => {
-            if (!category) return;
             setCategory((c) => (c ? { ...c, [field]: value } : c));
             setErrors((e) => ({ ...e, [field]: undefined }));
         },
-        [category]
+        []
     );
 
     return {
@@ -308,7 +309,7 @@ export const useAdminStorage = () => {
         if (data) setValues(data.storageSettings);
     }, [data, setValues]);
 
-    const submit = useCallback(async () => {
+    const submit = useLatestCallback(async () => {
         const trpc = getTRPCClient();
 
         try {
@@ -333,7 +334,7 @@ export const useAdminStorage = () => {
             console.error('Error updating storage settings:', error);
             setTrpcErrors(error);
         }
-    }, [values, setTrpcErrors, refetch]);
+    });
 
     const labels = useMemo(() => {
         return {

@@ -2,6 +2,7 @@ import { DatePicker } from '@/components/date-picker';
 import { SettingsFooterActions } from '@/components/server-screens/settings-footer-actions';
 import { useOwnPublicUser } from '@/features/server/users/hooks';
 import { useForm } from '@/hooks/use-form';
+import { useLatestCallback } from '@/hooks/use-latest-callback';
 import { getTRPCClient } from '@/lib/trpc';
 import {
     Card,
@@ -14,7 +15,7 @@ import {
     Input,
     Textarea
 } from '@caesar/ui';
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
 import { toast } from 'sonner';
 import { AvatarManager } from './avatar-manager';
 import { BannerManager } from './banner-manager';
@@ -47,7 +48,7 @@ const Profile = memo(() => {
         birthday: ownPublicUser?.birthday ?? ''
     });
 
-    const onUpdateUser = useCallback(async () => {
+    const onUpdateUser = useLatestCallback(async () => {
         const trpc = getTRPCClient();
 
         try {
@@ -59,7 +60,7 @@ const Profile = memo(() => {
         } catch (error) {
             setTrpcErrors(error);
         }
-    }, [values, setTrpcErrors]);
+    });
 
     if (!ownPublicUser) return null;
 
