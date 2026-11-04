@@ -17,8 +17,15 @@
 // is where a memo() or a stable prop stops the whole cascade, `wasted`
 // counts every redundant render below it, library leaves included.
 //
+// Timing: the profiling build (CAESAR_PROFILE aliases react-dom/profiling)
+// sets selfBaseDuration on every fiber, its own render time without
+// children. Renders and redundant renders also sum it, so a row reads as
+// "how much time went to renders that changed nothing". Other builds
+// report 0ms.
+//
 // API (window.__rr): reset(), mark(label) starts a named scenario,
-// report({ top, scenario }) -> sorted rows with sourcemapped locations.
+// report({ top, scenario }) -> sorted rows with sourcemapped locations,
+// totals() -> per scenario `redundant/renders redundantMs/ms`.
 // Pasting again swaps the implementation in place (single hook wrapper).
 (() => {
 	const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
@@ -129,8 +136,15 @@
 		return s;
 	};
 
-	const newStat = () => ({ renders: 0, redundant: 0, causes: new Map() });
-	const newCut = () => ({ cuts: 0, wasted: 0, parents: new Map() });
+	const newStat = () => ({
+		renders: 0,
+		redundant: 0,
+		ms: 0,
+		redundantMs: 0,
+		causes: new Map()
+	});
+	const newCut = () => ({ cuts: 0, wasted: 0, ms: 0, parents: new Map() });
+	const selfMs = (fiber) => fiber.selfBaseDuration ?? 0;
 	const bump = (map, key) => map.set(key, (map.get(key) ?? 0) + 1);
 
 	const record = (prev, next) => {
@@ -150,9 +164,11 @@
 		const redundant = !causes.some(([kind]) => kind === 'changed');
 
 		s.renders++;
+		s.ms += selfMs(next);
 		if (!redundant) return false;
 
 		s.redundant++;
+		s.redundantMs += selfMs(next);
 		if (causes.length === 0) causes.push(['cascade', '']);
 		for (const [kind, what] of causes) {
 			bump(s.causes, what ? `${kind} ${what}` : kind);
@@ -168,14 +184,16 @@
 		if (!root) {
 			root = fiber;
 
-			const c = bucket(cuts, typeKey(fiber), newCut);
+			const cut = bucket(cuts, typeKey(fiber), newCut);
 
-			c.cuts++;
-			c.wasted++;
-			bump(c.parents, parent ? typeKey(parent) : null);
-		} else {
-			bucket(cuts, typeKey(root), newCut).wasted++;
+			cut.cuts++;
+			bump(cut.parents, parent ? typeKey(parent) : null);
 		}
+
+		const c = bucket(cuts, typeKey(root), newCut);
+
+		c.wasted++;
+		c.ms += selfMs(fiber);
 		roots.set(fiber, root);
 	};
 
@@ -374,7 +392,7 @@
 				const s = stats.get(name).get(type);
 
 				lines.push([
-					`wasted=${c.wasted} cuts=${c.cuts}`,
+					`wasted=${c.wasted} ${c.ms.toFixed(2)}ms cuts=${c.cuts}`,
 					`${s.redundant}/${s.renders}`,
 					where(type),
 					`[${topKeys(s.causes, 3)}]`,
@@ -385,6 +403,28 @@
 		lines.push(...errors);
 
 		return lines.join('\n');
+	};
+
+	const totals = () => {
+		const out = {};
+
+		for (const [name, byType] of stats) {
+			let renders = 0;
+			let redundant = 0;
+			let ms = 0;
+			let redundantMs = 0;
+
+			for (const s of byType.values()) {
+				renders += s.renders;
+				redundant += s.redundant;
+				ms += s.ms;
+				redundantMs += s.redundantMs;
+			}
+			out[name] = `${redundant}/${renders} `
+				+ `${redundantMs.toFixed(2)}/${ms.toFixed(2)}ms`;
+		}
+
+		return out;
 	};
 
 	window.__rr = {
@@ -398,7 +438,8 @@
 		mark(label) {
 			scenario = label;
 		},
-		report
+		report,
+		totals
 	};
 
 	return 'installed';

@@ -54,7 +54,12 @@ export default defineConfig(({ command }) => ({
     },
     resolve: {
         alias: {
-            '@': path.resolve(import.meta.dirname, './src')
+            '@': path.resolve(import.meta.dirname, './src'),
+            // profiling builds record fiber timings (actualDuration) and
+            // enable the DevTools Profiler, see scripts/rerender/hook.js
+            ...(process.env.CAESAR_PROFILE
+                ? { 'react-dom/client': 'react-dom/profiling' }
+                : {})
         }
     },
     define: {
