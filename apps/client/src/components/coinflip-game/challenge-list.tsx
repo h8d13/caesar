@@ -4,6 +4,7 @@ import {
 } from '@/features/server/coinflip/actions';
 import { useCoinflipChallenges } from '@/features/server/coinflip/hooks';
 import { useOwnUserId } from '@/features/server/users/hooks';
+import { getTrpcError } from '@caesar/shared';
 import { CoinflipStatus } from '@caesar/shared/games/coinflip';
 import { Button } from '@caesar/ui';
 import { memo, useCallback, useState } from 'react';
@@ -19,9 +20,7 @@ const ChallengeList = memo(() => {
         try {
             await acceptCoinflipChallenge(challengeId);
         } catch (e) {
-            toast.error(
-                e instanceof Error ? e.message : 'Failed to accept challenge'
-            );
+            toast.error(getTrpcError(e, 'Failed to accept challenge'));
         }
         setLoadingId(null);
     }, []);
@@ -31,9 +30,7 @@ const ChallengeList = memo(() => {
         try {
             await cancelCoinflipChallenge(challengeId);
         } catch (e) {
-            toast.error(
-                e instanceof Error ? e.message : 'Failed to cancel challenge'
-            );
+            toast.error(getTrpcError(e, 'Failed to cancel challenge'));
         }
         setLoadingId(null);
     }, []);

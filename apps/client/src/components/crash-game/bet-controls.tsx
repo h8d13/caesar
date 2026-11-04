@@ -1,5 +1,6 @@
 import { cashOut, placeBet } from '@/features/server/crash/actions';
 import { useCrashPhase } from '@/features/server/crash/hooks';
+import { getTrpcError } from '@caesar/shared';
 import { CrashPhase } from '@caesar/shared/games/crash';
 import { Button, Input } from '@caesar/ui';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
@@ -26,7 +27,7 @@ const BetControls = memo(() => {
             await placeBet(parsed);
             lastBetAmount.current = parsed;
         } catch (e) {
-            toast.error(e instanceof Error ? e.message : 'Failed to place bet');
+            toast.error(getTrpcError(e, 'Failed to place bet'));
             setAutoBet(false);
         }
         setLoading(false);
@@ -37,7 +38,7 @@ const BetControls = memo(() => {
         try {
             await cashOut();
         } catch (e) {
-            toast.error(e instanceof Error ? e.message : 'Failed to cash out');
+            toast.error(getTrpcError(e, 'Failed to cash out'));
         }
         setLoading(false);
     }, []);
@@ -56,9 +57,7 @@ const BetControls = memo(() => {
                 try {
                     await placeBet(parsed);
                 } catch (e) {
-                    toast.error(
-                        e instanceof Error ? e.message : 'Auto-bet failed'
-                    );
+                    toast.error(getTrpcError(e, 'Auto-bet failed'));
                     setAutoBet(false);
                 }
                 setLoading(false);

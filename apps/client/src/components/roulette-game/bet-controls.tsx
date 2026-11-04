@@ -11,6 +11,7 @@ import {
 import { useOwnUserId } from '@/features/server/users/hooks';
 import { useNow } from '@/hooks/use-now';
 import { cn } from '@/lib/utils';
+import { getTrpcError } from '@caesar/shared';
 import {
     type RouletteBetType,
     RoulettePhase
@@ -89,9 +90,7 @@ const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
                         toast.error(result.errors[0]);
                     }
                 } catch (e) {
-                    toast.error(
-                        e instanceof Error ? e.message : 'Auto-bet failed'
-                    );
+                    toast.error(getTrpcError(e, 'Auto-bet failed'));
                     setAutoBet(false);
                 }
             })();
@@ -106,9 +105,7 @@ const BetControls = memo(({ children }: { children?: React.ReactNode }) => {
             try {
                 await removeRouletteBet(bet.betId);
             } catch (e) {
-                toast.error(
-                    e instanceof Error ? e.message : 'Failed to remove bet'
-                );
+                toast.error(getTrpcError(e, 'Failed to remove bet'));
                 break;
             }
         }

@@ -5,6 +5,7 @@ import {
     useRoulettePhase
 } from '@/features/server/roulette/hooks';
 import { cn } from '@/lib/utils';
+import { getTrpcError } from '@caesar/shared';
 import { RouletteBetType, RoulettePhase } from '@caesar/shared/games/roulette';
 import { Zap } from 'lucide-react';
 import { Fragment, memo, useCallback, useContext } from 'react';
@@ -102,9 +103,7 @@ const BettingBoard = memo(() => {
             try {
                 await placeRouletteBet(betType, betValue, chipAmount);
             } catch (e) {
-                toast.error(
-                    e instanceof Error ? e.message : 'Failed to place bet'
-                );
+                toast.error(getTrpcError(e, 'Failed to place bet'));
             }
         },
         [disabled, chipAmount]

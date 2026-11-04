@@ -1,5 +1,6 @@
 import { createCoinflipChallenge } from '@/features/server/coinflip/actions';
 import { cn } from '@/lib/utils';
+import { getTrpcError } from '@caesar/shared';
 import { CoinflipSide } from '@caesar/shared/games/coinflip';
 import { Button, Input } from '@caesar/ui';
 import { memo, useCallback, useState } from 'react';
@@ -23,9 +24,7 @@ const CreateChallenge = memo(() => {
         try {
             await createCoinflipChallenge(side, parsed);
         } catch (e) {
-            toast.error(
-                e instanceof Error ? e.message : 'Failed to create challenge'
-            );
+            toast.error(getTrpcError(e, 'Failed to create challenge'));
         }
         setLoading(false);
     }, [side, amount]);
