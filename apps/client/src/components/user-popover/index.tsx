@@ -9,7 +9,11 @@ import {
     usePublicServerSettings,
     useUserRoles
 } from '@/features/server/hooks';
-import { useIsOwnUser, useUserById } from '@/features/server/users/hooks';
+import {
+    useIsOwnUser,
+    useUserById,
+    useUserExists
+} from '@/features/server/users/hooks';
 import { getFileUrl } from '@/helpers/get-file-url';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
 import { getSocialCreditColor } from '@/helpers/get-social-credit-color';
@@ -81,7 +85,9 @@ type TUserPopoverProps = {
     children: React.ReactNode;
 };
 
-const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
+// Mounted by PopoverContent only while open: every member row, message
+// group and mention renders a trigger, the subscriptions live here.
+const UserCard = memo(({ userId }: { userId: number }) => {
     const user = useUserById(userId);
     const roles = useUserRoles(userId);
     const settings = usePublicServerSettings();
@@ -149,9 +155,9 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
                 );
             } catch (error) {
                 toast.error(getTrpcError(error, 'Could not vote'));
-            } finally {
-                setIsVoting(false);
             }
+            // not `finally`: the React Compiler skips try/finally
+            setIsVoting(false);
         },
         [userId]
     );
@@ -169,7 +175,7 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
         }
     }, [userId]);
 
-    if (!user) return children;
+    if (!user) return null;
 
     const isDeleted = user.name === DELETED_USER_IDENTITY_AND_NAME;
     const hasStatus = (user.activeStatusCount ?? 0) > 0;
@@ -180,6 +186,246 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
         !isOwnUser;
 
     return (
+        <>
+            <div className="relative">
+                {user.banned && (
+                    <div className="absolute right-2 top-2 bg-red-500 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
+                        <ShieldCheck className="h-3 w-3" />
+                        Banned
+                    </div>
+                )}
+                {isDeleted && (
+                    <div className="absolute right-2 top-2 bg-gray-600 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
+                        <Trash className="h-3 w-3" />
+                        Deleted
+                    </div>
+                )}
+                {user.banner ? (
+                    <div
+                        className="h-24 w-full rounded-t-md bg-cover bg-center bg-no-repeat"
+                        style={{
+                            backgroundImage: `url("${getFileUrl(user.banner)}")`
+                        }}
+                    />
+                ) : (
+                    <div
+                        className="h-24 w-full rounded-t-md"
+                        style={{
+                            background: user.bannerColor || '#5865f2'
+                        }}
+                    />
+                )}
+                <div className="absolute left-4 top-16">
+                    <UserAvatar
+                        userId={user.id}
+                        className={cn(
+                            'h-16 w-16 border-4 border-card',
+                            hasStatus && 'cursor-pointer'
+                        )}
+                        showStatusBadge={false}
+                        showAddStatus={isOwnUser}
+                        onClick={
+                            hasStatus
+                                ? () => openStoryViewer(user.id)
+                                : undefined
+                        }
+                    />
+                </div>
+            </div>
+
+            <div className="px-4 pt-12 pb-4">
+                <div className="mb-3">
+                    <div className="flex items-center gap-1.5">
+                        <span
+                            className="text-lg font-semibold truncate"
+                            style={{
+                                color: getSocialCreditColor(
+                                    user.socialCredit ?? 0
+                                )
+                            }}
+                        >
+                            {getRenderedUsername(user, user.id)}
+                        </span>
+                        {!isOwnUser && !isDeleted && !isEditingNickname && (
+                            <IconButton
+                                icon={Pencil}
+                                variant="ghost"
+                                size="xs"
+                                title="Set Nickname"
+                                onClick={handleStartEditing}
+                            />
+                        )}
+                    </div>
+                    {currentNickname && !isEditingNickname && (
+                        <span className="text-xs text-muted-foreground">
+                            {user.name}
+                        </span>
+                    )}
+                    {isEditingNickname && (
+                        <div className="flex flex-col gap-1.5 py-1.5">
+                            <div className="flex items-center gap-1.5">
+                                <Input
+                                    value={nicknameInput}
+                                    onChange={(e) =>
+                                        setNicknameInput(e.target.value)
+                                    }
+                                    placeholder="Enter nickname..."
+                                    className="h-7 text-sm"
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter')
+                                            handleSaveNickname();
+                                        if (e.key === 'Escape')
+                                            handleCancelEditing();
+                                    }}
+                                />
+                                <Button
+                                    size="sm"
+                                    variant="default"
+                                    className="h-7 px-2 text-xs shrink-0"
+                                    onClick={handleSaveNickname}
+                                >
+                                    Save
+                                </Button>
+                                <IconButton
+                                    icon={X}
+                                    variant="ghost"
+                                    size="xs"
+                                    title="Cancel"
+                                    onClick={handleCancelEditing}
+                                />
+                            </div>
+                            {currentNickname && (
+                                <button
+                                    type="button"
+                                    className="text-xs text-muted-foreground hover:text-destructive transition-colors text-left"
+                                    onClick={handleRemoveNickname}
+                                >
+                                    Remove nickname
+                                </button>
+                            )}
+                        </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
+                            <UserStatusBadge
+                                status={user.status || UserStatus.OFFLINE}
+                                className="h-3 w-3"
+                            />
+                            <span className="text-xs text-muted-foreground capitalize">
+                                {user.status || UserStatus.OFFLINE}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-1.5 bg-muted/50 rounded-md px-2.5 py-1.5">
+                        <Star
+                            className="h-3.5 w-3.5"
+                            style={{
+                                color: getSocialCreditColor(
+                                    user.socialCredit ?? 0
+                                )
+                            }}
+                        />
+                        <span
+                            className="text-sm font-medium"
+                            style={{
+                                color: getSocialCreditColor(
+                                    user.socialCredit ?? 0
+                                )
+                            }}
+                        >
+                            {user.socialCredit ?? 0}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                            SC
+                        </span>
+                    </div>
+                    {!isOwnUser && !isDeleted && !hasVotedToday && (
+                        <div className="flex gap-1">
+                            <button
+                                type="button"
+                                disabled={isVoting}
+                                className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium bg-green-500/10 text-green-500 hover:bg-green-500/20 transition-colors disabled:opacity-50"
+                                onClick={() => onVote('upvote')}
+                            >
+                                <ChevronUp className="h-3.5 w-3.5" />
+                                +10
+                            </button>
+                            <button
+                                type="button"
+                                disabled={isVoting}
+                                className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                                onClick={() => onVote('downvote')}
+                            >
+                                <ChevronDown className="h-3.5 w-3.5" />
+                                -5
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {roles.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                        {roles.map((role) => (
+                            <RoleBadge key={role.id} role={role} />
+                        ))}
+                    </div>
+                )}
+
+                {user.bio && (
+                    <div className="mt-3">
+                        <p className="text-sm text-foreground leading-relaxed">
+                            {user.bio}
+                        </p>
+                    </div>
+                )}
+                <div className="flex justify-between items-center mt-4 pt-3 border-t border-border">
+                    <p className="text-xs text-muted-foreground">
+                        Member since {format(new Date(user.createdAt), 'PP')}
+                    </p>
+
+                    <div className="flex gap-2 items-center">
+                        {showDmButton && (
+                            <IconButton
+                                icon={MessageSquare}
+                                variant="ghost"
+                                size="sm"
+                                title="Direct Message"
+                                onClick={onDirectMessageClick}
+                            />
+                        )}
+
+                        {
+                            <Protect permission={Permission.MANAGE_USERS}>
+                                <IconButton
+                                    icon={UserCog}
+                                    variant="ghost"
+                                    size="sm"
+                                    title="Moderation View"
+                                    onClick={() =>
+                                        setModViewOpen(true, user.id)
+                                    }
+                                />
+                            </Protect>
+                        }
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+});
+
+UserCard.displayName = 'UserCard';
+
+const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
+    const userExists = useUserExists(userId);
+
+    if (!userExists) return children;
+
+    return (
         <Popover>
             <PopoverTrigger asChild>{children}</PopoverTrigger>
             <PopoverContent
@@ -188,234 +434,7 @@ const UserPopover = memo(({ userId, children }: TUserPopoverProps) => {
                 side="top"
                 collisionPadding={8}
             >
-                <div className="relative">
-                    {user.banned && (
-                        <div className="absolute right-2 top-2 bg-red-500 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
-                            <ShieldCheck className="h-3 w-3" />
-                            Banned
-                        </div>
-                    )}
-                    {isDeleted && (
-                        <div className="absolute right-2 top-2 bg-gray-600 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
-                            <Trash className="h-3 w-3" />
-                            Deleted
-                        </div>
-                    )}
-                    {user.banner ? (
-                        <div
-                            className="h-24 w-full rounded-t-md bg-cover bg-center bg-no-repeat"
-                            style={{
-                                backgroundImage: `url("${getFileUrl(user.banner)}")`
-                            }}
-                        />
-                    ) : (
-                        <div
-                            className="h-24 w-full rounded-t-md"
-                            style={{
-                                background: user.bannerColor || '#5865f2'
-                            }}
-                        />
-                    )}
-                    <div className="absolute left-4 top-16">
-                        <UserAvatar
-                            userId={user.id}
-                            className={cn(
-                                'h-16 w-16 border-4 border-card',
-                                hasStatus && 'cursor-pointer'
-                            )}
-                            showStatusBadge={false}
-                            showAddStatus={isOwnUser}
-                            onClick={
-                                hasStatus
-                                    ? () => openStoryViewer(user.id)
-                                    : undefined
-                            }
-                        />
-                    </div>
-                </div>
-
-                <div className="px-4 pt-12 pb-4">
-                    <div className="mb-3">
-                        <div className="flex items-center gap-1.5">
-                            <span
-                                className="text-lg font-semibold truncate"
-                                style={{
-                                    color: getSocialCreditColor(
-                                        user.socialCredit ?? 0
-                                    )
-                                }}
-                            >
-                                {getRenderedUsername(user, user.id)}
-                            </span>
-                            {!isOwnUser && !isDeleted && !isEditingNickname && (
-                                <IconButton
-                                    icon={Pencil}
-                                    variant="ghost"
-                                    size="xs"
-                                    title="Set Nickname"
-                                    onClick={handleStartEditing}
-                                />
-                            )}
-                        </div>
-                        {currentNickname && !isEditingNickname && (
-                            <span className="text-xs text-muted-foreground">
-                                {user.name}
-                            </span>
-                        )}
-                        {isEditingNickname && (
-                            <div className="flex flex-col gap-1.5 py-1.5">
-                                <div className="flex items-center gap-1.5">
-                                    <Input
-                                        value={nicknameInput}
-                                        onChange={(e) =>
-                                            setNicknameInput(e.target.value)
-                                        }
-                                        placeholder="Enter nickname..."
-                                        className="h-7 text-sm"
-                                        autoFocus
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter')
-                                                handleSaveNickname();
-                                            if (e.key === 'Escape')
-                                                handleCancelEditing();
-                                        }}
-                                    />
-                                    <Button
-                                        size="sm"
-                                        variant="default"
-                                        className="h-7 px-2 text-xs shrink-0"
-                                        onClick={handleSaveNickname}
-                                    >
-                                        Save
-                                    </Button>
-                                    <IconButton
-                                        icon={X}
-                                        variant="ghost"
-                                        size="xs"
-                                        title="Cancel"
-                                        onClick={handleCancelEditing}
-                                    />
-                                </div>
-                                {currentNickname && (
-                                    <button
-                                        type="button"
-                                        className="text-xs text-muted-foreground hover:text-destructive transition-colors text-left"
-                                        onClick={handleRemoveNickname}
-                                    >
-                                        Remove nickname
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-2">
-                                <UserStatusBadge
-                                    status={user.status || UserStatus.OFFLINE}
-                                    className="h-3 w-3"
-                                />
-                                <span className="text-xs text-muted-foreground capitalize">
-                                    {user.status || UserStatus.OFFLINE}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 mb-3">
-                        <div className="flex items-center gap-1.5 bg-muted/50 rounded-md px-2.5 py-1.5">
-                            <Star
-                                className="h-3.5 w-3.5"
-                                style={{
-                                    color: getSocialCreditColor(
-                                        user.socialCredit ?? 0
-                                    )
-                                }}
-                            />
-                            <span
-                                className="text-sm font-medium"
-                                style={{
-                                    color: getSocialCreditColor(
-                                        user.socialCredit ?? 0
-                                    )
-                                }}
-                            >
-                                {user.socialCredit ?? 0}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                                SC
-                            </span>
-                        </div>
-                        {!isOwnUser && !isDeleted && !hasVotedToday && (
-                            <div className="flex gap-1">
-                                <button
-                                    type="button"
-                                    disabled={isVoting}
-                                    className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium bg-green-500/10 text-green-500 hover:bg-green-500/20 transition-colors disabled:opacity-50"
-                                    onClick={() => onVote('upvote')}
-                                >
-                                    <ChevronUp className="h-3.5 w-3.5" />
-                                    +10
-                                </button>
-                                <button
-                                    type="button"
-                                    disabled={isVoting}
-                                    className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors disabled:opacity-50"
-                                    onClick={() => onVote('downvote')}
-                                >
-                                    <ChevronDown className="h-3.5 w-3.5" />
-                                    -5
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    {roles.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mb-3">
-                            {roles.map((role) => (
-                                <RoleBadge key={role.id} role={role} />
-                            ))}
-                        </div>
-                    )}
-
-                    {user.bio && (
-                        <div className="mt-3">
-                            <p className="text-sm text-foreground leading-relaxed">
-                                {user.bio}
-                            </p>
-                        </div>
-                    )}
-                    <div className="flex justify-between items-center mt-4 pt-3 border-t border-border">
-                        <p className="text-xs text-muted-foreground">
-                            Member since{' '}
-                            {format(new Date(user.createdAt), 'PP')}
-                        </p>
-
-                        <div className="flex gap-2 items-center">
-                            {showDmButton && (
-                                <IconButton
-                                    icon={MessageSquare}
-                                    variant="ghost"
-                                    size="sm"
-                                    title="Direct Message"
-                                    onClick={onDirectMessageClick}
-                                />
-                            )}
-
-                            {
-                                <Protect permission={Permission.MANAGE_USERS}>
-                                    <IconButton
-                                        icon={UserCog}
-                                        variant="ghost"
-                                        size="sm"
-                                        title="Moderation View"
-                                        onClick={() =>
-                                            setModViewOpen(true, user.id)
-                                        }
-                                    />
-                                </Protect>
-                            }
-                        </div>
-                    </div>
-                </div>
+                <UserCard userId={userId} />
             </PopoverContent>
         </Popover>
     );

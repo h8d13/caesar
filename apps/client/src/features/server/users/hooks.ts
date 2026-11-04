@@ -23,6 +23,11 @@ export const useIsOwnUser = (userId: number) =>
 export const useUserById = (userId: number) =>
     useSelector((state: IRootState) => userByIdSelector(state, userId));
 
+// boolean result: re-renders only when the user appears or goes, not on
+// every field change of the user object
+export const useUserExists = (userId: number) =>
+    useSelector((state: IRootState) => !!userByIdSelector(state, userId));
+
 export const useOwnPublicUser = () =>
     useSelector((state: IRootState) => ownPublicUserSelector(state));
 
