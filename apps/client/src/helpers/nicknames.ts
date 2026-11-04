@@ -6,6 +6,22 @@ import {
 
 type NicknameMap = Record<number, string>;
 
+// render-time readers subscribe (useNickname): a plain getNickname call
+// is memoized by the React Compiler and never sees a later write
+const listeners = new Set<() => void>();
+
+const subscribeNicknames = (listener: () => void) => {
+    listeners.add(listener);
+    return () => {
+        listeners.delete(listener);
+    };
+};
+
+const writeNicknameMap = (map: NicknameMap) => {
+    setLocalStorageItemAsJSON(LocalStorageKey.NICKNAMES, map);
+    for (const listener of listeners) listener();
+};
+
 const getNicknameMap = (): NicknameMap => {
     return getLocalStorageItemAsJSON<NicknameMap>(
         LocalStorageKey.NICKNAMES,
@@ -21,13 +37,13 @@ const getNickname = (userId: number): string | null => {
 const setNickname = (userId: number, nickname: string): void => {
     const map = getNicknameMap();
     map[userId] = nickname;
-    setLocalStorageItemAsJSON(LocalStorageKey.NICKNAMES, map);
+    writeNicknameMap(map);
 };
 
 const removeNickname = (userId: number): void => {
     const map = getNicknameMap();
     delete map[userId];
-    setLocalStorageItemAsJSON(LocalStorageKey.NICKNAMES, map);
+    writeNicknameMap(map);
 };
 
-export { getNickname, removeNickname, setNickname };
+export { getNickname, removeNickname, setNickname, subscribeNicknames };

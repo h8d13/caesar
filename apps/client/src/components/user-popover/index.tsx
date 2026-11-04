@@ -17,7 +17,8 @@ import {
 import { getFileUrl } from '@/helpers/get-file-url';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
 import { getSocialCreditColor } from '@/helpers/get-social-credit-color';
-import { getNickname, removeNickname, setNickname } from '@/helpers/nicknames';
+import { removeNickname, setNickname } from '@/helpers/nicknames';
+import { useNickname } from '@/hooks/use-nickname';
 import { getTRPCClient } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
 import {
@@ -46,7 +47,7 @@ import {
     UserCog,
     X
 } from 'lucide-react';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Protect } from '../protect';
 import { RoleBadge } from '../role-badge';
@@ -95,7 +96,6 @@ const UserCard = memo(({ userId }: { userId: number }) => {
     const can = useCan();
     const [isEditingNickname, setIsEditingNickname] = useState(false);
     const [nicknameInput, setNicknameInput] = useState('');
-    const [, forceUpdate] = useState(0);
     const [isVoting, setIsVoting] = useState(false);
     const [hasVotedToday, setHasVotedToday] = useState(() =>
         votedTodaySet.has(userId)
@@ -107,14 +107,14 @@ const UserCard = memo(({ userId }: { userId: number }) => {
         });
     }, [userId]);
 
-    const currentNickname = getNickname(userId);
+    const currentNickname = useNickname(userId);
 
-    const handleStartEditing = useCallback(() => {
+    const handleStartEditing = () => {
         setNicknameInput(currentNickname ?? '');
         setIsEditingNickname(true);
-    }, [currentNickname]);
+    };
 
-    const handleSaveNickname = useCallback(() => {
+    const handleSaveNickname = () => {
         const trimmed = nicknameInput.trim();
         if (trimmed) {
             setNickname(userId, trimmed);
@@ -122,47 +122,39 @@ const UserCard = memo(({ userId }: { userId: number }) => {
             removeNickname(userId);
         }
         setIsEditingNickname(false);
-        forceUpdate((n) => n + 1);
-    }, [nicknameInput, userId]);
+    };
 
-    const handleRemoveNickname = useCallback(() => {
+    const handleRemoveNickname = () => {
         removeNickname(userId);
         setIsEditingNickname(false);
         setNicknameInput('');
-        forceUpdate((n) => n + 1);
-    }, [userId]);
+    };
 
-    const handleCancelEditing = useCallback(() => {
+    const handleCancelEditing = () => {
         setIsEditingNickname(false);
-    }, []);
+    };
 
-    const onVote = useCallback(
-        async (type: 'upvote' | 'downvote') => {
-            const trpc = getTRPCClient();
-            setIsVoting(true);
+    const onVote = async (type: 'upvote' | 'downvote') => {
+        const trpc = getTRPCClient();
+        setIsVoting(true);
 
-            try {
-                await trpc.users.voteSocialCredit.mutate({
-                    targetUserId: userId,
-                    type
-                });
-                markVoted(userId);
-                setHasVotedToday(true);
-                toast.success(
-                    type === 'upvote'
-                        ? '+10 social credit!'
-                        : '-5 social credit'
-                );
-            } catch (error) {
-                toast.error(getTrpcError(error, 'Could not vote'));
-            }
-            // not `finally`: the React Compiler skips try/finally
-            setIsVoting(false);
-        },
-        [userId]
-    );
+        try {
+            await trpc.users.voteSocialCredit.mutate({
+                targetUserId: userId,
+                type
+            });
+            markVoted(userId);
+            setHasVotedToday(true);
+            toast.success(
+                type === 'upvote' ? '+10 social credit!' : '-5 social credit'
+            );
+        } catch (error) {
+            toast.error(getTrpcError(error, 'Could not vote'));
+        }
+        setIsVoting(false);
+    };
 
-    const onDirectMessageClick = useCallback(async () => {
+    const onDirectMessageClick = async () => {
         const trpc = getTRPCClient();
 
         try {
@@ -173,7 +165,7 @@ const UserCard = memo(({ userId }: { userId: number }) => {
         } catch (error) {
             toast.error(getTrpcError(error, 'Could not open direct message'));
         }
-    }, [userId]);
+    };
 
     if (!user) return null;
 
