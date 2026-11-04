@@ -7,13 +7,8 @@ import {
     removeLocalStorageItem
 } from '@/helpers/storage';
 import { useIsPageVisible } from '@/hooks/use-is-page-visible';
+import { loadSessionModules } from '@/lib/load-session-modules';
 import { memo, useEffect, useRef } from 'react';
-
-// loaded on demand rather than imported, so the login page an anonymous
-// visitor gets ships without tRPC and the e2ee crypto. Module level: the
-// React Compiler skips components containing import().
-const loadSessionModules = () =>
-    Promise.all([import('@/lib/e2ee'), import('@/features/server/actions')]);
 
 const AutoLoginController = memo(() => {
     const isConnected = useIsConnected();

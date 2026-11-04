@@ -7,6 +7,7 @@ import {
     setLocalStorageItemBool
 } from '@/helpers/storage';
 import { useForm } from '@/hooks/use-form';
+import { loadSessionModules } from '@/lib/load-session-modules';
 import { cn } from '@/lib/utils';
 import {
     PASSWORD_LENGTH_ERROR,
@@ -43,12 +44,6 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 type TConnectMode = 'sign-in' | 'sign-up';
-
-// tRPC, the e2ee crypto and the server subscriptions only matter once a
-// login succeeds, so the page an anonymous visitor loads ships without
-// them. Started on submit, alongside /login, so it rarely adds a wait.
-const loadSessionModules = () =>
-    Promise.all([import('@/lib/e2ee'), import('@/features/server/actions')]);
 
 // An invite link (/?invite=CODE) only seeds the Sign up form. The param is
 // dropped from the address bar once read, so a bookmark of this page is
@@ -188,6 +183,7 @@ const Connect = memo(() => {
         // event-driven sounds (incoming-call ring, msg pings) can play
         // later without the browser keeping the context suspended.
         ensureAudioCtxReady();
+        // started alongside /login, so the chunks rarely add a wait
         void loadSessionModules().catch(() => {
             // completeLogin awaits it again and reports the failure
         });
@@ -209,78 +205,77 @@ const Connect = memo(() => {
 
         setLoading(true);
 
-        try {
-            // early returns stay inside: the reset below still runs
-            await (async () => {
-                const [{ deriveCredentials }] = await loadSessionModules();
+        const submitLogin = async () => {
+            const [{ deriveCredentials }] = await loadSessionModules();
 
-                // argon2id runs in a Web Worker, so the spinner stays
-                // responsive. Only authKey leaves this browser.
-                const { priv, authKey } = await deriveCredentials(
-                    values.password,
-                    values.identity
-                );
+            // argon2id runs in a Web Worker, so the spinner stays
+            // responsive. Only authKey leaves this browser.
+            const { priv, authKey } = await deriveCredentials(
+                values.password,
+                values.identity
+            );
 
-                const url = getUrlFromServer();
-                const response = await fetch(`${url}/login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        identity: values.identity,
-                        authKey,
-                        invite: inviteCode || undefined,
-                        remember: values.autoLogin
-                    })
+            const url = getUrlFromServer();
+            const response = await fetch(`${url}/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    identity: values.identity,
+                    authKey,
+                    invite: inviteCode || undefined,
+                    remember: values.autoLogin
+                })
+            });
+
+            // Burst limit and failed-login lockout reply 429 with a plain
+            // { error } body rather than per-field errors.
+            if (response.status === 429) {
+                const data = await response.json().catch(() => ({}));
+
+                setErrors({
+                    identity:
+                        data.error ||
+                        'Too many attempts. Please try again later.'
                 });
+                return;
+            }
 
-                // Burst limit and failed-login lockout reply 429 with a plain
-                // { error } body rather than per-field errors.
-                if (response.status === 429) {
-                    const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                const data = await response.json();
 
-                    setErrors({
-                        identity:
-                            data.error ||
-                            'Too many attempts. Please try again later.'
-                    });
-                    return;
-                }
+                setErrors(data.errors || {});
+                return;
+            }
 
-                if (!response.ok) {
-                    const data = await response.json();
+            const data = (await response.json()) as
+                | { success: true }
+                | {
+                      needs2fa: true;
+                      preAuthToken: string;
+                      options: PublicKeyCredentialRequestOptionsJSON;
+                  };
 
-                    setErrors(data.errors || {});
-                    return;
-                }
+            if ('needs2fa' in data) {
+                setPending2fa({
+                    preAuthToken: data.preAuthToken,
+                    options: data.options,
+                    priv
+                });
+                return;
+            }
 
-                const data = (await response.json()) as
-                    | { success: true }
-                    | {
-                          needs2fa: true;
-                          preAuthToken: string;
-                          options: PublicKeyCredentialRequestOptionsJSON;
-                      };
+            await completeLogin(priv);
+        };
 
-                if ('needs2fa' in data) {
-                    setPending2fa({
-                        preAuthToken: data.preAuthToken,
-                        options: data.options,
-                        priv
-                    });
-                    return;
-                }
-
-                await completeLogin(priv);
-            })();
-        } catch (error) {
+        // early returns in submitLogin still reach the reset below
+        await submitLogin().catch((error: unknown) => {
             const errorMessage =
                 error instanceof Error ? error.message : String(error);
 
             toast.error(`Could not connect: ${errorMessage}`);
-        }
-        // not `finally`: the React Compiler skips try/finally
+        });
         setLoading(false);
     }, [
         values.identity,
@@ -298,44 +293,42 @@ const Connect = memo(() => {
 
         setLoading(true);
 
-        try {
-            // early returns stay inside: the reset below still runs
-            await (async () => {
-                const assertion = await startAuthentication({
-                    optionsJSON: pending2fa.options
-                });
+        const submitKey = async () => {
+            const assertion = await startAuthentication({
+                optionsJSON: pending2fa.options
+            });
 
-                const url = getUrlFromServer();
-                const response = await fetch(`${url}/login/2fa`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        preAuthToken: pending2fa.preAuthToken,
-                        response: assertion
-                    })
-                });
+            const url = getUrlFromServer();
+            const response = await fetch(`${url}/login/2fa`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    preAuthToken: pending2fa.preAuthToken,
+                    response: assertion
+                })
+            });
 
-                if (!response.ok) {
-                    const errData = await response.json();
-                    const message =
-                        errData.errors?.preAuthToken ||
-                        errData.errors?.response ||
-                        errData.error ||
-                        'Two-factor authentication failed.';
-                    toast.error(message);
-                    // Burn the preAuthToken; user must re-enter password.
-                    setPending2fa(null);
-                    return;
-                }
+            if (!response.ok) {
+                const errData = await response.json();
+                const message =
+                    errData.errors?.preAuthToken ||
+                    errData.errors?.response ||
+                    errData.error ||
+                    'Two-factor authentication failed.';
+                toast.error(message);
+                // Burn the preAuthToken; user must re-enter password.
+                setPending2fa(null);
+                return;
+            }
 
-                await completeLogin(pending2fa.priv);
-            })();
-        } catch (error) {
+            await completeLogin(pending2fa.priv);
+        };
+
+        await submitKey().catch((error: unknown) => {
             const message =
                 error instanceof Error ? error.message : String(error);
             toast.error(`Key auth failed: ${message}`);
-        }
-        // not `finally`: the React Compiler skips try/finally
+        });
         setLoading(false);
     }, [pending2fa, completeLogin]);
 
