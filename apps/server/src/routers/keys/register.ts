@@ -1,12 +1,13 @@
+import { BASE64_32_BYTES_REGEX } from '@caesar/shared';
 import { userKeys } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { protectedProcedure } from '@server/utils/trpc';
 import { z } from 'zod';
 
-// upsert the caller's E2EE public key. idempotent.
-// 32-byte X25519 public key encoded as base64 (44 chars with padding).
+// upsert the caller's E2EE public key (X25519, 32 bytes base64). Peers feed
+// it to ECDH, so anything else is rejected here.
 const registerKeyRoute = protectedProcedure
-  .input(z.object({ publicKey: z.string().min(1).max(64) }))
+  .input(z.object({ publicKey: z.string().regex(BASE64_32_BYTES_REGEX) }))
   .mutation(async ({ ctx, input }) => {
     await db
       .insert(userKeys)
