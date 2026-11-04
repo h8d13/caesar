@@ -109,9 +109,8 @@ const SearchPanel = ({ onClose }: Pick<TSearchDialogProps, 'onClose'>) => {
                 setResults(data);
             } catch {
                 setResults([]);
-            } finally {
-                setLoading(false);
             }
+            setLoading(false);
         },
         [scopedChannelId]
     );
