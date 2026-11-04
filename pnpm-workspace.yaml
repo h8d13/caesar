@@ -27,7 +27,6 @@ catalog:
   drizzle-orm: ^0.45.4
   lucide-react: ^1.66.0
   mediasoup: 3.32.1
-  oxc-transform-react: ^0.152.0
   react: ^19.3.1
   react-dom: ^19.3.1
   sonner: ^2.0.8
@@ -43,10 +42,6 @@ catalog:
 # kernel 6/7; it only falls back to a python+pip source build without one.)
 allowBuilds:
   argon2: true
-  # drizzle-orm declares better-sqlite3 as a peer dep, so pnpm installs
-  # it even though we use the libsql driver. Allow its postinstall so
-  # pnpm doesn't warn; we never actually load the .node binding.
-  better-sqlite3: true
   esbuild: true
   mediasoup: true
 

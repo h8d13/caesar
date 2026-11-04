@@ -39,7 +39,8 @@
     },
     {
       "matchUpdateTypes": ["major"],
-      "dependencyDashboardApproval": true
+      "dependencyDashboardApproval": true,
+      "description": "every major waits for approval on the dependency dashboard"
     },
     { "matchManagers": ["github-actions"], "groupName": "github-actions" },
     { "matchManagers": ["dockerfile", "docker-compose"], "groupName": "docker" },
@@ -67,16 +68,10 @@
     {
       "matchManagers": ["custom.regex"],
       "pinDigests": false,
-      "description": "CI node-version is a plain version for setup-node, no digest to pin"
+      "description": "custom.regex deps (CI node-version, corepack) are plain versions, no digest to pin"
     },
     {
-      "matchPackageNames": ["typescript", "@types/node", "mediasoup", "pnpm"],
-      "matchUpdateTypes": ["major"],
-      "dependencyDashboardApproval": true,
-      "description": "ts/node/mediasoup/pnpm majors must be approved on the dashboard"
-    },
-    {
-      "matchPackageNames": ["mediasoup", "argon2", "better-sqlite3"],
+      "matchPackageNames": ["mediasoup", "argon2"],
       "rangeStrategy": "pin",
       "description": "native postinstall, pin exact so prebuilt-binary caches stay valid"
     }
