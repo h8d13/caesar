@@ -13,9 +13,10 @@ class NoiseGateProcessor extends AudioWorkletProcessor {
     // smooth gain envelope to avoid hard cuts / clicks
     this.currentGain = 1.0;
     this.targetGain = 1.0;
-    // fade speed per sample (~5ms attack, ~20ms release at 48kHz)
-    this.attackCoeff = 1.0 - Math.exp(-1.0 / (0.005 * 48000));
-    this.releaseCoeff = 1.0 - Math.exp(-1.0 / (0.02 * 48000));
+    // fade speed per sample (~5ms attack, ~20ms release): from the
+    // context's sampleRate, the pipeline runs at 16kHz when DTLN is on
+    this.attackCoeff = 1.0 - Math.exp(-1.0 / (0.005 * sampleRate));
+    this.releaseCoeff = 1.0 - Math.exp(-1.0 / (0.02 * sampleRate));
 
     this.port.onmessage = (event) => {
       const data = event.data;
