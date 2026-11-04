@@ -1,7 +1,5 @@
-import {
-    useMediaControl,
-    type TVolumeKey
-} from '@/components/media-provider/media-control-context';
+import { useMediaControl } from '@/components/media-provider/hooks/use-media-control';
+import type { TVolumeKey } from '@/components/media-provider/media-control-context';
 import {
     IconButton,
     Popover,

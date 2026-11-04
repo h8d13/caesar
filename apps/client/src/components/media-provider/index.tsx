@@ -57,7 +57,7 @@ import { useTransports } from './hooks/use-transports';
 import { useVoiceControls } from './hooks/use-voice-controls';
 import { useVoiceEvents } from './hooks/use-voice-events';
 import { useVoiceHotkeys } from './hooks/use-voice-hotkeys';
-import { MediaControlProvider } from './media-control-context';
+import { MediaControlProvider } from './media-control-provider';
 
 // Encoding strategy:
 // VP9 / AV1 -> single encoding, L1T3 temporal-only scalability. K-SVC

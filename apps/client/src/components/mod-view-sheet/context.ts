@@ -47,6 +47,5 @@ const ModViewContext = createContext<TModViewContext>({
 
 const useModViewContext = () => useContext(ModViewContext);
 
-// eslint-disable-next-line react-refresh/only-export-components
 export { ModViewContext, ModViewScreen, useModViewContext };
 export type { TModViewContext };

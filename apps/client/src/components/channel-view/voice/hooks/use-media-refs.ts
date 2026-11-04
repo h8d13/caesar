@@ -1,5 +1,5 @@
 import { useDevices } from '@/components/devices-provider/hooks/use-devices';
-import { useMediaControl } from '@/components/media-provider/media-control-context';
+import { useMediaControl } from '@/components/media-provider/hooks/use-media-control';
 import { useIsOwnUser } from '@/features/server/users/hooks';
 import { useMedia } from '@/features/server/voice/hooks';
 import { applyAudioOutputDevice } from '@/helpers/audio-output';

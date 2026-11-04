@@ -1,5 +1,5 @@
 import { useDevices } from '@/components/devices-provider/hooks/use-devices';
-import { useMediaControl } from '@/components/media-provider/media-control-context';
+import { useMediaControl } from '@/components/media-provider/hooks/use-media-control';
 import { UserAvatar } from '@/components/user-avatar';
 import type { TVoiceUser } from '@/features/server/types';
 import { useOwnUserId } from '@/features/server/users/hooks';

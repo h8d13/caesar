@@ -1,4 +1,4 @@
-import { useMediaControl } from '@/components/media-provider/media-control-context';
+import { useMediaControl } from '@/components/media-provider/hooks/use-media-control';
 import { useVoiceUsersByChannelId } from '@/features/server/hooks';
 import { useOwnUserId } from '@/features/server/users/hooks';
 import { useHideNonVideoParticipants } from '@/features/server/voice/hooks';

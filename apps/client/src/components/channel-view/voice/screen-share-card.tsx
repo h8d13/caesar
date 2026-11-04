@@ -1,7 +1,5 @@
-import {
-    useMediaControl,
-    type TVolumeKey
-} from '@/components/media-provider/media-control-context';
+import { useMediaControl } from '@/components/media-provider/hooks/use-media-control';
+import type { TVolumeKey } from '@/components/media-provider/media-control-context';
 import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
 import { useMedia, useMediaStats } from '@/features/server/voice/hooks';
 import { cn } from '@/lib/utils';
