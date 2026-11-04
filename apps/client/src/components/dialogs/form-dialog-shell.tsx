@@ -1,3 +1,4 @@
+import { useLatestCallback } from '@/hooks/use-latest-callback';
 import {
     Button,
     Dialog,
@@ -9,11 +10,12 @@ import {
 } from '@caesar/ui';
 import { memo, type ReactNode } from 'react';
 
-// Outer shell shared by every `Dialog`-style create-form modal (create
-// channel, category, invite). Companion to DialogShell which wraps the
-// `AlertDialog` variant. Body via children; each caller owns its inputs
-// and submit handler. Action button label is required (it labels the
-// concrete action: "Create channel", "Create invite"...).
+// Outer frame shared by every `Dialog`-style create-form modal (create
+// channel, category, invite). Companion to DialogShell (the `AlertDialog`
+// variant). Only the frame lives here: callers render a body component
+// owning the form state plus FormDialogFooter as children. Typing then
+// re-renders that body only; state held above the shell would re-render
+// every Radix layer (portal, presence, focus scope...) on each keystroke.
 type Props = {
     isOpen: boolean;
     close: () => void;
@@ -21,10 +23,6 @@ type Props = {
     description?: ReactNode;
     descriptionClassName?: string;
     children?: ReactNode;
-    cancelLabel?: string;
-    confirmLabel: string;
-    onConfirm: () => void;
-    confirmDisabled?: boolean;
 };
 
 const FormDialogShell = memo(
@@ -34,11 +32,7 @@ const FormDialogShell = memo(
         title,
         description,
         descriptionClassName,
-        children,
-        cancelLabel = 'Cancel',
-        confirmLabel,
-        onConfirm,
-        confirmDisabled
+        children
     }: Props) => (
         <Dialog open={isOpen}>
             <DialogContent onInteractOutside={close} close={close}>
@@ -55,15 +49,6 @@ const FormDialogShell = memo(
                 </DialogHeader>
 
                 {children}
-
-                <DialogFooter className="gap-2">
-                    <Button variant="ghost" onClick={close}>
-                        {cancelLabel}
-                    </Button>
-                    <Button onClick={onConfirm} disabled={confirmDisabled}>
-                        {confirmLabel}
-                    </Button>
-                </DialogFooter>
             </DialogContent>
         </Dialog>
     )
@@ -71,4 +56,39 @@ const FormDialogShell = memo(
 
 FormDialogShell.displayName = 'FormDialogShell';
 
-export { FormDialogShell };
+type TFooterProps = {
+    close: () => void;
+    cancelLabel?: string;
+    // labels the concrete action: "Create channel", "Create invite"...
+    confirmLabel: string;
+    onConfirm: () => void;
+    confirmDisabled?: boolean;
+};
+
+const FormDialogFooter = memo(
+    ({
+        close,
+        cancelLabel = 'Cancel',
+        confirmLabel,
+        onConfirm,
+        confirmDisabled
+    }: TFooterProps) => {
+        // submit handlers close over form values: keep the button stable
+        const confirm = useLatestCallback(onConfirm);
+
+        return (
+            <DialogFooter className="gap-2">
+                <Button variant="ghost" onClick={close}>
+                    {cancelLabel}
+                </Button>
+                <Button onClick={confirm} disabled={confirmDisabled}>
+                    {confirmLabel}
+                </Button>
+            </DialogFooter>
+        );
+    }
+);
+
+FormDialogFooter.displayName = 'FormDialogFooter';
+
+export { FormDialogFooter, FormDialogShell };

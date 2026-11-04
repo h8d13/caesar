@@ -1,6 +1,7 @@
 import { DatePicker } from '@/components/date-picker';
 import { useDefaultRole, useRoles } from '@/features/server/roles/hooks';
 import { useForm } from '@/hooks/use-form';
+import { useLatestCallback } from '@/hooks/use-latest-callback';
 import { getTRPCClient } from '@/lib/trpc';
 import { OWNER_ROLE_ID } from '@caesar/shared';
 import {
@@ -12,114 +13,125 @@ import {
     SelectTrigger,
     SelectValue
 } from '@caesar/ui';
-import { memo, useCallback, useState } from 'react';
+import { memo, useState } from 'react';
 import { toast } from 'sonner';
-import { FormDialogShell } from '../form-dialog-shell';
+import { FormDialogFooter, FormDialogShell } from '../form-dialog-shell';
 import type { TDialogBaseProps } from '../types';
+
+type TCreateInviteFormProps = {
+    refetch: () => void;
+    close: () => void;
+};
+
+// Form state lives here, inside the shell: typing re-renders this body
+// only, not the dialog layers above it.
+const CreateInviteForm = memo(({ refetch, close }: TCreateInviteFormProps) => {
+    const roles = useRoles();
+    const defaultRole = useDefaultRole();
+    // earliest pickable expiry: the moment the dialog opened
+    const [openedAt] = useState(() => Date.now());
+    const { r, rrn, values, setTrpcErrors, onChange } = useForm({
+        maxUses: 0,
+        expiresAt: 0,
+        roleId: 0
+    });
+
+    const handleCreate = useLatestCallback(async () => {
+        const trpc = getTRPCClient();
+
+        try {
+            const payload: Record<string, unknown> = { ...values };
+
+            // Only send roleId if a role was selected (not "None")
+            if (!payload.roleId) {
+                delete payload.roleId;
+            }
+
+            await trpc.invites.add.mutate(payload);
+
+            toast.success('Invite created');
+
+            refetch();
+            close();
+        } catch (error) {
+            setTrpcErrors(error);
+        }
+    });
+
+    return (
+        <>
+            <div className="space-y-4">
+                <Group label="Max uses" description="Use 0 for unlimited uses.">
+                    <Input placeholder="Max uses" {...r('maxUses', 'number')} />
+                </Group>
+                <Group
+                    label="Expires in"
+                    description="Leave empty for no expiration."
+                >
+                    <DatePicker {...rrn('expiresAt')} minDate={openedAt} />
+                </Group>
+                <Group
+                    label="Assign Role"
+                    description="Users joining with this invite will be assigned this role."
+                >
+                    <Select
+                        onValueChange={(value) =>
+                            onChange('roleId', Number(value))
+                        }
+                        value={values.roleId.toString()}
+                    >
+                        <SelectTrigger className="w-[230px]">
+                            <SelectValue placeholder="Select a role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {/* 0 sends no roleId: every signup gets the
+                                    default role anyway, so it isn't listed twice */}
+                            <SelectItem value="0">
+                                {defaultRole?.name ?? 'Default role'}
+                            </SelectItem>
+                            {roles
+                                .filter(
+                                    (role) =>
+                                        !role.isDefault &&
+                                        role.id !== OWNER_ROLE_ID
+                                )
+                                .map((role) => (
+                                    <SelectItem
+                                        key={role.id}
+                                        value={role.id.toString()}
+                                    >
+                                        {role.name}
+                                    </SelectItem>
+                                ))}
+                        </SelectContent>
+                    </Select>
+                </Group>
+            </div>
+
+            <FormDialogFooter
+                close={close}
+                confirmLabel="Create Invite"
+                onConfirm={handleCreate}
+            />
+        </>
+    );
+});
 
 type TCreateInviteDialogProps = TDialogBaseProps & {
     refetch: () => void;
 };
 
 const CreateInviteDialog = memo(
-    ({ refetch, close, isOpen }: TCreateInviteDialogProps) => {
-        const roles = useRoles();
-        const defaultRole = useDefaultRole();
-        // earliest pickable expiry: the moment the dialog opened
-        const [openedAt] = useState(() => Date.now());
-        const { r, rrn, values, setTrpcErrors, onChange } = useForm({
-            maxUses: 0,
-            expiresAt: 0,
-            roleId: 0
-        });
-
-        const handleCreate = useCallback(async () => {
-            const trpc = getTRPCClient();
-
-            try {
-                const payload: Record<string, unknown> = { ...values };
-
-                // Only send roleId if a role was selected (not "None")
-                if (!payload.roleId) {
-                    delete payload.roleId;
-                }
-
-                await trpc.invites.add.mutate(payload);
-
-                toast.success('Invite created');
-
-                refetch();
-                close();
-            } catch (error) {
-                setTrpcErrors(error);
-            }
-        }, [close, refetch, setTrpcErrors, values]);
-
-        return (
-            <FormDialogShell
-                isOpen={isOpen}
-                close={close}
-                title="Create Server Invite"
-                description="Create a new invitation link for users to join the server."
-                confirmLabel="Create Invite"
-                onConfirm={handleCreate}
-            >
-                <div className="space-y-4">
-                    <Group
-                        label="Max uses"
-                        description="Use 0 for unlimited uses."
-                    >
-                        <Input
-                            placeholder="Max uses"
-                            {...r('maxUses', 'number')}
-                        />
-                    </Group>
-                    <Group
-                        label="Expires in"
-                        description="Leave empty for no expiration."
-                    >
-                        <DatePicker {...rrn('expiresAt')} minDate={openedAt} />
-                    </Group>
-                    <Group
-                        label="Assign Role"
-                        description="Users joining with this invite will be assigned this role."
-                    >
-                        <Select
-                            onValueChange={(value) =>
-                                onChange('roleId', Number(value))
-                            }
-                            value={values.roleId.toString()}
-                        >
-                            <SelectTrigger className="w-[230px]">
-                                <SelectValue placeholder="Select a role" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {/* 0 sends no roleId: every signup gets the
-                                    default role anyway, so it isn't listed twice */}
-                                <SelectItem value="0">
-                                    {defaultRole?.name ?? 'Default role'}
-                                </SelectItem>
-                                {roles
-                                    .filter(
-                                        (role) =>
-                                            !role.isDefault &&
-                                            role.id !== OWNER_ROLE_ID
-                                    )
-                                    .map((role) => (
-                                        <SelectItem
-                                            key={role.id}
-                                            value={role.id.toString()}
-                                        >
-                                            {role.name}
-                                        </SelectItem>
-                                    ))}
-                            </SelectContent>
-                        </Select>
-                    </Group>
-                </div>
-            </FormDialogShell>
-        );
-    }
+    ({ refetch, close, isOpen }: TCreateInviteDialogProps) => (
+        <FormDialogShell
+            isOpen={isOpen}
+            close={close}
+            title="Create Server Invite"
+            description="Create a new invitation link for users to join the server."
+        >
+            <CreateInviteForm refetch={refetch} close={close} />
+        </FormDialogShell>
+    )
 );
 
 export { CreateInviteDialog };

@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { DialogShell } from '../dialog-shell';
+import { DialogShell, DialogShellFooter } from '../dialog-shell';
 import type { TDialogBaseProps } from '../types';
 
 type TConfirmActionDialogProps = TDialogBaseProps & {
@@ -29,11 +29,14 @@ const ConfirmActionDialog = memo(
                 message ?? 'Are you sure you want to perform this action?'
             }
             descriptionClassName="whitespace-pre-line break-all"
-            cancelLabel={cancelLabel}
-            confirmLabel={confirmLabel}
-            onCancel={onCancel}
-            onConfirm={onConfirm}
-        />
+        >
+            <DialogShellFooter
+                cancelLabel={cancelLabel}
+                confirmLabel={confirmLabel}
+                onCancel={onCancel}
+                onConfirm={onConfirm}
+            />
+        </DialogShell>
     )
 );
 

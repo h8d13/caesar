@@ -16,7 +16,7 @@ import {
 import { Info } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { DialogShell } from '../dialog-shell';
+import { DialogShell, DialogShellFooter } from '../dialog-shell';
 import type { TDialogBaseProps } from '../types';
 
 type TAssignRoleDialogProps = TDialogBaseProps & {
@@ -88,12 +88,6 @@ const AssignRoleDialog = memo(
                         )}
                     </>
                 }
-                confirmLabel="Assign Role"
-                onCancel={close}
-                onConfirm={onSubmit}
-                confirmDisabled={
-                    availableRoles.length === 0 || selectedRoleId === 0
-                }
             >
                 <div className="flex flex-col gap-4">
                     <Group label="Role">
@@ -128,6 +122,14 @@ const AssignRoleDialog = memo(
                         />
                     )}
                 </div>
+                <DialogShellFooter
+                    confirmLabel="Assign Role"
+                    onCancel={close}
+                    onConfirm={onSubmit}
+                    confirmDisabled={
+                        availableRoles.length === 0 || selectedRoleId === 0
+                    }
+                />
             </DialogShell>
         );
     }

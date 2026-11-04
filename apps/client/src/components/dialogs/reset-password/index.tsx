@@ -4,7 +4,7 @@ import { Alert, AlertDescription, Input } from '@caesar/ui';
 import { AlertCircleIcon } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';
-import { DialogShell } from '../dialog-shell';
+import { DialogShell, DialogShellFooter } from '../dialog-shell';
 import type { TDialogBaseProps } from '../types';
 
 type TResetPasswordDialogProps = TDialogBaseProps & {
@@ -64,10 +64,6 @@ const ResetPasswordDialog = memo(
                     isOpen={isOpen}
                     title={`Temporary password for ${user.name}`}
                     description="Shown once. Copy it now and send it to the user over a channel you trust."
-                    cancelLabel="Done"
-                    confirmLabel="Copy"
-                    onCancel={close}
-                    onConfirm={onCopy}
                 >
                     <div className="flex flex-col gap-4">
                         <Input
@@ -85,6 +81,12 @@ const ResetPasswordDialog = memo(
                             </AlertDescription>
                         </Alert>
                     </div>
+                    <DialogShellFooter
+                        cancelLabel="Done"
+                        confirmLabel="Copy"
+                        onCancel={close}
+                        onConfirm={onCopy}
+                    />
                 </DialogShell>
             );
         }
@@ -94,10 +96,6 @@ const ResetPasswordDialog = memo(
                 isOpen={isOpen}
                 title={`Reset password for ${user.name}`}
                 description="The server generates a new password and shows it to you once."
-                confirmLabel="Reset Password"
-                onCancel={close}
-                onConfirm={onReset}
-                confirmDisabled={isResetting}
             >
                 <Alert variant="destructive" className="py-2">
                     <AlertCircleIcon className="h-4 w-4" />
@@ -108,6 +106,12 @@ const ResetPasswordDialog = memo(
                         become unreadable to them.
                     </AlertDescription>
                 </Alert>
+                <DialogShellFooter
+                    confirmLabel="Reset Password"
+                    onCancel={close}
+                    onConfirm={onReset}
+                    confirmDisabled={isResetting}
+                />
             </DialogShell>
         );
     }

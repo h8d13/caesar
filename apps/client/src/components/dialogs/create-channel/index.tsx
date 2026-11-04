@@ -1,10 +1,11 @@
+import { useLatestCallback } from '@/hooks/use-latest-callback';
 import { getTRPCClient } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
 import { ChannelType, parseTrpcErrors, type TTrpcErrors } from '@caesar/shared';
 import { AutoFocus, Group, Input } from '@caesar/ui';
 import { Hash, Mic } from 'lucide-react';
-import { memo, useCallback, useState } from 'react';
-import { FormDialogShell } from '../form-dialog-shell';
+import { memo, useState } from 'react';
+import { FormDialogFooter, FormDialogShell } from '../form-dialog-shell';
 import type { TDialogBaseProps } from '../types';
 
 type TChannelTypeItemProps = {
@@ -37,24 +38,22 @@ const ChannelTypeItem = ({
     </div>
 );
 
-type TCreateChannelDialogProps = TDialogBaseProps & {
+type TCreateChannelFormProps = {
     categoryId: number;
-    defaultChannelType?: ChannelType;
+    close: () => void;
+    defaultChannelType: ChannelType;
 };
 
-const CreateChannelDialog = memo(
-    ({
-        isOpen,
-        categoryId,
-        close,
-        defaultChannelType = ChannelType.TEXT
-    }: TCreateChannelDialogProps) => {
+// Form state lives here, inside the shell: typing re-renders this body
+// only, not the dialog layers above it.
+const CreateChannelForm = memo(
+    ({ categoryId, close, defaultChannelType }: TCreateChannelFormProps) => {
         const [channelType, setChannelType] = useState(defaultChannelType);
         const [name, setName] = useState('New Channel');
         const [loading, setLoading] = useState(false);
         const [errors, setErrors] = useState<TTrpcErrors>({});
 
-        const onSubmit = useCallback(async () => {
+        const onSubmit = useLatestCallback(async () => {
             const trpc = getTRPCClient();
 
             setLoading(true);
@@ -69,20 +68,13 @@ const CreateChannelDialog = memo(
                 close();
             } catch (error) {
                 setErrors(parseTrpcErrors(error));
-            } finally {
-                setLoading(false);
             }
-        }, [name, categoryId, close, channelType]);
+            // not `finally`: the React Compiler skips try/finally
+            setLoading(false);
+        });
 
         return (
-            <FormDialogShell
-                isOpen={isOpen}
-                close={close}
-                title="Create New Channel"
-                confirmLabel="Create channel"
-                onConfirm={onSubmit}
-                confirmDisabled={loading || !name || !channelType}
-            >
+            <>
                 <Group label="Channel type">
                     <ChannelTypeItem
                         title="Text Channel"
@@ -114,9 +106,42 @@ const CreateChannelDialog = memo(
                         />
                     </AutoFocus>
                 </Group>
-            </FormDialogShell>
+
+                <FormDialogFooter
+                    close={close}
+                    confirmLabel="Create channel"
+                    onConfirm={onSubmit}
+                    confirmDisabled={loading || !name || !channelType}
+                />
+            </>
         );
     }
+);
+
+type TCreateChannelDialogProps = TDialogBaseProps & {
+    categoryId: number;
+    defaultChannelType?: ChannelType;
+};
+
+const CreateChannelDialog = memo(
+    ({
+        isOpen,
+        categoryId,
+        close,
+        defaultChannelType = ChannelType.TEXT
+    }: TCreateChannelDialogProps) => (
+        <FormDialogShell
+            isOpen={isOpen}
+            close={close}
+            title="Create New Channel"
+        >
+            <CreateChannelForm
+                categoryId={categoryId}
+                close={close}
+                defaultChannelType={defaultChannelType}
+            />
+        </FormDialogShell>
+    )
 );
 
 export { CreateChannelDialog };

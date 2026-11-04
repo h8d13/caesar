@@ -5,7 +5,7 @@ import { Alert, AlertDescription, Group, Switch } from '@caesar/ui';
 import { AlertCircleIcon } from 'lucide-react';
 import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';
-import { DialogShell } from '../dialog-shell';
+import { DialogShell, DialogShellFooter } from '../dialog-shell';
 import type { TDialogBaseProps } from '../types';
 
 type TDeleteUserDialogProps = TDialogBaseProps & {
@@ -54,14 +54,7 @@ const DeleteUserDialog = memo(
         }, [close, refetch, wipe, user.name, user.id, onDelete]);
 
         return (
-            <DialogShell
-                isOpen={isOpen}
-                title={`Delete ${user.name}`}
-                confirmLabel="Delete User"
-                onCancel={close}
-                onConfirm={onSubmit}
-                confirmDisabled={isDeleting}
-            >
+            <DialogShell isOpen={isOpen} title={`Delete ${user.name}`}>
                 <div className="flex flex-col gap-4">
                     <Group label="Wipe All Data">
                         <Switch
@@ -93,6 +86,12 @@ const DeleteUserDialog = memo(
                         </Alert>
                     )}
                 </div>
+                <DialogShellFooter
+                    confirmLabel="Delete User"
+                    onCancel={close}
+                    onConfirm={onSubmit}
+                    confirmDisabled={isDeleting}
+                />
             </DialogShell>
         );
     }
