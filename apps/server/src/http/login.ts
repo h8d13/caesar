@@ -72,7 +72,8 @@ const loginLockout = createLoginLockout({
 });
 
 // Single opaque response for every auth-style failure (unknown identity,
-// wrong invite, wrong password, reserved sentinel). Distinguishable
+// wrong invite, wrong password, reserved sentinel). Malformed identities
+// get a format message: no stored identity can fail that check. Distinguishable
 // responses let an attacker enumerate which usernames exist by probing
 // the public /login endpoint. The specific reason is logged server-side
 // for legitimate operator debugging.
@@ -244,19 +245,6 @@ const loginRouteHandler = async (
     const isBootstrap = userCount === 0;
 
     if (!isBootstrap) {
-      // Enforce cap before invite consumption so a valid invite isn't
-      // "spent" on a rejected signup. Bootstrap path above already
-      // bypasses, so cap=1 still lets the first admin in.
-      if (await isAtUserCap()) {
-        logger.info(
-          `[Auth] Signup blocked for "${data.identity}": user cap reached (IP: ${ip || 'unknown'})`
-        );
-        throw new HttpValidationError(
-          'invite',
-          'This instance has reached its user limit.'
-        );
-      }
-
       invite = await consumeInvite(data.invite);
 
       if (!invite) {
@@ -268,6 +256,21 @@ const loginRouteHandler = async (
           `[Auth] Signup failed for "${data.identity}": invite missing, expired or used up (IP: ${ip || 'unknown'})`
         );
         throw new HttpValidationError('identity', GENERIC_AUTH_ERROR);
+      }
+
+      // Cap after the invite: only an invite holder learns the instance is
+      // full (checked first, it told unknown identities from known ones).
+      // The use is given back. Bootstrap skips this, so cap=1 still lets the
+      // first user in.
+      if (await isAtUserCap()) {
+        await refundInvite(invite.code);
+        logger.info(
+          `[Auth] Signup blocked for "${data.identity}": user cap reached (IP: ${ip || 'unknown'})`
+        );
+        throw new HttpValidationError(
+          'invite',
+          'This instance has reached its user limit.'
+        );
       }
     }
 

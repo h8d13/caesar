@@ -6,6 +6,7 @@ import {
   login
 } from '@server/__tests__/helpers';
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
+import { config } from '@server/config';
 import { getJwtSecret } from '@server/utils/jwt-secret';
 import { deriveAuthKey } from '@server/utils/password';
 import { setRateLimitingDisabled } from '@server/utils/rate-limiters';
@@ -153,6 +154,53 @@ describe('/login', () => {
     const w: any = await wrongPassword.json();
 
     expect(u.errors).toEqual(w.errors);
+  });
+
+  test('at the user cap, an unknown identity without invite still gets the generic error', async () => {
+    // the cap message would otherwise tell unknown identities from known ones
+    const previous = config.limits.maxUsers;
+    config.limits.maxUsers = 1;
+
+    try {
+      const unknownUser = await login('nonexistent', 'somepassword');
+      const wrongPassword = await login('testowner', 'wrongpassword');
+
+      const u: any = await unknownUser.json();
+      const w: any = await wrongPassword.json();
+
+      expect(u.errors).toEqual(w.errors);
+    } finally {
+      config.limits.maxUsers = previous;
+    }
+  });
+
+  test('at the user cap, a valid invite gets the limit message and keeps its use', async () => {
+    const previous = config.limits.maxUsers;
+    config.limits.maxUsers = 1;
+
+    try {
+      await tdb.insert(invites).values({
+        code: 'CAPINVITE',
+        creatorId: 1,
+        maxUses: 1,
+        uses: 0,
+        createdAt: Date.now()
+      });
+
+      const response = await login('newcomer', 'password123', 'CAPINVITE');
+      const data: any = await response.json();
+
+      expect(data.errors?.invite).toMatch(/user limit/);
+
+      const invite = await tdb
+        .select({ uses: invites.uses })
+        .from(invites)
+        .where(eq(invites.code, 'CAPINVITE'))
+        .get();
+      expect(invite?.uses).toBe(0);
+    } finally {
+      config.limits.maxUsers = previous;
+    }
   });
 
   test('signup rejects identities with non-alphanumeric prefix or symbols', async () => {
