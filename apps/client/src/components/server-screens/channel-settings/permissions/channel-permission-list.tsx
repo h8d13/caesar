@@ -5,7 +5,7 @@ import {
     ChannelType
 } from '@caesar/shared';
 import { Switch } from '@caesar/ui';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 // Voice-only and text-only permissions don't apply to the other channel
 // type. SEND_MESSAGES is meaningless in a voice channel; JOIN / SPEAK /
@@ -27,11 +27,13 @@ const PERMISSIONS_BY_CHANNEL_TYPE: Record<ChannelType, ChannelPermission[]> = {
 type TChannelPermissionItemProps = {
     permission: ChannelPermission;
     enabled: boolean;
-    onChange: (enabled: boolean) => void;
+    onToggle: (permission: ChannelPermission) => void;
 };
 
+// onToggle is stable and takes the permission, so a toggle re-renders
+// only the row whose `enabled` changed
 const ChannelPermissionItem = memo(
-    ({ permission, enabled, onChange }: TChannelPermissionItemProps) => {
+    ({ permission, enabled, onToggle }: TChannelPermissionItemProps) => {
         return (
             <div className="flex items-center justify-between">
                 <div className="flex flex-col">
@@ -42,7 +44,10 @@ const ChannelPermissionItem = memo(
                         {channelPermissionDescriptions[permission]}
                     </span>
                 </div>
-                <Switch checked={enabled} onCheckedChange={onChange} />
+                <Switch
+                    checked={enabled}
+                    onCheckedChange={() => onToggle(permission)}
+                />
             </div>
         );
     }
@@ -69,13 +74,6 @@ const ChannelPermissionList = memo(
             return map;
         }, [permissions]);
 
-        const handleToggle = useCallback(
-            (permission: ChannelPermission) => {
-                onTogglePermission(permission);
-            },
-            [onTogglePermission]
-        );
-
         return (
             <div className="space-y-4">
                 <h3 className="text-sm font-semibold">Channel Permissions</h3>
@@ -89,7 +87,7 @@ const ChannelPermissionList = memo(
                                 enabled={
                                     permissionsMap.get(permission) ?? false
                                 }
-                                onChange={() => handleToggle(permission)}
+                                onToggle={onTogglePermission}
                             />
                         )
                     )}

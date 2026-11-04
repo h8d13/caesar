@@ -4,19 +4,23 @@ import {
     permissionLabels
 } from '@caesar/shared';
 import { Switch } from '@caesar/ui';
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
 
 const availablePermissions = Object.values(EPermission);
+
+type TToggle = (permission: EPermission, enabled: boolean) => void;
 
 type TPermissionProps = {
     permission: EPermission;
     enabled: boolean;
-    onChange: (enabled: boolean) => void;
+    onToggle: TToggle;
     disabled?: boolean;
 };
 
+// onToggle is stable and takes the permission, so a toggle re-renders
+// only the row whose `enabled` changed
 const Permission = memo(
-    ({ permission, enabled, onChange, disabled }: TPermissionProps) => {
+    ({ permission, enabled, onToggle, disabled }: TPermissionProps) => {
         return (
             <div className="flex items-center justify-between">
                 <div className="flex flex-col">
@@ -29,7 +33,7 @@ const Permission = memo(
                 </div>
                 <Switch
                     checked={enabled}
-                    onCheckedChange={onChange}
+                    onCheckedChange={(checked) => onToggle(permission, checked)}
                     disabled={disabled}
                 />
             </div>
@@ -39,23 +43,12 @@ const Permission = memo(
 
 type TPermissionListProps = {
     permissions: EPermission[];
-    setPermissions: (permissions: EPermission[]) => void;
+    onToggle: TToggle;
     disabled?: boolean;
 };
 
 const PermissionList = memo(
-    ({ permissions, setPermissions, disabled }: TPermissionListProps) => {
-        const onTogglePermission = useCallback(
-            (permission: EPermission) => {
-                if (permissions.includes(permission)) {
-                    setPermissions(permissions.filter((p) => p !== permission));
-                } else {
-                    setPermissions([...permissions, permission]);
-                }
-            },
-            [permissions, setPermissions]
-        );
-
+    ({ permissions, onToggle, disabled }: TPermissionListProps) => {
         return (
             <div className="space-y-4">
                 <h3 className="text-sm font-semibold">Permissions</h3>
@@ -66,7 +59,7 @@ const PermissionList = memo(
                             key={permission}
                             permission={permission}
                             enabled={permissions.includes(permission)}
-                            onChange={() => onTogglePermission(permission)}
+                            onToggle={onToggle}
                             disabled={disabled}
                         />
                     ))}

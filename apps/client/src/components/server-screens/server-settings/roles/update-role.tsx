@@ -1,9 +1,11 @@
 import { requestConfirmation } from '@/features/dialogs/actions';
 import { useForm } from '@/hooks/use-form';
+import { useLatestCallback } from '@/hooks/use-latest-callback';
 import { getTRPCClient } from '@/lib/trpc';
 import {
     getTrpcError,
     OWNER_ROLE_ID,
+    type Permission,
     STORAGE_MAX_QUOTA_PER_USER,
     STORAGE_MIN_QUOTA_PER_USER,
     type TJoinedRole
@@ -38,7 +40,7 @@ type TUpdateRoleProps = {
 
 const UpdateRole = memo(
     ({ selectedRole, setSelectedRoleId, refetch }: TUpdateRoleProps) => {
-        const { setTrpcErrors, r, onChange, values } = useForm({
+        const { setTrpcErrors, r, onChange, values, setValues } = useForm({
             name: selectedRole.name,
             color: selectedRole.color,
             permissions: selectedRole.permissions,
@@ -52,6 +54,18 @@ const UpdateRole = memo(
             output: 'object',
             standard: 'jedec'
         });
+
+        // functional update: stable across toggles, see PermissionList
+        const onTogglePermission = useCallback(
+            (permission: Permission, enabled: boolean) =>
+                setValues((prev) => ({
+                    ...prev,
+                    permissions: enabled
+                        ? [...prev.permissions, permission]
+                        : prev.permissions.filter((p) => p !== permission)
+                })),
+            [setValues]
+        );
 
         const onDeleteRole = useCallback(async () => {
             const choice = await requestConfirmation({
@@ -74,7 +88,7 @@ const UpdateRole = memo(
             }
         }, [selectedRole.id, refetch, setSelectedRoleId]);
 
-        const onUpdateRole = useCallback(async () => {
+        const onUpdateRole = useLatestCallback(async () => {
             const trpc = getTRPCClient();
 
             try {
@@ -88,7 +102,7 @@ const UpdateRole = memo(
             } catch (error) {
                 setTrpcErrors(error);
             }
-        }, [selectedRole.id, values, refetch, setTrpcErrors]);
+        });
 
         const onDuplicateRole = useCallback(async () => {
             const trpc = getTRPCClient();
@@ -211,9 +225,7 @@ const UpdateRole = memo(
                     <PermissionList
                         permissions={values.permissions}
                         disabled={OWNER_ROLE_ID === selectedRole.id}
-                        setPermissions={(permissions) =>
-                            onChange('permissions', permissions)
-                        }
+                        onToggle={onTogglePermission}
                     />
 
                     <Separator />

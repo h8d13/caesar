@@ -3,6 +3,7 @@ import { UserAvatar } from '@/components/user-avatar';
 import { useChannelById } from '@/features/server/channels/hooks';
 import { useRoleById } from '@/features/server/roles/hooks';
 import { useUserById } from '@/features/server/users/hooks';
+import { useLatestCallback } from '@/hooks/use-latest-callback';
 import { getTRPCClient } from '@/lib/trpc';
 import {
     type ChannelPermission,
@@ -110,7 +111,7 @@ const Override = memo(
             }
         }, [channelId, isRole, targetId, setSelectedOverrideId, refetch]);
 
-        const onUpdateOverride = useCallback(async () => {
+        const onUpdateOverride = useLatestCallback(async () => {
             const trpc = getTRPCClient();
 
             try {
@@ -138,7 +139,7 @@ const Override = memo(
                     getTrpcError(error, 'Failed to update permission override')
                 );
             }
-        }, [channelId, isRole, targetId, localPermissions, refetch]);
+        });
 
         const onTogglePermission = useCallback(
             (permission: ChannelPermission) => {
