@@ -33,6 +33,7 @@
 	// MemoComponent (14) never does work itself, its tag-0 child does
 	const RENDERING = new Set([FUNCTION, CLASS, FORWARD_REF, SIMPLE_MEMO]);
 	const DEEP_LIMIT = 6;
+	const MAX_ERRORS = 5;
 
 	let scenario = 'default';
 	let commits = 0;
@@ -42,13 +43,13 @@
 	let cuts = new Map();
 	const errors = [];
 
-	const isPlain = (v) => v !== null && typeof v === 'object';
+	const isObject = (v) => v !== null && typeof v === 'object';
 
 	// structural equality; functions only equal by reference, so an
 	// inline callback nested in an object reports as a real change
 	const deepEqual = (a, b, depth = 0) => {
 		if (Object.is(a, b)) return true;
-		if (!isPlain(a) || !isPlain(b) || depth > DEEP_LIMIT) return false;
+		if (!isObject(a) || !isObject(b) || depth > DEEP_LIMIT) return false;
 		if (Array.isArray(a) !== Array.isArray(b)) return false;
 		if (a instanceof Map || a instanceof Set) return false;
 
@@ -57,9 +58,8 @@
 
 		if (ka.length !== kb.length) return false;
 
-		return ka.every((k) => k !== '_owner' && k !== '_store'
-			? deepEqual(a[k], b[k], depth + 1)
-			: true);
+		return ka.every((k) => k === '_owner' || k === '_store'
+			|| deepEqual(a[k], b[k], depth + 1));
 	};
 
 	const classify = (prev, next) => {
@@ -161,17 +161,8 @@
 		return true;
 	};
 
-	// nearest ancestor that rendered in this commit
-	const renderedParent = (fiber, verdicts) => {
-		for (let p = fiber.return; p; p = p.return) {
-			if (verdicts.has(p)) return p;
-		}
-
-		return null;
-	};
-
-	const credit = (fiber, verdicts, roots) => {
-		const parent = renderedParent(fiber, verdicts);
+	// parent = nearest ancestor that rendered in this commit
+	const credit = (fiber, parent, verdicts, roots) => {
 		let root = parent && verdicts.get(parent) ? roots.get(parent) : null;
 
 		if (!root) {
@@ -180,34 +171,40 @@
 			const c = bucket(cuts, typeKey(fiber), newCut);
 
 			c.cuts++;
+			c.wasted++;
 			bump(c.parents, parent ? typeKey(parent) : null);
+		} else {
+			bucket(cuts, typeKey(root), newCut).wasted++;
 		}
 		roots.set(fiber, root);
-		bucket(cuts, typeKey(root), newCut).wasted++;
 	};
 
 	// Same walk as DevTools: a subtree whose child pointer is shared with
-	// the previous tree bailed out and keeps stale flags, skip it.
-	// parents pop before children, so a fiber's verdict is known when
-	// its descendants get credited
+	// the previous tree bailed out and keeps stale flags, skip it. Each
+	// stack entry carries its nearest rendered ancestor, so crediting a
+	// cut root never walks back up.
 	const walk = (next) => {
-		const stack = [next];
+		const stack = [[next, null]];
 		const verdicts = new Map();
 		const roots = new Map();
 
 		while (stack.length) {
-			const fiber = stack.pop();
+			const [fiber, parent] = stack.pop();
 			const prev = fiber.alternate;
+			let nearest = parent;
 
 			if (prev && RENDERING.has(fiber.tag)
 				&& (fiber.flags & PERFORMED_WORK)) {
 				const redundant = record(prev, fiber);
 
 				verdicts.set(fiber, redundant);
-				if (redundant) credit(fiber, verdicts, roots);
+				if (redundant) credit(fiber, parent, verdicts, roots);
+				nearest = fiber;
 			}
 			if (prev && fiber.child === prev.child) continue;
-			for (let c = fiber.child; c; c = c.sibling) stack.push(c);
+			for (let c = fiber.child; c; c = c.sibling) {
+				stack.push([c, nearest]);
+			}
 		}
 	};
 
@@ -216,7 +213,9 @@
 			commits++;
 			walk(root.current);
 		} catch (e) {
-			errors.push(String(e?.stack ?? e));
+			if (errors.length < MAX_ERRORS) {
+				errors.push(String(e?.stack ?? e));
+			}
 		}
 	};
 
@@ -236,9 +235,32 @@
 	const B64 =
 		'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
+	// one VLQ segment -> its signed fields
+	const decodeVlq = (seg) => {
+		const vals = [];
+		let v = 0;
+		let shift = 0;
+
+		for (const ch of seg) {
+			const d = B64.indexOf(ch);
+
+			v += (d & 31) << shift;
+			if (d & 32) {
+				shift += 5;
+				continue;
+			}
+			vals.push(v & 1 ? -(v >>> 1) : v >>> 1);
+			v = 0;
+			shift = 0;
+		}
+
+		return vals;
+	};
+
+	// per generated line: [col, sourceIndex, sourceLine] segments
 	const decodeMappings = (mappings) => {
 		const lines = [];
-		const st = [0, 0, 0, 0];
+		const st = [0, 0, 0];
 
 		for (const line of mappings.split(';')) {
 			const segs = [];
@@ -247,22 +269,8 @@
 			for (const seg of line.split(',')) {
 				if (!seg) continue;
 
-				const vals = [];
-				let v = 0;
-				let shift = 0;
+				const vals = decodeVlq(seg);
 
-				for (const ch of seg) {
-					const d = B64.indexOf(ch);
-
-					v += (d & 31) << shift;
-					if (d & 32) {
-						shift += 5;
-						continue;
-					}
-					vals.push(v & 1 ? -(v >>> 1) : v >>> 1);
-					v = 0;
-					shift = 0;
-				}
 				col += vals[0];
 				if (vals.length < 4) continue;
 				for (let i = 0; i < 3; i++) st[i] += vals[i + 1];
@@ -274,60 +282,70 @@
 		return lines;
 	};
 
+	// maps decode lazily (tens of MB as arrays), only for chunks a
+	// component is found in
 	const chunks = new Map();
+	const located = new Map();
 
 	const loadChunks = async () => {
 		const urls = performance.getEntriesByType('resource')
 			.map((e) => e.name)
-			.filter((u) => /\/assets\/.*\.js$/.test(u));
+			.filter((u) => /\/assets\/.*\.js$/.test(u) && !chunks.has(u));
 
-		for (const url of new Set(urls)) {
-			if (chunks.has(url)) continue;
-
+		await Promise.all([...new Set(urls)].map(async (url) => {
 			const [code, map] = await Promise.all([
 				fetch(url).then((r) => r.text()),
 				fetch(`${url}.map`).then((r) => (r.ok ? r.json() : null))
 			]);
 
-			chunks.set(url, {
-				code,
-				map,
-				lines: map ? decodeMappings(map.mappings) : null
-			});
+			chunks.set(url, { code, map, lines: null });
+		}));
+	};
+
+	const shortSource = (path) => path
+		.replace(/^(\.\.\/)+/, '')
+		.replace(/^.*node_modules\/\.pnpm\/[^/]+\/node_modules\//, 'npm:');
+
+	const locateIn = (url, c, at) => {
+		let line = 0;
+		let lineStart = 0;
+
+		for (let i = c.code.indexOf('\n'); i !== -1 && i < at;
+			i = c.code.indexOf('\n', i + 1)) {
+			line++;
+			lineStart = i + 1;
 		}
+		c.lines ??= decodeMappings(c.map.mappings);
+
+		let hit = null;
+
+		for (const s of c.lines[line] ?? []) {
+			if (s[0] > at - lineStart) break;
+			hit = s;
+		}
+
+		return hit
+			? `${shortSource(c.map.sources[hit[1]])}:${hit[2] + 1}`
+			: `${url.split('/').pop()}:${line + 1}`;
 	};
 
 	const locate = (fn) => {
 		if (typeof fn !== 'function') return '?';
+		if (located.has(fn)) return located.get(fn);
 
 		const src = fn.toString();
+		let out = `unresolved:${fn.name || 'anon'}`;
 
 		for (const [url, c] of chunks) {
 			const at = c.code.indexOf(src);
 
-			if (at < 0 || !c.lines) continue;
-
-			const before = c.code.slice(0, at);
-			const line = before.split('\n').length - 1;
-			const col = at - before.lastIndexOf('\n') - 1;
-			const segs = c.lines[line] ?? [];
-			let hit = null;
-
-			for (const s of segs) {
-				if (s[0] > col) break;
-				hit = s;
-			}
-			if (!hit) return `${url.split('/').pop()}:${line + 1}`;
-
-			const file = c.map.sources[hit[1]]
-				.replace(/^(\.\.\/)+/, '')
-				.replace(/^.*node_modules\/\.pnpm\/[^/]+\/node_modules\//,
-					'npm:');
-
-			return `${file}:${hit[2] + 1}`;
+			if (at < 0 || !c.map) continue;
+			out = locateIn(url, c, at);
+			break;
 		}
+		located.set(fn, out);
 
-		return `unresolved:${fn.name || 'anon'}`;
+		return out;
 	};
 
 	const topKeys = (map, n, fmt = (k) => k) => [...map]
@@ -364,7 +382,7 @@
 				].join(' | '));
 			}
 		}
-		lines.push(...errors.slice(0, 3));
+		lines.push(...errors);
 
 		return lines.join('\n');
 	};
