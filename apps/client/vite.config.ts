@@ -41,6 +41,9 @@ export default defineConfig({
     build: {
         target: 'esnext',
         chunkSizeWarningLimit: 1000,
+        // re-render profiling (prod-dev): maps fiber function locations back
+        // to source, components are mostly anonymous memo() arrows
+        sourcemap: !!process.env.CAESAR_PROFILE,
         // small ?url scripts (audio worklets) would otherwise inline as
         // data: URLs, which script-src deliberately does not allow
         assetsInlineLimit: (filePath) =>

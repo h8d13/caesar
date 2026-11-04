@@ -9,7 +9,7 @@ import {
     type TJoinedMessage
 } from '@caesar/shared';
 import { format } from 'date-fns';
-import { memo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Message } from './message';
 
 type TMessagesGroupProps = {
@@ -32,7 +32,22 @@ const MessagesGroup = memo(
     }: TMessagesGroupProps) => {
         const firstMessage = group[0];
         const user = useUserById(firstMessage.userId);
-        const date = new Date(firstMessage.createdAt);
+        const date = useMemo(
+            () => new Date(firstMessage.createdAt),
+            [firstMessage.createdAt]
+        );
+        // stable date + render fn: RelativeTime is memo
+        const renderTime = useCallback(
+            (relativeTime: string) => (
+                <span
+                    className="text-primary/60 text-xs"
+                    title={format(date, 'PPpp')}
+                >
+                    {relativeTime}
+                </span>
+            ),
+            [date]
+        );
         const isOwnUser = useIsOwnUser(firstMessage.userId);
         const isDeletedUser = user?.name === DELETED_USER_IDENTITY_AND_NAME;
 
@@ -65,16 +80,7 @@ const MessagesGroup = memo(
                         >
                             {getRenderedUsername(user, user.id)}
                         </span>
-                        <RelativeTime date={date}>
-                            {(relativeTime) => (
-                                <span
-                                    className="text-primary/60 text-xs"
-                                    title={format(date, 'PPpp')}
-                                >
-                                    {relativeTime}
-                                </span>
-                            )}
-                        </RelativeTime>
+                        <RelativeTime date={date}>{renderTime}</RelativeTime>
                     </div>
                     <div className="flex min-w-0 flex-col">
                         {group.map((message, index) => (

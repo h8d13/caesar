@@ -42,6 +42,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 # Now the source; edits below this line no longer bust the install.
 COPY . .
 
+# non-empty = client sourcemaps for re-render profiling (compose.prod-dev.yaml)
+ARG CAESAR_PROFILE
 RUN pnpm --filter @caesar/client build
 # Bundle (vp pack, Rolldown) + SEA (postject) -> apps/server/dist/caesar.
 RUN pnpm --filter @caesar/server build:sea

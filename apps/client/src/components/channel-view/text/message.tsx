@@ -3,7 +3,7 @@ import {
     useDmReadByPeer
 } from '@/features/server/channels/hooks';
 import { useCan, useIsOwnUserOwner } from '@/features/server/hooks';
-import { useLatestOwnMessageId } from '@/features/server/messages/hooks';
+import { useIsLatestOwnMessage } from '@/features/server/messages/hooks';
 import {
     useIsOwnUser,
     useOwnUserId,
@@ -58,7 +58,10 @@ const Message = memo(
         const author = useUserById(message.userId);
         const channel = useChannelById(message.channelId);
         const dmReadByPeer = useDmReadByPeer(message.channelId);
-        const latestOwnId = useLatestOwnMessageId(message.channelId);
+        const isLatestOwn = useIsLatestOwnMessage(
+            message.channelId,
+            message.id
+        );
         // pinned to the latest own message in the channel, and only
         // when the peer has read at least up to it. sliding forward as
         // new own messages are sent avoids stranding the mark mid-group.
@@ -66,8 +69,7 @@ const Message = memo(
             !!channel?.isDm &&
             isFromOwnUser &&
             !!dmReadByPeer &&
-            latestOwnId !== undefined &&
-            message.id === latestOwnId &&
+            isLatestOwn &&
             dmReadByPeer.lastReadMessageId >= message.id;
         const decrypted = useDecryptedMessage(message, channel?.isDm);
 
@@ -95,6 +97,9 @@ const Message = memo(
         );
 
         const replyToUser = useUserById(message.replyTo?.userId ?? -1);
+
+        // stable: MessageActions is memo
+        const handleEdit = useCallback(() => setIsEditing(true), []);
 
         const handleReply = useCallback(() => {
             onReply?.(message);
@@ -159,7 +164,7 @@ const Message = memo(
                         )}
                         {!disableActions && (
                             <MessageActions
-                                onEdit={() => setIsEditing(true)}
+                                onEdit={handleEdit}
                                 onReply={onReply ? handleReply : undefined}
                                 canEdit={isFromOwnUser}
                                 canDelete={canDelete}

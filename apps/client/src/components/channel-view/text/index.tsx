@@ -64,9 +64,9 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
 
     const draftChannelKey = getChannelDraftKey(channelId);
 
-    const [newMessage, setNewMessage] = useState(
-        getDraftMessage(draftChannelKey)
-    );
+    // read once: the compose editor owns the draft from here (remounted
+    // per channel by its key)
+    const [initialDraft] = useState(() => getDraftMessage(draftChannelKey));
     const channel = useChannelById(channelId);
     const allUsers = useUsers();
     const ownUserId = useOwnUserId();
@@ -173,23 +173,20 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
         [channelId]
     );
 
-    const setNewMessageHandler = useCallback(
-        (value: string) => {
-            setNewMessage(value);
-            setDraftMessage(draftChannelKey, value);
-        },
-        [setNewMessage, draftChannelKey]
+    const onDraftChange = useCallback(
+        (value: string) => setDraftMessage(draftChannelKey, value),
+        [draftChannelKey]
     );
 
     const onSend = useCallback(
         async (message: string, files: { id: string }[]) => {
             sendTypingSignal.cancel();
 
+            // success clears the compose editor, draft included
             if (
                 files.length === 0 &&
                 handleBuiltInCommand(message, channelId)
             ) {
-                setNewMessageHandler('');
                 return true;
             }
 
@@ -252,7 +249,6 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
             }
 
             setReplyingTo(null);
-            setNewMessageHandler('');
 
             // the sent message lands in the live tail, not the jump window
             if (hasNewer) void onJumpToPresent();
@@ -262,7 +258,6 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
         [
             channelId,
             sendTypingSignal,
-            setNewMessageHandler,
             replyingTo,
             e2eeContext,
             ownUserId,
@@ -353,8 +348,8 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
                     <MessageCompose
                         ref={composeRef}
                         channelId={channelId}
-                        message={newMessage}
-                        onMessageChange={setNewMessageHandler}
+                        initialMessage={initialDraft}
+                        onMessageChange={onDraftChange}
                         onSend={onSend}
                         onTyping={sendTypingSignal}
                         typingUsers={typingUsers}

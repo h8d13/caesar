@@ -6,7 +6,17 @@ import { Button } from '@caesar/ui';
 import { gitHubEmojis } from '@tiptap/extension-emoji';
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import { ChevronDown, ChevronUp, Maximize2, Smile } from 'lucide-react';
-import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+    memo,
+    useCallback,
+    useEffect,
+    useImperativeHandle,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+    type Ref
+} from 'react';
 import { CHANNEL_MENTION_STORAGE_KEY } from './commands/channel-mention-suggestion';
 import { USER_MENTION_STORAGE_KEY } from './commands/user-mention-suggestion';
 import type { TEmojiItem } from './helpers';
@@ -21,6 +31,13 @@ import { useMessageEditorExtensions } from './use-message-editor-extensions';
 const isLive = (editor: Editor | null): editor is Editor =>
     !!editor && !editor.isDestroyed;
 
+// collapsed box holds ~3 lines, past that the expand toggle shows
+const isOverflowing = (wrapper: HTMLDivElement | null) => {
+    const el = wrapper?.firstElementChild as HTMLElement | null;
+
+    return !!el && el.scrollHeight > el.clientHeight;
+};
+
 type TTiptapInputProps = {
     disabled?: boolean;
     readOnly?: boolean;
@@ -32,6 +49,14 @@ type TTiptapInputProps = {
     onPopOut?: () => void;
     onGifSelect?: (url: string) => void;
     users?: TJoinedPublicUser[];
+    ref?: Ref<TTiptapInputHandle>;
+};
+
+// Uncontrolled use (compose bar): the editor owns the draft, the parent
+// replaces it through here instead of a changing `value`, so typing does
+// not re-render the parent. Goes through onChange like typed input.
+type TTiptapInputHandle = {
+    setContent: (html: string) => void;
 };
 
 const TiptapInput = memo(
@@ -45,7 +70,8 @@ const TiptapInput = memo(
         onGifSelect,
         disabled,
         readOnly,
-        users
+        users,
+        ref
     }: TTiptapInputProps) => {
         // read by editor key/paste/drop handlers, which outlive renders
         const readOnlyRef = useRef(readOnly);
@@ -75,6 +101,10 @@ const TiptapInput = memo(
                 const html = editor.getHTML();
 
                 onChange?.(html);
+                // view is already updated when the update event fires
+                if (!isExpanded) {
+                    setHasOverflow(isOverflowing(editorWrapperRef.current));
+                }
 
                 if (!editor.isEmpty) {
                     onTyping?.();
@@ -170,13 +200,36 @@ const TiptapInput = memo(
             }
         });
 
-        const handleEmojiSelect = (emoji: TEmojiItem) => {
-            if (disabled || readOnly) return;
+        useImperativeHandle(
+            ref,
+            () => ({
+                setContent: (html: string) => {
+                    if (isLive(editor)) editor.commands.setContent(html);
+                }
+            }),
+            [editor]
+        );
 
-            if (emoji.shortcodes.length > 0) {
-                editor?.chain().focus().setEmoji(emoji.shortcodes[0]).run();
-            }
-        };
+        // stable handler + trigger: EmojiPicker is memo
+        const handleEmojiSelect = useCallback(
+            (emoji: TEmojiItem) => {
+                if (disabled || readOnly) return;
+
+                if (emoji.shortcodes.length > 0) {
+                    editor?.chain().focus().setEmoji(emoji.shortcodes[0]).run();
+                }
+            },
+            [editor, disabled, readOnly]
+        );
+
+        const emojiTrigger = useMemo(
+            () => (
+                <Button variant="ghost" size="icon" disabled={disabled}>
+                    <Smile className="h-5 w-5" />
+                </Button>
+            ),
+            [disabled]
+        );
 
         // keep emoji storage in sync with custom emojis from the store
         // this ensures newly added emojis appear in autocomplete without refreshing the app
@@ -229,15 +282,12 @@ const TiptapInput = memo(
             }
         }, [editor, disabled]);
 
-        // Measure if content overflows (more than ~3 lines) when collapsed
+        // content changes measure from onUpdate; this covers mount and
+        // collapsing back
         useLayoutEffect(() => {
             if (isExpanded) return;
-            const wrapper = editorWrapperRef.current;
-            const el = wrapper?.firstElementChild as HTMLElement | null;
-            if (el) {
-                setHasOverflow(el.scrollHeight > el.clientHeight);
-            }
-        }, [value, isExpanded]);
+            setHasOverflow(isOverflowing(editorWrapperRef.current));
+        }, [isExpanded]);
 
         const showExpandButton = hasOverflow || isExpanded;
 
@@ -292,13 +342,11 @@ const TiptapInput = memo(
                     onEmojiSelect={handleEmojiSelect}
                     onGifSelect={onGifSelect}
                 >
-                    <Button variant="ghost" size="icon" disabled={disabled}>
-                        <Smile className="h-5 w-5" />
-                    </Button>
+                    {emojiTrigger}
                 </EmojiPicker>
             </div>
         );
     }
 );
 
-export { TiptapInput };
+export { TiptapInput, type TTiptapInputHandle };

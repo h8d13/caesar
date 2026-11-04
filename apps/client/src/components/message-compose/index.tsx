@@ -1,3 +1,4 @@
+import type { TTiptapInputHandle } from '@/components/tiptap-input';
 import {
     TiptapInput,
     TiptapInputFallback
@@ -41,9 +42,11 @@ const MessageEditorFullscreen = lazy(() =>
     }))
 );
 
+// The draft lives in the editor (uncontrolled), mirrored into a ref for
+// send: a controlled draft re-rendered the whole channel per keystroke.
 type TMessageComposeProps = {
     channelId: number;
-    message: string;
+    initialMessage: string;
     onMessageChange: (value: string) => void;
     onSend: (message: string, files: TTempFile[]) => Promise<boolean>;
     onTyping: () => void;
@@ -59,7 +62,7 @@ type TMessageComposeHandle = {
 const MessageCompose = memo(
     ({
         channelId,
-        message,
+        initialMessage,
         onMessageChange,
         onSend,
         onTyping,
@@ -69,8 +72,13 @@ const MessageCompose = memo(
     }: TMessageComposeProps) => {
         const sendingRef = useRef(false);
         const containerRef = useRef<HTMLDivElement>(null);
+        const inputRef = useRef<TTiptapInputHandle>(null);
+        const messageRef = useRef(initialMessage);
         const [sending, setSending] = useState(false);
-        const [fullEditorOpen, setFullEditorOpen] = useState(false);
+        // draft snapshot while the full editor is open
+        const [fullEditorDraft, setFullEditorDraft] = useState<string | null>(
+            null
+        );
         const can = useCan();
         const channelCan = useChannelCan(channelId);
         const channel = useChannelById(channelId);
@@ -132,7 +140,18 @@ const MessageCompose = memo(
 
         useImperativeHandle(ref, () => ({ clearFiles }), [clearFiles]);
 
+        // typed input and setContent both land here
+        const onInputChange = useCallback(
+            (html: string) => {
+                messageRef.current = html;
+                onMessageChange(html);
+            },
+            [onMessageChange]
+        );
+
         const handleSend = useCallback(async () => {
+            const message = messageRef.current;
+
             if (
                 (isEmptyMessage(message) && !files.length) ||
                 !canSendMessages ||
@@ -156,15 +175,9 @@ const MessageCompose = memo(
 
             if (success) {
                 clearFiles();
+                inputRef.current?.setContent('');
             }
-        }, [
-            message,
-            files,
-            canSendMessages,
-            onSend,
-            clearFiles,
-            publicSettings
-        ]);
+        }, [files, canSendMessages, onSend, clearFiles, publicSettings]);
 
         // GIF picks send immediately as their own message, leaving any
         // typed draft untouched; the renderer inlines the bare .gif URL.
@@ -198,13 +211,17 @@ const MessageCompose = memo(
             [removeFile]
         );
 
-        const handleFullEditorSave = useCallback(
-            (html: string) => {
-                onMessageChange(html);
-                setFullEditorOpen(false);
-            },
-            [onMessageChange]
+        const openFullEditor = useCallback(
+            () => setFullEditorDraft(messageRef.current),
+            []
         );
+
+        const closeFullEditor = useCallback(() => setFullEditorDraft(null), []);
+
+        const handleFullEditorSave = useCallback((html: string) => {
+            inputRef.current?.setContent(html);
+            setFullEditorDraft(null);
+        }, []);
 
         return (
             <div
@@ -240,14 +257,13 @@ const MessageCompose = memo(
                 <div className="flex items-center gap-2 rounded-lg">
                     <Suspense fallback={<TiptapInputFallback />}>
                         <TiptapInput
-                            value={message}
-                            onChange={onMessageChange}
+                            ref={inputRef}
+                            value={initialMessage}
+                            onChange={onInputChange}
                             onSubmit={handleSend}
                             onTyping={onTyping}
                             onPopOut={
-                                canSendMessages
-                                    ? () => setFullEditorOpen(true)
-                                    : undefined
+                                canSendMessages ? openFullEditor : undefined
                             }
                             onGifSelect={
                                 canSendMessages ? handleGifSelect : undefined
@@ -320,13 +336,13 @@ const MessageCompose = memo(
                     </Button>
                 </div>
 
-                {fullEditorOpen && (
+                {fullEditorDraft !== null && (
                     <Suspense fallback={null}>
                         <MessageEditorFullscreen
-                            initialValue={message}
+                            initialValue={fullEditorDraft}
                             users={users}
                             onSave={handleFullEditorSave}
-                            onClose={() => setFullEditorOpen(false)}
+                            onClose={closeFullEditor}
                         />
                     </Suspense>
                 )}

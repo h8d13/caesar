@@ -29,9 +29,12 @@ export const useMessagesByChannelId = (channelId: number) =>
 const oldestVisibleCreatedAt = (channelId: number) =>
     visibleMessagesSelector(store.getState(), channelId)[0]?.createdAt;
 
-export const useLatestOwnMessageId = (channelId: number) =>
-    useSelector((state: IRootState) =>
-        latestOwnMessageIdSelector(state, channelId)
+// boolean per message: the latest id moves on every own send, every
+// message reading it would re-render
+export const useIsLatestOwnMessage = (channelId: number, messageId: number) =>
+    useSelector(
+        (state: IRootState) =>
+            latestOwnMessageIdSelector(state, channelId) === messageId
     );
 
 const useGroupedMessages = (messages: TJoinedMessage[]) =>

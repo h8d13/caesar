@@ -1,6 +1,6 @@
 import { ChannelPermission, type Permission } from '@caesar/shared';
 import { useCallback, useMemo } from 'react';
-import { useSelector } from 'react-redux';
+import { shallowEqual, useSelector } from 'react-redux';
 import type { IRootState } from '../store';
 import { useChannelById, useChannelPermissionsById } from './channels/hooks';
 import {
@@ -127,9 +127,12 @@ export const useHasVisibleChannelsInCategory = (categoryId: number) =>
 export const useUserRoles = (userId: number) =>
     useSelector((state: IRootState) => userRolesSelector(state, userId));
 
+// the selector rebuilds its array on any typingMap/users change, a fresh
+// [] included: compare entries so idle channels don't re-render
 export const useTypingUsersByChannelId = (channelId: number) =>
-    useSelector((state: IRootState) =>
-        typingUsersByChannelIdSelector(state, channelId)
+    useSelector(
+        (state: IRootState) => typingUsersByChannelIdSelector(state, channelId),
+        shallowEqual
     );
 
 export const useVoiceUsersByChannelId = (channelId: number) =>
