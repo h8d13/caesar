@@ -32,7 +32,7 @@ pnpm workspace (`apps/*`, `packages/*`):
 - `apps/server`: Node, tRPC routers (`routers/`), raw HTTP endpoints
   (`http/`), Drizzle + libsql (`db/`, migrations), mediasoup voice
   (`runtimes/`), queues, crons. Alias `@server/`. Ships as a single
-  executable (`build:sea`). `test:fast` skips mediasoup.
+  executable (`build:sea`).
 - `packages/shared`: types, enums, permissions, constants, test ids and
   the Drizzle schema, used by both sides. No React, no Node-only APIs
   (the client bundles it).
