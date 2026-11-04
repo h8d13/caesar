@@ -30,9 +30,8 @@ const TEMP_FILE_TTL = 1000 * 60 * 1; // 1 minute
 const moveFile = async (src: string, dest: string) => {
   try {
     await fs.rename(src, dest);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    if (err.code === 'EXDEV') {
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'EXDEV') {
       await fs.copyFile(src, dest);
       await fs.unlink(src);
     } else {
