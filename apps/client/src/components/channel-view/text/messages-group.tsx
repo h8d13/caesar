@@ -1,4 +1,3 @@
-import { RelativeTime } from '@/components/relative-time';
 import { UserAvatar } from '@/components/user-avatar';
 import { useIsOwnUser, useUserById } from '@/features/server/users/hooks';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
@@ -32,15 +31,7 @@ const MessagesGroup = memo(
     }: TMessagesGroupProps) => {
         const firstMessage = group[0];
         const user = useUserById(firstMessage.userId);
-        // the React Compiler keeps date/title/renderTime stable per
-        // createdAt, so the memo'd RelativeTime only re-renders on its tick
         const date = new Date(firstMessage.createdAt);
-        const title = format(date, 'PPpp');
-        const renderTime = (relativeTime: string) => (
-            <span className="text-primary/60 text-xs" title={title}>
-                {relativeTime}
-            </span>
-        );
         const isOwnUser = useIsOwnUser(firstMessage.userId);
         const isDeletedUser = user?.name === DELETED_USER_IDENTITY_AND_NAME;
 
@@ -73,7 +64,12 @@ const MessagesGroup = memo(
                         >
                             {getRenderedUsername(user, user.id)}
                         </span>
-                        <RelativeTime date={date}>{renderTime}</RelativeTime>
+                        <span
+                            className="text-primary/60 text-xs"
+                            title={format(date, 'PPpp')}
+                        >
+                            {format(date, 'PPp')}
+                        </span>
                     </div>
                     <div className="flex min-w-0 flex-col">
                         {group.map((message, index) => (

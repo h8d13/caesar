@@ -1,4 +1,3 @@
-import { RelativeTime } from '@/components/relative-time';
 import { useSelectedChannelId } from '@/features/server/channels/hooks';
 import { useUserById } from '@/features/server/users/hooks';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
@@ -48,16 +47,12 @@ const PinnedMessageGroupWrapper = memo(
                     </div>
                     <div className="flex items-center gap-2">
                         {pinnedDate ? (
-                            <RelativeTime date={pinnedDate}>
-                                {(relativeTime) => (
-                                    <span
-                                        className="text-xs text-muted-foreground"
-                                        title={format(pinnedDate, 'PPpp')}
-                                    >
-                                        {relativeTime}
-                                    </span>
-                                )}
-                            </RelativeTime>
+                            <span
+                                className="text-xs text-muted-foreground"
+                                title={format(pinnedDate, 'PPpp')}
+                            >
+                                {format(pinnedDate, 'PPp')}
+                            </span>
                         ) : (
                             <span className="text-xs text-muted-foreground">
                                 Unknown time

@@ -1,4 +1,3 @@
-import { RelativeTime } from '@/components/relative-time';
 import { useChannelById } from '@/features/server/channels/hooks';
 import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
 import { getFileUrl } from '@/helpers/get-file-url';
@@ -15,6 +14,7 @@ import {
     type TJoinedMessage
 } from '@caesar/shared';
 import { Tooltip } from '@caesar/ui';
+import { format } from 'date-fns';
 import { memo, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { FileCard } from '../file-card';
@@ -187,22 +187,15 @@ const MessageRenderer = memo(
                         <Tooltip
                             content={
                                 <div className="flex flex-col">
-                                    <RelativeTime
-                                        date={new Date(message.editedAt)}
-                                    >
-                                        {(relativeTime) => (
-                                            <span className="text-secondary text-xs">
-                                                {editedByUser
-                                                    ? getRenderedUsername(
-                                                          editedByUser,
-                                                          message.editedBy ??
-                                                              undefined
-                                                      )
-                                                    : 'Unknown User'}{' '}
-                                                {relativeTime}
-                                            </span>
-                                        )}
-                                    </RelativeTime>
+                                    <span className="text-secondary text-xs">
+                                        {editedByUser
+                                            ? getRenderedUsername(
+                                                  editedByUser,
+                                                  message.editedBy ?? undefined
+                                              )
+                                            : 'Unknown User'}{' '}
+                                        {format(message.editedAt, 'PPp')}
+                                    </span>
                                 </div>
                             }
                         >
