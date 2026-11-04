@@ -1,5 +1,6 @@
 import type http from 'http';
 import z from 'zod';
+import { config } from '../config';
 import { getSessionUserByToken } from '../db/queries/users';
 import {
   getSessionToken,
@@ -21,7 +22,9 @@ const sessionRefreshRouteHandler = async (
   req: http.IncomingMessage,
   res: http.ServerResponse
 ) => {
-  const { nonce } = zBody.parse(await getJsonBody(req));
+  const { nonce } = zBody.parse(
+    await getJsonBody(req, config.server.maxRequestBodyBytes)
+  );
   const entry = takeSessionRefresh(nonce);
   const currentToken = getSessionToken(req);
 

@@ -65,7 +65,9 @@ const storeE2eeSessionKeyRouteHandler = async (
 
   if (!auth) return;
 
-  const { wrapKey } = zBody.parse(await getJsonBody(req));
+  const { wrapKey } = zBody.parse(
+    await getJsonBody(req, config.server.maxRequestBodyBytes)
+  );
   const { user, tokenHash } = auth;
 
   await db

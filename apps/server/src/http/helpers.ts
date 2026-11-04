@@ -10,14 +10,11 @@ type HttpRouteHandler = (
   res: http.ServerResponse
 ) => unknown;
 
-// Fallback cap when a caller doesn't pass one. Callers should pass
-// config.server.maxRequestBodyBytes; this keeps helpers.ts config-free (and
-// cheap to unit-test) while still failing closed if a cap is ever omitted.
-const DEFAULT_MAX_JSON_BODY_BYTES = 64 * 1024;
-
 const getJsonBody = async <T = unknown>(
   req: http.IncomingMessage,
-  maxBytes: number = DEFAULT_MAX_JSON_BODY_BYTES
+  // required: callers pass config.server.maxRequestBodyBytes, so the
+  // configured cap reaches every endpoint (helpers.ts stays config-free)
+  maxBytes: number
 ): Promise<T> => {
   return new Promise((resolve, reject) => {
     // Buffers, decoded once at the end: a per-chunk toString splits

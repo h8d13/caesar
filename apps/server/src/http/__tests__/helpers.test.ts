@@ -67,7 +67,7 @@ describe('http helpers', () => {
         req.emit('end');
       });
 
-      const body = await getJsonBody<{ identity: string }>(req);
+      const body = await getJsonBody<{ identity: string }>(req, 64 * 1024);
 
       expect(body.identity).toBe('test');
     });
@@ -79,7 +79,7 @@ describe('http helpers', () => {
         req.emit('end');
       });
 
-      const body = await getJsonBody<Record<string, unknown>>(req);
+      const body = await getJsonBody<Record<string, unknown>>(req, 64 * 1024);
 
       expect(body).toEqual({});
     });
@@ -92,7 +92,7 @@ describe('http helpers', () => {
         req.emit('end');
       });
 
-      await expect(getJsonBody(req)).rejects.toBeInstanceOf(Error);
+      await expect(getJsonBody(req, 64 * 1024)).rejects.toBeInstanceOf(Error);
     });
 
     test('rejects when request emits an error', async () => {
@@ -102,7 +102,9 @@ describe('http helpers', () => {
         req.emit('error', new Error('request failed'));
       });
 
-      await expect(getJsonBody(req)).rejects.toThrow('request failed');
+      await expect(getJsonBody(req, 64 * 1024)).rejects.toThrow(
+        'request failed'
+      );
     });
 
     test('rejects a single chunk over the max size', async () => {
@@ -143,7 +145,7 @@ describe('http helpers', () => {
         req.emit('end');
       });
 
-      const body = await getJsonBody<{ name: string }>(req);
+      const body = await getJsonBody<{ name: string }>(req, 64 * 1024);
 
       expect(body.name).toBe('é');
     });
