@@ -11,6 +11,7 @@ import {
 } from '@/features/server/hooks';
 import { useUserById } from '@/features/server/users/hooks';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
+import { useLatestCallback } from '@/hooks/use-latest-callback';
 import { getTRPCClient } from '@/lib/trpc';
 import { ChannelType, Permission, getTrpcError } from '@caesar/shared';
 import { IconButton } from '@caesar/ui';
@@ -41,6 +42,27 @@ import { Dialog } from '../dialogs/dialogs';
 import { Protect } from '../protect';
 import { Channels } from './channels';
 import { useCategoryExpanded } from './hooks';
+
+// Module-level so their identity never changes: useSensor memoizes on the
+// options object, and new sensors mean new activators/listeners for every
+// sortable row, re-rendering the whole sidebar.
+const POINTER_SENSOR_OPTIONS = { activationConstraint: { distance: 8 } };
+const NO_CHANNELS: number[] = [];
+
+// Member drags target the channel the pointer is literally inside (its
+// sortable node spans the whole channel incl. its user list). closestCorners
+// is corner-distance based and gets ambiguous between adjacent channels, so
+// restrict to pointerWithin on channel droppables; no nearest-fallback means
+// a drop in the gap simply no-ops instead of snapping to the wrong channel.
+// Channel/category reorder keeps closestCorners.
+const collisionDetection: CollisionDetection = (args) => {
+    if (String(args.active.id).startsWith('vu-')) {
+        return pointerWithin(args).filter((c) =>
+            String(c.id).startsWith('ch-')
+        );
+    }
+    return closestCorners(args);
+};
 
 type TCategoryProps = {
     categoryId: number;
@@ -145,7 +167,11 @@ const Categories = memo(() => {
         const sorted = [...channels].sort((a, b) => a.position - b.position);
         for (const ch of sorted) {
             if (ch.categoryId === null) continue;
-            (m[ch.categoryId] ??= []).push(ch.id);
+            // no `??=`: the React Compiler skips the whole file on it
+            const ids = m[ch.categoryId] ?? [];
+
+            ids.push(ch.id);
+            m[ch.categoryId] = ids;
         }
         return m;
     }, [channels]);
@@ -195,23 +221,8 @@ const Categories = memo(() => {
     );
 
     const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+        useSensor(PointerSensor, POINTER_SENSOR_OPTIONS)
     );
-
-    // Member drags target the channel the pointer is literally inside (its
-    // sortable node spans the whole channel incl. its user list). closestCorners
-    // is corner-distance based and gets ambiguous between adjacent channels, so
-    // restrict to pointerWithin on channel droppables; no nearest-fallback means
-    // a drop in the gap simply no-ops instead of snapping to the wrong channel.
-    // Channel/category reorder keeps closestCorners.
-    const collisionDetection = useCallback<CollisionDetection>((args) => {
-        if (String(args.active.id).startsWith('vu-')) {
-            return pointerWithin(args).filter((c) =>
-                String(c.id).startsWith('ch-')
-            );
-        }
-        return closestCorners(args);
-    }, []);
 
     const handleDragStart = useCallback((event: DragStartEvent) => {
         setActiveId(String(event.active.id));
@@ -219,201 +230,191 @@ const Categories = memo(() => {
 
     // Cross-container channel hover: move the dragged id in local state so
     // the destination's SortableContext picks it up and animates siblings.
-    const handleDragOver = useCallback(
-        (event: DragOverEvent) => {
-            const { active, over } = event;
-            if (!over) return;
-            const aId = String(active.id);
-            const oId = String(over.id);
-            if (!aId.startsWith('ch-')) return;
+    const handleDragOver = useLatestCallback((event: DragOverEvent) => {
+        const { active, over } = event;
+        if (!over) return;
+        const aId = String(active.id);
+        const oId = String(over.id);
+        if (!aId.startsWith('ch-')) return;
 
-            const aCat = findCat(aId);
-            const oCat = findCat(oId);
-            if (aCat === null || oCat === null || aCat === oCat) return;
+        const aCat = findCat(aId);
+        const oCat = findCat(oId);
+        if (aCat === null || oCat === null || aCat === oCat) return;
 
-            setOverride((prev) => {
-                const next = { ...(prev ?? baseByCat) };
-                const chId = Number(aId.slice(3));
-                next[aCat] = (next[aCat] ?? []).filter((id) => id !== chId);
-                const dest = [...(next[oCat] ?? [])];
-                let idx = dest.length;
-                if (oId.startsWith('ch-')) {
-                    const i = dest.indexOf(Number(oId.slice(3)));
-                    if (i !== -1) idx = i;
-                }
-                dest.splice(idx, 0, chId);
-                next[oCat] = dest;
-                return next;
-            });
-        },
-        [findCat, baseByCat]
-    );
-
-    const handleDragEnd = useCallback(
-        async (event: DragEndEvent) => {
-            const { active, over } = event;
-            setActiveId(null);
-            if (!over) {
-                setOverride(null);
-                return;
-            }
-
-            const aId = String(active.id);
-            const oId = String(over.id);
-            const trpc = getTRPCClient();
-
-            // Voice-member drag: drop onto a different voice channel to move
-            // them. `over` resolves to the channel's sortable (ch-) since voice
-            // users aren't droppable. ACL is enforced server-side.
-            if (aId.startsWith('vu-')) {
-                setOverride(null);
-                if (!oId.startsWith('ch-')) return;
-
-                const userId = Number(
-                    active.data.current?.userId ?? aId.slice(3)
-                );
-                const sourceChannelId = active.data.current?.channelId as
-                    | number
-                    | undefined;
-                const destChannelId = Number(oId.slice(3));
-
-                if (destChannelId === sourceChannelId) return;
-
-                const dest = channels.find((c) => c.id === destChannelId);
-                if (dest?.type !== ChannelType.VOICE || dest.isDm) return;
-
-                try {
-                    await trpc.voice.moveUser.mutate({
-                        userId,
-                        channelId: destChannelId
-                    });
-                } catch (e) {
-                    toast.error(getTrpcError(e, 'Failed to move member'));
-                }
-                return;
-            }
-
-            if (aId.startsWith('cat-')) {
-                setOverride(null);
-                // closestCorners can resolve `over` to any droppable inside
-                // the target category (ch-N, drop-cat-N), not just cat-N.
-                // Map back to the owning category before computing indexes.
-                const activeCatId = Number(aId.slice(4));
-                const overCatId = findCat(oId);
-                if (overCatId === null || activeCatId === overCatId) return;
-                const oldIdx = categorySortableIds.indexOf(aId);
-                const newIdx = categorySortableIds.indexOf(`cat-${overCatId}`);
-                if (oldIdx === -1 || newIdx === -1) return;
-                const reordered = categorySortableIds.map((s) =>
-                    Number(s.slice(4))
-                );
-                const [moved] = reordered.splice(oldIdx, 1);
-                reordered.splice(newIdx, 0, moved);
-                try {
-                    await trpc.categories.reorder.mutate({
-                        categoryIds: reordered
-                    });
-                } catch (e) {
-                    toast.error(
-                        getTrpcError(e, 'Failed to reorder categories')
-                    );
-                }
-                return;
-            }
-
-            if (!aId.startsWith('ch-')) {
-                setOverride(null);
-                return;
-            }
-
+        setOverride((prev) => {
+            const next = { ...(prev ?? baseByCat) };
             const chId = Number(aId.slice(3));
-            const oCat = findCat(oId);
-            // Source must be looked up in BASE (redux) — `byCat` already
-            // reflects the onDragOver-driven optimistic move.
-            let sCat: number | null = null;
-            for (const k in baseByCat) {
-                if (baseByCat[Number(k)].includes(chId)) {
-                    sCat = Number(k);
-                    break;
-                }
+            next[aCat] = (next[aCat] ?? []).filter((id) => id !== chId);
+            const dest = [...(next[oCat] ?? [])];
+            let idx = dest.length;
+            if (oId.startsWith('ch-')) {
+                const i = dest.indexOf(Number(oId.slice(3)));
+                if (i !== -1) idx = i;
             }
-            if (oCat === null || sCat === null) {
+            dest.splice(idx, 0, chId);
+            next[oCat] = dest;
+            return next;
+        });
+    });
+
+    const handleDragEnd = useLatestCallback(async (event: DragEndEvent) => {
+        const { active, over } = event;
+        setActiveId(null);
+        if (!over) {
+            setOverride(null);
+            return;
+        }
+
+        const aId = String(active.id);
+        const oId = String(over.id);
+        const trpc = getTRPCClient();
+
+        // Voice-member drag: drop onto a different voice channel to move
+        // them. `over` resolves to the channel's sortable (ch-) since voice
+        // users aren't droppable. ACL is enforced server-side.
+        if (aId.startsWith('vu-')) {
+            setOverride(null);
+            if (!oId.startsWith('ch-')) return;
+
+            const userId = Number(active.data.current?.userId ?? aId.slice(3));
+            const sourceChannelId = active.data.current?.channelId as
+                | number
+                | undefined;
+            const destChannelId = Number(oId.slice(3));
+
+            if (destChannelId === sourceChannelId) return;
+
+            const dest = channels.find((c) => c.id === destChannelId);
+            if (dest?.type !== ChannelType.VOICE || dest.isDm) return;
+
+            try {
+                await trpc.voice.moveUser.mutate({
+                    userId,
+                    channelId: destChannelId
+                });
+            } catch (e) {
+                toast.error(getTrpcError(e, 'Failed to move member'));
+            }
+            return;
+        }
+
+        if (aId.startsWith('cat-')) {
+            setOverride(null);
+            // closestCorners can resolve `over` to any droppable inside
+            // the target category (ch-N, drop-cat-N), not just cat-N.
+            // Map back to the owning category before computing indexes.
+            const activeCatId = Number(aId.slice(4));
+            const overCatId = findCat(oId);
+            if (overCatId === null || activeCatId === overCatId) return;
+            const oldIdx = categorySortableIds.indexOf(aId);
+            const newIdx = categorySortableIds.indexOf(`cat-${overCatId}`);
+            if (oldIdx === -1 || newIdx === -1) return;
+            const reordered = categorySortableIds.map((s) =>
+                Number(s.slice(4))
+            );
+            const [moved] = reordered.splice(oldIdx, 1);
+            reordered.splice(newIdx, 0, moved);
+            try {
+                await trpc.categories.reorder.mutate({
+                    categoryIds: reordered
+                });
+            } catch (e) {
+                toast.error(getTrpcError(e, 'Failed to reorder categories'));
+            }
+            return;
+        }
+
+        if (!aId.startsWith('ch-')) {
+            setOverride(null);
+            return;
+        }
+
+        const chId = Number(aId.slice(3));
+        const oCat = findCat(oId);
+        // Source must be looked up in BASE (redux) — `byCat` already
+        // reflects the onDragOver-driven optimistic move.
+        let sCat: number | null = null;
+        for (const k in baseByCat) {
+            if (baseByCat[Number(k)].includes(chId)) {
+                sCat = Number(k);
+                break;
+            }
+        }
+        if (oCat === null || sCat === null) {
+            setOverride(null);
+            return;
+        }
+
+        // Final destination order: byCat already has the channel inserted
+        // (from onDragOver for cross-container, or no-op for intra). For
+        // intra-container drags we still need an arrayMove if dropped on
+        // a specific channel.
+        const destIds = [...(byCat[oCat] ?? [])];
+        if (oId.startsWith('ch-')) {
+            const overChId = Number(oId.slice(3));
+            if (!destIds.includes(chId)) destIds.push(chId);
+            const aIdx = destIds.indexOf(chId);
+            const oIdx = destIds.indexOf(overChId);
+            if (aIdx !== -1 && oIdx !== -1 && aIdx !== oIdx) {
+                destIds.splice(aIdx, 1);
+                destIds.splice(oIdx, 0, chId);
+            }
+        } else if (!destIds.includes(chId)) {
+            destIds.push(chId);
+        }
+
+        // Persist the post-drop layout so the UI doesn't snap back while
+        // the server confirms; the effect above clears it on redux update.
+        // Intra-category drag has sCat === oCat: writing both [oCat] and
+        // [sCat] into the same object literal collapses on the duplicate
+        // key (sourceIds wins, dragged channel vanishes from the override
+        // until refresh). Only write the source entry when categories
+        // actually differ.
+        const sourceIds = (byCat[sCat] ?? baseByCat[sCat] ?? []).filter(
+            (id) => id !== chId
+        );
+        setOverride((prev) => {
+            const next = { ...(prev ?? baseByCat), [oCat]: destIds };
+            if (sCat !== oCat) next[sCat] = sourceIds;
+            return next;
+        });
+
+        if (sCat === oCat) {
+            const base = baseByCat[oCat] ?? [];
+            if (
+                base.length === destIds.length &&
+                base.every((v, i) => v === destIds[i])
+            ) {
                 setOverride(null);
                 return;
             }
-
-            // Final destination order: byCat already has the channel inserted
-            // (from onDragOver for cross-container, or no-op for intra). For
-            // intra-container drags we still need an arrayMove if dropped on
-            // a specific channel.
-            const destIds = [...(byCat[oCat] ?? [])];
-            if (oId.startsWith('ch-')) {
-                const overChId = Number(oId.slice(3));
-                if (!destIds.includes(chId)) destIds.push(chId);
-                const aIdx = destIds.indexOf(chId);
-                const oIdx = destIds.indexOf(overChId);
-                if (aIdx !== -1 && oIdx !== -1 && aIdx !== oIdx) {
-                    destIds.splice(aIdx, 1);
-                    destIds.splice(oIdx, 0, chId);
-                }
-            } else if (!destIds.includes(chId)) {
-                destIds.push(chId);
-            }
-
-            // Persist the post-drop layout so the UI doesn't snap back while
-            // the server confirms; the effect above clears it on redux update.
-            // Intra-category drag has sCat === oCat: writing both [oCat] and
-            // [sCat] into the same object literal collapses on the duplicate
-            // key (sourceIds wins, dragged channel vanishes from the override
-            // until refresh). Only write the source entry when categories
-            // actually differ.
-            const sourceIds = (byCat[sCat] ?? baseByCat[sCat] ?? []).filter(
-                (id) => id !== chId
-            );
-            setOverride((prev) => {
-                const next = { ...(prev ?? baseByCat), [oCat]: destIds };
-                if (sCat !== oCat) next[sCat] = sourceIds;
-                return next;
-            });
-
-            if (sCat === oCat) {
-                const base = baseByCat[oCat] ?? [];
-                if (
-                    base.length === destIds.length &&
-                    base.every((v, i) => v === destIds[i])
-                ) {
-                    setOverride(null);
-                    return;
-                }
-                try {
-                    await trpc.channels.reorder.mutate({
-                        categoryId: oCat,
-                        channelIds: destIds
-                    });
-                } catch (e) {
-                    toast.error(getTrpcError(e, 'Failed to reorder channels'));
-                    setOverride(null);
-                }
-                return;
-            }
-
-            // Cross-category: two sequential mutations (SQLite single-writer).
             try {
-                await trpc.channels.reorder.mutate({
-                    categoryId: sCat,
-                    channelIds: sourceIds
-                });
                 await trpc.channels.reorder.mutate({
                     categoryId: oCat,
                     channelIds: destIds
                 });
             } catch (e) {
-                toast.error(getTrpcError(e, 'Failed to move channel'));
+                toast.error(getTrpcError(e, 'Failed to reorder channels'));
                 setOverride(null);
             }
-        },
-        [byCat, baseByCat, categorySortableIds, findCat, channels]
-    );
+            return;
+        }
+
+        // Cross-category: two sequential mutations (SQLite single-writer).
+        try {
+            await trpc.channels.reorder.mutate({
+                categoryId: sCat,
+                channelIds: sourceIds
+            });
+            await trpc.channels.reorder.mutate({
+                categoryId: oCat,
+                channelIds: destIds
+            });
+        } catch (e) {
+            toast.error(getTrpcError(e, 'Failed to move channel'));
+            setOverride(null);
+        }
+    });
 
     return (
         <div className="flex-1 overflow-y-auto p-2">
@@ -433,7 +434,7 @@ const Categories = memo(() => {
                         <Category
                             key={category.id}
                             categoryId={category.id}
-                            channelIds={byCat[category.id] ?? []}
+                            channelIds={byCat[category.id] ?? NO_CHANNELS}
                         />
                     ))}
                 </SortableContext>
