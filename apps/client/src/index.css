@@ -151,20 +151,23 @@ body,
 
 :root {
   --scrollbar-width: 12px;
-  --scrollbar-track-color-light: #f1f1f1;
-  --scrollbar-thumb-color-light: #888;
-  --scrollbar-thumb-hover-color-light: #555;
-
-  --scrollbar-track-color-dark: #2e2e2e;
-  --scrollbar-thumb-color-dark: #555;
-  --scrollbar-thumb-hover-color-dark: #888;
+  --scrollbar-track-color: #f1f1f1;
+  --scrollbar-thumb-color: #888;
+  --scrollbar-thumb-hover-color: #555;
 }
 
-/* Light theme scrollbars */
-body {
+/* the theme provider sets .light/.dark on <html> (system mode included);
+   prefers-color-scheme would ignore an explicit app theme */
+.dark {
+  --scrollbar-track-color: #2e2e2e;
+  --scrollbar-thumb-color: #555;
+  --scrollbar-thumb-hover-color: #888;
+}
+
+/* Firefox */
+* {
   scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb-color-light)
-    var(--scrollbar-track-color-light);
+  scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
 }
 
 /* Webkit Browsers */
@@ -174,56 +177,18 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--scrollbar-track-color-light);
+  background: var(--scrollbar-track-color);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--scrollbar-thumb-color-light);
+  background-color: var(--scrollbar-thumb-color);
   border-radius: 10px;
-  border: 2px solid var(--scrollbar-track-color-light);
+  border: 2px solid var(--scrollbar-track-color);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--scrollbar-thumb-hover-color-light);
-}
-
-/* Dark theme support */
-@media (prefers-color-scheme: dark) {
-  body {
-    scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-thumb-color-dark)
-      var(--scrollbar-track-color-dark);
-  }
-
-  /* Webkit Browsers */
-  ::-webkit-scrollbar-track {
-    background: var(--scrollbar-track-color-dark);
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background-color: var(--scrollbar-thumb-color-dark);
-    border: 2px solid var(--scrollbar-track-color-dark);
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--scrollbar-thumb-hover-color-dark);
-  }
-}
-
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb-color-light)
-    var(--scrollbar-track-color-light);
-}
-
-@media (prefers-color-scheme: dark) {
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-thumb-color-dark)
-      var(--scrollbar-track-color-dark);
-  }
+  background: var(--scrollbar-thumb-hover-color);
 }
 
 #portal {
