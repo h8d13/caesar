@@ -10,9 +10,12 @@ import noChunkCycles from './vite-plugin-no-chunk-cycles.ts';
 import precompress from './vite-plugin-precompress.ts';
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
     plugins: lazyPlugins(() => [
-        react(),
+        // React Compiler (native oxc port): memoizes handlers and JSX so a
+        // form/parent change only re-renders what read the changed value.
+        // Dev logs skipped components (try/finally, rule suppressions).
+        react({ compiler: { logDiagnostics: command === 'serve' } }),
         tailwindcss(),
         dumpDevMaps({ outDir: '.vite-devmaps' }),
         noChunkCycles(),
@@ -59,4 +62,4 @@ export default defineConfig({
         VITE_APP_VERSION: JSON.stringify(pkg.version),
         VITE_APP_REPO_URL: JSON.stringify(manifest.repository)
     }
-});
+}));
