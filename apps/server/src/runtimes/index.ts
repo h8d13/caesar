@@ -14,7 +14,7 @@ const initVoiceRuntimes = async () => {
     .where(eq(channels.type, ChannelType.VOICE));
 
   for (const channel of voiceChannels) {
-    if (channel.isDm) continue; // skip DM channels for now, enable if we want to allow private calls between users in the future
+    if (channel.isDm) continue; // DM runtimes start lazily on dms.call
 
     const runtime = new VoiceRuntime(channel.id);
 

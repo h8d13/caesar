@@ -12,12 +12,12 @@ const sanitizeMessageHtml = (html: string): string => {
   // first strip zalgo to prevent it from being used to bypass sanitization
   input = stripZalgo(input);
 
-  // then sanitize the HTML content
   input = sanitize(input, {
     allowedTags: MESSAGE_ALLOWED_TAGS,
+    // no global attributes: on*/style only survive if listed per tag
     allowedAttributes: { ...MESSAGE_ALLOWED_ATTRIBUTES, '*': [] },
     allowedSchemes: MESSAGE_ALLOWED_SCHEMES,
-    // disallow any script or event handler attributes globally
+    // disallowed tags are dropped, not escaped to text
     disallowedTagsMode: 'discard'
   });
 

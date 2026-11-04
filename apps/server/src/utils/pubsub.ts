@@ -203,7 +203,7 @@ class PubSub {
 
     // One listener per connected socket per global topic (users.onJoin,
     // emojis.onCreate, ...): the count tracks online users, so any finite
-    // cap only turns the 51st connection into a leak warning.
+    // cap only turns connection N+1 into a false leak warning.
     this.ee.setMaxListeners(0);
   }
 

@@ -2,7 +2,7 @@ import { e2eeSessionKeys, users } from '@caesar/shared/db/schema';
 import { lte, or, sql } from 'drizzle-orm';
 import { db } from '../db';
 
-// matches the session JWT's expiresIn (issueSession)
+// matches SESSION_MAX_AGE_S (helpers/session-token)
 const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 // Delete wrap keys whose session is gone: epoch bumped (logout, password

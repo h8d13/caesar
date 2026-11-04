@@ -1,4 +1,5 @@
-// these values are injected at build time
+// CAESAR_BUILD_VERSION is inlined by vp pack; CAESAR_ENV is runtime
+// (Dockerfile.prod)
 const CAESAR_ENV = process.env.CAESAR_ENV;
 const CAESAR_BUILD_VERSION = process.env.CAESAR_BUILD_VERSION;
 

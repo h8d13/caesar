@@ -101,9 +101,9 @@ const setAppearOffline = (userId: number, value: boolean) => {
   appearOfflineByUser.set(userId, value);
 };
 
-// Close all open WS sessions for a user (except optionally one token). Used
-// when a fresh /login bumps sessionEpoch: any prior connections are now on
-// a stale epoch and must be told to disconnect.
+// Close all open WS sessions for a user (except optionally one token): every
+// sessionEpoch bump (login, logout, password change/reset, rename, sign out
+// others) leaves them on a stale token.
 const closeUserSessions = (
   userId: number,
   reason: string,
@@ -212,8 +212,7 @@ const createContext = async ({
 
     if (!channel.private) return ALL_PERMISSIONS;
 
-    // the queries are synchronous, so the owner check runs first and owners
-    // skip the per-channel rows entirely
+    // owners skip the per-channel rows entirely
     const roleIds = await getUserRoleIds(decodedUser.id);
 
     if (roleIds.includes(OWNER_ROLE_ID)) return ALL_PERMISSIONS;

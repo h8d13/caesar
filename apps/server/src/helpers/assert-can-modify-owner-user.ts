@@ -2,12 +2,11 @@ import { OWNER_ROLE_ID } from '@caesar/shared';
 import { getUserRoleIds } from '@server/db/queries/roles';
 import { invariant } from '@server/utils/invariant';
 
-// Owner protection for moderation actions (ban/kick/delete/rename, and
-// deleting their messages or files). MANAGE_USERS / MANAGE_MESSAGES let a
-// moderator act on members, but a non-owner must never be able to touch
-// the server owner: banning locks the owner out with no
-// self-serve recovery, deleting is irreversible. Mirrors the guard in
-// voice/move-user.ts so every moderation path enforces the same boundary.
+// Owner protection for every moderation path on a user (ban, kick, delete,
+// rename, reset password, role add/remove, voice move, deleting their
+// messages or files). A non-owner must never touch the server owner:
+// banning locks the owner out with no self-serve recovery, deleting is
+// irreversible.
 const assertCanModifyOwnerUser = async (
   actorUserId: number,
   targetUserId: number,

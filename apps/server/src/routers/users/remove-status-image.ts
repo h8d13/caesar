@@ -30,8 +30,6 @@ const removeStatusImageRoute = protectedProcedure
       message: 'You can only remove your own status'
     });
 
-    // Drop the row before the file so the FK reference is gone regardless of
-    // whether SQLite cascade is enforced; removeFile then reclaims disk + row.
     await db.delete(statusImages).where(eq(statusImages.id, input.id)).run();
     await removeFile(story.fileId);
 

@@ -107,7 +107,6 @@ const getDirectMessageConversations = async (
   return conversations;
 };
 
-// checks if a channel is a DM channel by looking for it in the directMessages table
 const isDirectMessageChannel = async (channelId: number): Promise<boolean> =>
   !!(await getChannelAccessRow(channelId))?.isDm;
 
@@ -155,11 +154,9 @@ const assertDmParticipant = async (
   }
 };
 
-// checks if the channel of the message is a DM channel, and if so checks if
-// the user is a participant, throwing if not. Resolves true once
-// participation is confirmed, or undefined when the channel is not a DM;
-// callers pass that on so the permission check does not look the participant
-// row up a second time.
+// Non-DM: undefined. DM: requires DMs enabled and participation (throws
+// otherwise), resolves true so callers can pass it on as isDmParticipant
+// instead of looking the row up again.
 const assertDmChannel = async (
   channelId: number,
   userId: number,

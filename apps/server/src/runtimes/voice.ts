@@ -314,8 +314,8 @@ class VoiceRuntime {
     user.state = { ...user.state, ...newState };
   };
 
-  // rtpCapabilities are identical across all routers in this channel (same
-  // mediaCodecs), so any router answers join.ts. Keep for backward-compat.
+  // rtpCapabilities match across routers (same mediaCodecs), so join.ts can
+  // read any of them
   public getRouter = (): Router => {
     const first = this.routers.values().next().value;
     if (!first) throw new Error('Router not initialized yet');

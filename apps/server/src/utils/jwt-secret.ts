@@ -11,7 +11,8 @@ import { logger } from '../logger';
 //      only carried ~74 bits of randomness from the v7 layout;
 //   2. it can never leak through a settings query the way `secretToken` could.
 // `secretToken` stays the internal HMAC key for IP / file / webauthn hashing
-// and the one-time owner-spawn check; it is no longer a JWT signing key.
+// and the owner-spawn check (never rotated, redeemable repeatedly); it is
+// no longer a JWT signing key.
 const JWT_KEY_PATH = path.join(DATA_PATH, 'jwt.key');
 
 let jwtSecret: string | undefined;

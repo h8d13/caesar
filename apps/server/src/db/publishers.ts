@@ -94,11 +94,8 @@ const publishMessage = logFailures(
       });
     }
 
-    // Only `create` bumps the unread counter. `update` covers re-publishes
-    // for edits, sc-vote toggles, file deletions, and the URL-metadata
-    // post-process queue. The metadata queue runs on every send (even
-    // when no URLs are extracted), so without this gate every message
-    // would deliver two deltas and the recipient's unread sits at 2.
+    // Only `create` bumps unread: `update` re-publishes (edits, sc-votes,
+    // file deletes, link previews) must not count again.
     if (type !== 'create') return;
 
     // only send unread updates to users OTHER than the message author

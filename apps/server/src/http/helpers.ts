@@ -93,7 +93,7 @@ const safeDecodeURIComponent = (value: string): string | null => {
 };
 
 const sanitizeFileName = (name: string): string | null => {
-  // reject null bytes which can truncate paths on some
+  // NUL truncates paths in some fs/C APIs
   if (name.includes('\0')) {
     return null;
   }
@@ -111,8 +111,6 @@ const sanitizeFileName = (name: string): string | null => {
   return baseName;
 };
 
-// script-src keeps data: because Vite inlines small `?url` imports (the
-// audio worklet processors) as data: URLs under assetsInlineLimit.
 const buildCsp = (nonce?: string): string => {
   // blob: is the DTLN worklet (fetched, cached, loaded via object URL). No
   // data:: an injected <script src="data:..."> would run under it.

@@ -13,23 +13,14 @@ import { clearRateLimitersForTests } from '../utils/rate-limiters/rate-limiter';
 import { setTestDb } from './mock-db';
 import { seedDatabase } from './seed';
 
-/**
- * Global test setup - creates a fresh isolated database before each test.
- * This ensures tests don't interfere with each other.
- *
- * The database is:
- * 1. Created in-memory (fast, isolated)
- * 2. Migrated (applies schema)
- * 3. Seeded (with test data)
- * 4. Set as the mocked db (via setTestDb)
- * 5. Cleaned up after the test
- */
+// One migrated tempfile DB per fork (beforeAll, set via setTestDb);
+// beforeEach wipes rows and reseeds; globalSetup removes the file after the
+// run.
 
 const DISABLE_CONSOLE = true;
-// Disable per-file cleanup of DATA_PATH. With vitest's singleFork mode the
-// same process runs every test file; deleting DATA_PATH between files races
-// with the migrations dir prepare step in the next file's setup and tended
-// to leave the worker in an unrecoverable state mid-suite.
+// Disable per-file cleanup of DATA_PATH: forks run many files each
+// (isolate: false), and deleting DATA_PATH between files races the next
+// file's migrations prepare step.
 const CLEANUP_AFTER_FINISH = false;
 
 // vitest hoists vi.mock to the top of the file, so the factory cannot
@@ -63,8 +54,7 @@ let testsBaseUrl: string;
 
 beforeAll(async () => {
   // One server + one libsql client per fork. Stash on globalThis since
-  // vitest re-imports setupFiles per test file (isolate: true) while the
-  // process itself persists.
+  // setupFiles re-run per test file while the fork persists.
   const g = globalThis as typeof globalThis & {
     __caesarServer?: { port: number; url: string };
     __caesarSqlite?: Client;
@@ -93,8 +83,8 @@ beforeAll(async () => {
     g.__caesarTmpDbPath = tmpDbPath;
     // The test DB is a disposable per-fork tempfile, so durability is
     // irrelevant: drop fsync-on-every-write (synchronous=FULL) and the
-    // on-disk journal. Each test's beforeEach does ~20 DELETEs + 17 seed
-    // inserts, and at synchronous=FULL every one fsyncs. This is the fixed
+    // on-disk journal. Each test's beforeEach does a DELETE per table plus
+    // the seed, and at synchronous=FULL every one fsyncs. This is the fixed
     // per-test cost paid by every test, unit tests included.
     const sqlite = await createDbClient(`file:${tmpDbPath}`, [
       'PRAGMA journal_mode = MEMORY;',

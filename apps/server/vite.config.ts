@@ -13,7 +13,7 @@ const { dependencies } = JSON.parse(
 ) as { dependencies: Record<string, string> };
 
 // Compile for the oldest Node we run: root engines.node, which renovate
-// keeps at the minimum the images ship ('>=26.11.1' -> 'node26.11.1').
+// keeps at the minimum the images ship ('>=x.y.z' -> 'nodex.y.z').
 const { engines } = JSON.parse(
   readFileSync(new URL('../../package.json', import.meta.url), 'utf8')
 ) as { engines: { node: string } };

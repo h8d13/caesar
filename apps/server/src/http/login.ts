@@ -236,7 +236,8 @@ const loginRouteHandler = async (
 
     let invite: TInvite | undefined;
 
-    // Bootstrap: first user when DB is empty signs up without invite (becomes admin via seeded role assignment).
+    // Bootstrap: the first user signs up without an invite (Owner is then
+    // claimed with the secret token, see use-secret-token.ts).
     // Otherwise: signup requires a valid invite.
     const userCount =
       (await db.select({ c: count() }).from(users).get())?.c ?? 0;
