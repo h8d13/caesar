@@ -1,3 +1,4 @@
+import { useDraft } from '@/hooks/use-draft';
 import { useForm } from '@/hooks/use-form';
 import { useLatestCallback } from '@/hooks/use-latest-callback';
 import { getTRPCClient } from '@/lib/trpc';
@@ -30,12 +31,6 @@ const toVoid =
 
 export const useAdminGeneral = () => {
     const [errors, setErrors] = useState<TTrpcErrors>({});
-    const [settings, setSettings] = useState({
-        name: '',
-        description: '',
-        directMessagesEnabled: true,
-        gamesEnabled: true
-    });
 
     const {
         data,
@@ -46,17 +41,12 @@ export const useAdminGeneral = () => {
         queryFn: () => getTRPCClient().others.getSettings.query()
     });
 
-    // form state initialized from server data
-    useEffect(() => {
-        if (!data) return;
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- mirror server data into editable form state on (re)fetch
-        setSettings({
-            name: data.name,
-            description: data.description ?? '',
-            directMessagesEnabled: data.directMessagesEnabled ?? true,
-            gamesEnabled: data.gamesEnabled ?? true
-        });
-    }, [data]);
+    const [settings, updateSettings] = useDraft(data, (d) => ({
+        name: d?.name ?? '',
+        description: d?.description ?? '',
+        directMessagesEnabled: d?.directMessagesEnabled ?? true,
+        gamesEnabled: d?.gamesEnabled ?? true
+    }));
 
     const submit = useLatestCallback(async () => {
         const trpc = getTRPCClient();
@@ -79,11 +69,13 @@ export const useAdminGeneral = () => {
         }
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const onChange = useCallback((field: keyof typeof settings, value: any) => {
-        setSettings((s) => ({ ...s, [field]: value }));
+    const onChange = <K extends keyof typeof settings>(
+        field: K,
+        value: (typeof settings)[K]
+    ) => {
+        updateSettings((s) => ({ ...s, [field]: value }));
         setErrors((e) => ({ ...e, [field]: undefined }));
-    }, []);
+    };
 
     return {
         settings,
@@ -98,7 +90,6 @@ export const useAdminGeneral = () => {
 
 export const useAdminChannelGeneral = (channelId: number) => {
     const [errors, setErrors] = useState<TTrpcErrors>({});
-    const [channel, setChannel] = useState<TChannel | undefined>(undefined);
 
     const {
         data,
@@ -109,11 +100,7 @@ export const useAdminChannelGeneral = (channelId: number) => {
         queryFn: () => getTRPCClient().channels.get.query({ channelId })
     });
 
-    // form state initialized from server data
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- mirror server data into editable form state on (re)fetch
-        if (data) setChannel(data);
-    }, [data]);
+    const [channel, updateChannel] = useDraft(data, (d) => d);
 
     const submit = useLatestCallback(async () => {
         const trpc = getTRPCClient();
@@ -133,14 +120,13 @@ export const useAdminChannelGeneral = (channelId: number) => {
         }
     });
 
-    const onChange = useCallback(
-        // functional update: no dependency on channel, stable for fields
-        (field: keyof TChannel, value: string | null | boolean) => {
-            setChannel((c) => (c ? { ...c, [field]: value } : c));
-            setErrors((e) => ({ ...e, [field]: undefined }));
-        },
-        []
-    );
+    const onChange = (
+        field: keyof TChannel,
+        value: string | null | boolean
+    ) => {
+        updateChannel((c) => (c ? { ...c, [field]: value } : c));
+        setErrors((e) => ({ ...e, [field]: undefined }));
+    };
 
     return {
         channel,
@@ -154,7 +140,6 @@ export const useAdminChannelGeneral = (channelId: number) => {
 
 export const useAdminCategoryGeneral = (categoryId: number) => {
     const [errors, setErrors] = useState<TTrpcErrors>({});
-    const [category, setCategory] = useState<TCategory | undefined>(undefined);
 
     const {
         data,
@@ -165,11 +150,7 @@ export const useAdminCategoryGeneral = (categoryId: number) => {
         queryFn: () => getTRPCClient().categories.get.query({ categoryId })
     });
 
-    // form state initialized from server data
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- mirror server data into editable form state on (re)fetch
-        if (data) setCategory(data);
-    }, [data]);
+    const [category, updateCategory] = useDraft(data, (d) => d);
 
     const submit = useLatestCallback(async () => {
         const trpc = getTRPCClient();
@@ -187,14 +168,10 @@ export const useAdminCategoryGeneral = (categoryId: number) => {
         }
     });
 
-    const onChange = useCallback(
-        // functional update: no dependency on category, stable for fields
-        (field: keyof TCategory, value: string | null) => {
-            setCategory((c) => (c ? { ...c, [field]: value } : c));
-            setErrors((e) => ({ ...e, [field]: undefined }));
-        },
-        []
-    );
+    const onChange = (field: keyof TCategory, value: string | null) => {
+        updateCategory((c) => (c ? { ...c, [field]: value } : c));
+        setErrors((e) => ({ ...e, [field]: undefined }));
+    };
 
     return {
         category,
