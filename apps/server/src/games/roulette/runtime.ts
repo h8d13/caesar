@@ -14,7 +14,7 @@ import {
 import { db } from '@server/db';
 import { createHash, randomInt } from 'crypto';
 import { desc, eq, isNotNull } from 'drizzle-orm';
-import { withBalanceLock } from '../shared-bindings';
+import { runDetached, withBalanceLock } from '../shared-bindings';
 import {
   BETTING_PHASE_DURATION_MS,
   MAX_BET,
@@ -237,7 +237,7 @@ class RouletteRuntime {
     this.notifyStateSubscribers();
 
     setTimeout(() => {
-      void this.startResultPhase();
+      runDetached('roulette result phase', this.startResultPhase());
     }, SPINNING_PHASE_DURATION_MS);
   }
 
@@ -298,7 +298,7 @@ class RouletteRuntime {
     this.notifyResultSubscribers(result);
 
     setTimeout(() => {
-      void this.startBettingPhase();
+      runDetached('roulette betting phase', this.startBettingPhase());
     }, RESULT_PHASE_DURATION_MS);
   }
 

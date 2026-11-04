@@ -7,10 +7,9 @@ import {
   type TCoinflipStateUpdate
 } from '@caesar/shared/games/coinflip';
 import { db } from '@server/db';
-import { logger } from '@server/logger';
 import { randomInt } from 'crypto';
 import { and, eq, inArray } from 'drizzle-orm';
-import { withBalanceLock } from '../shared-bindings';
+import { runDetached, withBalanceLock } from '../shared-bindings';
 import {
   CHALLENGE_EXPIRE_MS,
   FLIP_DURATION_MS,
@@ -153,7 +152,7 @@ class CoinflipRuntime {
         .run();
 
       const expireTimer = setTimeout(() => {
-        void this.expireChallenge(game.id);
+        runDetached('coinflip expiry', this.expireChallenge(game.id));
       }, CHALLENGE_EXPIRE_MS);
 
       this.activeTimers.set(game.id, {
@@ -239,7 +238,7 @@ class CoinflipRuntime {
       await this.callbacks.onUserBalanceChanged(userId);
 
       setTimeout(() => {
-        void this.resolveChallenge(challengeId);
+        runDetached('coinflip resolve', this.resolveChallenge(challengeId));
       }, FLIP_DURATION_MS);
     });
   }
@@ -444,15 +443,13 @@ class CoinflipRuntime {
   }
 
   private notifyStateSubscribers() {
-    // fire-and-forget: callers are sync. getState queries the db, and an
-    // unhandled rejection exits Node, so failures are logged here.
-    this.getState()
-      .then((state) => {
+    // callers are sync; getState queries the db
+    runDetached(
+      'coinflip state broadcast',
+      this.getState().then((state) => {
         for (const cb of this.stateSubscribers) cb(state);
       })
-      .catch((error: unknown) => {
-        logger.error('[Coinflip] state broadcast failed:', error);
-      });
+    );
   }
 
   private notifyResultSubscribers(result: TCoinflipResult) {

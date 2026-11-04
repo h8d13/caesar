@@ -9,7 +9,7 @@ import {
 import { db } from '@server/db';
 import { createHash } from 'crypto';
 import { desc, eq, isNotNull } from 'drizzle-orm';
-import { withBalanceLock } from '../shared-bindings';
+import { runDetached, withBalanceLock } from '../shared-bindings';
 import {
   BETTING_PHASE_DURATION_MS,
   CASHOUT_GRACE_PERIOD_MS,
@@ -215,7 +215,7 @@ class CrashRuntime {
     this.notifyStateSubscribers();
 
     setTimeout(() => {
-      void this.startFlyingPhase();
+      runDetached('crash flying phase', this.startFlyingPhase());
     }, BETTING_PHASE_DURATION_MS);
   }
 
@@ -234,7 +234,7 @@ class CrashRuntime {
     this.notifyStateSubscribers();
 
     this.tickInterval = setInterval(() => {
-      void this.tick();
+      runDetached('crash tick', this.tick());
     }, MULTIPLIER_TICK_INTERVAL_MS);
   }
 
@@ -290,7 +290,7 @@ class CrashRuntime {
     this.notifyResultSubscribers(result);
 
     setTimeout(() => {
-      void this.startBettingPhase();
+      runDetached('crash betting phase', this.startBettingPhase());
     }, CRASHED_PHASE_DURATION_MS);
   }
 

@@ -2,9 +2,19 @@ import { socialCreditLedger, users } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
 import { getSettings } from '@server/db/queries/server';
+import { logger } from '@server/logger';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, t } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';
+
+// Timer-driven game work runs detached (phase changes, ticks, expiry). An
+// unhandled rejection exits Node, so failures are logged here. A failed
+// phase change still stops that game's loop.
+const runDetached = (label: string, work: Promise<unknown>) => {
+  work.catch((error: unknown) => {
+    logger.error(`[Games] ${label} failed:`, error);
+  });
+};
 
 const assertGamesEnabled = async (): Promise<void> => {
   const settings = await getSettings();
@@ -98,5 +108,6 @@ export {
   assertGamesEnabled,
   createGameLedgerBindings,
   gamesProcedure,
+  runDetached,
   withBalanceLock
 };
