@@ -44,4 +44,20 @@ const joinedUserBaseFields = {
   invitedBy: users.invitedBy
 };
 
-export { joinedUserBaseFields, publicUserBaseFields };
+type TSelfOnlyFields = {
+  appearOffline?: unknown;
+  allowMultipleSessions?: unknown;
+  sendDmReadReceipts?: unknown;
+};
+
+// The per-user settings selected above with the public fields. Only the
+// user's own row may carry them; every row sent to peers goes through this,
+// so a new self-only flag is added here once.
+const stripSelfOnlyFields = <T extends TSelfOnlyFields>({
+  appearOffline: _appearOffline,
+  allowMultipleSessions: _allowMultipleSessions,
+  sendDmReadReceipts: _sendDmReadReceipts,
+  ...peerSafe
+}: T): Omit<T, keyof TSelfOnlyFields> => peerSafe;
+
+export { joinedUserBaseFields, publicUserBaseFields, stripSelfOnlyFields };

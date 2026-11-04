@@ -8,6 +8,7 @@ import { getEmojis } from '@server/db/queries/emojis';
 import { getRoles } from '@server/db/queries/roles';
 import { getPublicSettings, getSettings } from '@server/db/queries/server';
 import { getSounds } from '@server/db/queries/sounds';
+import { stripSelfOnlyFields } from '@server/db/queries/user-fields';
 import { getPublicUsers } from '@server/db/queries/users';
 import { logger } from '@server/logger';
 import { enqueueActivityLog } from '@server/queues/activity-log';
@@ -90,8 +91,8 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
     //   self) so the UI matches what peers see. the `appearOffline` flag
     //   itself is kept only on the self row so the eye toggle reflects
     //   truth.
-    // - peers see masked status when their `appearOffline` is true, and
-    //   the flag itself is stripped so it never leaves the server.
+    // - peers see masked status when their `appearOffline` is true; all
+    //   self-only flags are stripped (stripSelfOnlyFields).
     // one pass over the sockets, not one per user
     const onlineUserIds = new Set(getOnlineUserIds());
     const processedPublicUsers = publicUsers.map((u) => {
@@ -101,12 +102,7 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
         : UserStatus.OFFLINE;
       const status = u.appearOffline ? UserStatus.OFFLINE : realStatus;
 
-      return {
-        ...u,
-        status,
-        appearOffline: isSelf ? u.appearOffline : undefined,
-        allowMultipleSessions: isSelf ? u.allowMultipleSessions : undefined
-      };
+      return isSelf ? { ...u, status } : { ...stripSelfOnlyFields(u), status };
     });
 
     const foundPublicUser = processedPublicUsers.find(
@@ -120,17 +116,11 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
 
     logger.info(`%s joined the server`, ctx.user.name);
 
-    // broadcast to peers with the masked status and without self-only flags.
-    const {
-      appearOffline: ownAppearOffline,
-      allowMultipleSessions: _ownMultiSession,
-      ...broadcastBase
-    } = foundPublicUser;
-    void _ownMultiSession;
-
     ctx.pubsub.publish(ServerEvents.USER_JOIN, {
-      ...broadcastBase,
-      status: ownAppearOffline ? UserStatus.OFFLINE : UserStatus.ONLINE
+      ...stripSelfOnlyFields(foundPublicUser),
+      status: foundPublicUser.appearOffline
+        ? UserStatus.OFFLINE
+        : UserStatus.ONLINE
     });
 
     if (connectionInfo?.ip) {

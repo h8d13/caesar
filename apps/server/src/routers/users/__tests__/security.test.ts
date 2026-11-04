@@ -93,6 +93,24 @@ describe('users.setAllowMultipleSessions', () => {
   });
 });
 
+describe('self-only user flags', () => {
+  test('join response keeps them on the own row and strips them from peers', async () => {
+    const { initialData } = await initTest(1);
+    const ownRow = initialData.users.find((u) => u.id === 1);
+    const peerRow = initialData.users.find((u) => u.id === 2);
+
+    expect(ownRow).toHaveProperty('sendDmReadReceipts');
+    expect(peerRow).toBeDefined();
+    for (const key of [
+      'appearOffline',
+      'allowMultipleSessions',
+      'sendDmReadReceipts'
+    ]) {
+      expect(peerRow).not.toHaveProperty(key);
+    }
+  });
+});
+
 describe('/login epoch behavior with allowMultipleSessions', () => {
   test('default (false) bumps sessionEpoch on each login', async () => {
     const before = await epochFor(1);

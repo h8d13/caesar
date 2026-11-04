@@ -20,6 +20,7 @@ import { getMessage } from './queries/messages';
 import { getRole } from './queries/roles';
 import { getPublicSettings } from './queries/server';
 import { getSoundById } from './queries/sounds';
+import { stripSelfOnlyFields } from './queries/user-fields';
 import { getAllUserIds, getPublicUserById } from './queries/users';
 
 // Broadcasts announce writes that have already committed, and most callers
@@ -201,20 +202,8 @@ const publishUser = logFailures(
     const targetEvent =
       type === 'create' ? ServerEvents.USER_CREATE : ServerEvents.USER_UPDATE;
 
-    // strip self-only flags at the broadcast boundary: these are per-user
-    // settings and must never reach peers. self-targeted updates use the
-    // respective mutation return values to refresh local own-user state.
-    const {
-      appearOffline,
-      allowMultipleSessions,
-      sendDmReadReceipts,
-      ...broadcastUser
-    } = user;
-    void appearOffline;
-    void allowMultipleSessions;
-    void sendDmReadReceipts;
-
-    pubsub.publish(targetEvent, broadcastUser);
+    // self-targeted updates refresh own state from the mutation's return
+    pubsub.publish(targetEvent, stripSelfOnlyFields(user));
   }
 );
 
