@@ -32,9 +32,8 @@ const StorageSizeControl = memo(
     }: TStorageSizeControlProps) => {
         const valueInMb = Math.round(value / MEGABYTE);
 
-        // Clamping on every keystroke made values unreachable whenever the
-        // minimum exceeds a partial entry (quota min is 1024 MB: typing "2"
-        // snapped to 1024). Edit a draft, clamp and commit on blur/Enter.
+        // draft, clamp on blur/Enter: per-keystroke clamping snaps partial
+        // input up to the minimum (quota min is 1024 MB)
         const [draft, setDraft] = useState<string | null>(null);
 
         const commitDraft = useCallback(() => {

@@ -33,7 +33,7 @@ const wrapInline = (editor: Editor, open: string, close: string): boolean =>
         })
         .run();
 
-// Block quote: prefix the current line with "> ".
+// prefix the current line ("> " quote, "# " headings)
 const prefixLine = (editor: Editor, prefix: string): boolean =>
     editor
         .chain()

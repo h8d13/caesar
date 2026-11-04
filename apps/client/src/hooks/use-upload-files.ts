@@ -56,7 +56,7 @@ const useUploadFiles = (
 
     // ephemeral DM attachments piggyback on the same E2EE context as
     // message content. resolve a per-upload key lazily so the dialog
-    // can sit idle without paying argon2 / ECDH costs.
+    // can sit idle without paying the ECDH cost.
     const e2eeCtx = useDmE2eeContext(channelId, isDmChannel);
     const ownUserId = useOwnUserId();
 

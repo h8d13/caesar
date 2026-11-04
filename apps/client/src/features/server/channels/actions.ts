@@ -65,12 +65,10 @@ export const setChannelPermissions = (
 
     if (!channel?.private) return;
 
-    // user is in a channel that is private, so we need to check if their permissions changed
     const canViewChannel =
         permissions[selectedChannel]?.permissions['VIEW_CHANNEL'];
 
     if (!canViewChannel) {
-        // user lost VIEW_CHANNEL permission, deselect the channel
         setSelectedChannelId(undefined);
     }
 };
@@ -109,9 +107,8 @@ export const setChannelReadState = (
     if (isViewingChannel) {
         actualCount = 0;
 
-        // we also need to notify the server that the channel has been read
-        // otherwise the count will be wrong when the user joins the server again
-        // we can't do it here to avoid infinite loops
+        // markAsRead is sent by the select / arrival paths; sending it here
+        // loops
     }
 
     store.dispatch(

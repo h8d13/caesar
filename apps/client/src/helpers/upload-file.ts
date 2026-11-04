@@ -15,7 +15,7 @@ type TUploadProgress = {
 type TUploadFileOptions = {
     onProgress?: (progress: TUploadProgress) => void;
     // when set, encrypt the file bytes with AES-GCM under this key before
-    // upload. server stores ciphertext opaquely; the matching openBytes
+    // upload. server stores ciphertext opaquely; the matching openStreamed
     // call on the renderer side restores the original payload.
     encryptKey?: CryptoKey;
 };
@@ -31,8 +31,9 @@ const uploadFile = async (
 
     if (options?.encryptKey) {
         try {
-            // streamed: only ~1 MB of plaintext in memory at a time, no
-            // 256 MB AES-GCM single-call limit, multi-GB files supported.
+            // chunked: plaintext is read 1 MB at a time and AES-GCM's 256 MB
+            // single-call limit does not apply; the ciphertext still builds
+            // up in memory before upload.
             const sealed = await sealStreamed(options.encryptKey, file);
             body = sealed;
             contentLength = sealed.size;

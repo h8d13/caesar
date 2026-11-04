@@ -1,7 +1,5 @@
 /// <reference types="vite/client" />
-/// <reference types="zzfx" />
 
-// Extend the Window interface for global functions
 declare global {
     interface Window {
         useToken: (token: string) => Promise<void>;

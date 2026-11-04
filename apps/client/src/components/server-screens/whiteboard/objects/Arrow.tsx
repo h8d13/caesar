@@ -14,7 +14,6 @@ const Arrow = memo(({ layer, onPointerDown, selectionColor }: ArrowProps) => {
     const { x, y, x2, y2, fill } = layer;
     const color = selectionColor || colorToCss(fill);
 
-    // Calculate arrowhead points
     const angle = Math.atan2(y2 - y, x2 - x);
     const ax1 = x2 - ARROW_HEAD_SIZE * Math.cos(angle - Math.PI / 6);
     const ay1 = y2 - ARROW_HEAD_SIZE * Math.sin(angle - Math.PI / 6);
@@ -45,7 +44,6 @@ const Arrow = memo(({ layer, onPointerDown, selectionColor }: ArrowProps) => {
                 }}
                 pointerEvents="none"
             />
-            {/* Arrowhead */}
             <polygon
                 points={`${x2},${y2} ${ax1},${ay1} ${ax2},${ay2}`}
                 fill={color}

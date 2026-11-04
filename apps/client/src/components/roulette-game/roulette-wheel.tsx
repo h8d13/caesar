@@ -103,10 +103,8 @@ const RouletteWheel = memo(() => {
 
     return (
         <div className="flex flex-col items-center gap-1">
-            {/* Pointer */}
             <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[12px] border-l-transparent border-r-transparent border-t-yellow-400 z-10" />
 
-            {/* Wheel container */}
             <div className="relative -mt-1 w-48 h-48">
                 <div
                     className="w-full h-full rounded-full border-4 border-yellow-400/50 shadow-lg"
@@ -118,7 +116,6 @@ const RouletteWheel = memo(() => {
                             : 'none'
                     }}
                 >
-                    {/* Numbers */}
                     {WHEEL_ORDER.map((num, i) => {
                         const deg = i * SEGMENT_ANGLE + SEGMENT_ANGLE / 2;
                         return (
@@ -136,14 +133,12 @@ const RouletteWheel = memo(() => {
                         );
                     })}
 
-                    {/* Center hub */}
                     <div className="absolute inset-0 flex items-center justify-center">
                         <div className="w-9 h-9 rounded-full bg-background border-2 border-yellow-400/50" />
                     </div>
                 </div>
             </div>
 
-            {/* Winning number display */}
             <div
                 className={cn(
                     'text-lg font-bold tabular-nums mt-1',

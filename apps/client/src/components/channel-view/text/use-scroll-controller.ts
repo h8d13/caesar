@@ -1,8 +1,6 @@
 import { isAutoScrollLocked } from '@/features/server/messages/scroll-lock';
 import { useCallback, useEffect, useRef } from 'react';
 
-// TODO: this might be improved in the future
-
 type TUseScrollControllerProps = {
     messages: unknown[];
     fetching: boolean;
@@ -44,7 +42,6 @@ const useScrollController = ({
         return distanceFromBottom <= 120;
     }, []);
 
-    // scroll to bottom function
     const scrollToBottom = useCallback(() => {
         const container = containerRef.current;
         if (!container) return;
@@ -52,7 +49,7 @@ const useScrollController = ({
         container.scrollTop = container.scrollHeight;
     }, []);
 
-    // detect scroll-to-top and load more messages
+    // top pages older; bottom pages newer when detached (jump window)
     const onScroll = useCallback(() => {
         const container = containerRef.current;
 

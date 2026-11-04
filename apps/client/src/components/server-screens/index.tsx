@@ -87,7 +87,7 @@ const ServerScreensProvider = memo(() => {
 
         component = (
             <Suspense fallback={null}>
-                {/* @ts-expect-error - é lidar irmoum */}
+                {/* @ts-expect-error - ScreensMap entries have distinct prop types */}
                 {createElement(ScreensMap[openServerScreen], baseProps)}
             </Suspense>
         );

@@ -261,11 +261,9 @@ const MessageRenderer = memo(
                     </div>
                 )}
 
-                {/* No per-file delete here: deleting the message already
-                    removes its attachments (delete-message.ts drops every
-                    file row and blob first), so a second affordance only
-                    differed on multi-file messages. The mod view keeps its
-                    own FileCard remove for moderation. */}
+                {/* No per-file delete: deleting the message drops its files
+                    (server delete-message.ts); the mod view keeps its own
+                    remove. */}
                 {message.files.length > 0 && !disableFiles && (
                     <div className="flex gap-1 flex-wrap">
                         {message.files.map((file) =>

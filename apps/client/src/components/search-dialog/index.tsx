@@ -160,7 +160,6 @@ const SearchDialog = ({ open, onClose }: TSearchDialogProps) => {
         [onClose]
     );
 
-    // reset state when dialog closes
     useEffect(() => {
         if (!open) {
             // eslint-disable-next-line react-hooks/set-state-in-effect -- reset local form state when the dialog is closed by parent
@@ -174,7 +173,6 @@ const SearchDialog = ({ open, onClose }: TSearchDialogProps) => {
         }
     }, [open]);
 
-    // focus input when dialog opens
     useEffect(() => {
         if (open) {
             setTimeout(() => inputRef.current?.focus(), 0);

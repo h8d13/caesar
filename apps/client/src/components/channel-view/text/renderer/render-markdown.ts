@@ -6,18 +6,6 @@ marked.setOptions({
     gfm: true
 });
 
-/**
- * Converts stored message content to rendered HTML for display.
- *
- * The editor stores plain text wrapped in <p> tags with literal markdown
- * syntax (e.g. `<p># heading</p><p>**bold**</p>`).
- *
- * This function strips the editor HTML wrapper, runs the text through
- * a proper markdown parser, then linkifies any remaining bare URLs.
- *
- * Old messages stored as proper HTML (with <h1>, <strong>, etc.) pass
- * through safely marked preserves existing HTML tags.
- */
 const FENCE_LINE = /^\s*(```|~~~)/;
 
 // Enter in the editor starts a new <p>, so code typed line by line arrives
@@ -41,6 +29,10 @@ const joinParagraphs = (paragraphs: string[]): string => {
     return text;
 };
 
+// Stored content is editor <p>s with literal markdown (`<p>**bold**</p>`):
+// unwrap them, decode &lt;/&gt;/&amp; (escaped tags revive here and are
+// handled by sanitizeElement), run marked, then linkify bare URLs. Older
+// messages stored as HTML pass through: marked keeps existing tags.
 const renderMarkdown = (content: string): string => {
     // Convert editor HTML to markdown-like text:
     // - <br> variants → newlines

@@ -7,10 +7,8 @@ type Props = {
     loading: boolean;
 };
 
-// Shared Cancel/Save Changes footer for every settings card. Each call
-// site otherwise reproduced this exact block including identifier names
-// (closeServerScreens, submit, loading). Granularity preserved: the only
-// site-specific bits (the submit handler + loading flag) are props.
+// Shared settings footer. Cancel closes all server screens, not just this
+// card.
 const SettingsFooterActions = memo(({ onSave, loading }: Props) => (
     <CardAction className="max-sm:w-full">
         <div className="flex gap-2 max-sm:w-full">

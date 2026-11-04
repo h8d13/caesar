@@ -72,11 +72,8 @@ const EphemeralToggle = memo(({ channelId }: TEphemeralToggleProps) => {
     const [enabled, setEnabled] = useState(false);
     const queryClient = useQueryClient();
 
-    // Keep the E2EE context cache (used by compose + render) consistent
-    // with the toggle state. Without this, compose would still think the
-    // channel is ephemeral after a toggle-off and encrypt regardless,
-    // which the server now rejects but produces a worse UX than a fresh
-    // local view.
+    // Refresh the cached E2EE context after a toggle. Send does not rely on
+    // it: onSend re-checks dms.getEphemeral before every message.
     const invalidateE2eeContext = useCallback(() => {
         void queryClient.invalidateQueries({
             queryKey: ['dms', 'e2eeContext', channelId]

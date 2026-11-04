@@ -5,7 +5,7 @@ type TEmojiItem = {
     emoji?: string;
 };
 
-// checks if the emoji is likely to be rendered as a text presentation emoji, which often look worse and less consistent across platforms than image presentation emojis
+// text-presentation emoji render inconsistently across platforms
 const isTextPresentation = (emoji: string): boolean => {
     const cp = emoji.codePointAt(0);
 

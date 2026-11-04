@@ -401,7 +401,7 @@ const sfxIncomingCallRing = () => {
 };
 
 // PEER_INCOMING_CALL_RING brighter ascending arpeggio for the callee side.
-// The caller hears the mellow A-minor chord from sfxIncomingCallRing as
+// The caller hears the mellow A-major chord from sfxIncomingCallRing as
 // their dial tone; the callee hears this so the two ends are audibly
 // distinct and the incoming side feels more attention-grabbing.
 const sfxPeerIncomingCallRing = () => {

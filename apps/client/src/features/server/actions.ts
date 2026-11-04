@@ -49,18 +49,14 @@ export const joinServer = async (handshakeHash: string) => {
 
     store.dispatch(serverSliceActions.setInitialData(data));
 
-    // E2EE pub-key registration lives in <E2eeKeyRegister />, which fires
-    // when both isConnected and priv are ready. Keeping it out of this
-    // imperative path avoids the auth race when derive defers past
-    // joinServer (the WS context's authenticated flag is set by
-    // joinServer; a register call that beats it returns UNAUTHORIZED).
+    // E2EE pub-key registration lives in <E2eeKeyRegister />, keyed on
+    // isConnected: keys.register returns UNAUTHORIZED until joinServer has
+    // authenticated the WS context.
 };
 
 export const disconnectFromServer = () => {
-    // Explicit logout: drop the resume hint up-front before cleanup so it
-    // survives any beforeunload race (cleanup's localStorage clear is gated
-    // on isNavigatingAway to protect refresh, which can flip true between
-    // click and the cleanup line otherwise).
+    // Explicit logout: drop the resume hint before cleanup, which bails
+    // while a previous cleanup is still in flight.
     removeLocalStorageItem(LocalStorageKey.HAS_SESSION);
 
     // The session cookie is HttpOnly, so only the server can clear it: this

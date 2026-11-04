@@ -36,7 +36,6 @@ const ChannelPermissionList = memo(
         channelType,
         onTogglePermission
     }: TChannelPermissionListProps) => {
-        // Convert permissions array to a map for quick lookup
         const permissionsMap = useMemo(() => {
             const map = new Map<string, boolean>();
             permissions.forEach((perm) => {

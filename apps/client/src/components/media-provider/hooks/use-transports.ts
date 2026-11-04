@@ -367,7 +367,7 @@ const useTransports = ({
                 ];
 
                 cleanupEvents.forEach((event) => {
-                    // @ts-expect-error - YOLO
+                    // @ts-expect-error - event is a string, not keyof the consumer event map
                     newConsumer?.on(event, () => {
                         logVoice(
                             `Consumer cleanup event "${event}" triggered`,
@@ -603,11 +603,6 @@ const useTransports = ({
         logVoice('Transports cleanup complete');
     }, []);
 
-    // All ref objects (producerTransport, consumerTransport, consumers) are
-    // stable across renders by definition of useRef. All callbacks above are
-    // useCallback'd with stable deps. Memoizing the return shape on those
-    // identities means MediaProvider only re-spreads when something material
-    // changed, instead of every render.
     return useMemo(
         () => ({
             producerTransport,

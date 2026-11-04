@@ -152,7 +152,7 @@ const Categories = memo(() => {
         const sorted = [...channels].sort((a, b) => a.position - b.position);
         for (const ch of sorted) {
             if (ch.categoryId === null) continue;
-            // no `??=`: the React Compiler skips the whole file on it
+            // no `??=`: the React Compiler skips the component on it
             const ids = m[ch.categoryId] ?? [];
 
             ids.push(ch.id);
@@ -306,13 +306,8 @@ const Categories = memo(() => {
         const destIds = (byCat[oCat] ?? []).filter((id) => id !== chId);
         destIds.splice(source.index, 0, chId);
 
-        // Persist the post-drop layout so the UI doesn't snap back while
-        // the server confirms; the check above clears it on redux update.
-        // Intra-category drag has sCat === oCat: writing both [oCat] and
-        // [sCat] into the same object literal collapses on the duplicate
-        // key (sourceIds wins, dragged channel vanishes from the override
-        // until refresh). Only write the source entry when categories
-        // actually differ.
+        // Keep the post-drop layout until redux catches up (no snap-back).
+        // Same-category drags skip [sCat]: it would overwrite destIds.
         const sourceIds = (byCat[sCat] ?? baseByCat[sCat] ?? []).filter(
             (id) => id !== chId
         );

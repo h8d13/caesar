@@ -35,9 +35,8 @@ export const handleUserJoin = (user: TJoinedPublicUser) => {
     const state = store.getState();
     const foundUser = userByIdSelector(state, user.id);
 
-    // trust the broadcast status: the server masks it to OFFLINE for users
-    // who have appearOffline=true. hard-coding ONLINE here previously made
-    // appear-offline invisible to peers.
+    // trust the broadcast status: the server masks it to OFFLINE for
+    // appearOffline users
     if (foundUser) {
         updateUser(user.id, user);
     } else {

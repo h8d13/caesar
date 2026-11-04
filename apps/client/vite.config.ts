@@ -2,8 +2,8 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig, lazyPlugins } from 'vite-plus';
-// lives in public/ so it ships to dist and /manifest.json resolves in prod
 import pkg from './package.json' with { type: 'json' };
+// lives in public/ so it ships to dist and /manifest.json resolves in prod
 import manifest from './public/manifest.json' with { type: 'json' };
 import dumpDevMaps from './vite-plugin-dump-dev-maps.ts';
 import noChunkCycles from './vite-plugin-no-chunk-cycles.ts';

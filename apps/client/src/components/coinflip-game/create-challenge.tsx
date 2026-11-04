@@ -33,7 +33,6 @@ const CreateChallenge = memo(() => {
 
     return (
         <div className="flex flex-col gap-3 px-4">
-            {/* Side selector */}
             <div className="flex gap-2">
                 <Button
                     variant={
@@ -65,7 +64,6 @@ const CreateChallenge = memo(() => {
                 </Button>
             </div>
 
-            {/* Amount input */}
             <Input
                 type="number"
                 placeholder="Bet amount"
@@ -76,7 +74,6 @@ const CreateChallenge = memo(() => {
                 onEnter={handleCreate}
             />
 
-            {/* Amount presets */}
             <div className="flex flex-wrap gap-2">
                 {AMOUNT_PRESETS.map((preset) => (
                     <Button
@@ -90,7 +87,6 @@ const CreateChallenge = memo(() => {
                 ))}
             </div>
 
-            {/* Create button */}
             <Button onClick={handleCreate} disabled={loading}>
                 {loading ? 'Creating...' : 'Challenge'}
             </Button>

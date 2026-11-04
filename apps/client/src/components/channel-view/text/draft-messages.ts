@@ -7,7 +7,7 @@ import {
 } from '@/helpers/storage';
 import { isEmptyMessage } from '@caesar/shared';
 
-// defines the key for a draft message, channel/chat id
+// `ch-<channelId>-<ownUserId>`: drafts stay per account in a shared browser
 type TDraftMessageKey = string;
 
 type TDraftMessages = Record<TDraftMessageKey, string>;

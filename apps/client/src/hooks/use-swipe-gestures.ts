@@ -30,7 +30,7 @@ const useSwipeGestures = (handlers: TSwipeHandlers): TSwipeGestureHandlers => {
     }, []);
 
     const handleTouchEnd = useCallback(() => {
-        const swipeThreshold = 50; // minimum distance for swipe
+        const swipeThreshold = 50; // px
         const diffX = touchEndX.current - touchStartX.current;
         const diffY = Math.abs(touchEndY.current - touchStartY.current);
 

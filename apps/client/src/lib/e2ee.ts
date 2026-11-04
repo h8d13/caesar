@@ -3,9 +3,9 @@
 // priv = argon2id(password, identity). deterministic, heap-only,
 // never sent. derived at manual login before the session starts, so it is
 // fixed for the session's lifetime. auto-login resumes the session cookie
-// only => no password, so priv comes back via the session key below (sealed blob here,
-// wrap key on the server); without both, ephemeral DMs stay locked until the
-// user logs out and back in.
+// only => no password, so priv comes back via the session key below
+// (sealed blob here, wrap key on the server); without both, ephemeral DMs
+// stay locked until the user logs out and back in.
 //
 // "ephemeral" = server TTL, not forward secrecy: password holder can
 // always rederive and read still-live msgs.
@@ -86,16 +86,9 @@ const deriveAuthKey = (priv: Uint8Array): string =>
         )
     );
 
-// Derive priv from password+identity and verify it matches the user's
-// worker-backed async derivation (avoids freezing the main thread)
-//
-// argon2id with the params above blocks 1-5s depending on the machine.
-// On the login flow that block translates to a frozen UI; if the user
-// is on a slow device or the tab is throttled it can read as "hang".
-// The worker computes off-thread; callers await a Promise.
-//
-// Sync derivePriv() above stays available for tests; UI callers use
-// derivePrivAsync.
+// Worker-backed derivation: argon2id with the params above blocks 1-5s on
+// the main thread, which freezes the login UI. Sync derivePriv() stays for
+// tests; UI callers go through deriveCredentials.
 
 let _worker: Worker | null = null;
 let _workerSeq = 0;
@@ -131,7 +124,7 @@ const getWorker = (): Worker => {
         if (e.data.error) pending.reject(new Error(e.data.error));
         else if (e.data.priv) pending.resolve(e.data.priv);
         // Release worker once the queue drains. Respawn is cheap; the
-        // bundle is small and derive runs rarely (login + re-prompt).
+        // bundle is small and derive runs rarely (login + password change).
         if (_workerPending.size === 0) terminateWorker();
     };
     _worker.onerror = (e) => {
@@ -291,10 +284,9 @@ const restoreSessionKey = async () => {
     }
 };
 
-// chunked variants for files. AES-GCM has a 256 MB single-call hard
-// limit (NIST SP 800-38D) plus the obvious memory-pressure problem of
-// holding multi-GB plaintext + ciphertext + Blob in heap; chunking
-// fixes both. layout:
+// chunked variants for files: AES-GCM has a 256 MB single-call hard limit
+// (NIST SP 800-38D), and plaintext is read one chunk at a time. The output
+// Blob is still assembled in memory. layout:
 //   header  : "CESE"(4) || ver(1) || chunkSize(4 LE) || plainSize(8 LE)
 //   chunks  : [ nonce(12) || ct(plainBytes + 16-byte tag) ] *
 // each chunk carries its index as AAD so reordering fails auth.

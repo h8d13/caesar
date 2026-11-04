@@ -64,8 +64,8 @@ const useVoiceControls = ({
             }
         } catch (error) {
             updateOwnVoiceState({ micMuted: !newState });
-            // Unmuting starts a getUserMedia stream
-            // empty-message hazard as the webcam path. Use a fixed string.
+            // getUserMedia rejects with an empty/unhelpful DOMException
+            // message: use a fixed string
             const isUnmuting = !newState;
             toast.error(
                 isUnmuting
@@ -209,8 +209,8 @@ const useVoiceControls = ({
                 // ignore
             }
 
-            // getDisplayMedia rejection on cancel / denial is also a
-            // DOMException with no useful message. Same fix as webcam.
+            // getDisplayMedia rejects on cancel/denial with an unhelpful
+            // DOMException: use a fixed string
             toast.error(
                 newState
                     ? 'Could not start screen share.'

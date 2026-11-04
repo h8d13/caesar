@@ -62,8 +62,8 @@ const StoryViewerInner = memo(({ userId }: TInnerProps) => {
         setIndex((i) => Math.max(i - 1, 0));
     }, []);
 
-    // auto-advance the active segment. re-armed whenever the index changes;
-    // empty deps on images.length keep it stable across the same set.
+    // auto-advance: re-armed on every index change, so each segment gets a
+    // full SEGMENT_MS
     useEffect(() => {
         if (loading || images.length === 0) return;
 
@@ -153,7 +153,6 @@ const StoryViewerInner = memo(({ userId }: TInnerProps) => {
                     ))}
                 </div>
 
-                {/* header */}
                 <div className="z-10 mt-2 flex items-center gap-2">
                     <UserAvatar
                         userId={userId}
@@ -186,7 +185,6 @@ const StoryViewerInner = memo(({ userId }: TInnerProps) => {
                     </div>
                 </div>
 
-                {/* image */}
                 <div className="z-0 flex flex-1 items-center justify-center overflow-hidden">
                     <img
                         src={getFileUrl(current.file)}

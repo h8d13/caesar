@@ -49,10 +49,7 @@ export const BUILT_IN_COMMANDS: TBuiltInCommand[] = [
     }
 ];
 
-/**
- * Try to handle a message as a built-in slash command.
- * Returns true if the message was handled as a command, false otherwise.
- */
+// true when the message was a built-in command
 export const handleBuiltInCommand = (
     html: string,
     channelId: number

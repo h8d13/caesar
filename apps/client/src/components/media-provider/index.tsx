@@ -1011,7 +1011,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                         async () => {
                             logVoice('Screen share audio producer closed');
 
-                            // teardown race: see video handler comment.
+                            // teardown race: see audio handler comment.
                             try {
                                 await getTRPCClient().voice.closeProducer.mutate(
                                     { kind: StreamKind.SCREEN_AUDIO }

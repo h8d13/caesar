@@ -160,10 +160,8 @@ const ItemWrapper = memo(
         style,
         disabled = false
     }: TItemWrapperProps) => {
-        // Plain <div> isn't keyboard-reachable. Adding role + tabIndex + a
-        // key handler makes Tab focus the row and Enter/Space activate it,
-        // matching every other selectable element in the app. The row is
-        // also the drag handle (handleRef).
+        // div row (also the drag handle): role/tabIndex/Enter/Space make it
+        // keyboard-operable
         const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
             if (disabled) return;
             if (e.key === 'Enter' || e.key === ' ') {

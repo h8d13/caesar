@@ -15,9 +15,8 @@ const base64ToBytes = (b64: string): Uint8Array => {
     return out;
 };
 
-// like base64ToBytes but returns null on malformed input instead of throwing.
-// useful when decoding values that might be plaintext (older messages) or
-// ciphertext (post-E2EE messages) without an explicit marker.
+// like base64ToBytes but returns null on malformed input instead of throwing:
+// peer public keys come from the server and may be malformed.
 const base64ToBytesSafe = (b64: string): Uint8Array | null => {
     try {
         return base64ToBytes(b64);

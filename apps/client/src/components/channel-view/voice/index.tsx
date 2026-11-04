@@ -26,7 +26,6 @@ const VoiceChannel = memo(({ channelId }: TChannelProps) => {
     const cards = useMemo(() => {
         const cards: React.ReactNode[] = [];
 
-        // Check if there are any video streams at all
         const hasAnyVideoStreams = voiceUsers.some(
             (user) => user.state.webcamEnabled || user.state.sharingScreen
         );
@@ -45,12 +44,9 @@ const VoiceChannel = memo(({ channelId }: TChannelProps) => {
             );
             const hasVideo = voiceUser.state.webcamEnabled;
 
-            // Skip the user card entirely when the local user has hidden
-            // this participant's video stream. Audio is rendered separately
-            // (VoiceAudioStreams), so hiding the visual tile does NOT kill
-            // sound it just frees up the grid slot. Own card is exempt:
-            // hiding "own stream" suppresses the local video preview INSIDE
-            // the card (see useMediaRefs)
+            // hidden peer video drops the tile (audio stays in
+            // VoiceAudioStreams); own card stays, its preview blanks
+            // (useMediaRefs)
             const isOwn = voiceUser.id === ownUserId;
             const showUserCard =
                 (isOwn || !videoLocallyHidden) &&

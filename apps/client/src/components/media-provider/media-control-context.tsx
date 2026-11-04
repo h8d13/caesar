@@ -15,8 +15,7 @@ import {
     useState
 } from 'react';
 
-// volume keys are string-based for persistence
-// user volumes: "user-{userId}"
+// persisted volume keys: "user-<id>", "userscreen-<id>", "soundboard"
 type TVolumeKey = string;
 
 type TVolumeSettings = Record<TVolumeKey, number>;

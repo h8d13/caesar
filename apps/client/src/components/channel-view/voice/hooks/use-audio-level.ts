@@ -1,11 +1,9 @@
 import { useOwnVoiceUser } from '@/features/server/hooks';
 import { useEffect, useRef, useState } from 'react';
 
-// Speaking intensity buckets. The only externally observed signals are
-// isSpeaking and speakingIntensity, so we compute the bucket inside the RAF
-// loop and only setState when it flips. Saves ~60 re-renders/sec per voice
-// card, which previously cascaded through redux (setUserSpeaking) to every
-// subscriber of that user's speaking state.
+// Speaking intensity buckets: setState only when the bucket flips. Each flip
+// dispatches setUserSpeaking (SpeakingDetector), so per-sample updates would
+// fan out through redux to every subscriber of that user.
 enum SpeakingIntensity {
     Silent = 0,
     Quiet = 1,

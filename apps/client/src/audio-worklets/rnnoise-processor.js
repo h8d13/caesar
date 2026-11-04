@@ -1,7 +1,7 @@
 const RNNOISE_WORKLET_NAME = 'caesar-rnnoise';
 const FRAME_SIZE = 480; // RNNoise processes 480 samples (10ms at 48kHz)
 const BYTES_PER_FLOAT = 4;
-// ring buffer size: must hold enough to cover latency (2 rnnoise frames)
+// ring buffer size: must hold enough to cover latency (4 rnnoise frames)
 const RING_SIZE = FRAME_SIZE * 4;
 // pre-allocated mono downmix buffer (128 = default AudioWorklet render quantum)
 const MAX_RENDER_QUANTUM = 128;
@@ -233,7 +233,7 @@ class RNNoiseProcessor extends AudioWorkletProcessor {
       return true;
     }
 
-    // rnnoise is mono downmix input channels to mono
+    // rnnoise is mono: downmix
     // re-use pre-allocated buffer to avoid GC pressure on the audio thread
     let monoInput = this.monoBuffer;
 

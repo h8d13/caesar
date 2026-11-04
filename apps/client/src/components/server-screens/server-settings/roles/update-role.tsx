@@ -55,7 +55,7 @@ const UpdateRole = memo(
             standard: 'jedec'
         });
 
-        // functional update: stable across toggles, see PermissionList
+        // functional update: stable across toggles, see PermissionToggleRow
         const onTogglePermission = useCallback(
             (permission: Permission, enabled: boolean) =>
                 setValues((prev) => ({

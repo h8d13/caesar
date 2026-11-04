@@ -123,7 +123,7 @@ const cleanup = (keepSession = false) => {
     clearPriv();
     queryClient.clear();
 
-    // this should help Firefox users who report that auto login is not consistent
+    // re-entrancy guard: wsClient.close() fires onClose, which calls back here
     setTimeout(() => {
         isCleaningUp = false;
     }, 100);

@@ -7,9 +7,7 @@ import {
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 
-// "MM-DD" of tomorrow in the user's local timezone. We only care about
-// month and day for matching the user's birth year is stored but not
-// used in the comparison.
+// "MM-DD" of tomorrow, local time; birth year is ignored
 const tomorrowMMDD = (): string => {
     const t = new Date();
     t.setDate(t.getDate() + 1);

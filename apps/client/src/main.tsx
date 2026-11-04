@@ -46,8 +46,7 @@ createRoot(document.getElementById('root')!).render(
                         without hitting a null Redux context. */}
                     <Toaster />
                     <StoreDebug />
-                    {/* Single TooltipProvider for the whole app. Tooltip /
-                        TooltipRoot no longer instantiate their own. */}
+                    {/* Tooltip/TooltipRoot rely on this single provider */}
                     <TooltipProvider delayDuration={200}>
                         <DevicesProvider>
                             <DialogsProvider />

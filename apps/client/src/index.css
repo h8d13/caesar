@@ -149,7 +149,6 @@ body,
   height: 100%;
 }
 
-/* Define CSS variables for light and dark themes */
 :root {
   --scrollbar-width: 12px;
   --scrollbar-track-color-light: #f1f1f1;

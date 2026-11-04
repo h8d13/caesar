@@ -8,9 +8,9 @@ import { dmKey, hasPriv, open } from './e2ee';
 import { useDmE2eeContext } from './use-dm-e2ee';
 
 // Bundle the crypto-context fields a caller needs for write paths
-// (encrypting on edit). null when the message can't be encrypted: not
-// in an ephemeral DM, peer hasn't registered a key, or we don't know
-// our own userId yet.
+// (encrypting on edit). null when not a DM, the peer hasn't registered a
+// key, or we don't know our own userId yet. Callers decide whether the
+// message is ephemeral.
 type TE2eeWriteContext = {
     ownUserId: number;
     peerUserId: number;
@@ -58,7 +58,7 @@ const useDecryptedMessage = (
     // was ephemeral. Three render outcomes for the reply preview:
     //   parent had expiresAt null   => render parent.content verbatim.
     //   parent was ephemeral + key  => decrypt and render plaintext.
-    //   parent was ephemeral + no key (post-refresh) => null sentinel; the
+    //   parent was ephemeral + no key (no session key) => null sentinel; the
     //                                                  view renders the
     //                                                  generic fallback.
     const replyToId = message.replyTo?.id ?? null;

@@ -12,10 +12,8 @@ type Props = {
     // subcomponent, or any other identity markup.
     leftHeader: ReactNode;
     onDelete: () => void;
-    // When true the trash button gets the destructive text color.
-    // The visual stays subtle on its own, the destructive variant is
-    // for cases where the deletion is irreversible at the panel level
-    // (permission overrides) vs the usual confirm-then-delete flow.
+    // destructive color: deletes without a confirm step (permission
+    // overrides)
     deleteDestructive?: boolean;
     onClose: () => void;
     closeLabel?: string;

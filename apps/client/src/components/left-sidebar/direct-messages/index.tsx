@@ -26,8 +26,8 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { SearchUserDropdown } from './search-user-dropdown';
 
-// Client-only "close conversation". The server keeps the DM channel and
-// we just hide the entry from this reopening via SearchUserDropdown un-hides it.
+// Client-only close: the server keeps the DM channel; reopening via
+// SearchUserDropdown un-hides it.
 const readHiddenDms = (): number[] =>
     getLocalStorageItemAsJSON<number[]>(LocalStorageKey.HIDDEN_DMS, []) ?? [];
 

@@ -22,7 +22,7 @@ export const store = configureStore({
             serializableCheck: false,
             devChecks: {
                 identityFunctionCheck: {
-                    warnAfter: 0 // warn immediately
+                    warnAfter: 0
                 }
             }
         })

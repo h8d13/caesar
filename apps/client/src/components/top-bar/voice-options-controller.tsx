@@ -30,14 +30,8 @@ const VoiceOptionsController = memo(() => {
         toggleStreamVisibility
     } = useMediaControl();
 
-    // Local-only "hide own stream":
-    //   - own user card: stays in the grid, webcam preview is replaced
-    //     with the avatar (see useMediaRefs + the isOwn exemption in
-    //     voice/index.tsx).
-    //   - own screen-share card: removed from the grid entirely. The
-    //     card is purely the preview — without it there's nothing
-    //     useful to render in a placeholder.
-    // Other participants are unaffected on either count.
+    // local-only hide own stream: own card stays (avatar replaces the
+    // preview), own screen card leaves the grid
     const ownVideoKey =
         ownUserId !== undefined ? getUserVideoKey(ownUserId) : null;
     const ownScreenKey =

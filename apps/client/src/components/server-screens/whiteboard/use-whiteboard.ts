@@ -96,7 +96,7 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         null
     );
 
-    // Auto-focus text layer after creation
+    // layer in text-edit mode (new text layer or double-click)
     const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
 
     // Clipboard (local, for copy/paste)
@@ -139,7 +139,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
 
     const trpc = useMemo(() => getTRPCClient(), []);
 
-    // --- Fetch initial state ---
     useEffect(() => {
         trpc.whiteboard.getState
             .query()
@@ -154,7 +153,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [trpc]);
 
-    // --- Subscribe to remote events ---
     useEffect(() => {
         const subs = [
             trpc.whiteboard.onLayerAdd.subscribe(undefined, {
@@ -222,7 +220,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         return () => subs.forEach((s) => s.unsubscribe());
     }, [trpc]);
 
-    // --- History ---
     const { canUndo, canRedo } = historySnapshot;
 
     const undo = useCallback(() => {
@@ -245,7 +242,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         refreshHistorySnapshot();
     }, [refreshHistorySnapshot]);
 
-    // --- Cursor broadcasting ---
     const broadcastCursor = useMemo(
         () =>
             throttle((x: number, y: number) => {
@@ -258,19 +254,16 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         [trpc]
     );
 
-    // --- Layer ID generation ---
     const generateLayerId = useCallback(() => {
         return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
     }, []);
 
-    // --- Snap helper ---
     const snap = useCallback(
         (point: Point): Point =>
             snapToGridEnabled ? snapPointToGrid(point) : point,
         [snapToGridEnabled]
     );
 
-    // --- Mode changes ---
     const onModeChange = useCallback(
         (mode: CanvasMode, layerType?: LayerType) => {
             // Cancel pending line if switching away
@@ -294,7 +287,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         []
     );
 
-    // --- Start inserting a layer (pointerDown) ---
     const startInsertLayer = useCallback(
         (type: LayerType, position: Point) => {
             const pos = snap(position);
@@ -366,7 +358,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         [generateLayerId, selectedColor, snap]
     );
 
-    // --- Finalize inserted layer (pointerUp or second click for lines) ---
     const finalizeInsertLayer = useCallback(() => {
         // Check linePendingRef first (click-click lines), then insertDragRef (drag shapes)
         const drag = linePendingRef.current ?? insertDragRef.current;
@@ -413,7 +404,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         }
     }, [trpc, pushToHistory]);
 
-    // --- Delete selection ---
     const deleteSelection = useCallback(() => {
         if (selection.length === 0) return;
 
@@ -432,7 +422,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         pushToHistory(newLayers, newLayerIds);
     }, [layers, layerIds, selection, trpc, pushToHistory]);
 
-    // --- Clear all ---
     const clearAll = useCallback(() => {
         setLayers({});
         setLayerIds([]);
@@ -441,7 +430,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         pushToHistory({}, []);
     }, [trpc, pushToHistory]);
 
-    // --- Update color (sets default + applies to selection) ---
     const updateColor = useCallback(
         (color: Color) => {
             setSelectedColor(color);
@@ -466,7 +454,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         [selection, trpc]
     );
 
-    // --- Update layer value (for text/note) ---
     const updateLayerValue = useCallback(
         (layerId: string, value: string) => {
             setLayers((prev) => {
@@ -484,7 +471,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         [trpc]
     );
 
-    // --- Pointer handlers ---
     const onPointerDown = useCallback(
         (e: React.PointerEvent, point: Point) => {
             setEditingLayerId(null);
@@ -866,7 +852,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         ]
     );
 
-    // --- Layer pointer down (for selecting/translating) ---
     const onLayerPointerDown = useCallback(
         (e: React.PointerEvent, layerId: string) => {
             if (
@@ -896,7 +881,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         [camera, canvasMode, selection, svgRef, zoom]
     );
 
-    // --- Resize handle ---
     const onResizeHandlePointerDown = useCallback(
         (corner: Side, initialBounds: XYWH) => {
             setCanvasMode(CanvasMode.Resizing);
@@ -906,7 +890,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         []
     );
 
-    // --- Layer ordering ---
     const bringForward = useCallback(() => {
         if (selection.length !== 1) return;
         const id = selection[0];
@@ -951,7 +934,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         });
     }, [selection]);
 
-    // --- Double-click to edit text layer ---
     const onLayerDoubleClick = useCallback(
         (layerId: string) => {
             const layer = layers[layerId];
@@ -962,7 +944,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         [layers]
     );
 
-    // --- Copy/Paste ---
     const copySelection = useCallback(() => {
         if (selection.length === 0) return;
         const copiedLayers: Record<string, Layer> = {};
@@ -1033,7 +1014,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         clipboardRef.current = { layers: addedLayers, layerIds: addedIds };
     }, [generateLayerId, trpc, pushToHistory]);
 
-    // --- Keyboard shortcuts ---
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Delete' || e.key === 'Backspace') {

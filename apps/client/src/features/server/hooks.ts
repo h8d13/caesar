@@ -118,7 +118,6 @@ export const useAccessibleChannels = () => {
     );
 };
 
-// Returns true if the user can view at least one of the channels in the category
 export const useHasVisibleChannelsInCategory = (categoryId: number) =>
     useSelector((state: IRootState) =>
         hasVisibleChannelsInCategorySelector(state, categoryId)
