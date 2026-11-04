@@ -32,8 +32,10 @@ const initializeTRPC = (host: string) => {
 
     wsClient = createWSClient({
         url: `${protocol}://${host}`,
-        // @ts-expect-error - the onclose type is not correct in trpc
-        onClose: (cause: CloseEvent) => {
+        // typed as { code?: number }, but trpc forwards the socket's
+        // CloseEvent as is (ws.addEventListener('close', ...))
+        onClose: (closeCause) => {
+            const cause = closeCause as CloseEvent;
             const transient = isTransientClose(
                 cause.code,
                 connectedSelector(store.getState())

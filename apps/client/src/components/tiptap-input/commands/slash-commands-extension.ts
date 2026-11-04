@@ -9,7 +9,14 @@ export type SlashCommandsOptions = {
     suggestion: Omit<SuggestionOptions, 'editor'>;
 };
 
-export const SlashCommands = Node.create<SlashCommandsOptions>({
+type TSlashCommandsStorage = {
+    [COMMANDS_STORAGE_KEY]?: { commands: TBuiltInCommand[] };
+};
+
+export const SlashCommands = Node.create<
+    SlashCommandsOptions,
+    TSlashCommandsStorage
+>({
     name: 'slashCommands',
 
     addOptions() {
@@ -39,14 +46,12 @@ export const SlashCommands = Node.create<SlashCommandsOptions>({
                 editor: this.editor,
                 ...this.options.suggestion,
                 items: ({ query }) => {
+                    // this.storage is editor.storage[this.name]
                     const commands =
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        (this.editor.storage as Record<string, any>)[
-                            this.name
-                        ]?.[COMMANDS_STORAGE_KEY]?.commands ??
+                        this.storage[COMMANDS_STORAGE_KEY]?.commands ??
                         this.options.commands;
 
-                    return commands.filter((cmd: TBuiltInCommand) =>
+                    return commands.filter((cmd) =>
                         cmd.name.toLowerCase().startsWith(query.toLowerCase())
                     );
                 }

@@ -1,6 +1,7 @@
 import { closeDialogs } from '@/features/dialogs/actions';
 import { useDialogInfo } from '@/features/dialogs/hooks';
-import { createElement, lazy, memo, Suspense } from 'react';
+import { createDynamicElement } from '@/helpers/create-dynamic-element';
+import { lazy, memo, Suspense } from 'react';
 import { Dialog } from './dialogs';
 
 const DialogsMap = {
@@ -45,8 +46,7 @@ const DialogsProvider = memo(() => {
 
     return (
         <Suspense fallback={null}>
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {createElement(DialogsMap[openDialog] as any, {
+            {createDynamicElement(DialogsMap[openDialog], {
                 ...props,
                 isOpen: realIsOpen,
                 close: closeDialogs

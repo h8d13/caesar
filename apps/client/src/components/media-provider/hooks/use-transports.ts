@@ -359,15 +359,15 @@ const useTransports = ({
 
                 logVoice('Created new consumer', { newConsumer });
 
+                // '@close' fires on consumer.close(); 'close' only exists on
+                // consumer.observer, the consumer itself never emits it
                 const cleanupEvents = [
                     'transportclose',
                     'trackended',
-                    '@close',
-                    'close'
-                ];
+                    '@close'
+                ] as const;
 
                 cleanupEvents.forEach((event) => {
-                    // @ts-expect-error - event is a string, not keyof the consumer event map
                     newConsumer?.on(event, () => {
                         logVoice(
                             `Consumer cleanup event "${event}" triggered`,

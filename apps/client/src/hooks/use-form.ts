@@ -1,8 +1,8 @@
 import { parseTrpcErrors, type TTrpcErrors } from '@caesar/shared';
 import { useState } from 'react';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type TInputHandler = (e: React.ChangeEvent<any>) => void;
+// only target.value is read: fits change events of any input element
+type TInputHandler = (e: { target: { value: string } }) => void;
 
 const useForm = <T extends Record<string, unknown>>(initialValues: T) => {
     const [values, setValues] = useState<T>(initialValues);

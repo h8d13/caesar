@@ -15,8 +15,11 @@ const getAudioCtx = (): AudioContext => {
     if (!_audioCtx) {
         _audioCtx = new (
             window.AudioContext ||
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (window as any).webkitAudioContext
+            (
+                window as typeof window & {
+                    webkitAudioContext?: typeof AudioContext;
+                }
+            ).webkitAudioContext
         )();
     }
     if (_audioCtx.state === 'suspended') {

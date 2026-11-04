@@ -15,16 +15,13 @@ import { CodeBlock } from './code-block';
 import { sanitizeElement } from './sanitize-element';
 import type { TFoundMedia } from './types';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getTextContent = (node: any): string => {
+// the slice of a domhandler node read here; every node kind fits it
+type TTextNode = { type: string; data?: string; children?: TTextNode[] };
+
+const getTextContent = (node: TTextNode): string => {
     if (node.type === 'text') return node.data || '';
     if (node.children) {
-        return (
-            node.children
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                .map((child: any) => getTextContent(child))
-                .join('')
-        );
+        return node.children.map((child) => getTextContent(child)).join('');
     }
     return '';
 };

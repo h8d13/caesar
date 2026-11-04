@@ -1,9 +1,9 @@
 import type { IRootState } from '@/features/store';
 import { createCachedSelector } from 're-reselect';
+import type { TMessagesMap } from '../types';
 import { visibleMessages } from './window';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const DEFAULT_ARRAY: any[] = [];
+const DEFAULT_ARRAY: TMessagesMap[number] = [];
 
 export const typingMapSelector = (state: IRootState) => state.server.typingMap;
 

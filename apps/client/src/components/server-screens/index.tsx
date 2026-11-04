@@ -1,15 +1,8 @@
 import { useModViewOpen } from '@/features/app/hooks';
 import { closeServerScreens } from '@/features/server-screens/actions';
 import { useServerScreenInfo } from '@/features/server-screens/hooks';
-import {
-    createElement,
-    lazy,
-    memo,
-    Suspense,
-    useCallback,
-    useEffect,
-    type JSX
-} from 'react';
+import { createDynamicElement } from '@/helpers/create-dynamic-element';
+import { lazy, memo, Suspense, useCallback, useEffect, type JSX } from 'react';
 import { createPortal } from 'react-dom';
 import { ServerScreen } from './screens';
 
@@ -87,8 +80,7 @@ const ServerScreensProvider = memo(() => {
 
         component = (
             <Suspense fallback={null}>
-                {/* @ts-expect-error - ScreensMap entries have distinct prop types */}
-                {createElement(ScreensMap[openServerScreen], baseProps)}
+                {createDynamicElement(ScreensMap[openServerScreen], baseProps)}
             </Suspense>
         );
     }
