@@ -8,6 +8,11 @@ packages:
 # of a cataloged dep must use `catalog:`, so ranges can't drift apart.
 catalogMode: strict
 catalog:
+  # 0.x, all on one @dnd-kit/abstract: a minor skew installs a second copy
+  # (collision detectors/constraints typed against the other one). Exact.
+  '@dnd-kit/collision': 0.5.3
+  '@dnd-kit/dom': 0.5.3
+  '@dnd-kit/react': 0.5.3
   # also consumed by overrides below
   '@libsql/client': 0.18.0
   # depends on tailwindcss at its own exact version: keep both equal

@@ -15,25 +15,16 @@ import { useLatestCallback } from '@/hooks/use-latest-callback';
 import { getTRPCClient } from '@/lib/trpc';
 import { ChannelType, Permission, getTrpcError } from '@caesar/shared';
 import { IconButton } from '@caesar/ui';
+import { closestCorners } from '@dnd-kit/collision';
+import { PointerActivationConstraints } from '@dnd-kit/dom';
 import {
-    DndContext,
+    DragDropProvider,
     DragOverlay,
     PointerSensor,
-    closestCorners,
-    pointerWithin,
-    useSensor,
-    useSensors,
-    type CollisionDetection,
     type DragEndEvent,
-    type DragOverEvent,
-    type DragStartEvent
-} from '@dnd-kit/core';
-import {
-    SortableContext,
-    useSortable,
-    verticalListSortingStrategy
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+    type DragOverEvent
+} from '@dnd-kit/react';
+import { isSortable, useSortable } from '@dnd-kit/react/sortable';
 import { ChevronDown, ChevronRight, Hash, Plus, Volume2 } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -43,47 +34,42 @@ import { Protect } from '../protect';
 import { Channels } from './channels';
 import { useCategoryExpanded } from './hooks';
 
-// Module-level so their identity never changes: useSensor memoizes on the
-// options object, and new sensors mean new activators/listeners for every
-// sortable row, re-rendering the whole sidebar.
-const POINTER_SENSOR_OPTIONS = { activationConstraint: { distance: 8 } };
+// Module-level so the provider never rebinds sensors. 8px before a drag
+// starts: the default activates instantly on a handle under a mouse, and
+// every channel row is its own handle, so clicks would never select. A
+// factory since constraints keep per-gesture state.
+const SENSORS = [
+    PointerSensor.configure({
+        activationConstraints: () => [
+            new PointerActivationConstraints.Distance({ value: 8 })
+        ]
+    })
+];
 const NO_CHANNELS: number[] = [];
-
-// Member drags target the channel the pointer is literally inside (its
-// sortable node spans the whole channel incl. its user list). closestCorners
-// is corner-distance based and gets ambiguous between adjacent channels, so
-// restrict to pointerWithin on channel droppables; no nearest-fallback means
-// a drop in the gap simply no-ops instead of snapping to the wrong channel.
-// Channel/category reorder keeps closestCorners.
-const collisionDetection: CollisionDetection = (args) => {
-    if (String(args.active.id).startsWith('vu-')) {
-        return pointerWithin(args).filter((c) =>
-            String(c.id).startsWith('ch-')
-        );
-    }
-    return closestCorners(args);
-};
 
 type TCategoryProps = {
     categoryId: number;
+    index: number;
     channelIds: number[];
 };
 
-const Category = memo(({ categoryId, channelIds }: TCategoryProps) => {
+const Category = memo(({ categoryId, index, channelIds }: TCategoryProps) => {
     const can = useCan();
     const hasVisibleChannelsInCategory =
         useHasVisibleChannelsInCategory(categoryId);
     const { expanded, toggleExpanded } = useCategoryExpanded(categoryId);
     const category = useCategoryById(categoryId);
 
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging
-    } = useSortable({ id: `cat-${categoryId}` });
+    // accept: only other categories, so channel and member drags never
+    // resolve to a category and need mapping back to their own target.
+    const { ref, handleRef, isDragging } = useSortable({
+        id: `cat-${categoryId}`,
+        index,
+        type: 'category',
+        accept: 'category',
+        collisionDetector: closestCorners,
+        disabled: !can(Permission.MANAGE_CATEGORIES)
+    });
 
     const onCreateChannelClick = useCallback(() => {
         openDialog(Dialog.CREATE_CHANNEL, { categoryId });
@@ -100,14 +86,8 @@ const Category = memo(({ categoryId, channelIds }: TCategoryProps) => {
 
     return (
         <div
-            ref={setNodeRef}
-            style={{
-                transform: CSS.Transform.toString(
-                    transform && { ...transform, x: 0 }
-                ),
-                transition,
-                opacity: isDragging ? 0.5 : 1
-            }}
+            ref={ref}
+            style={{ opacity: isDragging ? 0.5 : 1 }}
             // pb-4 not mb-4: @dnd-kit measures via getBoundingClientRect
             // which excludes margins. Padding is in the rect.
             className="pb-4"
@@ -125,8 +105,7 @@ const Category = memo(({ categoryId, channelIds }: TCategoryProps) => {
                     />
                     <CategoryContextMenu categoryId={category.id}>
                         <span
-                            {...attributes}
-                            {...listeners}
+                            ref={handleRef}
                             className="cursor-grab active:cursor-grabbing flex-1"
                         >
                             {category.name}
@@ -152,14 +131,20 @@ const Category = memo(({ categoryId, channelIds }: TCategoryProps) => {
     );
 });
 
+// Category a channel drag is over: a channel row's sortable group, or the
+// list droppable (drop-cat-N) catching empty categories and list ends.
+const getTargetCategoryId = (
+    target: DragOverEvent['operation']['target']
+): number | null => {
+    if (!target) return null;
+    if (isSortable(target)) return Number(target.group);
+    const id = String(target.id);
+    return id.startsWith('drop-cat-') ? Number(id.slice(9)) : null;
+};
+
 const Categories = memo(() => {
-    const can = useCan();
     const categories = useCategories();
     const channels = useChannels();
-    const categorySortableIds = useMemo(
-        () => categories.map((cat) => `cat-${cat.id}`),
-        [categories]
-    );
 
     // category -> ordered channel ids from redux. DMs have null categoryId.
     const baseByCat = useMemo(() => {
@@ -176,21 +161,22 @@ const Categories = memo(() => {
         return m;
     }, [channels]);
 
-    // Optimistic state during drag. onDragOver mutates it so the destination
-    // SortableContext sees the dragged channel and verticalListSortingStrategy
-    // can animate its items to make space (the insertion preview). Kept until
+    // Cross-category layout during and after a drag. onDragOver moves the
+    // dragged channel into the destination list so it renders there (the
+    // insertion preview); same-list moves are left to dnd-kit's optimistic
+    // sorting, which reorders the DOM without a React render. Kept until
     // redux catches up (then cleared during render below) to avoid snap-back.
     const [override, setOverride] = useState<Record<number, number[]> | null>(
         null
     );
-    const [activeId, setActiveId] = useState<string | null>(null);
+    const [dragging, setDragging] = useState(false);
 
     // baseByCat omits categories with zero channels (loop skips them),
     // override can hold `[sCat]: []` after a cross-cat drag drains the
     // source. Strip empties before comparing so the override clears
     // instead of lingering forever and shadowing future drags.
     if (
-        activeId === null &&
+        !dragging &&
         override &&
         JSON.stringify(
             Object.fromEntries(
@@ -203,47 +189,28 @@ const Categories = memo(() => {
 
     const byCat = override ?? baseByCat;
 
-    const findCat = useCallback(
-        (sortableId: string): number | null => {
-            if (sortableId.startsWith('drop-cat-'))
-                return Number(sortableId.slice(9));
-            if (sortableId.startsWith('cat-'))
-                return Number(sortableId.slice(4));
-            if (sortableId.startsWith('ch-')) {
-                const id = Number(sortableId.slice(3));
-                for (const k in byCat) {
-                    if (byCat[Number(k)].includes(id)) return Number(k);
-                }
-            }
-            return null;
-        },
-        [byCat]
-    );
-
-    const sensors = useSensors(
-        useSensor(PointerSensor, POINTER_SENSOR_OPTIONS)
-    );
-
-    const handleDragStart = useCallback((event: DragStartEvent) => {
-        setActiveId(String(event.active.id));
+    const handleDragStart = useCallback(() => {
+        setDragging(true);
     }, []);
 
-    // Cross-container channel hover: move the dragged id in local state so
-    // the destination's SortableContext picks it up and animates siblings.
     const handleDragOver = useLatestCallback((event: DragOverEvent) => {
-        const { active, over } = event;
-        if (!over) return;
-        const aId = String(active.id);
-        const oId = String(over.id);
-        if (!aId.startsWith('ch-')) return;
+        const { source, target } = event.operation;
+        if (!source || !target || !isSortable(source)) return;
+        if (source.type !== 'channel') return;
 
-        const aCat = findCat(aId);
-        const oCat = findCat(oId);
-        if (aCat === null || oCat === null || aCat === oCat) return;
+        const aCat = Number(source.group);
+        const oCat = getTargetCategoryId(target);
+        if (oCat === null || aCat === oCat) return;
 
+        // We own cross-list moves: the row remounts in its new list. Stop the
+        // optimistic plugin from also moving the DOM node across parents,
+        // which React could no longer reconcile.
+        event.preventDefault();
+
+        const chId = Number(String(source.id).slice(3));
+        const oId = String(target.id);
         setOverride((prev) => {
             const next = { ...(prev ?? baseByCat) };
-            const chId = Number(aId.slice(3));
             next[aCat] = (next[aCat] ?? []).filter((id) => id !== chId);
             const dest = [...(next[oCat] ?? [])];
             let idx = dest.length;
@@ -258,29 +225,26 @@ const Categories = memo(() => {
     });
 
     const handleDragEnd = useLatestCallback(async (event: DragEndEvent) => {
-        const { active, over } = event;
-        setActiveId(null);
-        if (!over) {
+        const { source, target } = event.operation;
+        setDragging(false);
+        // Canceled sorts are rolled back in the DOM by dnd-kit itself.
+        if (event.canceled || !source) {
             setOverride(null);
             return;
         }
 
-        const aId = String(active.id);
-        const oId = String(over.id);
         const trpc = getTRPCClient();
 
         // Voice-member drag: drop onto a different voice channel to move
-        // them. `over` resolves to the channel's sortable (ch-) since voice
-        // users aren't droppable. ACL is enforced server-side.
-        if (aId.startsWith('vu-')) {
+        // them. Only voice channel rows accept members (channels.tsx).
+        // ACL is enforced server-side.
+        if (source.type === 'voice-user') {
             setOverride(null);
-            if (!oId.startsWith('ch-')) return;
+            if (!target) return;
 
-            const userId = Number(active.data.current?.userId ?? aId.slice(3));
-            const sourceChannelId = active.data.current?.channelId as
-                | number
-                | undefined;
-            const destChannelId = Number(oId.slice(3));
+            const userId = Number(source.data.userId);
+            const sourceChannelId = source.data.channelId as number;
+            const destChannelId = Number(String(target.id).slice(3));
 
             if (destChannelId === sourceChannelId) return;
 
@@ -298,22 +262,21 @@ const Categories = memo(() => {
             return;
         }
 
-        if (aId.startsWith('cat-')) {
+        if (!isSortable(source)) {
             setOverride(null);
-            // closestCorners can resolve `over` to any droppable inside
-            // the target category (ch-N, drop-cat-N), not just cat-N.
-            // Map back to the owning category before computing indexes.
-            const activeCatId = Number(aId.slice(4));
-            const overCatId = findCat(oId);
-            if (overCatId === null || activeCatId === overCatId) return;
-            const oldIdx = categorySortableIds.indexOf(aId);
-            const newIdx = categorySortableIds.indexOf(`cat-${overCatId}`);
-            if (oldIdx === -1 || newIdx === -1) return;
-            const reordered = categorySortableIds.map((s) =>
-                Number(s.slice(4))
-            );
-            const [moved] = reordered.splice(oldIdx, 1);
-            reordered.splice(newIdx, 0, moved);
+            return;
+        }
+
+        // Sortables carry their final slot: index within group, after both
+        // optimistic same-list moves and our cross-list re-renders.
+        if (source.type === 'category') {
+            setOverride(null);
+            const from = source.initialIndex;
+            const to = source.index;
+            if (from === to) return;
+            const reordered = categories.map((cat) => cat.id);
+            const [moved] = reordered.splice(from, 1);
+            reordered.splice(to, 0, moved);
             try {
                 await trpc.categories.reorder.mutate({
                     categoryIds: reordered
@@ -324,15 +287,10 @@ const Categories = memo(() => {
             return;
         }
 
-        if (!aId.startsWith('ch-')) {
-            setOverride(null);
-            return;
-        }
-
-        const chId = Number(aId.slice(3));
-        const oCat = findCat(oId);
+        const chId = Number(String(source.id).slice(3));
+        const oCat = Number(source.group);
         // Source must be looked up in BASE (redux) — `byCat` already
-        // reflects the onDragOver-driven optimistic move.
+        // reflects the onDragOver-driven cross-list move.
         let sCat: number | null = null;
         for (const k in baseByCat) {
             if (baseByCat[Number(k)].includes(chId)) {
@@ -340,31 +298,16 @@ const Categories = memo(() => {
                 break;
             }
         }
-        if (oCat === null || sCat === null) {
+        if (sCat === null) {
             setOverride(null);
             return;
         }
 
-        // Final destination order: byCat already has the channel inserted
-        // (from onDragOver for cross-container, or no-op for intra). For
-        // intra-container drags we still need an arrayMove if dropped on
-        // a specific channel.
-        const destIds = [...(byCat[oCat] ?? [])];
-        if (oId.startsWith('ch-')) {
-            const overChId = Number(oId.slice(3));
-            if (!destIds.includes(chId)) destIds.push(chId);
-            const aIdx = destIds.indexOf(chId);
-            const oIdx = destIds.indexOf(overChId);
-            if (aIdx !== -1 && oIdx !== -1 && aIdx !== oIdx) {
-                destIds.splice(aIdx, 1);
-                destIds.splice(oIdx, 0, chId);
-            }
-        } else if (!destIds.includes(chId)) {
-            destIds.push(chId);
-        }
+        const destIds = (byCat[oCat] ?? []).filter((id) => id !== chId);
+        destIds.splice(source.index, 0, chId);
 
         // Persist the post-drop layout so the UI doesn't snap back while
-        // the server confirms; the effect above clears it on redux update.
+        // the server confirms; the check above clears it on redux update.
         // Intra-category drag has sCat === oCat: writing both [oCat] and
         // [sCat] into the same object literal collapses on the duplicate
         // key (sourceIds wins, dragged channel vanishes from the override
@@ -418,30 +361,24 @@ const Categories = memo(() => {
 
     return (
         <div className="flex-1 overflow-y-auto p-2">
-            <DndContext
-                sensors={sensors}
-                collisionDetection={collisionDetection}
+            <DragDropProvider
+                sensors={SENSORS}
                 onDragStart={handleDragStart}
                 onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
             >
-                <SortableContext
-                    items={categorySortableIds}
-                    strategy={verticalListSortingStrategy}
-                    disabled={!can(Permission.MANAGE_CATEGORIES)}
-                >
-                    {categories.map((category) => (
-                        <Category
-                            key={category.id}
-                            categoryId={category.id}
-                            channelIds={byCat[category.id] ?? NO_CHANNELS}
-                        />
-                    ))}
-                </SortableContext>
+                {categories.map((category, index) => (
+                    <Category
+                        key={category.id}
+                        categoryId={category.id}
+                        index={index}
+                        channelIds={byCat[category.id] ?? NO_CHANNELS}
+                    />
+                ))}
                 <DragOverlay>
-                    {activeId ? <DragGhost id={activeId} /> : null}
+                    {(source) => <DragGhost id={String(source.id)} />}
                 </DragOverlay>
-            </DndContext>
+            </DragDropProvider>
             <Protect permission={Permission.MANAGE_CATEGORIES}>
                 <button
                     type="button"
@@ -457,8 +394,8 @@ const Categories = memo(() => {
 });
 
 // Floating snapshot rendered while dragging. Decouples the dragged element
-// from layout so verticalListSortingStrategy gets a stable neighbor height —
-// fixes the categories grow/shrink artifact and gives a clear cursor preview.
+// from layout so sorting gets a stable neighbor height — fixes the
+// categories grow/shrink artifact and gives a clear cursor preview.
 const DragGhost = memo(({ id }: { id: string }) => {
     if (id.startsWith('cat-')) return <CatGhost id={Number(id.slice(4))} />;
     if (id.startsWith('ch-')) return <ChGhost id={Number(id.slice(3))} />;

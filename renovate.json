@@ -50,6 +50,11 @@
       "description": "catalog aliases vite to vite-plus-core at the vite-plus version; they ship together"
     },
     {
+      "matchPackageNames": ["@dnd-kit/**"],
+      "groupName": "dnd-kit",
+      "description": "0.x packages share @dnd-kit/abstract; bump together so one copy resolves"
+    },
+    {
       "matchPackageNames": ["node", "pnpm", "actions/setup-node", "@types/node"],
       "groupName": "node runtime"
     },

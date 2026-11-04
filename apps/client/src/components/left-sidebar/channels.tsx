@@ -16,21 +16,35 @@ import {
 } from '@/features/server/hooks';
 import { cn } from '@/lib/utils';
 import { ChannelPermission, Permission, type TChannel } from '@caesar/shared';
-import { useDroppable } from '@dnd-kit/core';
 import {
-    SortableContext,
-    useSortable,
-    verticalListSortingStrategy
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+    closestCorners,
+    pointerIntersection,
+    type CollisionDetector
+} from '@dnd-kit/collision';
+import { useDroppable } from '@dnd-kit/react';
+import { useSortable } from '@dnd-kit/react/sortable';
 import { Hash, Volume2 } from 'lucide-react';
-import { memo, useCallback, useMemo } from 'react';
+import { memo, useCallback } from 'react';
 import { ChannelContextMenu } from '../context-menus/channel';
 import { UnreadCount } from '../unread-count';
 import { CallTime } from './call-time';
 import { useSelectChannel } from './hooks';
 import { VoiceUser } from './voice-user';
 import { Waveform } from './waveform';
+
+// Member drags target the channel the pointer is literally inside (its
+// sortable node spans the whole channel incl. its user list). closestCorners
+// is corner-distance based and gets ambiguous between adjacent channels;
+// pointerIntersection has no nearest-fallback, so a drop in the gap simply
+// no-ops instead of snapping to the wrong channel. Reorder keeps corners.
+const channelCollision: CollisionDetector = (input) =>
+    input.dragOperation.source?.type === 'voice-user'
+        ? pointerIntersection(input)
+        : closestCorners(input);
+
+const CHANNEL_ACCEPT = 'channel';
+const VOICE_CHANNEL_ACCEPT = ['channel', 'voice-user'];
+const DROP_ONLY = { draggable: true, droppable: false };
 
 type TVoiceProps = Omit<TItemWrapperProps, 'children'> & {
     channel: TChannel;
@@ -131,7 +145,7 @@ type TItemWrapperProps = {
     className?: string;
     isSelected: boolean;
     onClick: () => void;
-    dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
+    handleRef?: (element: Element | null) => void;
     style?: React.CSSProperties;
     disabled?: boolean;
 };
@@ -142,14 +156,14 @@ const ItemWrapper = memo(
         isSelected,
         onClick,
         className,
-        dragHandleProps,
+        handleRef,
         style,
         disabled = false
     }: TItemWrapperProps) => {
         // Plain <div> isn't keyboard-reachable. Adding role + tabIndex + a
         // key handler makes Tab focus the row and Enter/Space activate it,
-        // matching every other selectable element in the app. Kept as a
-        // <div> so @dnd-kit drag-handle listeners spread cleanly.
+        // matching every other selectable element in the app. The row is
+        // also the drag handle (handleRef).
         const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
             if (disabled) return;
             if (e.key === 'Enter' || e.key === ' ') {
@@ -160,7 +174,7 @@ const ItemWrapper = memo(
 
         return (
             <div
-                {...dragHandleProps}
+                ref={handleRef}
                 style={style}
                 role="button"
                 tabIndex={disabled ? -1 : 0}
@@ -185,111 +199,104 @@ const ItemWrapper = memo(
 
 type TChannelProps = {
     channelId: number;
+    categoryId: number;
+    index: number;
     isSelected: boolean;
     onSelect: (channelId: number) => void;
 };
 
-const Channel = memo(({ channelId, isSelected, onSelect }: TChannelProps) => {
-    const channel = useChannelById(channelId);
-    const channelCan = useChannelCan(channelId);
-    const can = useCan();
-    const onClick = useCallback(
-        () => onSelect(channelId),
-        [onSelect, channelId]
-    );
+const Channel = memo(
+    ({ channelId, categoryId, index, isSelected, onSelect }: TChannelProps) => {
+        const channel = useChannelById(channelId);
+        const channelCan = useChannelCan(channelId);
+        const can = useCan();
+        const onClick = useCallback(
+            () => onSelect(channelId),
+            [onSelect, channelId]
+        );
+        const isVoiceTarget = channel?.type === 'VOICE' && !channel.isDm;
 
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging
-    } = useSortable({ id: `ch-${channelId}` });
+        const { ref, handleRef, isDragging } = useSortable({
+            id: `ch-${channelId}`,
+            index,
+            group: categoryId,
+            type: 'channel',
+            accept: isVoiceTarget ? VOICE_CHANNEL_ACCEPT : CHANNEL_ACCEPT,
+            collisionDetector: channelCollision,
+            // Without MANAGE_CHANNELS the row still takes member drops.
+            disabled: can(Permission.MANAGE_CHANNELS) ? false : DROP_ONLY
+        });
 
-    if (!channel) {
-        return null;
+        if (!channel) {
+            return null;
+        }
+
+        if (!channelCan(ChannelPermission.VIEW_CHANNEL)) return null;
+
+        return (
+            <div ref={ref} style={{ opacity: isDragging ? 0.5 : 1 }}>
+                <ChannelContextMenu channelId={channelId}>
+                    <div>
+                        {channel.type === 'TEXT' && (
+                            <Text
+                                channel={channel}
+                                isSelected={isSelected}
+                                onClick={onClick}
+                                handleRef={handleRef}
+                            />
+                        )}
+                        {channel.type === 'VOICE' && (
+                            <Voice
+                                channel={channel}
+                                isSelected={isSelected}
+                                onClick={onClick}
+                                handleRef={handleRef}
+                                disabled={
+                                    !channelCan(ChannelPermission.JOIN) ||
+                                    !can(Permission.JOIN_VOICE_CHANNELS)
+                                }
+                            />
+                        )}
+                    </div>
+                </ChannelContextMenu>
+            </div>
+        );
     }
-
-    if (!channelCan(ChannelPermission.VIEW_CHANNEL)) return null;
-
-    return (
-        <div
-            ref={setNodeRef}
-            style={{
-                transform: CSS.Transform.toString(
-                    transform && { ...transform, x: 0 }
-                ),
-                transition,
-                opacity: isDragging ? 0.5 : 1
-            }}
-        >
-            <ChannelContextMenu channelId={channelId}>
-                <div>
-                    {channel.type === 'TEXT' && (
-                        <Text
-                            channel={channel}
-                            isSelected={isSelected}
-                            onClick={onClick}
-                            dragHandleProps={{ ...attributes, ...listeners }}
-                        />
-                    )}
-                    {channel.type === 'VOICE' && (
-                        <Voice
-                            channel={channel}
-                            isSelected={isSelected}
-                            onClick={onClick}
-                            dragHandleProps={{ ...attributes, ...listeners }}
-                            disabled={
-                                !channelCan(ChannelPermission.JOIN) ||
-                                !can(Permission.JOIN_VOICE_CHANNELS)
-                            }
-                        />
-                    )}
-                </div>
-            </ChannelContextMenu>
-        </div>
-    );
-});
+);
 
 type TChannelsProps = {
     categoryId: number;
     // Ordered ids passed from <Categories> so cross-container drag can
-    // optimistically swap items between lists via onDragOver before commit.
+    // move a channel between lists via onDragOver before commit.
     channelIds: number[];
 };
 
 const Channels = memo(({ categoryId, channelIds }: TChannelsProps) => {
     const selectedChannelId = useSelectedChannelId();
-    const can = useCan();
-    const channelSortableIds = useMemo(
-        () => channelIds.map((id) => `ch-${id}`),
-        [channelIds]
-    );
 
     // Droppable for the whole list. Catches drops in empty space (so empty
     // categories accept channels) and end-of-list drops past the last child.
     // min-h gives an empty list a real hit-target.
-    const { setNodeRef } = useDroppable({ id: `drop-cat-${categoryId}` });
+    const { ref } = useDroppable({
+        id: `drop-cat-${categoryId}`,
+        accept: CHANNEL_ACCEPT,
+        collisionDetector: closestCorners
+    });
 
     const onChannelClick = useSelectChannel();
 
     return (
-        <div ref={setNodeRef} className="space-y-0.5 min-h-2">
-            <SortableContext
-                items={channelSortableIds}
-                strategy={verticalListSortingStrategy}
-                disabled={!can(Permission.MANAGE_CHANNELS)}
-            >
-                {channelIds.map((id) => (
-                    <Channel
-                        key={id}
-                        channelId={id}
-                        isSelected={selectedChannelId === id}
-                        onSelect={onChannelClick}
-                    />
-                ))}
-            </SortableContext>
+        <div ref={ref} className="space-y-0.5 min-h-2">
+            {channelIds.map((id, index) => (
+                <Channel
+                    key={id}
+                    channelId={id}
+                    categoryId={categoryId}
+                    index={index}
+                    isSelected={selectedChannelId === id}
+                    onSelect={onChannelClick}
+                />
+            ))}
         </div>
     );
 });

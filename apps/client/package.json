@@ -12,9 +12,9 @@
   "dependencies": {
     "@caesar/shared": "workspace:*",
     "@caesar/ui": "workspace:*",
-    "@dnd-kit/core": "^6.3.1",
-    "@dnd-kit/sortable": "^10.0.0",
-    "@dnd-kit/utilities": "^3.2.2",
+    "@dnd-kit/collision": "catalog:",
+    "@dnd-kit/dom": "catalog:",
+    "@dnd-kit/react": "catalog:",
     "@floating-ui/dom": "^1.8.0",
     "@jitsi/rnnoise-wasm": "^0.2.1",
     "@noble/curves": "^2.4.0",

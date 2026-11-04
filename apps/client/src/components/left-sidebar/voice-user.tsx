@@ -7,7 +7,7 @@ import { getRenderedUsername } from '@/helpers/get-rendered-username';
 import { getSocialCreditColor } from '@/helpers/get-social-credit-color';
 import { cn } from '@/lib/utils';
 import { Permission } from '@caesar/shared';
-import { useDraggable } from '@dnd-kit/core';
+import { useDraggable } from '@dnd-kit/react';
 import {
     HeadphoneOff,
     Headphones,
@@ -32,9 +32,10 @@ const VoiceUser = memo(({ user, channelId }: TVoiceUserProps) => {
 
     // Drag a member onto another voice channel to move them (server-enforced
     // via MOVE_MEMBERS; disabled entirely when the viewer lacks the perm).
-    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    const { ref, isDragging } = useDraggable({
         id: `vu-${user.id}`,
-        data: { type: 'voice-user', userId: user.id, channelId },
+        type: 'voice-user',
+        data: { userId: user.id, channelId },
         disabled: !canMove
     });
 
@@ -51,9 +52,7 @@ const VoiceUser = memo(({ user, channelId }: TVoiceUserProps) => {
         <VoiceUserContextMenu user={user}>
             <UserPopover userId={user.id}>
                 <div
-                    ref={setNodeRef}
-                    {...(canMove ? listeners : {})}
-                    {...(canMove ? attributes : {})}
+                    ref={ref}
                     className={cn(
                         'flex items-center gap-2 px-2 py-1 rounded hover:bg-accent/30 text-sm',
                         canMove && 'cursor-grab',
