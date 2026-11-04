@@ -29,7 +29,6 @@ const BetControls = memo(() => {
             toast.error(e instanceof Error ? e.message : 'Failed to place bet');
             setAutoBet(false);
         }
-        // not `finally`: the React Compiler skips try/finally
         setLoading(false);
     }, [amount]);
 
@@ -40,7 +39,6 @@ const BetControls = memo(() => {
         } catch (e) {
             toast.error(e instanceof Error ? e.message : 'Failed to cash out');
         }
-        // not `finally`: the React Compiler skips try/finally
         setLoading(false);
     }, []);
 
@@ -63,7 +61,6 @@ const BetControls = memo(() => {
                     );
                     setAutoBet(false);
                 }
-                // not `finally`: the React Compiler skips try/finally
                 setLoading(false);
             })();
         }

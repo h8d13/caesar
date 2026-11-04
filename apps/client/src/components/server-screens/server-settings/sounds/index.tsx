@@ -44,7 +44,6 @@ const Sounds = memo(() => {
 
             toast.error('Failed to upload sound');
         }
-        // not `finally`: the React Compiler skips try/finally
         setIsUploading(false);
     }, [openFilePicker, refetch]);
 

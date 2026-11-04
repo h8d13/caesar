@@ -74,7 +74,6 @@ const SecurityKeys = memo(() => {
                 error instanceof Error ? error.message : String(error);
             toast.error(`Failed to register key: ${message}`);
         }
-        // not `finally`: the React Compiler skips try/finally
         setLoading(false);
     }, [newKeyName, refresh]);
 

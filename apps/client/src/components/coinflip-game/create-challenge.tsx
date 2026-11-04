@@ -27,7 +27,6 @@ const CreateChallenge = memo(() => {
                 e instanceof Error ? e.message : 'Failed to create challenge'
             );
         }
-        // not `finally`: the React Compiler skips try/finally
         setLoading(false);
     }, [side, amount]);
 

@@ -39,7 +39,6 @@ const StoryViewerInner = memo(({ userId }: TInnerProps) => {
             } catch {
                 setImages([]);
             }
-            // not `finally`: the React Compiler skips try/finally
             setLoading(false);
         };
 

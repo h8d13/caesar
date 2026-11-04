@@ -54,7 +54,6 @@ const Header = memo(() => {
             } catch (error) {
                 toast.error(getTrpcError(error, 'Failed to remove role'));
             }
-            // not `finally`: the React Compiler skips try/finally
             refetch();
         },
         [user.id, refetch]
@@ -85,7 +84,6 @@ const Header = memo(() => {
         } catch (error) {
             toast.error(getTrpcError(error, 'Failed to kick user'));
         }
-        // not `finally`: the React Compiler skips try/finally
         refetch();
     }, [user.id, refetch]);
 
@@ -118,7 +116,6 @@ const Header = memo(() => {
         } catch (error) {
             toast.error(getTrpcError(error, 'Failed to ban user'));
         }
-        // not `finally`: the React Compiler skips try/finally
         refetch();
     }, [user.id, refetch, isDeletedUser]);
 
@@ -148,7 +145,6 @@ const Header = memo(() => {
         } catch (error) {
             toast.error(getTrpcError(error, 'Failed to unban user'));
         }
-        // not `finally`: the React Compiler skips try/finally
         refetch();
     }, [user.id, refetch, isDeletedUser]);
 

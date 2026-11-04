@@ -69,7 +69,6 @@ const CreateChannelForm = memo(
             } catch (error) {
                 setErrors(parseTrpcErrors(error));
             }
-            // not `finally`: the React Compiler skips try/finally
             setLoading(false);
         });
 

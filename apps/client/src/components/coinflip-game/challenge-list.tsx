@@ -23,7 +23,6 @@ const ChallengeList = memo(() => {
                 e instanceof Error ? e.message : 'Failed to accept challenge'
             );
         }
-        // not `finally`: the React Compiler skips try/finally
         setLoadingId(null);
     }, []);
 
@@ -36,7 +35,6 @@ const ChallengeList = memo(() => {
                 e instanceof Error ? e.message : 'Failed to cancel challenge'
             );
         }
-        // not `finally`: the React Compiler skips try/finally
         setLoadingId(null);
     }, []);
 

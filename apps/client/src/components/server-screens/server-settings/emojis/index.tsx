@@ -44,7 +44,6 @@ const Emojis = memo(() => {
 
             toast.error('Failed to upload emoji');
         }
-        // not `finally`: the React Compiler skips try/finally
         setIsUploading(false);
     }, [openFilePicker, refetch]);
 

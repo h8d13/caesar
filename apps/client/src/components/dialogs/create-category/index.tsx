@@ -28,7 +28,6 @@ const CreateCategoryForm = memo(({ close }: { close: () => void }) => {
         } catch (error) {
             setTrpcErrors(error);
         }
-        // not `finally`: the React Compiler skips try/finally
         setLoading(false);
     });
 

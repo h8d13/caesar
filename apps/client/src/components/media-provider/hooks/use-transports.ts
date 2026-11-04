@@ -435,7 +435,6 @@ const useTransports = ({
             } catch (error) {
                 logVoice('Error consuming remote producer', { error });
             }
-            // not `finally`: the React Compiler skips try/finally
             consumeOperationsInProgress.current.delete(operationKey);
         },
         [

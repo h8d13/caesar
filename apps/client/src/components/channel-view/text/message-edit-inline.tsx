@@ -72,7 +72,6 @@ const MessageEditInline = memo(
                 } catch {
                     toast.error('Failed to edit message');
                 }
-                // not `finally`: the React Compiler skips try/finally
                 onBlur();
             },
             [message.id, onBlur, e2ee]

@@ -31,7 +31,6 @@ const Files = memo(() => {
             } catch (error) {
                 toast.error(getTrpcError(error, 'Failed to delete file'));
             }
-            // not `finally`: the React Compiler skips try/finally
             refetch();
         },
         [refetch]

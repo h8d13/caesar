@@ -73,7 +73,6 @@ const useVoiceControls = ({
                     : getTrpcError(error, 'Failed to update microphone state')
             );
         }
-        // not `finally`: the React Compiler skips try/finally
         isTogglingMic.current = false;
     }, [
         ownVoiceState.micMuted,
@@ -108,7 +107,6 @@ const useVoiceControls = ({
         } catch (error) {
             toast.error(getTrpcError(error, 'Failed to update sound state'));
         }
-        // not `finally`: the React Compiler skips try/finally
         isTogglingSound.current = false;
     }, [ownVoiceState.soundMuted, currentVoiceChannelId]);
 
@@ -152,7 +150,6 @@ const useVoiceControls = ({
                     : 'Failed to update webcam state.'
             );
         }
-        // not `finally`: the React Compiler skips try/finally
         isTogglingWebcam.current = false;
     }, [
         ownVoiceState.webcamEnabled,
@@ -217,7 +214,6 @@ const useVoiceControls = ({
                     : getTrpcError(error, 'Failed to update screen share state')
             );
         }
-        // not `finally`: the React Compiler skips try/finally
         isTogglingScreenShare.current = false;
     }, [
         ownVoiceState.sharingScreen,

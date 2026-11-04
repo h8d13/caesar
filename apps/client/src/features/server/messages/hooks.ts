@@ -166,7 +166,6 @@ const usePaginatedMessages = (
             } catch (error) {
                 toast.error(getTrpcError(error, 'Failed to load messages'));
             }
-            // not `finally`: the React Compiler skips try/finally
             setFetching(false);
             setLoading(false);
         },
@@ -266,7 +265,6 @@ export const useMessages = (channelId: number) => {
         } catch (error) {
             toast.error(getTrpcError(error, 'Failed to load messages'));
         }
-        // not `finally`: the React Compiler skips try/finally
         fetchingNewer.current = false;
     }, [channelId, newerCursor]);
 
