@@ -63,7 +63,8 @@ const stripHtml = (html: string) =>
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>');
 
-const SearchDialog = ({ open, onClose }: TSearchDialogProps) => {
+// rendered inside DialogContent, which Radix unmounts while closed
+const SearchPanel = ({ onClose }: Pick<TSearchDialogProps, 'onClose'>) => {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<SearchResult[]>([]);
     const [loading, setLoading] = useState(false);
@@ -108,8 +109,9 @@ const SearchDialog = ({ open, onClose }: TSearchDialogProps) => {
                 setResults(data);
             } catch {
                 setResults([]);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         },
         [scopedChannelId]
     );
@@ -145,104 +147,103 @@ const SearchDialog = ({ open, onClose }: TSearchDialogProps) => {
         [onClose]
     );
 
+    // mounted on open and unmounted once the dialog has closed, which drops
+    // query and results; the cleanup cancels a pending debounced search
     useEffect(() => {
-        if (!open) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect -- reset local form state when the dialog is closed by parent
-            setQuery('');
-            setResults([]);
-            setSearched(false);
-            setLoading(false);
+        setTimeout(() => inputRef.current?.focus(), 0);
+
+        return () => {
             if (debounceRef.current) {
                 clearTimeout(debounceRef.current);
             }
-        }
-    }, [open]);
-
-    useEffect(() => {
-        if (open) {
-            setTimeout(() => inputRef.current?.focus(), 0);
-        }
-    }, [open]);
+        };
+    }, []);
 
     return (
-        <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-            <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
-                <DialogTitle className="sr-only">Search messages</DialogTitle>
-                <DialogDescription className="sr-only">
-                    Search through channel messages
-                </DialogDescription>
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-                    <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <Input
-                        ref={inputRef}
-                        value={query}
-                        onChange={(e) => onQueryChange(e.target.value)}
-                        placeholder={
-                            scopedChannelId
-                                ? 'Search this conversation...'
-                                : 'Search messages...'
-                        }
-                        className="border-0 shadow-none focus-visible:ring-0 px-2 h-9 text-sm flex-1"
-                    />
-                </div>
+        <>
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+                <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Input
+                    ref={inputRef}
+                    value={query}
+                    onChange={(e) => onQueryChange(e.target.value)}
+                    placeholder={
+                        scopedChannelId
+                            ? 'Search this conversation...'
+                            : 'Search messages...'
+                    }
+                    className="border-0 shadow-none focus-visible:ring-0 px-2 h-9 text-sm flex-1"
+                />
+            </div>
 
-                <div className="max-h-80 overflow-y-auto">
-                    {loading && (
-                        <div className="flex items-center justify-center py-8">
-                            <Spinner size="sm" />
-                        </div>
-                    )}
+            <div className="max-h-80 overflow-y-auto">
+                {loading && (
+                    <div className="flex items-center justify-center py-8">
+                        <Spinner size="sm" />
+                    </div>
+                )}
 
-                    {!loading && searched && results.length === 0 && (
-                        <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-                            No results found
-                        </div>
-                    )}
+                {!loading && searched && results.length === 0 && (
+                    <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                        No results found
+                    </div>
+                )}
 
-                    {!loading &&
-                        results.map((result) => (
-                            <button
-                                key={result.id}
-                                type="button"
-                                onClick={() => onResultClick(result)}
-                                className="w-full text-left px-4 py-2.5 hover:bg-accent/50 transition-colors border-b border-border last:border-b-0"
-                            >
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                                    <span className="flex items-center gap-0.5">
-                                        <Hash className="w-3 h-3" />
-                                        {result.isDm
-                                            ? (usersMap[result.userId] ?? 'DM')
-                                            : (channelsMap[result.channelId]
-                                                  ?.name ?? 'unknown')}
+                {!loading &&
+                    results.map((result) => (
+                        <button
+                            key={result.id}
+                            type="button"
+                            onClick={() => onResultClick(result)}
+                            className="w-full text-left px-4 py-2.5 hover:bg-accent/50 transition-colors border-b border-border last:border-b-0"
+                        >
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                                <span className="flex items-center gap-0.5">
+                                    <Hash className="w-3 h-3" />
+                                    {result.isDm
+                                        ? (usersMap[result.userId] ?? 'DM')
+                                        : (channelsMap[result.channelId]
+                                              ?.name ?? 'unknown')}
+                                </span>
+                                {!result.isDm && (
+                                    <span>
+                                        {usersMap[result.userId] ??
+                                            'Unknown User'}
                                     </span>
-                                    {!result.isDm && (
-                                        <span>
-                                            {usersMap[result.userId] ??
-                                                'Unknown User'}
-                                        </span>
-                                    )}
-                                    <span className="ml-auto">
-                                        {format(result.createdAt, 'PPp')}
-                                    </span>
-                                </div>
-                                <div className="text-sm truncate">
-                                    {buildExcerpt(
-                                        stripHtml(result.content ?? ''),
-                                        query
-                                    )}
-                                </div>
-                            </button>
-                        ))}
+                                )}
+                                <span className="ml-auto">
+                                    {format(result.createdAt, 'PPp')}
+                                </span>
+                            </div>
+                            <div className="text-sm truncate">
+                                {buildExcerpt(
+                                    stripHtml(result.content ?? ''),
+                                    query
+                                )}
+                            </div>
+                        </button>
+                    ))}
 
-                    {!loading && !searched && (
-                        <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-                            Type to search messages
-                        </div>
-                    )}
-                </div>
-            </DialogContent>
-        </Dialog>
+                {!loading && !searched && (
+                    <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                        Type to search messages
+                    </div>
+                )}
+            </div>
+        </>
     );
 };
+
+const SearchDialog = ({ open, onClose }: TSearchDialogProps) => (
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+        <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden">
+            <DialogTitle className="sr-only">Search messages</DialogTitle>
+            <DialogDescription className="sr-only">
+                Search through channel messages
+            </DialogDescription>
+            <SearchPanel onClose={onClose} />
+        </DialogContent>
+    </Dialog>
+);
 
 export { SearchDialog };
