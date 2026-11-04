@@ -10,10 +10,14 @@ net.core.wmem_default=16777216
 EOF
 sysctl --system
 
-# limit log sizes of journald
-tee /etc/systemd/journald.conf > /dev/null <<EOF
+# limit log sizes of journald: drop-in keeps the distro's journald.conf,
+# keys outside a [Journal] section are ignored
+mkdir -p /etc/systemd/journald.conf.d
+tee /etc/systemd/journald.conf.d/99-caesar.conf > /dev/null <<EOF
+[Journal]
 SystemMaxUse=200M
 EOF
+systemctl restart systemd-journald
 
 # limit similarly docker/podman logs
 # ...
