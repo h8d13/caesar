@@ -58,23 +58,22 @@ const RelativeTime = memo(
             [date]
         );
 
-        const [, setCounter] = useState(0);
+        const [tick, setTick] = useState(0);
 
+        // one timeout per tick, re-derived from the date's age: the interval
+        // widens (minute -> hour) and stops once the date renders absolute
         useEffect(() => {
             const updateInterval = interval ?? getUpdateInterval(parsedDate);
 
-            // if no update interval is needed, don't set up a timer
-            if (updateInterval === null) {
-                return;
-            }
+            if (updateInterval === null) return;
 
-            const timer = setInterval(() => {
-                // force re-render to update the relative time display
-                setCounter((prev) => prev + 1);
-            }, updateInterval);
+            const timer = setTimeout(
+                () => setTick((prev) => prev + 1),
+                updateInterval
+            );
 
-            return () => clearInterval(timer);
-        }, [interval, parsedDate]);
+            return () => clearTimeout(timer);
+        }, [interval, parsedDate, tick]);
 
         return children(getFormattedTime(parsedDate));
     }
