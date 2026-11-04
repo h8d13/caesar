@@ -151,5 +151,6 @@
 - Various refactors to reduce duplicate offenders in non-granular call-sites
 - Various changes to manifest, version strings, GitHub URL
 - Heap profiling
+- Re-render profiling
 - Documentation work
 - Port more upstream changes
