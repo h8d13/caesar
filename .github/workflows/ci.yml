@@ -12,7 +12,7 @@ on:
 
 jobs:
   ci:
-    name: Lint | Typecheck | Format | Tests
+    name: Format | Lint | Typecheck | Tests | Knip
     runs-on: ubuntu-latest
 
     steps:
