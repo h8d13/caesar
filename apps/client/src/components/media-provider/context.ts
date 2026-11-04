@@ -29,7 +29,6 @@ enum ConnectionStatus {
 export type TMediaProvider = {
     loading: boolean;
     connectionStatus: ConnectionStatus;
-    audioVideoRefsMap: Map<number, AudioVideoRefs>;
     ownVoiceState: TVoiceUserState;
     getOrCreateRefs: (remoteId: number) => AudioVideoRefs;
     getConsumerCodec: (
@@ -83,7 +82,6 @@ const MediaStatsContext = createContext<TransportStatsData>(
 const MediaProviderContext = createContext<TMediaProvider>({
     loading: false,
     connectionStatus: ConnectionStatus.DISCONNECTED,
-    audioVideoRefsMap: new Map(),
     getOrCreateRefs: () => ({
         videoRef: { current: null },
         audioRef: { current: null },

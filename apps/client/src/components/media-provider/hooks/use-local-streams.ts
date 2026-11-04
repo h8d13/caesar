@@ -15,10 +15,10 @@ const useLocalStreams = () => {
         MediaStream | undefined
     >(undefined);
 
-    const localVideoProducer = useRef<Producer | undefined>(undefined);
-    const localAudioProducer = useRef<Producer | undefined>(undefined);
-    const localScreenShareProducer = useRef<Producer | undefined>(undefined);
-    const localScreenShareAudioProducer = useRef<Producer | undefined>(
+    const localVideoProducerRef = useRef<Producer | undefined>(undefined);
+    const localAudioProducerRef = useRef<Producer | undefined>(undefined);
+    const localScreenShareProducerRef = useRef<Producer | undefined>(undefined);
+    const localScreenShareAudioProducerRef = useRef<Producer | undefined>(
         undefined
     );
 
@@ -35,15 +35,15 @@ const useLocalStreams = () => {
         setLocalScreenShare(undefined);
         setLocalScreenShareAudio(undefined);
 
-        localVideoProducer.current?.close();
-        localAudioProducer.current?.close();
-        localScreenShareProducer.current?.close();
-        localScreenShareAudioProducer.current?.close();
+        localVideoProducerRef.current?.close();
+        localAudioProducerRef.current?.close();
+        localScreenShareProducerRef.current?.close();
+        localScreenShareAudioProducerRef.current?.close();
 
-        localVideoProducer.current = undefined;
-        localAudioProducer.current = undefined;
-        localScreenShareProducer.current = undefined;
-        localScreenShareAudioProducer.current = undefined;
+        localVideoProducerRef.current = undefined;
+        localAudioProducerRef.current = undefined;
+        localScreenShareProducerRef.current = undefined;
+        localScreenShareAudioProducerRef.current = undefined;
     }, [
         localAudioStream,
         localScreenShareStream,
@@ -64,10 +64,10 @@ const useLocalStreams = () => {
         localScreenShareAudioStream,
         setLocalScreenShareAudio,
 
-        localVideoProducer,
-        localAudioProducer,
-        localScreenShareProducer,
-        localScreenShareAudioProducer,
+        localVideoProducerRef,
+        localAudioProducerRef,
+        localScreenShareProducerRef,
+        localScreenShareAudioProducerRef,
 
         clearLocalStreams
     };
