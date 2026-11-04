@@ -707,7 +707,6 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
                 });
             }
         },
-        // eslint-disable-next-line react-hooks/exhaustive-deps
         [
             broadcastCursor,
             canvasMode,
@@ -718,6 +717,8 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
             resizeInitialBounds,
             selection,
             selectionNetOrigin,
+            snap,
+            snapToGridEnabled,
             translateOrigin,
             zoom
         ]
