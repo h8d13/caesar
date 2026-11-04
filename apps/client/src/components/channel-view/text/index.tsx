@@ -125,14 +125,6 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
         setReplyingTo(message);
     }, []);
 
-    // Clear reply state on channel change
-    const [replyChannelId, setReplyChannelId] = useState(channelId);
-
-    if (channelId !== replyChannelId) {
-        setReplyChannelId(channelId);
-        setReplyingTo(null);
-    }
-
     const pendingScroll = usePendingScrollTarget();
 
     useEffect(() => {
