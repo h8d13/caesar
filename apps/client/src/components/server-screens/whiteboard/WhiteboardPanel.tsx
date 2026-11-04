@@ -1,3 +1,4 @@
+import { useLatestCallback } from '@/hooks/use-latest-callback';
 import { CanvasMode } from '@caesar/shared';
 import {
     ArrowDown,
@@ -27,6 +28,9 @@ const WhiteboardPanel = memo(() => {
     const containerRef = useRef<HTMLDivElement>(null);
     const svgRef = useRef<SVGSVGElement>(null);
     const wb = useWhiteboard(svgRef);
+    // reads camera/mode/selection: its identity changes with them, every
+    // layer would re-render on each pan step
+    const onLayerPointerDown = useLatestCallback(wb.onLayerPointerDown);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     // Fullscreen tracking
@@ -128,10 +132,7 @@ const WhiteboardPanel = memo(() => {
             className="relative flex-1 flex flex-col bg-muted/30 overflow-hidden"
         >
             {/* Header */}
-            <div className="flex items-center justify-between px-3 py-1.5 border-b border-border bg-card/50 shrink-0">
-                <span className="text-sm font-medium text-muted-foreground">
-                    Whiteboard
-                </span>
+            <div className="flex items-center justify-end px-3 py-1.5 border-b border-border bg-card/50 shrink-0">
                 <div className="flex items-center gap-1">
                     {/* Zoom controls */}
                     <button
@@ -191,9 +192,7 @@ const WhiteboardPanel = memo(() => {
                     canUndo={wb.canUndo}
                     canRedo={wb.canRedo}
                     snapToGrid={wb.snapToGridEnabled}
-                    onToggleSnapToGrid={() =>
-                        wb.setSnapToGridEnabled((v) => !v)
-                    }
+                    onToggleSnapToGrid={wb.toggleSnapToGrid}
                 />
 
                 {/* Pen thickness bottom-right, only in pen mode */}
@@ -320,16 +319,13 @@ const WhiteboardPanel = memo(() => {
                                     }
                                 >
                                     <LayerPreview
+                                        layerId={layerId}
                                         layer={layer}
-                                        onPointerDown={(e) =>
-                                            wb.onLayerPointerDown(e, layerId)
-                                        }
+                                        onLayerPointerDown={onLayerPointerDown}
                                         selectionColor={
                                             isSelected ? '#3b82f6' : undefined
                                         }
-                                        onValueChange={(value) =>
-                                            wb.updateLayerValue(layerId, value)
-                                        }
+                                        onLayerValueChange={wb.updateLayerValue}
                                         isEditing={
                                             wb.editingLayerId === layerId
                                         }

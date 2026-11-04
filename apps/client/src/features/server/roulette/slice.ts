@@ -1,3 +1,4 @@
+import { isSameRows } from '@/helpers/is-same-rows';
 import {
     type RoulettePhase,
     type TLightningNumber,
@@ -53,8 +54,17 @@ export const rouletteSlice = createSlice({
             state.phaseStartedAt = action.payload.phaseStartedAt;
             state.phaseDuration = action.payload.phaseDuration;
             state.winningNumber = action.payload.winningNumber;
-            state.bets = action.payload.bets;
-            state.lightningNumbers = action.payload.lightningNumbers;
+            if (!isSameRows(state.bets, action.payload.bets)) {
+                state.bets = action.payload.bets;
+            }
+            if (
+                !isSameRows(
+                    state.lightningNumbers,
+                    action.payload.lightningNumbers
+                )
+            ) {
+                state.lightningNumbers = action.payload.lightningNumbers;
+            }
         },
         setRoundHistory: (
             state,

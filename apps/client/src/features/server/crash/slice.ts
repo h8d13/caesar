@@ -1,3 +1,4 @@
+import { isSameRows } from '@/helpers/is-same-rows';
 import {
     type CrashPhase,
     type TCrashActiveBet,
@@ -49,7 +50,9 @@ export const crashSlice = createSlice({
             state.multiplier = action.payload.multiplier;
             state.phaseStartedAt = action.payload.phaseStartedAt;
             state.phaseDuration = action.payload.phaseDuration;
-            state.bets = action.payload.bets;
+            if (!isSameRows(state.bets, action.payload.bets)) {
+                state.bets = action.payload.bets;
+            }
         },
         setRoundHistory: (
             state,

@@ -1,4 +1,6 @@
 import { useOwnUser } from '@/features/server/users/hooks';
+import { ownUserIdSelector } from '@/features/server/users/selectors';
+import { store } from '@/features/store';
 import { throttle } from '@/helpers/throttle';
 import { getTRPCClient } from '@/lib/trpc';
 import {
@@ -200,6 +202,14 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
             }),
             trpc.whiteboard.onCursorUpdate.subscribe(undefined, {
                 onData: (data) => {
+                    // the server echoes our own moves: storing them would re-render
+                    // the whole board every 50ms for a cursor Cursors never draws
+                    if (
+                        data.cursor.userId ===
+                        ownUserIdSelector(store.getState())
+                    )
+                        return;
+
                     setCursors((prev) => {
                         const next = new Map(prev);
                         next.set(data.cursor.userId, data.cursor);
@@ -428,6 +438,10 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         trpc.whiteboard.clear.mutate().catch(reportCommitError);
         pushToHistory({}, []);
     }, [trpc, pushToHistory]);
+
+    const toggleSnapToGrid = useCallback(() => {
+        setSnapToGridEnabled((v) => !v);
+    }, []);
 
     const updateColor = useCallback(
         (color: Color) => {
@@ -1130,7 +1144,7 @@ export function useWhiteboard(svgRef: React.RefObject<SVGSVGElement | null>) {
         bringToFront,
         sendToBack,
         snapToGridEnabled,
-        setSnapToGridEnabled,
+        toggleSnapToGrid,
         ownUserId: ownUser?.id ?? 0
     };
 }

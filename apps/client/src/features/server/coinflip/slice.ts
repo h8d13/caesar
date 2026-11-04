@@ -1,3 +1,4 @@
+import { isSameRows } from '@/helpers/is-same-rows';
 import {
     type TCoinflipChallenge,
     type TCoinflipResult,
@@ -34,7 +35,9 @@ export const coinflipSlice = createSlice({
             state,
             action: PayloadAction<TCoinflipStateUpdate>
         ) => {
-            state.challenges = action.payload.challenges;
+            if (!isSameRows(state.challenges, action.payload.challenges)) {
+                state.challenges = action.payload.challenges;
+            }
         },
         addResult: (state, action: PayloadAction<TCoinflipResult>) => {
             state.recentResults.unshift(action.payload);
