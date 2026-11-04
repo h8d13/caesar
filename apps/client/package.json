@@ -21,7 +21,7 @@
     "@noble/hashes": "^2.4.0",
     "@reduxjs/toolkit": "^2.13.0",
     "@simplewebauthn/browser": "^14.0.0",
-    "@tailwindcss/vite": "^4.3.3",
+    "@tailwindcss/vite": "catalog:",
     "@tanstack/react-query": "^5.105.0",
     "@tiptap/core": "^3.32.2",
     "@tiptap/extension-emoji": "^3.32.2",

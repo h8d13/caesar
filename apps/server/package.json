@@ -47,7 +47,7 @@
     "zod": "^4.6.7"
   },
   "dependencies": {
-    "@libsql/client": "0.18.0",
+    "@libsql/client": "catalog:",
     "argon2": "0.45.1",
     "mediasoup": "catalog:"
   }

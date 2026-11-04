@@ -2,11 +2,16 @@ packages:
   - 'apps/*'
   - 'packages/*'
 
-# One version per dep shared by several packages, so overlapping
-# packages resolve to a single copy. strict: `pnpm add` of a cataloged
-# dep must use `catalog:`, so ranges can't drift apart again.
+# One version per dep shared by several packages (or by a package and an
+# override), so overlapping packages resolve to a single copy. Also holds
+# deps that must move in lockstep with another entry. strict: `pnpm add`
+# of a cataloged dep must use `catalog:`, so ranges can't drift apart.
 catalogMode: strict
 catalog:
+  # also consumed by overrides below
+  '@libsql/client': 0.18.0
+  # depends on tailwindcss at its own exact version: keep both equal
+  '@tailwindcss/vite': ^4.3.4
   # client and server must match
   '@trpc/client': ^11.22.1
   '@trpc/server': ^11.22.1
@@ -56,7 +61,7 @@ engineStrict: true
 # per libsql version found in the graph), and TS sees them as different
 # types ("Type '...drizzle-orm@x/y/Column' is not assignable to ...").
 overrides:
-  '@libsql/client': '0.18.0'
+  '@libsql/client': 'catalog:'
   vite@*: 'catalog:'
 
 # `pnpm deploy` requires workspace packages to be injected
