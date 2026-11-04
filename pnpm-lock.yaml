@@ -325,8 +325,8 @@ importers:
         specifier: ^1.42.8
         version: 1.42.8
       re-reselect:
-        specifier: ^5.1.1
-        version: 5.1.1(reselect@5.3.0)
+        specifier: ^6.0.0
+        version: 6.0.0(reselect@5.3.0)
       react:
         specifier: 'catalog:'
         version: 19.3.1
@@ -3577,10 +3577,10 @@ packages:
   queue@7.0.0:
     resolution: {integrity: sha512-sphwS7HdfQnvrJAXUNAUgpf9H/546IE3p/5Lf2jr71O4udEYlqAhkevykumas2FYuMkX/29JMOgrRdRoYZ/X9w==}
 
-  re-reselect@5.1.1:
-    resolution: {integrity: sha512-hgpMzkAga49Qr/CnR/06G+B2D4MZWLBU2K5hAAAnmKMdduwP/t3vuO+Zu7/zU4ujB/I3SXHba1gsIeTXT+KyIg==}
+  re-reselect@6.0.0:
+    resolution: {integrity: sha512-yQ54DnJwi31hIrQrU4vR02Jz3WJ+2R6Pg9VXvqlGLWDKwCSmDx+6d109VYgt1a8BDjavvm79QYeVR8LCWQfIzw==}
     peerDependencies:
-      reselect: ^5.0.0
+      reselect: ^5.1.0
 
   react-colorful@5.8.1:
     resolution: {integrity: sha512-oz68bhsnFWnpDf1ZR8daiQbYpXUnM2h2J6hl9Zg2rTpM/DU6vCqe1E+CpqmqLnJucMZetHZeifSAfJ+geN9lcA==}
@@ -6596,7 +6596,7 @@ snapshots:
 
   queue@7.0.0: {}
 
-  re-reselect@5.1.1(reselect@5.3.0):
+  re-reselect@6.0.0(reselect@5.3.0):
     dependencies:
       reselect: 5.3.0
 
