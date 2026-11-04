@@ -10,7 +10,7 @@
     or `docker` with buildx. `podman-compose` keeps running containers on a
     rebuilt image: `up -d --force-recreate` after `build`.
 - Checks before calling anything done: `pnpm check-types`, `pnpm lint`,
-  `pnpm format:check`, `pnpm --filter @caesar/client test`, `pnpm knip`.
+  `pnpm format:check`, `pnpm test` (all packages, like CI), `pnpm knip`.
 - Do not run `pnpm format` while another session edits the tree: it
   rewrites files that are not yours.
 - A fresh prod-dev instance has no users. The first sign-in (Sign in tab,
@@ -49,8 +49,8 @@ pnpm workspace (`apps/*`, `packages/*`):
 - `pnpm-workspace.yaml` is the dependency policy:
   - `catalog` + `catalogMode: strict`: a dep used by more than one
     package, or that must move in lockstep with another, lives in the
-    catalog and is referenced as `catalog:`. Each pinned or lockstep entry
-    carries a comment saying why; keep that up when adding one.
+    catalog and is referenced as `catalog:`. The reason for a pin or
+    lockstep lives next to the entry or in its `renovate.json` rule.
   - 0.x families sharing an internal package (e.g. `@dnd-kit/*` on one
     `@dnd-kit/abstract`) are pinned exactly and grouped in
     `renovate.json` so they bump together.
@@ -73,7 +73,7 @@ pnpm workspace (`apps/*`, `packages/*`):
 - The client builds with the native React Compiler
   (`react({ compiler })` in `apps/client/vite.config.ts`). It compiles
   `apps/client` and `packages/ui` (workspace imports resolve to source).
-  The server and `packages/shared` have no React and should stay free of.
+  The server and `packages/shared` stay React-free.
 - Skipped components run uncompiled, silently. `vp dev` logs them
   (diagnostics are dev-only). Known causes in this codebase:
   - `try`/`finally`: write `try`/`catch` then the reset after it (same

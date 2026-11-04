@@ -12,7 +12,6 @@ const extractUrls = (content: string): string[] => {
 
     const urls = matches ? matches.map((m) => m.url) : [];
 
-    // remove duplicates
     return Array.from(new Set(urls));
   } catch (e) {
     console.warn('extractUrls: linkify failed', e);

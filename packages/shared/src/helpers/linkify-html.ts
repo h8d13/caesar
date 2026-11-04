@@ -35,7 +35,7 @@ const normalizeAnchorHref = (anchorHtml: string): string => {
   return anchorHtml.replace(/\bhref=(['"])(.*?)\1/i, `href="${innerText}"`);
 };
 
-// processes an HTML string and wraps explicit http/https URLs in <a> tags
+// existing <a> tags are kept but get href=text (normalizeAnchorHref)
 const linkifyHtml = (html: string): string => {
   const parts = html.split(/(<a\b[^>]*>[\s\S]*?<\/a>|<[^>]+>)/gi);
 
@@ -55,7 +55,6 @@ const linkifyHtml = (html: string): string => {
         return part;
       }
 
-      // only keep matches with an explicit protocol (http or https)
       const validMatches = matches.filter(
         (m) => m.schema === 'https:' || m.schema === 'http:'
       );

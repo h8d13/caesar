@@ -35,7 +35,7 @@ const Spinner = memo(({ size = 'md', className, ...props }: TSpinnerProps) => {
       strokeLinecap="round"
       strokeLinejoin="round"
       className={cn(spinnerVariants({ size }), className)}
-      style={{ shapeRendering: 'auto', imageRendering: 'auto' }} // Using CSS properties for rendering
+      style={{ shapeRendering: 'auto', imageRendering: 'auto' }}
     >
       <path d="M42 24a18 18 0 1 1-12.438-17.12" />
     </svg>

@@ -49,7 +49,7 @@ const reactHooksRules = {
   'react/exhaustive-deps': 'error',
   'react/static-components': 'error',
   'react/use-memo': 'error',
-  // flags valid useCallback/useMemo the compiler would handle itself
+  // manual memo the compiler cannot preserve: it then skips the component
   'react/preserve-manual-memoization': 'warn',
   'react/incompatible-library': 'warn',
   'react/globals': 'error',

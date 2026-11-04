@@ -1,6 +1,6 @@
 export enum StorageOverflowAction {
-  DELETE_OLD_FILES = 'delete', // when new uploads exceed the quota, delete the oldest files
-  PREVENT_UPLOADS = 'prevent' // when new uploads exceed the quota, prevent new uploads
+  DELETE_OLD_FILES = 'delete',
+  PREVENT_UPLOADS = 'prevent'
 }
 
 export const STORAGE_OVERFLOW_ACTIONS_DICT = {

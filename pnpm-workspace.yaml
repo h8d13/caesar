@@ -50,11 +50,8 @@ allowBuilds:
   esbuild: true
   mediasoup: true
 
-# Refuse versions published less than 24h ago. Catches compromised releases
-# during the window where a malicious publish hasn't been detected yet.
-# Bump to 10080 (1 week) if same-day upgrades aren't needed. Renovate is
-# configured with `minimumReleaseAge: 3 days` so it never proposes a bump
-# that would fail this check at install time.
+# Supply-chain guard: refuse versions <24h old (10080 = 1 week if same-day
+# upgrades aren't needed). Renovate waits 3 days so its bumps never fail it.
 minimumReleaseAge: 1440
 
 # Fail install when node is below package.json "engines" (Dockerfiles, CI

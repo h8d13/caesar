@@ -16,7 +16,7 @@ for run in $(seq 1 "$runs"); do
 	start=$(now_ms)
 	podman start "$container" > /dev/null || exit 1
 
-	# -k: Caddy serves a local self-signed cert
+	# -k: cert from Caddy's internal CA, untrusted by curl
 	until curl -ksf -o /dev/null "$url"; do
 		if (( $(now_ms) - start > timeout_ms )); then
 			echo "run $run: no healthz after ${timeout_ms}ms" >&2

@@ -12,7 +12,7 @@ Or describe what you are trying to improve. Screenshots also welcome.
 1. Fork the repo and create a branch off `master`.
 `git checkout -b mynewfeature`
 2. Make your changes; keep commits focused on key files.
-3. Run `pnpm magic` (format, types, lint) and `pnpm test` inside the dev container, see
+3. Run `pnpm magic` (format, lint --fix, types), `pnpm test` and `pnpm knip` inside the dev container, see
 [Dev](https://github.com/h8d13/caesar/wiki/Dev): `docker compose -f compose.dev.yaml exec caesar pnpm magic`.
 4. Open a PR
 

@@ -27,12 +27,9 @@ WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/client/package.json ./apps/client/
 COPY apps/server/package.json ./apps/server/
-# Full directories (not just package.json) for the two library packages:
-# injectWorkspacePackages: true makes pnpm hardlink-copy workspace deps
-# instead of symlinking, and that copy is a one-off snapshot taken at
-# install time. Only shipping the manifest here left the injected
-# @caesar/ui copy with no src/ at all -- the later `COPY . .` brings in
-# the real source but never refreshes an already-taken hardlink snapshot.
+# Full directories, not manifests: injectWorkspacePackages snapshots the
+# library packages into node_modules at install; the later `COPY . .`
+# never refreshes that copy.
 COPY packages/shared ./packages/shared
 COPY packages/ui ./packages/ui
 
@@ -42,14 +39,15 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 # Now the source; edits below this line no longer bust the install.
 COPY . .
 
-# non-empty = client sourcemaps for re-render profiling (compose.prod-dev.yaml)
+# non-empty = client sourcemaps + react-dom/profiling, for re-render
+# profiling (compose.prod-dev.yaml)
 ARG CAESAR_PROFILE
 RUN pnpm --filter @caesar/client build
 # Bundle (vp pack, Rolldown) + SEA (postject) -> apps/server/dist/caesar.
 RUN pnpm --filter @caesar/server build:sea
 
-# Prod node_modules for the externalized deps (argon2 native bindings +
-# mediasoup, whose postinstall downloaded the prebuilt worker for this
+# Prod node_modules for the externalized deps (argon2 and @libsql/client
+# native bindings + mediasoup, whose postinstall downloaded the prebuilt worker for this
 # arch/kernel). The SEA binary expects to find these at /app/node_modules at
 # runtime (process.cwd() == /app); mediasoup resolves its worker from there.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \

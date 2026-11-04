@@ -16,9 +16,8 @@ function TooltipProvider({
   );
 }
 
-// TooltipRoot no longer wraps in its own TooltipProvider. The provider must
-// be mounted once near the app root; nesting one per tooltip multiplies
-// provider state and re-runs the delayDuration default per instance.
+// needs the single TooltipProvider in main.tsx: one per tooltip multiplies
+// provider state and re-runs the delayDuration default per instance
 function TooltipRoot({
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
@@ -62,9 +61,8 @@ type TTooltipProps = {
   asChild?: boolean;
 };
 
-// Memo wrapper. Like Button, this bails on children-identity diff in the
-// common JSX-children case, but pays off when callers stabilize the child
-// element (e.g. passing a ref or memoized icon).
+// memo: compiled callers pass cached JSX children, so unchanged tooltips
+// skip re-rendering
 const Tooltip = React.memo(function Tooltip({
   children,
   content,

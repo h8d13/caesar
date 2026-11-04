@@ -24,7 +24,7 @@
 // report 0ms.
 //
 // API (window.__rr): reset(), mark(label) starts a named scenario,
-// report({ top, scenario }) -> sorted rows with sourcemapped locations,
+// async report({ top = 25, scenario }) -> text, cut roots by wasted count,
 // totals() -> per scenario `redundant/renders redundantMs/ms`.
 // Pasting again swaps the implementation in place (single hook wrapper).
 (() => {

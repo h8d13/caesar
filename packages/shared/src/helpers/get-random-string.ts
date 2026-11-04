@@ -1,8 +1,5 @@
-// Cryptographically secure random alphanumeric string.
-// Uses Web Crypto (works in Node and browsers).
-// Bias from modulo (256 % 62 != 0) is negligible for typical invite-code use:
-// the over-represented chars are ~0.4% more frequent, which doesn't meaningfully
-// reduce the entropy of a 24-char code (~142 bits effective vs 143 ideal).
+// Modulo bias (256 % 62 = 8): 8 chars come up at 5/256 instead of 4/256.
+// Negligible for invite codes: a 24-char code keeps ~142.8 of 142.9 bits.
 const getRandomString = (length: number): string => {
   const characters =
     'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
