@@ -7,6 +7,7 @@ import {
   type TCoinflipStateUpdate
 } from '@caesar/shared/games/coinflip';
 import { db } from '@server/db';
+import { logger } from '@server/logger';
 import { randomInt } from 'crypto';
 import { and, eq, inArray } from 'drizzle-orm';
 import { withBalanceLock } from '../shared-bindings';
@@ -443,13 +444,15 @@ class CoinflipRuntime {
   }
 
   private notifyStateSubscribers() {
-    // getState became async after the libsql migration (the inner
-    // getActiveChallenges runs an async db query). Fire-and-forget here
-    // since callers expect a no-return; errors are surfaced via logger
-    // inside getState's deps.
-    void this.getState().then((state) => {
-      for (const cb of this.stateSubscribers) cb(state);
-    });
+    // fire-and-forget: callers are sync. getState queries the db, and an
+    // unhandled rejection exits Node, so failures are logged here.
+    this.getState()
+      .then((state) => {
+        for (const cb of this.stateSubscribers) cb(state);
+      })
+      .catch((error: unknown) => {
+        logger.error('[Coinflip] state broadcast failed:', error);
+      });
   }
 
   private notifyResultSubscribers(result: TCoinflipResult) {
