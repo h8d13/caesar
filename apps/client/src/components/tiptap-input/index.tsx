@@ -41,7 +41,8 @@ const isOverflowing = (wrapper: HTMLDivElement | null) => {
 type TTiptapInputProps = {
     disabled?: boolean;
     readOnly?: boolean;
-    value?: string;
+    // seeds the editor once; later changes go through the handle
+    initialValue?: string;
     onChange?: (html: string) => void;
     onSubmit?: () => void;
     onCancel?: () => void;
@@ -52,16 +53,16 @@ type TTiptapInputProps = {
     ref?: Ref<TTiptapInputHandle>;
 };
 
-// Uncontrolled use (compose bar): the editor owns the draft, the parent
-// replaces it through here instead of a changing `value`, so typing does
-// not re-render the parent. Goes through onChange like typed input.
+// Uncontrolled: the editor owns its content, so typing never re-renders
+// the parent. setContent goes through onChange like typed input.
 type TTiptapInputHandle = {
+    getHTML: () => string;
     setContent: (html: string) => void;
 };
 
 const TiptapInput = memo(
     ({
-        value,
+        initialValue,
         onChange,
         onSubmit,
         onCancel,
@@ -93,7 +94,7 @@ const TiptapInput = memo(
 
         const editor = useEditor({
             extensions,
-            content: value,
+            content: initialValue,
             editable: !disabled,
             enableInputRules: false,
             enablePasteRules: false,
@@ -102,9 +103,7 @@ const TiptapInput = memo(
 
                 onChange?.(html);
                 // view is already updated when the update event fires
-                if (!isExpanded) {
-                    setHasOverflow(isOverflowing(editorWrapperRef.current));
-                }
+                setHasOverflow(isOverflowing(editorWrapperRef.current));
 
                 if (!editor.isEmpty) {
                     onTyping?.();
@@ -203,6 +202,7 @@ const TiptapInput = memo(
         useImperativeHandle(
             ref,
             () => ({
+                getHTML: () => (isLive(editor) ? editor.getHTML() : ''),
                 setContent: (html: string) => {
                     if (isLive(editor)) editor.commands.setContent(html);
                 }
@@ -210,16 +210,17 @@ const TiptapInput = memo(
             [editor]
         );
 
-        // stable handler + trigger: EmojiPicker is memo
+        // stable handler + trigger: EmojiPicker is memo. readOnly via ref:
+        // it flips on every send
         const handleEmojiSelect = useCallback(
             (emoji: TEmojiItem) => {
-                if (disabled || readOnly) return;
+                if (disabled || readOnlyRef.current) return;
 
                 if (emoji.shortcodes.length > 0) {
                     editor?.chain().focus().setEmoji(emoji.shortcodes[0]).run();
                 }
             },
-            [editor, disabled, readOnly]
+            [editor, disabled]
         );
 
         const emojiTrigger = useMemo(
@@ -264,17 +265,6 @@ const TiptapInput = memo(
                 editor.commands.setMentionChannels(channels);
             }
         }, [editor, channels]);
-
-        useEffect(() => {
-            if (isLive(editor) && value !== undefined) {
-                const currentContent = editor.getHTML();
-
-                // only update if content is actually different to avoid cursor jumping
-                if (currentContent !== value) {
-                    editor.commands.setContent(value);
-                }
-            }
-        }, [editor, value]);
 
         useEffect(() => {
             if (isLive(editor)) {

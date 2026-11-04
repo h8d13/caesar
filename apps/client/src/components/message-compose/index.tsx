@@ -26,13 +26,16 @@ import {
     memo,
     Suspense,
     useCallback,
-    useImperativeHandle,
     useMemo,
     useRef,
-    useState,
-    type Ref
+    useState
 } from 'react';
 import { PreviewFile } from '../channel-view/text/preview-file';
+import {
+    getChannelDraftKey,
+    getDraftMessage,
+    setDraftMessage
+} from '../channel-view/text/use-draft-messages';
 import { UsersTypingIndicator } from '../channel-view/text/users-typing';
 
 // only mounted while open, and pulls the whole editor stack
@@ -42,38 +45,30 @@ const MessageEditorFullscreen = lazy(() =>
     }))
 );
 
-// The draft lives in the editor (uncontrolled), mirrored into a ref for
-// send: a controlled draft re-rendered the whole channel per keystroke.
+// The draft lives in the editor (uncontrolled) and is persisted from its
+// onChange: a controlled draft re-rendered the whole channel per keystroke.
 type TMessageComposeProps = {
     channelId: number;
-    initialMessage: string;
-    onMessageChange: (value: string) => void;
     onSend: (message: string, files: TTempFile[]) => Promise<boolean>;
     onTyping: () => void;
     typingUsers: TJoinedPublicUser[];
     users?: TJoinedPublicUser[];
-    ref?: Ref<TMessageComposeHandle>;
-};
-
-type TMessageComposeHandle = {
-    clearFiles: () => void;
 };
 
 const MessageCompose = memo(
     ({
         channelId,
-        initialMessage,
-        onMessageChange,
         onSend,
         onTyping,
         typingUsers,
-        users,
-        ref
+        users
     }: TMessageComposeProps) => {
         const sendingRef = useRef(false);
         const containerRef = useRef<HTMLDivElement>(null);
         const inputRef = useRef<TTiptapInputHandle>(null);
-        const messageRef = useRef(initialMessage);
+        // read once per mount: the channel view remounts per channel
+        const [draftKey] = useState(() => getChannelDraftKey(channelId));
+        const [initialDraft] = useState(() => getDraftMessage(draftKey));
         const [sending, setSending] = useState(false);
         // draft snapshot while the full editor is open
         const [fullEditorDraft, setFullEditorDraft] = useState<string | null>(
@@ -138,19 +133,14 @@ const MessageCompose = memo(
             [canUploadFiles]
         );
 
-        useImperativeHandle(ref, () => ({ clearFiles }), [clearFiles]);
-
         // typed input and setContent both land here
         const onInputChange = useCallback(
-            (html: string) => {
-                messageRef.current = html;
-                onMessageChange(html);
-            },
-            [onMessageChange]
+            (html: string) => setDraftMessage(draftKey, html),
+            [draftKey]
         );
 
         const handleSend = useCallback(async () => {
-            const message = messageRef.current;
+            const message = inputRef.current?.getHTML() ?? '';
 
             if (
                 (isEmptyMessage(message) && !files.length) ||
@@ -212,7 +202,7 @@ const MessageCompose = memo(
         );
 
         const openFullEditor = useCallback(
-            () => setFullEditorDraft(messageRef.current),
+            () => setFullEditorDraft(inputRef.current?.getHTML() ?? ''),
             []
         );
 
@@ -258,7 +248,7 @@ const MessageCompose = memo(
                     <Suspense fallback={<TiptapInputFallback />}>
                         <TiptapInput
                             ref={inputRef}
-                            value={initialMessage}
+                            initialValue={initialDraft}
                             onChange={onInputChange}
                             onSubmit={handleSend}
                             onTyping={onTyping}
@@ -351,4 +341,4 @@ const MessageCompose = memo(
     }
 );
 
-export { MessageCompose, type TMessageComposeHandle };
+export { MessageCompose };

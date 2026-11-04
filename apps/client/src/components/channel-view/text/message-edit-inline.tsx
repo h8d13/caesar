@@ -1,3 +1,4 @@
+import type { TTiptapInputHandle } from '@/components/tiptap-input';
 import {
     TiptapInput,
     TiptapInputFallback
@@ -7,7 +8,7 @@ import { getTRPCClient } from '@/lib/trpc';
 import type { TE2eeWriteContext } from '@/lib/use-decrypted-message';
 import { type TJoinedMessage, isEmptyMessage } from '@caesar/shared';
 import { AutoFocus } from '@caesar/ui';
-import { memo, Suspense, useCallback, useState } from 'react';
+import { memo, Suspense, useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 
 type TMessageEditInlineProps = {
@@ -23,7 +24,7 @@ type TMessageEditInlineProps = {
 
 const MessageEditInline = memo(
     ({ message, initialContent, e2ee, onBlur }: TMessageEditInlineProps) => {
-        const [value, setValue] = useState<string>(initialContent);
+        const inputRef = useRef<TTiptapInputHandle>(null);
 
         const onSubmit = useCallback(
             async (newValue: string | undefined) => {
@@ -84,9 +85,11 @@ const MessageEditInline = memo(
                 <Suspense fallback={<TiptapInputFallback />}>
                     <AutoFocus>
                         <TiptapInput
-                            value={value}
-                            onChange={setValue}
-                            onSubmit={() => onSubmit(value)}
+                            ref={inputRef}
+                            initialValue={initialContent}
+                            onSubmit={() =>
+                                onSubmit(inputRef.current?.getHTML())
+                            }
                             onCancel={onBlur}
                         />
                     </AutoFocus>

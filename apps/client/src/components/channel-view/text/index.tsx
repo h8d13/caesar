@@ -1,7 +1,4 @@
-import {
-    MessageCompose,
-    type TMessageComposeHandle
-} from '@/components/message-compose';
+import { MessageCompose } from '@/components/message-compose';
 import { useChannelById } from '@/features/server/channels/hooks';
 import {
     useChannelCan,
@@ -30,16 +27,11 @@ import {
 import { Spinner } from '@caesar/ui';
 import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { MessagesGroup } from './messages-group';
 import { TextSkeleton } from './text-skeleton';
 import { TextTopbar } from './text-top-bar';
-import {
-    getChannelDraftKey,
-    getDraftMessage,
-    setDraftMessage
-} from './use-draft-messages';
 import { useScrollController } from './use-scroll-controller';
 
 type TChannelProps = {
@@ -62,11 +54,6 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
         jumpToPresent
     } = useMessages(channelId);
 
-    const draftChannelKey = getChannelDraftKey(channelId);
-
-    // read once: the compose editor owns the draft from here (remounted
-    // per channel by its key)
-    const [initialDraft] = useState(() => getDraftMessage(draftChannelKey));
     const channel = useChannelById(channelId);
     const allUsers = useUsers();
     const ownUserId = useOwnUserId();
@@ -115,7 +102,6 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
         [allUsers, channel?.isDm]
     );
     const typingUsers = useTypingUsersByChannelId(channelId);
-    const composeRef = useRef<TMessageComposeHandle>(null);
 
     const { containerRef, onScroll, scrollToBottom } = useScrollController({
         messages,
@@ -171,11 +157,6 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
                 }
             }, TYPING_MS),
         [channelId]
-    );
-
-    const onDraftChange = useCallback(
-        (value: string) => setDraftMessage(draftChannelKey, value),
-        [draftChannelKey]
     );
 
     const onSend = useCallback(
@@ -346,10 +327,7 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
                         </div>
                     )}
                     <MessageCompose
-                        ref={composeRef}
                         channelId={channelId}
-                        initialMessage={initialDraft}
-                        onMessageChange={onDraftChange}
                         onSend={onSend}
                         onTyping={sendTypingSignal}
                         typingUsers={typingUsers}

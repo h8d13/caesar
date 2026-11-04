@@ -36,17 +36,15 @@ const MessagesGroup = memo(
             () => new Date(firstMessage.createdAt),
             [firstMessage.createdAt]
         );
-        // stable date + render fn: RelativeTime is memo
+        // stable date + render fn: RelativeTime is memo and ticks
+        const title = useMemo(() => format(date, 'PPpp'), [date]);
         const renderTime = useCallback(
             (relativeTime: string) => (
-                <span
-                    className="text-primary/60 text-xs"
-                    title={format(date, 'PPpp')}
-                >
+                <span className="text-primary/60 text-xs" title={title}>
                     {relativeTime}
                 </span>
             ),
-            [date]
+            [title]
         );
         const isOwnUser = useIsOwnUser(firstMessage.userId);
         const isDeletedUser = user?.name === DELETED_USER_IDENTITY_AND_NAME;
