@@ -166,11 +166,11 @@ settings:
 catalogs:
   default:
     '@trpc/client':
-      specifier: ^11.19.0
-      version: 11.19.0
+      specifier: ^11.22.1
+      version: 11.23.0
     '@trpc/server':
-      specifier: ^11.19.0
-      version: 11.19.0
+      specifier: ^11.22.1
+      version: 11.23.0
     '@types/node':
       specifier: ^26.6.5
       version: 26.6.5
@@ -293,7 +293,7 @@ importers:
         version: 3.32.0(@floating-ui/dom@1.8.0)(@tiptap/core@3.32.0(@tiptap/pm@3.32.0))(@tiptap/pm@3.32.0)
       '@trpc/client':
         specifier: 'catalog:'
-        version: 11.19.0(@trpc/server@11.19.0(typescript@7.0.2))(typescript@7.0.2)
+        version: 11.23.0(@trpc/server@11.23.0(@types/ws@8.18.2)(typescript@7.0.2))(typescript@7.0.2)
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
@@ -397,7 +397,7 @@ importers:
         version: 14.0.3
       '@trpc/server':
         specifier: 'catalog:'
-        version: 11.19.0(typescript@7.0.2)
+        version: 11.23.0(@types/ws@8.18.2)(typescript@7.0.2)
       '@types/ini':
         specifier: ^4.1.1
         version: 4.1.1
@@ -2245,18 +2245,32 @@ packages:
       '@tiptap/core': 3.32.0
       '@tiptap/pm': 3.32.0
 
-  '@trpc/client@11.19.0':
-    resolution: {integrity: sha512-0MKkPq6MejsKB5Opca1Rl22KVIaqo2+A1EiXyZ8EGUsl9TLrPdpGn+Usux20TZKFwnSC2+wI/WilqNJaP4ODfw==}
-    hasBin: true
+  '@trpc/client@11.23.0':
+    resolution: {integrity: sha512-61qMX0YY8FDrFuAScBFMzeAPbH9l3p7fEa2YGY6wKhGlOcgCiJOVxSw8P5JdHVJEV6sw81HPPXlSWI51byxkXA==}
     peerDependencies:
-      '@trpc/server': 11.19.0
+      '@trpc/server': 11.23.0
       typescript: '>=5.7.2'
 
-  '@trpc/server@11.19.0':
-    resolution: {integrity: sha512-7C1goiDurz82yFKtZUbEzjXd0Rg/jyisaIZQhdvus+1l7E6mwcEYZXjZ1US/HF8kOyz1LERL8UN3bcboJtjcyQ==}
-    hasBin: true
+  '@trpc/server@11.23.0':
+    resolution: {integrity: sha512-kHQY+MvRYm/NaerM6zM755NA4elBrA+PVve4RoJQf1P+hBzqQUuIBsmg+y7DWDsrWtg4wPASWbcYInP2xCBIFQ==}
     peerDependencies:
+      '@types/aws-lambda': '*'
+      '@types/express': '*'
+      '@types/ws': '*'
+      fastify: '*'
+      next: '*'
       typescript: '>=5.7.2'
+    peerDependenciesMeta:
+      '@types/aws-lambda':
+        optional: true
+      '@types/express':
+        optional: true
+      '@types/ws':
+        optional: true
+      fastify:
+        optional: true
+      next:
+        optional: true
 
   '@tybys/wasm-util@0.10.4':
     resolution: {integrity: sha512-W3c4gRigFS0T/Ma4qIYF3GDAc5AQdHb1yL5znJT1Zv1YaD9Kitx656wBjvr19qbiosmZT8lWDM5BEMynUqX65A==}
@@ -5393,14 +5407,16 @@ snapshots:
       '@tiptap/core': 3.32.0(@tiptap/pm@3.32.0)
       '@tiptap/pm': 3.32.0
 
-  '@trpc/client@11.19.0(@trpc/server@11.19.0(typescript@7.0.2))(typescript@7.0.2)':
+  '@trpc/client@11.23.0(@trpc/server@11.23.0(@types/ws@8.18.2)(typescript@7.0.2))(typescript@7.0.2)':
     dependencies:
-      '@trpc/server': 11.19.0(typescript@7.0.2)
+      '@trpc/server': 11.23.0(@types/ws@8.18.2)(typescript@7.0.2)
       typescript: 7.0.2
 
-  '@trpc/server@11.19.0(typescript@7.0.2)':
+  '@trpc/server@11.23.0(@types/ws@8.18.2)(typescript@7.0.2)':
     dependencies:
       typescript: 7.0.2
+    optionalDependencies:
+      '@types/ws': 8.18.2
 
   '@tybys/wasm-util@0.10.4':
     dependencies:
