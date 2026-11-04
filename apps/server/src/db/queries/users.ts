@@ -17,7 +17,11 @@ import {
   jsonRows,
   precompile
 } from './json-sql';
-import { joinedUserBaseFields, publicUserBaseFields } from './user-fields';
+import {
+  joinedUserBaseFields,
+  publicUserBaseFields,
+  selfOnlyUserFields
+} from './user-fields';
 
 const userRelationsJson = {
   avatar: fileByIdJson('avatar_file', users.avatarId),
@@ -28,9 +32,12 @@ const userRelationsJson = {
   )
 };
 
+// includes the self-only flags for status masking: callers strip them
+// before anything leaves the server (stripSelfOnlyFields)
 const publicUserJson = precompile(
   jsonObject({
     ...publicUserBaseFields,
+    ...selfOnlyUserFields,
     ...userRelationsJson
   })
 );

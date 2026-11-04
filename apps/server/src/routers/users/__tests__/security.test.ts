@@ -1,7 +1,8 @@
 import {
   DELETED_USER_IDENTITY_AND_NAME,
   OWNER_ROLE_ID,
-  Permission
+  Permission,
+  ServerEvents
 } from '@caesar/shared';
 import { logins, userRoles, users } from '@caesar/shared/db/schema';
 import {
@@ -14,9 +15,10 @@ import { tdb, testsBaseUrl } from '@server/__tests__/setup';
 import { sha256 } from '@server/helpers/sha256';
 import { getJwtSecret } from '@server/utils/jwt-secret';
 import { deriveAuthKey, verifyPassword } from '@server/utils/password';
+import { pubsub } from '@server/utils/pubsub';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
-import { describe, expect, test } from 'vite-plus/test';
+import { describe, expect, test, vi } from 'vite-plus/test';
 
 const insertUser = async (identity: string): Promise<number> => {
   const row = await tdb
@@ -107,6 +109,47 @@ describe('self-only user flags', () => {
       'sendDmReadReceipts'
     ]) {
       expect(peerRow).not.toHaveProperty(key);
+    }
+  });
+});
+
+describe('self-only user flags in embedded and broadcast rows', () => {
+  const SELF_ONLY = [
+    'appearOffline',
+    'allowMultipleSessions',
+    'sendDmReadReceipts'
+  ];
+
+  test('invite creator rows carry none of them', async () => {
+    const { caller } = await initTest(1);
+
+    await caller.invites.add({});
+
+    const [invite] = await caller.invites.getAll();
+
+    expect(invite?.creator).toBeDefined();
+    for (const key of SELF_ONLY) {
+      expect(invite!.creator).not.toHaveProperty(key);
+    }
+  });
+
+  test('appear-offline off broadcasts USER_JOIN without them', async () => {
+    const { caller } = await initTest(1);
+    const publish = vi.spyOn(pubsub, 'publish');
+
+    try {
+      await caller.users.setAppearOffline({ value: false });
+
+      const joined = publish.mock.calls.find(
+        ([topic]) => topic === ServerEvents.USER_JOIN
+      )?.[1];
+
+      expect(joined).toBeDefined();
+      for (const key of SELF_ONLY) {
+        expect(joined).not.toHaveProperty(key);
+      }
+    } finally {
+      publish.mockRestore();
     }
   });
 });

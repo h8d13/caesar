@@ -1,9 +1,8 @@
 import { users } from '@caesar/shared/db/schema';
 import { sql } from 'drizzle-orm';
 
-// Common columns shared by every query that returns a TPublicUser-shaped
-// record. Spread this into a drizzle .select({ ... }) and add the rest
-// (avatar/banner joins) as needed.
+// Peer-safe columns of a TPublicUser-shaped record: anything embedding a
+// user (emoji/sound uploader, invite creator) uses this as is.
 //
 // When TPublicUser gains a new field, add it here once instead of patching
 // every caller.
@@ -21,9 +20,13 @@ const publicUserBaseFields = {
   // for every user without shipping the images; the list itself is fetched
   // lazily when a viewer opens. unixepoch()*1000 matches our ms timestamps.
   activeStatusCount: sql<number>`(SELECT COUNT(*) FROM status_images WHERE user_id = ${users.id} AND expires_at > (unixepoch() * 1000))`,
-  createdAt: users.createdAt,
-  // selected for redaction at the boundary: callers only forward this for
-  // the requester's own row (see join handler), never to peers.
+  createdAt: users.createdAt
+};
+
+// Per-user settings. Selected only where the server needs them (status
+// masking in join and user broadcasts, admin rows); rows to peers go
+// through stripSelfOnlyFields, only the own row keeps them.
+const selfOnlyUserFields = {
   appearOffline: users.appearOffline,
   allowMultipleSessions: users.allowMultipleSessions,
   sendDmReadReceipts: users.sendDmReadReceipts
@@ -35,6 +38,7 @@ const publicUserBaseFields = {
 // banner joins (+ optionally password) at the call site.
 const joinedUserBaseFields = {
   ...publicUserBaseFields,
+  ...selfOnlyUserFields,
   identity: users.identity,
   updatedAt: users.updatedAt,
   lastLoginAt: users.lastLoginAt,
@@ -50,9 +54,6 @@ type TSelfOnlyFields = {
   sendDmReadReceipts?: unknown;
 };
 
-// The per-user settings selected above with the public fields. Only the
-// user's own row may carry them; every row sent to peers goes through this,
-// so a new self-only flag is added here once.
 const stripSelfOnlyFields = <T extends TSelfOnlyFields>({
   appearOffline: _appearOffline,
   allowMultipleSessions: _allowMultipleSessions,
@@ -60,4 +61,9 @@ const stripSelfOnlyFields = <T extends TSelfOnlyFields>({
   ...peerSafe
 }: T): Omit<T, keyof TSelfOnlyFields> => peerSafe;
 
-export { joinedUserBaseFields, publicUserBaseFields, stripSelfOnlyFields };
+export {
+  joinedUserBaseFields,
+  publicUserBaseFields,
+  selfOnlyUserFields,
+  stripSelfOnlyFields
+};

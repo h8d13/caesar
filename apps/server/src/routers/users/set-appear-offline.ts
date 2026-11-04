@@ -1,6 +1,7 @@
 import { ServerEvents } from '@caesar/shared';
 import { users } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
+import { stripSelfOnlyFields } from '@server/db/queries/user-fields';
 import { getPublicUserById } from '@server/db/queries/users';
 import { protectedProcedure } from '@server/utils/trpc';
 import { setAppearOffline } from '@server/utils/wss';
@@ -28,11 +29,8 @@ const setAppearOfflineRoute = protectedProcedure
 
       if (publicUser) {
         const realStatus = ctx.getStatusById(ctx.userId);
-        const { appearOffline, ...broadcastUser } = publicUser;
-        void appearOffline;
-
         ctx.pubsub.publish(ServerEvents.USER_JOIN, {
-          ...broadcastUser,
+          ...stripSelfOnlyFields(publicUser),
           status: realStatus
         });
       }
