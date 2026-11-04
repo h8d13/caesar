@@ -8,11 +8,9 @@ import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import { ChevronDown, ChevronUp, Maximize2, Smile } from 'lucide-react';
 import {
     memo,
-    useCallback,
     useEffect,
     useImperativeHandle,
     useLayoutEffect,
-    useMemo,
     useRef,
     useState,
     type Ref
@@ -210,27 +208,15 @@ const TiptapInput = memo(
             [editor]
         );
 
-        // stable handler + trigger: EmojiPicker is memo. readOnly via ref:
-        // it flips on every send
-        const handleEmojiSelect = useCallback(
-            (emoji: TEmojiItem) => {
-                if (disabled || readOnlyRef.current) return;
+        // readOnly via ref: it flips on every send and would otherwise give
+        // the memo'd EmojiPicker a new handler each time
+        const handleEmojiSelect = (emoji: TEmojiItem) => {
+            if (disabled || readOnlyRef.current) return;
 
-                if (emoji.shortcodes.length > 0) {
-                    editor?.chain().focus().setEmoji(emoji.shortcodes[0]).run();
-                }
-            },
-            [editor, disabled]
-        );
-
-        const emojiTrigger = useMemo(
-            () => (
-                <Button variant="ghost" size="icon" disabled={disabled}>
-                    <Smile className="h-5 w-5" />
-                </Button>
-            ),
-            [disabled]
-        );
+            if (emoji.shortcodes.length > 0) {
+                editor?.chain().focus().setEmoji(emoji.shortcodes[0]).run();
+            }
+        };
 
         // keep emoji storage in sync with custom emojis from the store
         // this ensures newly added emojis appear in autocomplete without refreshing the app
@@ -332,7 +318,9 @@ const TiptapInput = memo(
                     onEmojiSelect={handleEmojiSelect}
                     onGifSelect={onGifSelect}
                 >
-                    {emojiTrigger}
+                    <Button variant="ghost" size="icon" disabled={disabled}>
+                        <Smile className="h-5 w-5" />
+                    </Button>
                 </EmojiPicker>
             </div>
         );

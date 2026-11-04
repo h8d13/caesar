@@ -1,4 +1,3 @@
-import { useLatestCallback } from '@/hooks/use-latest-callback';
 import {
     Button,
     Dialog,
@@ -56,6 +55,8 @@ const FormDialogShell = memo(
 
 FormDialogShell.displayName = 'FormDialogShell';
 
+// onConfirm should be stable (useLatestCallback in the body): it usually
+// closes over form values
 type TFooterProps = {
     close: () => void;
     cancelLabel?: string;
@@ -72,21 +73,16 @@ const FormDialogFooter = memo(
         confirmLabel,
         onConfirm,
         confirmDisabled
-    }: TFooterProps) => {
-        // submit handlers close over form values: keep the button stable
-        const confirm = useLatestCallback(onConfirm);
-
-        return (
-            <DialogFooter className="gap-2">
-                <Button variant="ghost" onClick={close}>
-                    {cancelLabel}
-                </Button>
-                <Button onClick={confirm} disabled={confirmDisabled}>
-                    {confirmLabel}
-                </Button>
-            </DialogFooter>
-        );
-    }
+    }: TFooterProps) => (
+        <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={close}>
+                {cancelLabel}
+            </Button>
+            <Button onClick={onConfirm} disabled={confirmDisabled}>
+                {confirmLabel}
+            </Button>
+        </DialogFooter>
+    )
 );
 
 FormDialogFooter.displayName = 'FormDialogFooter';

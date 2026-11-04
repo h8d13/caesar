@@ -55,9 +55,4 @@ const getChannelDraftKey = (channelId: number): TDraftMessageKey => {
     return `ch-${channelId}-${ownUserId}`;
 };
 
-export {
-    getChannelDraftKey,
-    getDraftMessage,
-    loadDraftsFromStorage,
-    setDraftMessage
-};
+export { getChannelDraftKey, getDraftMessage, setDraftMessage };

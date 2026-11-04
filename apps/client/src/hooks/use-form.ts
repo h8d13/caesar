@@ -1,5 +1,5 @@
 import { parseTrpcErrors, type TTrpcErrors } from '@caesar/shared';
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type TInputHandler = (e: React.ChangeEvent<any>) => void;
@@ -17,15 +17,16 @@ const useForm = <T extends Record<string, unknown>>(initialValues: T) => {
             setErrors((prev) => ({ ...prev, [key]: undefined }));
             setValues((prev) => ({ ...prev, [key]: value as T[keyof T] }));
         };
+        const keys = Object.keys(initialValues) as (keyof T)[];
+        const raw = new Map(keys.map((k) => [k, makeRaw(k)]));
+        const rawFor = (key: keyof T) => raw.get(key) ?? makeRaw(key);
         const makeInput =
             (key: keyof T, type?: string): TInputHandler =>
             (e) => {
                 const newValue = e.target.value;
 
-                makeRaw(key)(type === 'number' ? +newValue : newValue);
+                rawFor(key)(type === 'number' ? +newValue : newValue);
             };
-        const keys = Object.keys(initialValues) as (keyof T)[];
-        const raw = new Map(keys.map((k) => [k, makeRaw(k)]));
         const input = new Map(keys.map((k) => [k, makeInput(k)]));
         const number = new Map(keys.map((k) => [k, makeInput(k, 'number')]));
 
@@ -33,86 +34,44 @@ const useForm = <T extends Record<string, unknown>>(initialValues: T) => {
             input: (key: keyof T, type?: string) =>
                 (type === 'number' ? number : input).get(key) ??
                 makeInput(key, type),
-            raw: (key: keyof T) => raw.get(key) ?? makeRaw(key)
+            raw: rawFor
         };
     });
 
-    const registerInput = useCallback(
-        (key: keyof T, type?: string) => {
-            const value = String(values[key] ?? '');
+    // plain functions: the React Compiler memoizes them on their inputs
+    const registerInput = (key: keyof T, type?: string) => ({
+        value: String(values[key] ?? ''),
+        onChange: handlers.input(key, type),
+        name: key.toString(),
+        type,
+        error: errors[key as string]
+    });
 
-            return {
-                value,
-                onChange: handlers.input(key, type),
-                name: key.toString(),
-                type,
-                error: errors[key as string]
-            };
-        },
-        [values, errors, handlers]
-    );
+    const registerRaw = (key: keyof T) => ({
+        value: values[key] ?? '',
+        onChange: handlers.raw(key),
+        name: key.toString(),
+        error: errors[key as string]
+    });
 
-    const registerRaw = useCallback(
-        (key: keyof T) => {
-            const value = values[key] ?? '';
+    const registerRawNumber = (key: keyof T) => ({
+        value: values[key] as number | undefined,
+        onChange: handlers.raw(key),
+        error: errors[key as string]
+    });
 
-            return {
-                value,
-                onChange: handlers.raw(key),
-                name: key.toString(),
-                error: errors[key as string]
-            };
-        },
-        [values, errors, handlers]
-    );
+    const setTrpcErrors = (error: unknown) => setErrors(parseTrpcErrors(error));
 
-    const setTrpcErrors = useCallback(
-        (error: unknown) => {
-            setErrors(parseTrpcErrors(error));
-        },
-        [setErrors]
-    );
+    const onChange = <K extends keyof T>(key: K, value: T[K]) =>
+        handlers.raw(key)(value);
 
-    const onChange = useCallback(
-        <K extends keyof T>(key: K, value: T[K]) => {
-            setValues((prev) => ({ ...prev, [key]: value }));
-            setErrors((prev) => ({ ...prev, [key]: undefined }));
-        },
-        [setValues]
-    );
-
-    const registerRawNumber = useCallback(
-        (key: keyof T) => {
-            const value = values[key] as number | undefined;
-
-            return {
-                value,
-                onChange: handlers.raw(key),
-                error: errors[key as string]
-            };
-        },
-        [values, errors, handlers]
-    );
-
-    const setErrorsDirectly = useCallback(
-        (newErrors: TTrpcErrors) => {
-            setErrors(newErrors);
-        },
-        [setErrors]
-    );
-
-    const setError = useCallback(
-        (key: keyof T | '_general', errorMessage: string) => {
-            setErrors((prev) => ({ ...prev, [key]: errorMessage }));
-        },
-        [setErrors]
-    );
+    const setError = (key: keyof T | '_general', errorMessage: string) =>
+        setErrors((prev) => ({ ...prev, [key]: errorMessage }));
 
     return {
         values,
-        errors,
         setValues,
-        setErrors: setErrorsDirectly,
+        setErrors,
         setTrpcErrors,
         r: registerInput,
         rr: registerRaw,

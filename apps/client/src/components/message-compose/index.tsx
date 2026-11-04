@@ -30,12 +30,12 @@ import {
     useRef,
     useState
 } from 'react';
-import { PreviewFile } from '../channel-view/text/preview-file';
 import {
     getChannelDraftKey,
     getDraftMessage,
     setDraftMessage
-} from '../channel-view/text/use-draft-messages';
+} from '../channel-view/text/draft-messages';
+import { PreviewFile } from '../channel-view/text/preview-file';
 import { UsersTypingIndicator } from '../channel-view/text/users-typing';
 
 // only mounted while open, and pulls the whole editor stack

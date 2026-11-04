@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { HelpCircle } from 'lucide-react';
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import { Label } from './label';
 import { Tooltip } from './tooltip';
 
@@ -22,10 +22,10 @@ const Group = memo(
     required,
     className
   }: TGroupProps) => {
-    // the field (children) changes on every keystroke; the header doesn't,
-    // so Label and Tooltip skip those renders
-    const header = useMemo(
-      () => (
+    // the header only reads label/required/help/description: the React
+    // Compiler caches it while the field (children) changes per keystroke
+    return (
+      <div className={cn('flex flex-col gap-2', className)}>
         <div className="flex flex-col">
           <div className="flex">
             <Label>
@@ -41,13 +41,6 @@ const Group = memo(
             <span className="text-sm text-muted-foreground">{description}</span>
           )}
         </div>
-      ),
-      [label, required, help, description]
-    );
-
-    return (
-      <div className={cn('flex flex-col gap-2', className)}>
-        {header}
         <div className="flex flex-col gap-2">{children}</div>
       </div>
     );

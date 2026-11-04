@@ -1,4 +1,3 @@
-import { useLatestCallback } from '@/hooks/use-latest-callback';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -71,26 +70,21 @@ const DialogShellFooter = memo(
         onCancel,
         onConfirm,
         confirmDisabled
-    }: TFooterProps) => {
-        // confirm handlers may close over body values: keep the button stable
-        const confirm = useLatestCallback(() => onConfirm?.());
-
-        return (
-            <AlertDialogFooter className="gap-2">
-                <AlertDialogCancel onClick={onCancel}>
-                    {cancelLabel}
-                </AlertDialogCancel>
-                <AutoFocus>
-                    <AlertDialogAction
-                        onClick={confirm}
-                        disabled={confirmDisabled}
-                    >
-                        {confirmLabel}
-                    </AlertDialogAction>
-                </AutoFocus>
-            </AlertDialogFooter>
-        );
-    }
+    }: TFooterProps) => (
+        <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel onClick={onCancel}>
+                {cancelLabel}
+            </AlertDialogCancel>
+            <AutoFocus>
+                <AlertDialogAction
+                    onClick={onConfirm}
+                    disabled={confirmDisabled}
+                >
+                    {confirmLabel}
+                </AlertDialogAction>
+            </AutoFocus>
+        </AlertDialogFooter>
+    )
 );
 
 DialogShellFooter.displayName = 'DialogShellFooter';
