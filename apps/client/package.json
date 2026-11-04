@@ -39,7 +39,7 @@
     "marked": "^18.1.2",
     "mediasoup-client": "^3.26.0",
     "perfect-freehand": "^1.2.3",
-    "prosemirror-view": "^1.42.8",
+    "prosemirror-view": "^1.42.9",
     "re-reselect": "^6.0.0",
     "react": "catalog:",
     "react-dom": "catalog:",
