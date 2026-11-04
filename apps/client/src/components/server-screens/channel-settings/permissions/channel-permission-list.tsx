@@ -1,10 +1,10 @@
+import { PermissionToggleRow } from '@/components/permission-toggle-row';
 import {
     ChannelPermission,
     channelPermissionDescriptions,
     channelPermissionLabels,
     ChannelType
 } from '@caesar/shared';
-import { Switch } from '@caesar/ui';
 import { memo, useMemo } from 'react';
 
 // Voice-only and text-only permissions don't apply to the other channel
@@ -24,39 +24,10 @@ const PERMISSIONS_BY_CHANNEL_TYPE: Record<ChannelType, ChannelPermission[]> = {
     ]
 };
 
-type TChannelPermissionItemProps = {
-    permission: ChannelPermission;
-    enabled: boolean;
-    onToggle: (permission: ChannelPermission) => void;
-};
-
-// onToggle is stable and takes the permission, so a toggle re-renders
-// only the row whose `enabled` changed
-const ChannelPermissionItem = memo(
-    ({ permission, enabled, onToggle }: TChannelPermissionItemProps) => {
-        return (
-            <div className="flex items-center justify-between">
-                <div className="flex flex-col">
-                    <span className="text-sm font-medium">
-                        {channelPermissionLabels[permission]}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                        {channelPermissionDescriptions[permission]}
-                    </span>
-                </div>
-                <Switch
-                    checked={enabled}
-                    onCheckedChange={() => onToggle(permission)}
-                />
-            </div>
-        );
-    }
-);
-
 type TChannelPermissionListProps = {
     permissions: Array<{ permission: string; allow: boolean }>;
     channelType: ChannelType;
-    onTogglePermission: (permission: ChannelPermission) => void;
+    onTogglePermission: (permission: ChannelPermission, allow: boolean) => void;
 };
 
 const ChannelPermissionList = memo(
@@ -81,9 +52,13 @@ const ChannelPermissionList = memo(
                 <div className="space-y-3">
                     {PERMISSIONS_BY_CHANNEL_TYPE[channelType].map(
                         (permission) => (
-                            <ChannelPermissionItem
+                            <PermissionToggleRow
                                 key={permission}
                                 permission={permission}
+                                label={channelPermissionLabels[permission]}
+                                description={
+                                    channelPermissionDescriptions[permission]
+                                }
                                 enabled={
                                     permissionsMap.get(permission) ?? false
                                 }

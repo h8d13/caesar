@@ -142,11 +142,11 @@ const Override = memo(
         });
 
         const onTogglePermission = useCallback(
-            (permission: ChannelPermission) => {
+            (permission: ChannelPermission, allow: boolean) => {
                 setLocalPermissions((prevPermissions) =>
                     prevPermissions.map((perm) =>
                         perm.permission === permission
-                            ? { ...perm, allow: !perm.allow }
+                            ? { ...perm, allow }
                             : perm
                     )
                 );
