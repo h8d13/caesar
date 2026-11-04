@@ -1,105 +1,27 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useAvailableDevices as useDeviceStore } from '@/components/devices-provider/hooks/use-available-devices';
+
+// default device always on top, then sorted alphabetically
+const sortDevices = (devices: MediaDeviceInfo[]) =>
+    [...devices].sort((a, b) => {
+        if (a.deviceId === 'default') return -1;
+        if (b.deviceId === 'default') return 1;
+
+        return a.label.localeCompare(b.label);
+    });
 
 const useAvailableDevices = () => {
-    const [inputDevices, setInputDevices] = useState<
-        (MediaDeviceInfo | undefined)[]
-    >([]);
-    const [playbackDevices, setPlaybackDevices] = useState<
-        (MediaDeviceInfo | undefined)[]
-    >([]);
-    const [videoDevices, setVideoDevices] = useState<
-        (MediaDeviceInfo | undefined)[]
-    >([]);
-    const [loading, setLoading] = useState(true);
-
-    const normalizeDevices = useCallback(
-        (devices: MediaDeviceInfo[], kind: MediaDeviceKind) => {
-            const seen = new Set<string>();
-            const normalized: MediaDeviceInfo[] = [];
-
-            for (const device of devices) {
-                const dedupeKey =
-                    device.deviceId ||
-                    `${kind}-fallback-${device.groupId || 'default'}`;
-
-                if (seen.has(dedupeKey)) {
-                    continue;
-                }
-
-                seen.add(dedupeKey);
-                normalized.push(device);
-            }
-
-            // default device always on top, then sorted alphabetically
-            normalized.sort((a, b) => {
-                if (a.deviceId === 'default') return -1;
-                if (b.deviceId === 'default') return 1;
-
-                return a.label.localeCompare(b.label);
-            });
-
-            return normalized;
-        },
-        []
-    );
-
-    const loadDevices = useCallback(async () => {
-        if (!navigator.mediaDevices?.enumerateDevices) {
-            setLoading(false);
-            return;
-        }
-
-        // promise .finally, not try/finally: the React Compiler skips the
-        // latter. Errors still reach the caller.
-        await navigator.mediaDevices
-            .enumerateDevices()
-            .then((devices) => {
-                setInputDevices(
-                    normalizeDevices(
-                        devices.filter((d) => d.kind === 'audioinput'),
-                        'audioinput'
-                    )
-                );
-                setPlaybackDevices(
-                    normalizeDevices(
-                        devices.filter((d) => d.kind === 'audiooutput'),
-                        'audiooutput'
-                    )
-                );
-                setVideoDevices(
-                    normalizeDevices(
-                        devices.filter((d) => d.kind === 'videoinput'),
-                        'videoinput'
-                    )
-                );
-            })
-            .finally(() => setLoading(false));
-    }, [normalizeDevices]);
-
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs React state with the browser mediaDevices list (external system)
-        void loadDevices();
-
-        if (!navigator.mediaDevices?.addEventListener) return;
-
-        const onDeviceChange = () => {
-            void loadDevices();
-        };
-
-        navigator.mediaDevices.addEventListener('devicechange', onDeviceChange);
-
-        return () => {
-            navigator.mediaDevices.removeEventListener(
-                'devicechange',
-                onDeviceChange
-            );
-        };
-    }, [loadDevices]);
-
-    return {
+    const {
         inputDevices,
         playbackDevices,
         videoDevices,
+        loading,
+        loadDevices
+    } = useDeviceStore();
+
+    return {
+        inputDevices: sortDevices(inputDevices),
+        playbackDevices: sortDevices(playbackDevices),
+        videoDevices: sortDevices(videoDevices),
         loading,
         loadDevices
     };

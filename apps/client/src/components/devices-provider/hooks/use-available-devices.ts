@@ -1,100 +1,105 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 
-const useAvailableDevices = () => {
-    const [inputDevices, setInputDevices] = useState<
-        (MediaDeviceInfo | undefined)[]
-    >([]);
-    const [playbackDevices, setPlaybackDevices] = useState<
-        (MediaDeviceInfo | undefined)[]
-    >([]);
-    const [videoDevices, setVideoDevices] = useState<
-        (MediaDeviceInfo | undefined)[]
-    >([]);
-    const [loading, setLoading] = useState(true);
+type TDevicesSnapshot = {
+    inputDevices: MediaDeviceInfo[];
+    playbackDevices: MediaDeviceInfo[];
+    videoDevices: MediaDeviceInfo[];
+    loading: boolean;
+};
 
-    const normalizeDevices = useCallback(
-        (devices: MediaDeviceInfo[], kind: MediaDeviceKind) => {
-            const seen = new Set<string>();
-            const normalized: MediaDeviceInfo[] = [];
+// navigator.mediaDevices is one external store for every caller: the
+// snapshot only changes when a load lands, keeping getSnapshot stable.
+let snapshot: TDevicesSnapshot = {
+    inputDevices: [],
+    playbackDevices: [],
+    videoDevices: [],
+    loading: true
+};
+const listeners = new Set<() => void>();
 
-            for (const device of devices) {
-                const dedupeKey =
-                    device.deviceId ||
-                    `${kind}-fallback-${device.groupId || 'default'}`;
+const setSnapshot = (next: Partial<TDevicesSnapshot>) => {
+    snapshot = { ...snapshot, ...next };
+    listeners.forEach((listener) => listener());
+};
 
-                if (seen.has(dedupeKey)) {
-                    continue;
-                }
+const normalizeDevices = (
+    devices: MediaDeviceInfo[],
+    kind: MediaDeviceKind
+) => {
+    const seen = new Set<string>();
+    const normalized: MediaDeviceInfo[] = [];
 
-                seen.add(dedupeKey);
-                normalized.push(device);
-            }
+    for (const device of devices.filter((d) => d.kind === kind)) {
+        const dedupeKey =
+            device.deviceId ||
+            `${kind}-fallback-${device.groupId || 'default'}`;
 
-            return normalized;
-        },
-        []
-    );
-
-    const loadDevices = useCallback(async () => {
-        if (!navigator.mediaDevices?.enumerateDevices) {
-            setLoading(false);
-            return;
+        if (seen.has(dedupeKey)) {
+            continue;
         }
 
-        // promise .finally, not try/finally: the React Compiler skips the
-        // latter. Errors still reach the caller.
-        await navigator.mediaDevices
-            .enumerateDevices()
-            .then((devices) => {
-                setInputDevices(
-                    normalizeDevices(
-                        devices.filter((d) => d.kind === 'audioinput'),
-                        'audioinput'
-                    )
-                );
-                setPlaybackDevices(
-                    normalizeDevices(
-                        devices.filter((d) => d.kind === 'audiooutput'),
-                        'audiooutput'
-                    )
-                );
-                setVideoDevices(
-                    normalizeDevices(
-                        devices.filter((d) => d.kind === 'videoinput'),
-                        'videoinput'
-                    )
-                );
-            })
-            .finally(() => setLoading(false));
-    }, [normalizeDevices]);
+        seen.add(dedupeKey);
+        normalized.push(device);
+    }
 
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs React state with the browser mediaDevices list (external system)
-        void loadDevices();
+    return normalized;
+};
 
-        if (!navigator.mediaDevices?.addEventListener) return;
+const loadDevices = async () => {
+    if (!navigator.mediaDevices?.enumerateDevices) {
+        setSnapshot({ loading: false });
+        return;
+    }
 
-        const onDeviceChange = () => {
-            void loadDevices();
-        };
+    try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
 
-        navigator.mediaDevices.addEventListener('devicechange', onDeviceChange);
+        setSnapshot({
+            inputDevices: normalizeDevices(devices, 'audioinput'),
+            playbackDevices: normalizeDevices(devices, 'audiooutput'),
+            videoDevices: normalizeDevices(devices, 'videoinput'),
+            loading: false
+        });
+    } finally {
+        if (snapshot.loading) setSnapshot({ loading: false });
+    }
+};
 
-        return () => {
-            navigator.mediaDevices.removeEventListener(
+const onDeviceChange = () => {
+    void loadDevices();
+};
+
+// every new subscriber triggers a fresh enumeration, as each mount did
+// when the hook kept its own state
+const subscribe = (listener: () => void) => {
+    listeners.add(listener);
+    void loadDevices();
+
+    if (listeners.size === 1) {
+        navigator.mediaDevices?.addEventListener?.(
+            'devicechange',
+            onDeviceChange
+        );
+    }
+
+    return () => {
+        listeners.delete(listener);
+
+        if (listeners.size === 0) {
+            navigator.mediaDevices?.removeEventListener?.(
                 'devicechange',
                 onDeviceChange
             );
-        };
-    }, [loadDevices]);
-
-    return {
-        inputDevices,
-        playbackDevices,
-        videoDevices,
-        loading,
-        loadDevices
+        }
     };
+};
+
+const getSnapshot = () => snapshot;
+
+const useAvailableDevices = () => {
+    const devices = useSyncExternalStore(subscribe, getSnapshot);
+
+    return { ...devices, loadDevices };
 };
 
 export { useAvailableDevices };
