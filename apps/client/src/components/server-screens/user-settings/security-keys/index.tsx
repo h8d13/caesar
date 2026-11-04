@@ -14,43 +14,31 @@ import {
     startRegistration,
     type PublicKeyCredentialCreationOptionsJSON
 } from '@simplewebauthn/browser';
+import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { KeyRound, Trash2 } from 'lucide-react';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { toast } from 'sonner';
-
-type TCredential = {
-    id: number;
-    credentialId: string;
-    name: string | null;
-    deviceType: string | null;
-    backedUp: boolean;
-    createdAt: number;
-    lastUsedAt: number | null;
-};
 
 const formatDate = (ms: number): string => format(ms, 'PP');
 
 const SecurityKeys = memo(() => {
-    const [credentials, setCredentials] = useState<TCredential[]>([]);
     const [loading, setLoading] = useState(false);
     const [newKeyName, setNewKeyName] = useState('');
 
-    const refresh = useCallback(async () => {
-        const trpc = getTRPCClient();
-        try {
-            const list = await trpc.webauthn.list.query();
-            setCredentials(list);
-        } catch {
-            // ignored; list query failing is non-fatal for the page
-        }
-    }, []);
+    // fetched on every mount, one attempt: a failing list query is
+    // non-fatal for the page and keeps the last known list
+    const { data: credentials = [], refetch } = useQuery({
+        queryKey: ['webauthn', 'list'],
+        queryFn: () => getTRPCClient().webauthn.list.query(),
+        staleTime: 0,
+        retry: false
+    });
 
-    useEffect(() => {
-        // oxlint false positive: refresh only sets state after its await
-        // oxlint-disable-next-line react/set-state-in-effect
-        void refresh();
-    }, [refresh]);
+    // refetch resolves with the error instead of throwing
+    const refresh = useCallback(async () => {
+        await refetch();
+    }, [refetch]);
 
     const addKey = useCallback(async () => {
         const trpc = getTRPCClient();
