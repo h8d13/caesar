@@ -1,3 +1,4 @@
+import { createNextState } from '@reduxjs/toolkit';
 import { describe, expect, test } from 'vite-plus/test';
 import { isSameRows } from '../is-same-rows';
 
@@ -15,5 +16,12 @@ describe('isSameRows', () => {
         expect(isSameRows([bet], [{ ...bet, cashedOutAt: 1.5 }])).toBe(false);
         expect(isSameRows([bet], [bet, bet])).toBe(false);
         expect(isSameRows([bet], [{ userId: 1, amount: 10 }])).toBe(false);
+    });
+
+    test('a draft compares by its base rows', () => {
+        createNextState({ bets: [bet] }, (draft) => {
+            expect(isSameRows(draft.bets, [{ ...bet }])).toBe(true);
+            expect(isSameRows(draft.bets, [{ ...bet, amount: 5 }])).toBe(false);
+        });
     });
 });

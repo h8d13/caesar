@@ -1,16 +1,15 @@
+import { type Draft, isDraft, original } from '@reduxjs/toolkit';
+import { shallowEqual } from 'react-redux';
+
 // Game state updates resend whole lists of flat rows on every tick.
 // Reducers assign the new copy only when a row really changed, so
-// selector subscribers keep the old reference and bail.
-export const isSameRows = <T extends object>(a: T[], b: T[]) =>
-    a.length === b.length &&
-    a.every((row, i) => {
-        const other = b[i] as Record<string, unknown>;
-        const keys = Object.keys(row);
+// selector subscribers keep the old reference and bail. A draft is read
+// through its base: no Immer proxy per row just to compare.
+export const isSameRows = <T extends object>(a: T[], b: T[]) => {
+    const base = isDraft(a) ? original<T[]>(a as Draft<T[]>) : a;
 
-        return (
-            keys.length === Object.keys(other).length &&
-            keys.every((k) =>
-                Object.is((row as Record<string, unknown>)[k], other[k])
-            )
-        );
-    });
+    return (
+        base.length === b.length &&
+        base.every((row, i) => shallowEqual(row, b[i]))
+    );
+};
