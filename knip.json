@@ -20,7 +20,6 @@
       "project": ["src/**/*.ts", "src/**/*.tsx"]
     }
   },
-  "ignore": ["**/*.d.ts"],
   "ignoreBinaries": [],
   "ignoreDependencies": ["tailwindcss", "postject"],
   "ignoreExportsUsedInFile": true

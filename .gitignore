@@ -3,6 +3,8 @@
 data/
 data-test/
 .vite-devmaps/
+# agent sessions and their git worktrees
+.claude/
 
 *.wiki/
 .idea**
