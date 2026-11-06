@@ -151,3 +151,5 @@ the causes above.
   (submit, cancel, keyboard paths); render counts say nothing about
   behavior.
 
+The same idea applies to fetches, queries over-fetching thar aren't scoped
+correctly.
