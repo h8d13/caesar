@@ -178,11 +178,11 @@ catalogs:
       specifier: ^4.3.4
       version: 4.3.4
     '@trpc/client':
-      specifier: ^11.22.1
-      version: 11.23.0
+      specifier: ^11.24.0
+      version: 11.25.0
     '@trpc/server':
-      specifier: ^11.22.1
-      version: 11.23.0
+      specifier: ^11.24.0
+      version: 11.25.0
     '@types/node':
       specifier: ^26.6.6
       version: 26.6.6
@@ -305,7 +305,7 @@ importers:
         version: 3.32.2(@floating-ui/dom@1.8.0)(@tiptap/core@3.32.2(@tiptap/pm@3.32.2))(@tiptap/pm@3.32.2)
       '@trpc/client':
         specifier: 'catalog:'
-        version: 11.23.0(@trpc/server@11.23.0(@types/ws@8.18.2)(typescript@7.0.2))(typescript@7.0.2)
+        version: 11.25.0(@trpc/server@11.25.0(@types/ws@8.18.2)(typescript@7.0.2))(typescript@7.0.2)
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
@@ -412,7 +412,7 @@ importers:
         version: 14.0.3
       '@trpc/server':
         specifier: 'catalog:'
-        version: 11.23.0(@types/ws@8.18.2)(typescript@7.0.2)
+        version: 11.25.0(@types/ws@8.18.2)(typescript@7.0.2)
       '@types/ini':
         specifier: ^4.1.1
         version: 4.1.1
@@ -2383,14 +2383,14 @@ packages:
       '@tiptap/core': 3.32.2
       '@tiptap/pm': 3.32.2
 
-  '@trpc/client@11.23.0':
-    resolution: {integrity: sha512-61qMX0YY8FDrFuAScBFMzeAPbH9l3p7fEa2YGY6wKhGlOcgCiJOVxSw8P5JdHVJEV6sw81HPPXlSWI51byxkXA==}
+  '@trpc/client@11.25.0':
+    resolution: {integrity: sha512-sDLNepXpsR+b1KnnZ/9J3wIMaRaqE//PGzAAaUVM2Mpv9/POU4NCI5WDyu1LSBhLNuDycTHgGEE3tfClPEsiBA==}
     peerDependencies:
-      '@trpc/server': 11.23.0
+      '@trpc/server': 11.25.0
       typescript: '>=5.7.2'
 
-  '@trpc/server@11.23.0':
-    resolution: {integrity: sha512-kHQY+MvRYm/NaerM6zM755NA4elBrA+PVve4RoJQf1P+hBzqQUuIBsmg+y7DWDsrWtg4wPASWbcYInP2xCBIFQ==}
+  '@trpc/server@11.25.0':
+    resolution: {integrity: sha512-WnUlGgLdaRoOKbLKn/t3+6cnjPJndNKvJZYJ7RXSZwFOa1dam6Z8atf551KE0vz2vhyxRtcnk+58P7M/ztAjNw==}
     peerDependencies:
       '@types/aws-lambda': '*'
       '@types/express': '*'
@@ -5545,12 +5545,12 @@ snapshots:
       '@tiptap/core': 3.32.2(@tiptap/pm@3.32.2)
       '@tiptap/pm': 3.32.2
 
-  '@trpc/client@11.23.0(@trpc/server@11.23.0(@types/ws@8.18.2)(typescript@7.0.2))(typescript@7.0.2)':
+  '@trpc/client@11.25.0(@trpc/server@11.25.0(@types/ws@8.18.2)(typescript@7.0.2))(typescript@7.0.2)':
     dependencies:
-      '@trpc/server': 11.23.0(@types/ws@8.18.2)(typescript@7.0.2)
+      '@trpc/server': 11.25.0(@types/ws@8.18.2)(typescript@7.0.2)
       typescript: 7.0.2
 
-  '@trpc/server@11.23.0(@types/ws@8.18.2)(typescript@7.0.2)':
+  '@trpc/server@11.25.0(@types/ws@8.18.2)(typescript@7.0.2)':
     dependencies:
       typescript: 7.0.2
     optionalDependencies:
