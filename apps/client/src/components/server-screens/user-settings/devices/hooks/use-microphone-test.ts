@@ -203,8 +203,13 @@ const useMicrophoneTest = ({
             let audioContext: AudioContext | null = null;
             let destination: MediaStreamAudioDestinationNode | null = null;
             let audioElement: HTMLAudioElement | null = null;
-            let localMeterWorkletNode: AudioWorkletNode | null = null;
-            let localNoiseGateWorkletNode: AudioWorkletNode | null = null;
+            // Mutated from the cleanup closure: a holder object, since
+            // reassigning a captured `let` in an async function makes the
+            // React Compiler skip this hook.
+            const localNodes: {
+                meter: AudioWorkletNode | null;
+                noiseGate: AudioWorkletNode | null;
+            } = { meter: null, noiseGate: null };
 
             const isStaleRequest = () =>
                 requestId !== testRequestIdRef.current ||
@@ -222,20 +227,20 @@ const useMicrophoneTest = ({
                     audioElement.srcObject = null;
                 }
 
-                if (localNoiseGateWorkletNode) {
-                    localNoiseGateWorkletNode.port.onmessage = null;
-                    localNoiseGateWorkletNode.disconnect();
-                    localNoiseGateWorkletNode = null;
+                if (localNodes.noiseGate) {
+                    localNodes.noiseGate.port.onmessage = null;
+                    localNodes.noiseGate.disconnect();
+                    localNodes.noiseGate = null;
                 } else if (noiseGateWorkletNodeRef.current) {
                     noiseGateWorkletNodeRef.current.port.onmessage = null;
                     noiseGateWorkletNodeRef.current.disconnect();
                     noiseGateWorkletNodeRef.current = null;
                 }
 
-                if (localMeterWorkletNode) {
-                    localMeterWorkletNode.port.onmessage = null;
-                    localMeterWorkletNode.disconnect();
-                    localMeterWorkletNode = null;
+                if (localNodes.meter) {
+                    localNodes.meter.port.onmessage = null;
+                    localNodes.meter.disconnect();
+                    localNodes.meter = null;
                 } else if (meterWorkletNodeRef.current) {
                     meterWorkletNodeRef.current.port.onmessage = null;
                     meterWorkletNodeRef.current.disconnect();
@@ -279,7 +284,7 @@ const useMicrophoneTest = ({
                             updateIntervalMs: WORKLET_METER_UPDATE_INTERVAL_MS
                         }
                     );
-                    localMeterWorkletNode = meterWorkletNode;
+                    localNodes.meter = meterWorkletNode;
                     meterWorkletNode.port.onmessage = (event) => {
                         const data = event.data;
 
@@ -320,7 +325,7 @@ const useMicrophoneTest = ({
                                 holdMs: MICROPHONE_GATE_CLOSE_HOLD_MS
                             }
                         );
-                        localNoiseGateWorkletNode = noiseGateWorkletNode;
+                        localNodes.noiseGate = noiseGateWorkletNode;
                     } catch (error) {
                         console.warn(
                             'Noise gate AudioWorklet unavailable for mic test:',

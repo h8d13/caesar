@@ -89,13 +89,9 @@ const useWebcamTest = ({
 
             if (videoElement.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
                 await new Promise<void>((resolve) => {
-                    let isDone = false;
-
+                    // Runs once: the first call removes both listeners and
+                    // clears the timeout.
                     const onReady = () => {
-                        if (isDone) return;
-
-                        isDone = true;
-
                         videoElement.removeEventListener(
                             'loadedmetadata',
                             onReady
@@ -176,20 +172,17 @@ const useWebcamTest = ({
     useEffect(() => {
         if (!videoStream || !isTesting) return;
 
-        let attemptCount = 0;
         const maxAttempts = 20;
         let isCancelled = false;
 
-        const tryAttach = async () => {
-            attemptCount += 1;
-
+        const tryAttach = async (attempt: number) => {
             const attached = await attachStreamToPreview(videoStream);
 
             if (isCancelled) return;
 
             if (attached) return;
 
-            if (attemptCount >= maxAttempts) {
+            if (attempt >= maxAttempts) {
                 setIsStarting(false);
                 setError(
                     'Failed to start webcam preview. Please retry or choose another webcam.'
@@ -201,11 +194,11 @@ const useWebcamTest = ({
             window.setTimeout(() => {
                 if (isCancelled) return;
 
-                void tryAttach();
+                void tryAttach(attempt + 1);
             }, 120);
         };
 
-        void tryAttach();
+        void tryAttach(1);
 
         return () => {
             isCancelled = true;

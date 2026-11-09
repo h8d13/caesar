@@ -64,7 +64,9 @@ const useTransports = ({
             const existing = packetLossMonitors.current.get(monitorKey);
             if (existing) clearInterval(existing);
 
-            let prevPacketsLost = 0;
+            // Holder object: reassigning a captured `let` from the async
+            // interval callback makes the React Compiler skip this hook.
+            const lossCounter = { prev: 0 };
 
             const interval = setInterval(async () => {
                 if (consumer.closed || consumer.paused) return;
@@ -76,8 +78,8 @@ const useTransports = ({
                         if (report.type !== 'inbound-rtp') continue;
 
                         const currentLost = report.packetsLost ?? 0;
-                        const delta = currentLost - prevPacketsLost;
-                        prevPacketsLost = currentLost;
+                        const delta = currentLost - lossCounter.prev;
+                        lossCounter.prev = currentLost;
 
                         if (delta >= LOSS_THRESHOLD) {
                             logVoice(
