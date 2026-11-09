@@ -199,7 +199,7 @@ catalogs:
       specifier: ^0.45.4
       version: 0.45.4
     lucide-react:
-      specifier: ^1.67.0
+      specifier: ^1.69.0
       version: 1.69.0
     mediasoup:
       specifier: 3.32.1
