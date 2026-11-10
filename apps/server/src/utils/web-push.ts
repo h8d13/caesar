@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import webpush from 'web-push';
+import { generateVAPIDKeys, sendNotification, WebPushError } from 'web-push';
 import { DATA_PATH } from '../helpers/paths';
 import { logger } from '../logger';
 
@@ -39,7 +39,7 @@ const loadVapidKeys = async (): Promise<TVapidKeys> => {
     if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
   }
 
-  const generated = webpush.generateVAPIDKeys();
+  const generated = generateVAPIDKeys();
 
   try {
     // 0600: readable only by the server user.
@@ -90,7 +90,7 @@ const sendWebPush = async (
   const keys = await loadVapidKeys();
 
   try {
-    await webpush.sendNotification(
+    await sendNotification(
       {
         endpoint: subscription.endpoint,
         keys: { p256dh: subscription.p256dh, auth: subscription.auth }
@@ -109,7 +109,7 @@ const sendWebPush = async (
 
     return 'sent';
   } catch (err) {
-    const statusCode = (err as webpush.WebPushError).statusCode;
+    const statusCode = err instanceof WebPushError ? err.statusCode : undefined;
 
     if (statusCode === 404 || statusCode === 410) {
       return 'gone';
