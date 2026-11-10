@@ -202,8 +202,8 @@ catalogs:
       specifier: ^1.69.0
       version: 1.69.0
     mediasoup:
-      specifier: 3.32.1
-      version: 3.32.1
+      specifier: 3.32.2
+      version: 3.32.2
     react:
       specifier: ^19.3.1
       version: 19.3.1
@@ -402,7 +402,7 @@ importers:
         version: 0.45.1
       mediasoup:
         specifier: 'catalog:'
-        version: 3.32.1
+        version: 3.32.2
     devDependencies:
       '@caesar/shared':
         specifier: workspace:*
@@ -499,7 +499,7 @@ importers:
         version: 6.1.0
       mediasoup:
         specifier: 'catalog:'
-        version: 3.32.1
+        version: 3.32.2
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -3446,8 +3446,8 @@ packages:
     resolution: {integrity: sha512-XrbXA6yhBW6/MVqYSWHtZ+OiTvu3AIdXdpW6bAy7jkuhQtxQXUGv8BCssLYEt4hJC8GNwNAlTYcv/NhwSBD8tA==}
     engines: {node: '>=22'}
 
-  mediasoup@3.32.1:
-    resolution: {integrity: sha512-rwMHCARcAw1Bdd2Wb0TA0iLhvkqfSlVOuTspwZLQBzDO9Pk0tgoUzirusfVFCE7ra+Y3LPUyUqdygnz6GIu2uA==}
+  mediasoup@3.32.2:
+    resolution: {integrity: sha512-VAcQDpWBjoWLrRMrN2AlVxuPzgdOwPOwBN1Gw0/MuWohe8R42kkD8V99SNqO1SjjrDjuqAgeJ9aMi8k4FoSFVA==}
     engines: {node: '>=22'}
 
   mime-db@1.54.0:
@@ -6419,7 +6419,7 @@ snapshots:
       sdp-transform: 3.0.0
       supports-color: 11.0.0
 
-  mediasoup@3.32.1:
+  mediasoup@3.32.2:
     dependencies:
       debug: 4.4.3(supports-color@11.0.0)
       flatbuffers: 25.9.23
