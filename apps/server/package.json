@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@libsql/client": "catalog:",
-    "argon2": "0.45.1",
+    "argon2": "0.45.2",
     "mediasoup": "catalog:"
   }
 }
