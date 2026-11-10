@@ -56,7 +56,9 @@ export default defineConfig({
     // prod keeps the map out of the bundle the SEA embeds
     sourcemap: isProduction ? true : 'inline',
     env: { CAESAR_BUILD_VERSION: buildVersion },
-    // fails the build if the bundle would import anything else at runtime
-    deps: { onlyImport: Object.keys(dependencies) }
+    // fails the build if the bundle would import anything else at runtime.
+    // `kerberos` is an optional peer that web-push's https-proxy-agent
+    // imports lazily, only for Negotiate proxy auth (never used here).
+    deps: { onlyImport: [...Object.keys(dependencies), 'kerberos'] }
   }
 });
