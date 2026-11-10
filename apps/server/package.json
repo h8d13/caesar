@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "@caesar/shared": "workspace:*",
-    "@simplewebauthn/server": "^14.0.3",
+    "@simplewebauthn/server": "^14.1.0",
     "@trpc/server": "catalog:",
     "@types/ini": "^4.1.1",
     "@types/jsonwebtoken": "^9.0.10",
