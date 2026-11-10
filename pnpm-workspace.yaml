@@ -18,8 +18,8 @@ catalog:
   # depends on tailwindcss at its own exact version: keep both equal
   '@tailwindcss/vite': ^4.3.4
   # client and server must match
-  '@trpc/client': ^11.24.0
-  '@trpc/server': ^11.24.0
+  '@trpc/client': ^11.25.0
+  '@trpc/server': ^11.25.0
   '@types/node': ^26.6.6
   '@types/react': ^19.3.0
   '@types/react-dom': ^19.3.0
