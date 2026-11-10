@@ -23,7 +23,8 @@
   "schedule": ["before 5am on monday"],
   "lockFileMaintenance": {
     "enabled": true,
-    "schedule": ["before 5am on monday"]
+    "schedule": ["before 5am on monday"],
+    "minimumReleaseAge": null
   },
   "packageRules": [
     {
