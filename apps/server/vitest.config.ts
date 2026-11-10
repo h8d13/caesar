@@ -18,7 +18,10 @@ export default defineConfig({
     globalSetup: ['./src/__tests__/global-teardown.ts'],
     // Tests usually run inside the dev container next to the dev server,
     // which holds the default 40000; the voice suite binds its own port.
-    env: { CAESAR_WEBRTC_PORT: '40900' },
+    // Below the Linux ephemeral range (32768-60999): the suites open many
+    // loopback connections, and a listen on a port one of them drew as its
+    // source port fails with EADDRINUSE.
+    env: { CAESAR_WEBRTC_PORT: '20900' },
     testTimeout: 30000,
     hookTimeout: 30000,
     bail: 0,
