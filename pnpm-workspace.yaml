@@ -16,7 +16,7 @@ catalog:
   # also consumed by overrides below
   '@libsql/client': 0.18.0
   # depends on tailwindcss at its own exact version: keep both equal
-  '@tailwindcss/vite': ^4.3.4
+  '@tailwindcss/vite': ^4.3.5
   # client and server must match
   '@trpc/client': ^11.24.0
   '@trpc/server': ^11.24.0
@@ -31,7 +31,7 @@ catalog:
   react-dom: ^19.3.1
   sonner: ^2.0.8
   tailwind-merge: ^3.7.0
-  tailwindcss: ^4.3.4
+  tailwindcss: ^4.3.5
   typescript: ~7.0.2
   vite: npm:@voidzero-dev/vite-plus-core@1.5.0
   vite-plus: 1.5.0
