@@ -3,8 +3,9 @@ import { useChannelById } from '@/features/server/channels/hooks';
 import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
 import { getTRPCClient } from '@/lib/trpc';
 import { getTrpcError } from '@caesar/shared';
+import { Tooltip } from '@caesar/ui';
 import { useQueryClient } from '@tanstack/react-query';
-import { Hash, Timer, Trash2 } from 'lucide-react';
+import { Hash, Lock, LockOpen, Timer, Trash2 } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DmCallButton } from './dm-call-button';
@@ -64,12 +65,11 @@ const parseDmPeerId = (
     return a === ownUserId ? b : a;
 };
 
-type TEphemeralToggleProps = {
-    channelId: number;
-};
-
-const EphemeralToggle = memo(({ channelId }: TEphemeralToggleProps) => {
-    const [enabled, setEnabled] = useState(false);
+// Ephemeral mode is the only state in which a DM is end-to-end encrypted
+// (the server requires isEncrypted === ephemeral), so this one value drives
+// both the toggle and the encryption indicator. null until the first answer.
+const useDmEphemeral = (channelId: number) => {
+    const [enabled, setEnabled] = useState<boolean | null>(null);
     const queryClient = useQueryClient();
 
     // Refresh the cached E2EE context after a toggle. Send does not rely on
@@ -90,7 +90,8 @@ const EphemeralToggle = memo(({ channelId }: TEphemeralToggleProps) => {
                 if (!cancelled) setEnabled(res.ephemeralMs !== null);
             })
             .catch(() => {
-                /* ignore */
+                // unknown state: never claim encryption we cannot confirm
+                if (!cancelled) setEnabled((prev) => prev ?? false);
             });
 
         const sub = trpc.dms.onEphemeralUpdate.subscribe(undefined, {
@@ -126,19 +127,65 @@ const EphemeralToggle = memo(({ channelId }: TEphemeralToggleProps) => {
         }
     }, [channelId, enabled, invalidateE2eeContext]);
 
+    return { enabled, onToggle };
+};
+
+type TDmEncryptionIndicatorProps = {
+    encrypted: boolean;
+};
+
+const DmEncryptionIndicator = memo(
+    ({ encrypted }: TDmEncryptionIndicatorProps) => {
+        const Icon = encrypted ? Lock : LockOpen;
+        const label = encrypted ? 'End-to-end encrypted' : 'Not encrypted';
+        const details = encrypted
+            ? 'End-to-end encrypted: only you and the other participant can read messages sent in this mode. The server operator still sees who sent them, when, and file names and sizes.'
+            : 'Not encrypted: the server operator can read this conversation. Turn on ephemeral mode to encrypt new messages end-to-end.';
+
+        return (
+            <Tooltip
+                content={<span className="block max-w-64">{details}</span>}
+            >
+                <span
+                    tabIndex={0}
+                    aria-label={details}
+                    className={`flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-1.5 py-1 text-xs ${
+                        encrypted ? 'text-emerald-500' : 'text-amber-500'
+                    }`}
+                >
+                    <Icon size={14} className="shrink-0" />
+                    <span>{label}</span>
+                </span>
+            </Tooltip>
+        );
+    }
+);
+
+type TDmActionsProps = {
+    channelId: number;
+};
+
+const DmActions = memo(({ channelId }: TDmActionsProps) => {
+    const { enabled, onToggle } = useDmEphemeral(channelId);
+
     return (
-        <button
-            type="button"
-            onClick={onToggle}
-            title={enabled ? 'Encrypted Temp messages (24h)' : 'Normal DMs'}
-            className={`p-1.5 rounded-md transition-colors ${
-                enabled
-                    ? 'bg-emerald-500/15 text-emerald-500'
-                    : 'hover:bg-muted text-muted-foreground'
-            }`}
-        >
-            <Timer size={16} />
-        </button>
+        <div className="flex shrink-0 items-center gap-1">
+            {enabled !== null && <DmEncryptionIndicator encrypted={enabled} />}
+            <DmCallButton channelId={channelId} />
+            <button
+                type="button"
+                onClick={onToggle}
+                title={enabled ? 'Encrypted Temp messages (24h)' : 'Normal DMs'}
+                className={`p-1.5 rounded-md transition-colors ${
+                    enabled
+                        ? 'bg-emerald-500/15 text-emerald-500'
+                        : 'hover:bg-muted text-muted-foreground'
+                }`}
+            >
+                <Timer size={16} />
+            </button>
+            <WipeConversationButton channelId={channelId} />
+        </div>
     );
 });
 
@@ -194,11 +241,7 @@ const TextTopbar = memo(
                         )}
                     </div>
                     {channel?.isDm ? (
-                        <div className="flex items-center gap-1">
-                            <DmCallButton channelId={channelId} />
-                            <EphemeralToggle channelId={channelId} />
-                            <WipeConversationButton channelId={channelId} />
-                        </div>
+                        <DmActions channelId={channelId} />
                     ) : (
                         <div className="flex items-center gap-1">
                             <PinnedMessagesPopover

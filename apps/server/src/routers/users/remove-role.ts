@@ -8,6 +8,7 @@ import {
   snapshotUserChannelAccess
 } from '@server/db/publishers';
 import { assertCanModifyOwnerUser } from '@server/helpers/assert-can-modify-owner-user';
+import { sweepVoiceAccess } from '@server/runtimes/voice-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { and, eq } from 'drizzle-orm';
@@ -66,6 +67,8 @@ const removeRoleRoute = protectedProcedure
       afterChannels
     );
     await publishChannelPermissions([input.userId]);
+
+    await sweepVoiceAccess();
 
     void publishUser(input.userId, 'update');
   });

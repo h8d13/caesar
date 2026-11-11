@@ -3,19 +3,35 @@ import { channels } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishChannel } from '@server/db/publishers';
 import { enqueueActivityLog } from '@server/queues/activity-log';
+import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 
 const reorderChannelsRoute = protectedProcedure
   .input(
     z.object({
       categoryId: z.number(),
-      channelIds: z.array(z.number())
+      channelIds: z.array(z.number().int()).max(500)
     })
   )
   .mutation(async ({ input, ctx }) => {
     await ctx.needsPermission(Permission.MANAGE_CHANNELS);
+
+    // A DM moved into a category would be deleted with it; every other
+    // channel admin route refuses DMs too.
+    const dmChannel = await db
+      .select({ id: channels.id })
+      .from(channels)
+      .where(
+        and(inArray(channels.id, input.channelIds), eq(channels.isDm, true))
+      )
+      .get();
+
+    invariant(!dmChannel, {
+      code: 'FORBIDDEN',
+      message: 'Direct message channels cannot be reordered'
+    });
 
     await db.transaction(async (tx) => {
       for (let i = 0; i < input.channelIds.length; i++) {

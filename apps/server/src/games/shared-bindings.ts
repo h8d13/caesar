@@ -60,6 +60,13 @@ const withBalanceLock = async <T>(
   }
 };
 
+// The same lock as a procedure middleware, for routes that are one
+// check-then-insert from top to bottom (vote limits): two requests from one
+// user run one after the other, so the second sees the first one's row.
+const serialPerUser = t.middleware(({ ctx, next }) =>
+  withBalanceLock(ctx.userId, () => next())
+);
+
 // The 4 social-credit-ledger touchpoints every game runtime needs:
 // debit/credit a bet, amend it on a settle, broadcast the resulting
 // balance, look up the current balance. Differs across games only in
@@ -109,5 +116,6 @@ export {
   createGameLedgerBindings,
   gamesProcedure,
   runDetached,
+  serialPerUser,
   withBalanceLock
 };

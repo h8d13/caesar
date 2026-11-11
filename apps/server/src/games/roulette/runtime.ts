@@ -195,7 +195,11 @@ class RouletteRuntime {
 
     await db.delete(rouletteBets).where(eq(rouletteBets.id, bet.betId)).run();
 
-    this.activeBets.splice(betIndex, 1);
+    // not betIndex: a concurrent removal during the awaits above shifts the
+    // array, and the stale index would drop another player's bet
+    const currentIndex = this.activeBets.indexOf(bet);
+
+    if (currentIndex !== -1) this.activeBets.splice(currentIndex, 1);
 
     this.notifyStateSubscribers();
     await this.callbacks.onUserBalanceChanged(userId);

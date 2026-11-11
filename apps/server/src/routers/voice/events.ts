@@ -5,6 +5,9 @@ import {
   type TChannelAccess
 } from '@caesar/shared';
 import { getChannelAccessRow } from '@server/db/queries/channels';
+import { logger } from '@server/logger';
+import { VoiceRuntime } from '@server/runtimes/voice';
+import type { Events } from '@server/utils/pubsub';
 import { type Context, protectedProcedure } from '@server/utils/trpc';
 import { observable } from '@trpc/server/observable';
 
@@ -30,17 +33,32 @@ type TVoiceProducerEvent = {
 // on it reads the channel row once per event instead of once per socket in
 // the channel. Each user's own grants are still resolved per event.
 const channelByEvent = new WeakMap<
-  TVoiceProducerEvent,
+  object,
   Promise<TChannelAccess | undefined>
 >();
 
-const getEventChannel = (data: TVoiceProducerEvent) => {
+const getEventChannel = (data: { channelId: number }) => {
   let channel = channelByEvent.get(data);
 
   if (!channel)
     channelByEvent.set(data, (channel = getChannelAccessRow(data.channelId)));
 
   return channel;
+};
+
+// A listener runs detached from any request: a rejected lookup (a busy
+// database) would be an unhandled rejection, which exits the process. The
+// event is dropped instead.
+const deliverIf = async (
+  allowed: () => Promise<boolean>,
+  deliver: () => void,
+  topic: string
+) => {
+  try {
+    if (await allowed()) deliver();
+  } catch (error) {
+    logger.error(`[Voice] dropped ${topic} event:`, error);
+  }
 };
 
 const subscribeVoiceProducerEvent = (
@@ -51,38 +69,76 @@ const subscribeVoiceProducerEvent = (
 ) =>
   observable<TVoiceProducerEvent>((observer) => {
     const sub = ctx.pubsub.subscribeAcrossChannels(topic).subscribe({
-      next: async (data) => {
+      next: (data) => {
         if (data.channelId !== ctx.currentVoiceChannelId) return;
-        const channel = await getEventChannel(data);
-        const allowed = await ctx.hasChannelPermission(
-          data.channelId,
-          ChannelPermission.JOIN,
-          { channel }
+
+        void deliverIf(
+          async () =>
+            ctx.hasChannelPermission(data.channelId, ChannelPermission.JOIN, {
+              channel: await getEventChannel(data)
+            }),
+          () => observer.next(data),
+          topic
         );
-        if (!allowed) return;
-        observer.next(data);
       }
     });
     return () => sub.unsubscribe();
   });
 
-// these events are broadcast to ALL users (for UI population in the sidebar)
-const onUserJoinVoiceRoute = protectedProcedure.subscription(
-  async ({ ctx }) => {
-    return ctx.pubsub.subscribe(ServerEvents.USER_JOIN_VOICE);
-  }
+// Presence (who is in which voice channel, their mute/cam state) follows
+// channel visibility: a private channel's occupants reach only users who
+// can view it, a DM call only its two participants. The user an event is
+// about always gets it, so someone removed from a channel they can no
+// longer see still learns they left.
+type TVoicePresenceEvent = { channelId: number; userId?: number };
+
+const subscribeVoicePresenceEvent = <
+  TTopic extends
+    | typeof ServerEvents.USER_JOIN_VOICE
+    | typeof ServerEvents.USER_LEAVE_VOICE
+    | typeof ServerEvents.USER_VOICE_STATE_UPDATE
+    | typeof ServerEvents.VOICE_CHANNEL_STATE_UPDATE
+>(
+  topic: TTopic,
+  ctx: Context
+) =>
+  observable<Events[TTopic]>((observer) => {
+    const sub = ctx.pubsub.subscribe(topic).subscribe({
+      next: (data: Events[TTopic]) => {
+        const event: TVoicePresenceEvent = data;
+
+        if (event.userId === ctx.userId) {
+          observer.next(data);
+          return;
+        }
+
+        void deliverIf(
+          async () =>
+            ctx.hasChannelPermission(
+              event.channelId,
+              ChannelPermission.VIEW_CHANNEL,
+              { channel: await getEventChannel(event) }
+            ),
+          () => observer.next(data),
+          topic
+        );
+      }
+    });
+
+    return () => sub.unsubscribe();
+  });
+
+const onUserJoinVoiceRoute = protectedProcedure.subscription(async ({ ctx }) =>
+  subscribeVoicePresenceEvent(ServerEvents.USER_JOIN_VOICE, ctx)
 );
 
-const onUserLeaveVoiceRoute = protectedProcedure.subscription(
-  async ({ ctx }) => {
-    return ctx.pubsub.subscribe(ServerEvents.USER_LEAVE_VOICE);
-  }
+const onUserLeaveVoiceRoute = protectedProcedure.subscription(async ({ ctx }) =>
+  subscribeVoicePresenceEvent(ServerEvents.USER_LEAVE_VOICE, ctx)
 );
 
 const onUserUpdateVoiceStateRoute = protectedProcedure.subscription(
-  async ({ ctx }) => {
-    return ctx.pubsub.subscribe(ServerEvents.USER_VOICE_STATE_UPDATE);
-  }
+  async ({ ctx }) =>
+    subscribeVoicePresenceEvent(ServerEvents.USER_VOICE_STATE_UPDATE, ctx)
 );
 
 // Targeted: only the moved user receives this (publishFor).
@@ -91,9 +147,8 @@ const onForceMoveRoute = protectedProcedure.subscription(async ({ ctx }) => {
 });
 
 const onVoiceChannelStateUpdateRoute = protectedProcedure.subscription(
-  async ({ ctx }) => {
-    return ctx.pubsub.subscribe(ServerEvents.VOICE_CHANNEL_STATE_UPDATE);
-  }
+  async ({ ctx }) =>
+    subscribeVoicePresenceEvent(ServerEvents.VOICE_CHANNEL_STATE_UPDATE, ctx)
 );
 
 // these events are channel-scoped (only sent to users in the same voice channel)
@@ -103,10 +158,24 @@ const onVoiceNewProducerRoute = protectedProcedure.subscription(
     subscribeVoiceProducerEvent(ServerEvents.VOICE_NEW_PRODUCER, ctx)
 );
 
-const onSoundboardPlayRoute = protectedProcedure.subscription(
-  async ({ ctx }) => {
-    return ctx.pubsub.subscribe(ServerEvents.SOUNDBOARD_PLAY);
-  }
+// only the room the sound was played in hears it
+const onSoundboardPlayRoute = protectedProcedure.subscription(async ({ ctx }) =>
+  observable<Events[typeof ServerEvents.SOUNDBOARD_PLAY]>((observer) => {
+    const sub = ctx.pubsub.subscribe(ServerEvents.SOUNDBOARD_PLAY).subscribe({
+      next: (data) => {
+        // the socket's channel id alone is a claim: a user removed from the
+        // room by a sweep keeps it until their next voice call
+        if (
+          data.channelId === ctx.currentVoiceChannelId &&
+          VoiceRuntime.findById(data.channelId)?.getUser(ctx.userId)
+        ) {
+          observer.next(data);
+        }
+      }
+    });
+
+    return () => sub.unsubscribe();
+  })
 );
 
 const onVoiceProducerClosedRoute = protectedProcedure.subscription(

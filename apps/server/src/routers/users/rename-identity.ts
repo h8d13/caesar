@@ -1,5 +1,7 @@
 import {
+  ActivityLogType,
   canonicalIdentity,
+  DELETED_USER_IDENTITY_AND_NAME,
   DisconnectCode,
   IDENTITY_REGEX,
   Permission
@@ -9,7 +11,11 @@ import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
 import { getUserById } from '@server/db/queries/users';
-import { assertCanModifyOwnerUser } from '@server/helpers/assert-can-modify-owner-user';
+import {
+  assertCanModifyOwnerUser,
+  assertCanTakeOverUser
+} from '@server/helpers/assert-can-modify-owner-user';
+import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { generateTemporaryPassword } from '@server/utils/password';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
@@ -33,8 +39,20 @@ const renameIdentityRoute = rateLimitedProcedure(protectedProcedure, {
 
     await assertCanModifyOwnerUser(ctx.userId, input.userId, 'rename');
 
+    // your own rename is not a takeover
+    if (input.userId !== ctx.userId) {
+      await assertCanTakeOverUser(ctx.userId, input.userId, 'rename');
+    }
+
     const target = await getUserById(input.userId);
     invariant(target, { code: 'NOT_FOUND', message: 'User not found' });
+
+    // Renaming the placeholder would give the account that authors every
+    // deleted user's content a real login.
+    invariant(target.identity !== DELETED_USER_IDENTITY_AND_NAME, {
+      code: 'BAD_REQUEST',
+      message: 'Cannot rename the deleted user placeholder.'
+    });
 
     const next = canonicalIdentity(input.identity);
 
@@ -85,6 +103,13 @@ const renameIdentityRoute = rateLimitedProcedure(protectedProcedure, {
     );
 
     void publishUser(input.userId, 'update');
+
+    // a rename hands the moderator a login for the account, like a reset
+    enqueueActivityLog({
+      type: ActivityLogType.USER_PASSWORD_RESET,
+      userId: input.userId,
+      details: { resetBy: ctx.userId }
+    });
 
     return { temporaryPassword };
   });

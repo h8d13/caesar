@@ -13,11 +13,11 @@ import {
 } from '@server/__tests__/helpers';
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
 import { sha256 } from '@server/helpers/sha256';
-import { getJwtSecret } from '@server/utils/jwt-secret';
+import type { TTokenPayload } from '@server/types';
+import { verifyJwt } from '@server/utils/jwt-secret';
 import { deriveAuthKey, verifyPassword } from '@server/utils/password';
 import { pubsub } from '@server/utils/pubsub';
 import { eq } from 'drizzle-orm';
-import jwt from 'jsonwebtoken';
 import { describe, expect, test, vi } from 'vite-plus/test';
 
 const insertUser = async (identity: string): Promise<number> => {
@@ -178,11 +178,8 @@ describe('/login epoch behavior with allowMultipleSessions', () => {
     expect(after).toBe(before);
 
     // and the minted token carries that same (un-bumped) epoch
-    const decoded = jwt.verify(
-      getSessionCookie(response)!,
-      await getJwtSecret()
-    );
-    expect((decoded as { sessionEpoch: number }).sessionEpoch).toBe(before);
+    const decoded = await verifyJwt<TTokenPayload>(getSessionCookie(response)!);
+    expect(decoded.sessionEpoch).toBe(before);
   });
 });
 
@@ -204,11 +201,11 @@ describe('users.signOutOtherSessions', () => {
 
     const { refreshNonce } = await caller.users.signOutOtherSessions();
     const token = await redeem(refreshNonce, mockedToken);
-    const decoded = jwt.verify(token!, await getJwtSecret());
+    const decoded = await verifyJwt<TTokenPayload>(token!);
 
     const epochNow = await epochFor(1);
-    expect((decoded as { sessionEpoch: number }).sessionEpoch).toBe(epochNow);
-    expect((decoded as { userId: number }).userId).toBe(1);
+    expect(decoded.sessionEpoch).toBe(epochNow);
+    expect(decoded.userId).toBe(1);
   });
 });
 
@@ -395,6 +392,44 @@ describe('users.resetPassword', () => {
     await expect(
       adminCaller.users.resetPassword({ userId: placeholderId })
     ).rejects.toThrow(/placeholder/);
+  });
+
+  test('a MANAGE_USERS moderator cannot reset an account that outranks them', async () => {
+    const { caller: owner } = await initTest(1);
+    const adminId = await insertUser('co-admin');
+    const adminRoleId = await owner.roles.add();
+
+    await owner.roles.update({
+      roleId: adminRoleId,
+      name: 'Admin',
+      color: '#abcdef',
+      permissions: [Permission.MANAGE_USERS, Permission.MANAGE_ROLES],
+      storageQuotaOverrideEnabled: false,
+      storageSpaceQuota: 0
+    });
+    await owner.users.addRole({ userId: adminId, roleId: adminRoleId });
+
+    const { caller: mod } = await makeModerator(owner);
+
+    // a reset hands the moderator a login for the account
+    await expect(mod.users.resetPassword({ userId: adminId })).rejects.toThrow(
+      /holds permissions you do not have/
+    );
+    await expect(
+      mod.users.renameIdentity({ userId: adminId, identity: 'co-admin-2' })
+    ).rejects.toThrow(/holds permissions you do not have/);
+  });
+
+  test('a MANAGE_USERS moderator can still reset a plain member', async () => {
+    const { caller: owner } = await initTest(1);
+    const targetId = await insertUser('plain-member');
+    const { caller: mod } = await makeModerator(owner);
+
+    const { temporaryPassword } = await mod.users.resetPassword({
+      userId: targetId
+    });
+
+    expect(temporaryPassword.length).toBeGreaterThanOrEqual(16);
   });
 });
 
@@ -763,9 +798,9 @@ describe('users.updatePassword session invalidation', () => {
     });
 
     const token = await redeem(refreshNonce, mockedToken);
-    const decoded = jwt.verify(token!, await getJwtSecret());
+    const decoded = await verifyJwt<TTokenPayload>(token!);
     const epochNow = await epochFor(1);
-    expect((decoded as { sessionEpoch: number }).sessionEpoch).toBe(epochNow);
-    expect((decoded as { userId: number }).userId).toBe(1);
+    expect(decoded.sessionEpoch).toBe(epochNow);
+    expect(decoded.userId).toBe(1);
   });
 });

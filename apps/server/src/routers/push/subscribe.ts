@@ -1,7 +1,10 @@
 import { pushSubscriptions } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
+import { isFetchableUrl } from '@server/helpers/url-guard';
+import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { and, desc, eq, inArray } from 'drizzle-orm';
+import { isIP } from 'net';
 import { z } from 'zod';
 
 const MAX_SUBSCRIPTIONS_PER_USER = 10;
@@ -11,6 +14,28 @@ const MAX_SUBSCRIPTIONS_PER_USER = 10;
 // subscription; re-subscribing (or another user logging in on the same
 // browser) takes the endpoint over. https only: anything else would let
 // an authed user point message fan-out POSTs at internal hosts (SSRF).
+// The server POSTs to this URL on every message the member is notified
+// of, so it must name a public host: not an IP literal and not a name that
+// only resolves inside the container network or on the host (compose
+// service names are dotless). Real push services (FCM, Mozilla, Apple,
+// WNS) are public DNS names on 443. A public name pointed at an internal
+// address is not checked here: the TLS handshake fails, as no internal
+// service holds a certificate for it.
+const INTERNAL_SUFFIXES = ['.localhost', '.local', '.internal', '.lan'];
+
+const isPublicPushEndpoint = (endpoint: string): boolean => {
+  if (!isFetchableUrl(endpoint)) return false;
+
+  const { hostname, port } = new URL(endpoint);
+  const host = hostname.replace(/^\[|\]$/g, '').toLowerCase();
+
+  if (port && port !== '443') return false;
+  if (isIP(host)) return false;
+  if (!host.includes('.') || host.endsWith('.')) return false;
+
+  return !INTERNAL_SUFFIXES.some((suffix) => host.endsWith(suffix));
+};
+
 const subscribeRoute = protectedProcedure
   .input(
     z.object({
@@ -23,6 +48,11 @@ const subscribeRoute = protectedProcedure
     })
   )
   .mutation(async ({ ctx, input }) => {
+    invariant(isPublicPushEndpoint(input.endpoint), {
+      code: 'BAD_REQUEST',
+      message: 'Invalid push endpoint'
+    });
+
     await db
       .insert(pushSubscriptions)
       .values({

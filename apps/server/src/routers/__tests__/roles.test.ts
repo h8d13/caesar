@@ -1,5 +1,6 @@
-import { Permission } from '@caesar/shared';
-import { initTest } from '@server/__tests__/helpers';
+import { OWNER_ROLE_ID, Permission } from '@caesar/shared';
+import { initTest, makeModerator } from '@server/__tests__/helpers';
+import { getUserRoleIds } from '@server/db/queries/roles';
 import { describe, expect, test } from 'vite-plus/test';
 
 describe('roles router', () => {
@@ -328,6 +329,50 @@ describe('roles router', () => {
 
     await expect(caller.roles.duplicate({ roleId: 1 })).rejects.toThrow(
       'The owner role cannot be duplicated'
+    );
+  });
+
+  test('should refuse the owner role as default, even from a moderator with MANAGE_ROLES', async () => {
+    const { caller: owner } = await initTest();
+    const { caller: mod } = await makeModerator(owner, [
+      Permission.MANAGE_ROLES
+    ]);
+
+    await expect(
+      mod.roles.setDefault({ roleId: OWNER_ROLE_ID })
+    ).rejects.toThrow('The owner role cannot be the default role');
+    await expect(
+      owner.roles.setDefault({ roleId: OWNER_ROLE_ID })
+    ).rejects.toThrow('The owner role cannot be the default role');
+
+    // the escalation this closes: default = Owner, then delete your own
+    // role and fall back onto it
+    const modRoleId = (await getUserRoleIds(2)).find((id) => id > 3)!;
+
+    await mod.roles.delete({ roleId: modRoleId });
+
+    expect(await getUserRoleIds(2)).not.toContain(OWNER_ROLE_ID);
+  });
+
+  test('should refuse a default role the moderator could not assign', async () => {
+    const { caller: owner } = await initTest();
+    const adminRoleId = await owner.roles.add();
+
+    await owner.roles.update({
+      roleId: adminRoleId,
+      name: 'Admin',
+      color: '#654321',
+      permissions: [Permission.MANAGE_ROLES, Permission.MANAGE_USERS],
+      storageQuotaOverrideEnabled: false,
+      storageSpaceQuota: 0
+    });
+
+    const { caller: mod } = await makeModerator(owner, [
+      Permission.MANAGE_ROLES
+    ]);
+
+    await expect(mod.roles.setDefault({ roleId: adminRoleId })).rejects.toThrow(
+      'You cannot grant permissions you do not have.'
     );
   });
 });

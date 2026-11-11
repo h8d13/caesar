@@ -1,5 +1,7 @@
 import { OWNER_ROLE_ID } from '@caesar/shared';
 import { getUserRoleIds } from '@server/db/queries/roles';
+import { canGrantPermissions } from '@server/routers/users/assert-can-assign-role';
+import { getUserRoles } from '@server/routers/users/get-user-roles';
 import { invariant } from '@server/utils/invariant';
 
 // Owner protection for every moderation path on a user (ban, kick, delete,
@@ -24,4 +26,27 @@ const assertCanModifyOwnerUser = async (
   });
 };
 
-export { assertCanModifyOwnerUser };
+// Reset password and rename identity return a login for the target, so
+// MANAGE_USERS alone would let a moderator sign in as anyone short of the
+// owner and inherit what they hold. The actor must already hold every
+// permission of the target (an owner holds them all).
+const assertCanTakeOverUser = async (
+  actorUserId: number,
+  targetUserId: number,
+  action: string
+) => {
+  const targetRoles = await getUserRoles(targetUserId);
+  const outranked =
+    targetRoles.some((role) => role.id === OWNER_ROLE_ID) ||
+    !(await canGrantPermissions(
+      actorUserId,
+      targetRoles.flatMap((role) => role.permissions)
+    ));
+
+  invariant(!outranked, {
+    code: 'FORBIDDEN',
+    message: `You cannot ${action} a user who holds permissions you do not have.`
+  });
+};
+
+export { assertCanModifyOwnerUser, assertCanTakeOverUser };

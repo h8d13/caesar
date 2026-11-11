@@ -1,9 +1,8 @@
 import { users } from '@caesar/shared/db/schema';
 import { getMockedToken, uploadFile } from '@server/__tests__/helpers';
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
-import { getJwtSecret } from '@server/utils/jwt-secret';
+import { signJwt } from '@server/utils/jwt-secret';
 import { eq, sql } from 'drizzle-orm';
-import jwt from 'jsonwebtoken';
 import { describe, expect, test } from 'vite-plus/test';
 
 // Every token-authenticated HTTP route goes through resolveSessionToken.
@@ -22,8 +21,8 @@ const getEpoch = async () => {
   return row!.sessionEpoch;
 };
 
-const signToken = async (payload: object) =>
-  jwt.sign(payload, await getJwtSecret(), { expiresIn: '86400s' });
+const signToken = async (payload: Record<string, unknown>) =>
+  signJwt(payload, 86400);
 
 const revokedTokens = [
   {

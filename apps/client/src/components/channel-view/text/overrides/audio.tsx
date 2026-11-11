@@ -1,3 +1,4 @@
+import { isTrustedMediaUrl } from '@/helpers/media-url';
 import { memo, useCallback, useState } from 'react';
 import { OverrideLayout } from './layout';
 
@@ -12,7 +13,8 @@ const AudioOverride = memo(({ src }: TAudioOverrideProps) => {
         setError(true);
     }, []);
 
-    if (error) return null;
+    // off-origin media never plays (CSP media-src); the link stays
+    if (error || !isTrustedMediaUrl(src)) return null;
 
     return (
         <OverrideLayout>

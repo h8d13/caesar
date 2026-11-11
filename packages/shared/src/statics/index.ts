@@ -4,6 +4,20 @@ export * from './storage';
 
 export const DEFAULT_MESSAGES_LIMIT = 50;
 
+// The only third-party hosts a client loads images from directly. Every
+// other off-site image goes through the server's /proxy/image, so a
+// message cannot make viewers' browsers call a host its author picked.
+// One list for both sides: the client leaves these URLs alone, the server's
+// CSP img-src allows exactly these (plus YouTube thumbnails for the embed
+// card, which the client never builds a URL for itself).
+// Giphy: the GIF picker. The others: the built-in emoji image sets shipped
+// as URLs in the tiptap emoji dataset (fixed paths, nothing member-made).
+export const GIPHY_MEDIA_HOST_SUFFIX = '.giphy.com';
+export const DIRECT_IMAGE_URL_PREFIXES = [
+  'https://cdn.jsdelivr.net/npm/emoji-datasource-apple/',
+  'https://github.githubassets.com/images/icons/emoji/'
+];
+
 // Unread badges show exact counts up to this, then "<max>+". The server
 // stops counting at max + 1, which is all the badge can tell apart.
 export const UNREAD_COUNT_MAX = 99;

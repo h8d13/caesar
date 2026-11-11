@@ -1,4 +1,5 @@
 import { FullScreenImage } from '@/components/fullscreen-image/content';
+import { toImageSrc } from '@/helpers/media-url';
 import { memo, useCallback, useState } from 'react';
 import { OverrideLayout } from './layout';
 
@@ -14,8 +15,9 @@ type TImageOverrideProps = {
 const GIPHY_ORIGINAL_GIF =
     /^(https:\/\/media\d?\.giphy\.com\/media\/[\w-]+)\/giphy\.gif$/;
 
+// off-origin images other than Giphy's go through the server's image proxy
 const toDisplaySrc = (src: string) =>
-    src.replace(GIPHY_ORIGINAL_GIF, '$1/giphy.webp');
+    toImageSrc(src.replace(GIPHY_ORIGINAL_GIF, '$1/giphy.webp'));
 
 const ImageOverride = memo(({ src: rawSrc, alt }: TImageOverrideProps) => {
     const src = toDisplaySrc(rawSrc);

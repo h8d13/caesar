@@ -9,7 +9,10 @@ import { getRoles } from '@server/db/queries/roles';
 import { getPublicSettings, getSettings } from '@server/db/queries/server';
 import { getSounds } from '@server/db/queries/sounds';
 import { stripSelfOnlyFields } from '@server/db/queries/user-fields';
-import { getPublicUsers } from '@server/db/queries/users';
+import {
+  getPublicUsers,
+  getSessionUserByToken
+} from '@server/db/queries/users';
 import { logger } from '@server/logger';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { enqueueLogin } from '@server/queues/logins';
@@ -50,6 +53,14 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
     invariant(ctx.user, {
       code: 'UNAUTHORIZED',
       message: 'User not authenticated'
+    });
+
+    // ctx.user is a snapshot from when the socket connected. A ban, logout,
+    // password change or deletion since then must not be joinable from a
+    // socket that was opened earlier and left idle.
+    invariant(await getSessionUserByToken(ctx.token), {
+      code: 'UNAUTHORIZED',
+      message: 'Session is no longer valid'
     });
 
     ctx.authenticated = true;
@@ -127,7 +138,9 @@ const joinServerRoute = rateLimitedProcedure(t.procedure, {
       ctx.saveUserIp(ctx.user.id, connectionInfo.ip);
     }
 
-    const voiceMap = VoiceRuntime.getVoiceMap();
+    const voiceMap = VoiceRuntime.getVoiceMap(
+      new Set(channelsForUser.map((channel) => channel.id))
+    );
 
     await db
       .update(users)

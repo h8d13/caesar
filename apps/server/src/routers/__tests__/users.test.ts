@@ -11,13 +11,19 @@ import {
   logins,
   messageReactions,
   messages,
+  pushSubscriptions,
   rolePermissions,
   roles,
   statusImages,
   userRoles,
   users
 } from '@caesar/shared/db/schema';
-import { initTest, type TCaller, uploadFile } from '@server/__tests__/helpers';
+import {
+  initTest,
+  makeModerator,
+  type TCaller,
+  uploadFile
+} from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { pruneExpiredStatuses } from '@server/crons/prune-expired-statuses';
 import { updateSettings } from '@server/db/mutations/server';
@@ -1373,5 +1379,52 @@ describe('users router', () => {
     await expect(
       caller.users.changeBanner({ fileId: 'nonexistent-file-id' })
     ).rejects.toThrow('Too many requests. Please try again shortly.');
+  });
+
+  test('getInfo should not return messages from a private channel the moderator cannot view', async () => {
+    const { caller: owner } = await initTest();
+
+    await owner.channels.update({
+      channelId: 1,
+      name: 'secret',
+      private: true
+    });
+    await owner.messages.send({
+      channelId: 1,
+      content: 'for owners only',
+      files: []
+    });
+
+    const { caller: mod } = await makeModerator(owner, [
+      Permission.MANAGE_USERS
+    ]);
+
+    expect((await mod.users.getInfo({ userId: 1 })).messages).toHaveLength(0);
+    // the owner sees every channel, so still gets them
+    expect(
+      (await owner.users.getInfo({ userId: 1 })).messages.length
+    ).toBeGreaterThan(0);
+  });
+
+  test('ban should drop the push subscriptions of the banned user', async () => {
+    const { caller: owner } = await initTest();
+    const { caller: member } = await initTest(2);
+
+    await member.push.subscribe({
+      endpoint: 'https://push.example.com/sub/ban',
+      p256dh: 'p256dh-key',
+      auth: 'auth-secret',
+      notifyAll: true,
+      notifyMentions: false,
+      notifyDms: false
+    });
+    await owner.users.ban({ userId: 2 });
+
+    const rows = await tdb
+      .select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, 2));
+
+    expect(rows).toHaveLength(0);
   });
 });

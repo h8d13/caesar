@@ -1,95 +1,51 @@
 import { extractUrls, type TMessageMetadata } from '@caesar/shared';
 import { messages } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import dns from 'dns';
 import { and, eq, isNotNull } from 'drizzle-orm';
-import { getLinkPreview } from 'link-preview-js';
-import { isFetchableUrl, isPrivateIP } from './url-guard';
+import { fetchLinkPreview } from './fetch-preview';
 
-type LinkPreviewResult = Awaited<ReturnType<typeof getLinkPreview>>;
-const metadataCache = new Map<string, LinkPreviewResult>();
+// Bounded: a member picks the keys. Cleared wholesale every two hours, so
+// a preview is at most that stale.
+const MAX_CACHE_ENTRIES = 500;
+const MAX_URLS_PER_MESSAGE = 5;
 
-setInterval(
-  () => metadataCache.clear(),
-  1000 * 60 * 60 * 2 // clear cache every 2 hours
-);
+const metadataCache = new Map<string, TMessageMetadata>();
+
+setInterval(() => metadataCache.clear(), 1000 * 60 * 60 * 2).unref();
 
 const urlMetadataParser = async (
   content: string
 ): Promise<TMessageMetadata[]> => {
-  try {
-    const urls = extractUrls(content);
+  const urls = extractUrls(content).slice(0, MAX_URLS_PER_MESSAGE);
 
-    if (!urls) return [];
+  // per URL: one link that cannot be fetched must not cost the message its
+  // other previews
+  const results = await Promise.all(
+    urls.map(async (url) => {
+      const cached = metadataCache.get(url);
 
-    const promises = urls.map(async (url) => {
-      if (metadataCache.has(url)) return metadataCache.get(url);
+      if (cached) return cached;
 
-      if (!isFetchableUrl(url)) {
-        return;
-      }
+      try {
+        const metadata = await fetchLinkPreview(url);
 
-      const metadata = await getLinkPreview(url, {
-        headers: {
-          'user-agent': 'Mozilla/5.0 (compatible; bot)'
-        },
-        // 'follow' lets node-fetch chase redirects internally, and the
-        // library only re-validates hosts on 'manual'. So an allowed URL
-        // that 302s to 127.0.0.1 / 169.254.169.254 would be fetched
-        // unchecked. 'manual' + handleRedirects re-runs the host guard (and
-        // resolveDNSHost below) on the redirect target before following it.
-        followRedirects: 'manual',
-        handleRedirects: (_baseUrl: string, forwardedUrl: string) =>
-          isFetchableUrl(forwardedUrl),
-        resolveDNSHost: async (url: string) => {
-          return new Promise((resolve, reject) => {
-            try {
-              const hostname = new URL(url).hostname;
+        if (metadata) {
+          // full: drop the oldest entry rather than stop caching
+          if (metadataCache.size >= MAX_CACHE_ENTRIES) {
+            metadataCache.delete(metadataCache.keys().next().value!);
+          }
 
-              dns.lookup(hostname, { all: true }, (err, addresses) => {
-                if (err) {
-                  reject(err);
-                  return;
-                }
-
-                for (const entry of addresses) {
-                  if (isPrivateIP(entry.address)) {
-                    reject(new Error('Cannot resolve private IP addresses'));
-                    return;
-                  }
-                }
-
-                const firstAddress = addresses[0]?.address;
-
-                if (!firstAddress) {
-                  reject(new Error('No addresses found'));
-                  return;
-                }
-
-                resolve(firstAddress);
-              });
-            } catch (error) {
-              reject(error);
-            }
-          });
+          metadataCache.set(url, metadata);
         }
-      });
 
-      if (!metadata) return;
+        return metadata;
+      } catch {
+        // unreachable, too slow, refused: no preview
+      }
+    })
+  );
 
-      metadataCache.set(url, metadata);
-
-      return metadata;
-    });
-
-    const metadata = (await Promise.all(promises)) as TMessageMetadata[]; // TODO: fix these types
-
-    return metadata ?? [];
-  } catch {
-    // ignore
-  }
-
-  return [];
+  return results.filter((metadata) => metadata !== undefined);
 };
 
 export const processMessageMetadata = async (

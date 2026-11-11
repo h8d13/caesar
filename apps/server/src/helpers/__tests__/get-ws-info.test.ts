@@ -298,44 +298,16 @@ describe('getWsInfo - robustness', () => {
   });
 });
 
-describe('getWsInfo - user-agent parsing', () => {
-  test('parses OS name and version from user-agent', () => {
+describe('getWsInfo - user-agent', () => {
+  test('keeps the raw user-agent and derives nothing from it', () => {
+    const userAgent =
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
     const req = createRequest({
-      headers: {
-        'user-agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      },
+      headers: { 'user-agent': userAgent },
       remoteAddress: '127.0.0.1'
     });
 
-    expect(getWsInfo(undefined, req)?.os).toBe('Windows 10');
-  });
-
-  test('sets device to Desktop for non-mobile user-agents', () => {
-    const req = createRequest({
-      headers: {
-        'user-agent':
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-      },
-      remoteAddress: '127.0.0.1'
-    });
-
-    expect(getWsInfo(undefined, req)?.device).toBe('Desktop');
-  });
-
-  test('parses mobile device info', () => {
-    const req = createRequest({
-      headers: {
-        'user-agent':
-          'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1'
-      },
-      remoteAddress: '127.0.0.1'
-    });
-
-    const result = getWsInfo(undefined, req);
-
-    expect(result?.os).toBe('iOS 16.0');
-    expect(result?.device).toBe('Apple iPhone');
+    expect(getWsInfo(undefined, req)).toEqual({ ip: '127.0.0.1', userAgent });
   });
 
   test('returns ip even when user-agent is missing', () => {
@@ -355,7 +327,7 @@ describe('getWsInfo - user-agent parsing', () => {
     const result = getWsInfo(undefined, req);
 
     expect(result?.ip).toBeUndefined();
-    expect(result?.os).toBe('Linux');
+    expect(result?.userAgent).toContain('Linux');
   });
 });
 
@@ -368,6 +340,6 @@ describe('getWsInfo - return value', () => {
 
     const keys = Object.keys(getWsInfo(undefined, req)!).sort();
 
-    expect(keys).toEqual(['device', 'ip', 'os', 'userAgent']);
+    expect(keys).toEqual(['ip', 'userAgent']);
   });
 });

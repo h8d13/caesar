@@ -7,8 +7,14 @@ name: Image
 # running node binary and pnpm picks native addons for the host arch), pushes
 # an untagged image by digest, then `merge` tags both digests as one index.
 # Provenance lives in GitHub attestations, not the registry (buildx's in-index
-# attestations list as unknown/unknown on ghcr). Verify with:
-#   gh attestation verify oci://ghcr.io/<owner>/caesar:<tag> --owner <owner>
+# attestations list as unknown/unknown on ghcr). Verify with (pinned to this
+# repo, this workflow and the ref it built; --owner alone would accept any
+# workflow of any repo of the owner):
+#   gh attestation verify oci://ghcr.io/<owner>/caesar:edge \
+#     --repo <owner>/caesar \
+#     --signer-workflow <owner>/caesar/.github/workflows/image.yml \
+#     --source-ref refs/heads/master
+# Release tags: --source-ref refs/tags/v<x.y.z>.
 
 on:
   push:
@@ -19,9 +25,17 @@ on:
       - 'readme'
   workflow_dispatch:
 
+# Read-only by default: the ci job installs and runs dependency code on the
+# runner, so it must not hold a token that can push to ghcr. build and merge
+# ask for packages: write themselves.
 permissions:
   contents: read
-  packages: write # GITHUB_TOKEN can push to ghcr, no PAT needed
+
+# Runs for one ref finish in push order: without this an older run could
+# finish last and point :edge back at the older commit.
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: false
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}
@@ -29,6 +43,8 @@ env:
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
 
   build:
     name: Build ${{ matrix.arch }}
@@ -36,7 +52,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
-      packages: write
+      packages: write # GITHUB_TOKEN can push to ghcr, no PAT needed
       id-token: write # sigstore signing for attestations
       attestations: write
     strategy:
@@ -50,6 +66,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Resolve build version
         id: version

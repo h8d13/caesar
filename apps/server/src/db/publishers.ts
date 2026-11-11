@@ -265,8 +265,6 @@ const publishChannel = logFailures(
             .map((u) => u.id)
             .filter((id) => !affectedUserIds.includes(id));
 
-          console.log('now private', { lostAccessUserIds });
-
           if (lostAccessUserIds.length > 0) {
             pubsub.publishFor(
               lostAccessUserIds,
@@ -275,8 +273,6 @@ const publishChannel = logFailures(
             );
           }
         } else {
-          console.log('now public', { allUserIds });
-
           // channel is now public, so all users should have access to it
           // send a create event
           // if a user already has the channel in the state it will ignore the create event, so we don't need to worry about that

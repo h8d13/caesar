@@ -26,6 +26,7 @@ import {
 import { isUserDmParticipant } from '../db/queries/dms';
 import { getUserRoleIds } from '../db/queries/roles';
 import { getUserById, getUserByToken } from '../db/queries/users';
+import { closeSocket } from '../helpers/close-reason';
 import { getWsInfo } from '../helpers/get-ws-info';
 import {
   getCookie,
@@ -37,6 +38,7 @@ import { enqueueActivityLog } from '../queues/activity-log';
 import { appRouter } from '../routers';
 import { getUserRoles } from '../routers/users/get-user-roles';
 import { VoiceRuntime } from '../runtimes/voice';
+import { removeFromVoice } from '../runtimes/voice-access';
 import type { TConnectionInfo } from '../types';
 import { invariant } from './invariant';
 import { pubsub } from './pubsub';
@@ -45,7 +47,15 @@ import type { Context, TChannelPermissionHints } from './trpc';
 // Server-local extension of the ws WebSocket. Replaces the previous
 // global `declare module 'ws'` augmentation: keeping it local stops the
 // shape leaking into client typecheck through tRPC type inference.
-type AuthedWebSocket = WebSocket & { userId?: number; token: string };
+// sessionUserId is whose session the socket holds, set as soon as the
+// token resolves: revocation (kick, ban, logout, ...) matches on it, so it
+// also reaches sockets that connected but have not joined yet. userId is
+// set by joinServer and means "online".
+type AuthedWebSocket = WebSocket & {
+  userId?: number;
+  sessionUserId?: number;
+  token: string;
+};
 
 // fragmented frames arrive as Buffer[], binaryType 'arraybuffer' as one
 const rawDataToString = (data: RawData) =>
@@ -62,6 +72,7 @@ const rawDataToString = (data: RawData) =>
 const attachSessionFields = (ws: WebSocket): AuthedWebSocket =>
   Object.assign(ws, {
     userId: undefined as number | undefined,
+    sessionUserId: undefined as number | undefined,
     token: ''
   });
 
@@ -113,10 +124,10 @@ const closeUserSessions = (
   if (!wss) return;
 
   authedClients().forEach((client) => {
-    if (client.userId !== userId) return;
+    if (client.sessionUserId !== userId) return;
     if (exceptToken && client.token === exceptToken) return;
 
-    client.close(code, reason);
+    closeSocket(client, code, reason);
   });
 };
 
@@ -247,6 +258,8 @@ const createContext = async ({
   // client and could match another tab sharing the token.
   const ownWs = wss ? (res as AuthedWebSocket) : undefined;
 
+  if (ownWs) ownWs.sessionUserId = decodedUser.id;
+
   const getOwnWs = () => ownWs;
 
   // every socket of the user: multiple sessions/tabs are allowed, so kick,
@@ -254,7 +267,7 @@ const createContext = async ({
   const getUserWsList = (userId: number) => {
     if (!wss) return [];
     return Array.from(authedClients()).filter(
-      (client) => client.userId === userId
+      (client) => client.sessionUserId === userId
     );
   };
 
@@ -365,7 +378,7 @@ const createWsServer = async (server: http.Server) => {
       // socket here and the browser attaches our cookie, so refuse any
       // upgrade whose Origin isn't this host
       if (isCrossOrigin(req)) {
-        ws.close(1008, 'Forbidden origin');
+        closeSocket(ws, 1008, 'Forbidden origin');
         return;
       }
 
@@ -373,7 +386,7 @@ const createWsServer = async (server: http.Server) => {
       // connectionParams, then accepts or closes; it never times out itself
       if (expectsConnectionParams(req)) {
         const authTimer = setTimeout(
-          () => ws.close(1008, 'Authentication timeout'),
+          () => closeSocket(ws, 1008, 'Authentication timeout'),
           AUTH_TIMEOUT_MS
         );
 
@@ -455,19 +468,7 @@ const createWsServer = async (server: http.Server) => {
 
         const voiceRuntime = VoiceRuntime.findRuntimeByUserId(user.id);
 
-        if (voiceRuntime) {
-          voiceRuntime.removeUser(user.id);
-          const channelState = voiceRuntime.getState();
-
-          pubsub.publish(ServerEvents.USER_LEAVE_VOICE, {
-            channelId: voiceRuntime.id,
-            userId: user.id
-          });
-          pubsub.publish(ServerEvents.VOICE_CHANNEL_STATE_UPDATE, {
-            channelId: voiceRuntime.id,
-            activeSince: channelState.activeSince
-          });
-        }
+        if (voiceRuntime) await removeFromVoice(voiceRuntime, user.id);
 
         usersIpMap.delete(user.id);
         pubsub.publish(ServerEvents.USER_LEAVE, user.id);

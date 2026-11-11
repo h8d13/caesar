@@ -2,7 +2,10 @@ import { ChannelPermission, ChannelType } from '@caesar/shared';
 import { messages } from '@caesar/shared/db/schema';
 import { initTest } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
-import { getChannelsReadStatesForUser } from '@server/db/queries/channels';
+import {
+  getAffectedUserIdsForChannel,
+  getChannelsReadStatesForUser
+} from '@server/db/queries/channels';
 import {
   generateFileToken,
   verifyFileToken
@@ -252,9 +255,11 @@ describe('channels router', () => {
       categoryId: 1
     });
 
+    // 3 is the seeded DM channel: not reorderable, and not what the
+    // assertions below look at
     await caller.channels.reorder({
       categoryId: 1,
-      channelIds: [4, 3, 1, 2]
+      channelIds: [4, 5, 1, 2]
     });
 
     const [channel1, channel2, channel4, channel5] = await Promise.all([
@@ -1100,5 +1105,53 @@ describe('channels router', () => {
         roleId: 1
       })
     ).rejects.toThrow('Cannot delete DM channel permissions');
+  });
+
+  test('should leave a role member with a user deny out of the private channel audience', async () => {
+    const { caller: owner } = await initTest();
+
+    await owner.channels.update({
+      channelId: 1,
+      name: 'secret',
+      private: true
+    });
+    // role 2 (Member) may view; user 2 is explicitly configured with nothing
+    await owner.channels.updatePermissions({
+      channelId: 1,
+      roleId: 2,
+      permissions: [ChannelPermission.VIEW_CHANNEL]
+    });
+    await owner.channels.updatePermissions({
+      channelId: 1,
+      userId: 2,
+      isCreate: true,
+      permissions: []
+    });
+
+    const { caller: member } = await initTest(2);
+
+    // the access check already refused them ...
+    await expect(
+      member.messages.get({ channelId: 1, cursor: null })
+    ).rejects.toThrow();
+
+    // ... and the event audience (new messages, typing, push) must agree
+    const audience = await getAffectedUserIdsForChannel(1, {
+      permission: ChannelPermission.VIEW_CHANNEL
+    });
+
+    expect(audience).not.toContain(2);
+    expect(audience).toContain(1); // owner
+    expect(audience).toContain(3); // other role members are unaffected
+  });
+
+  test('should refuse to reorder a DM channel into a category', async () => {
+    const { caller } = await initTest();
+
+    // channel 3: seeded DM. Moved into a category, deleting that category
+    // would delete the conversation.
+    await expect(
+      caller.channels.reorder({ categoryId: 1, channelIds: [3] })
+    ).rejects.toThrow('Direct message channels cannot be reordered');
   });
 });

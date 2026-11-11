@@ -1,6 +1,11 @@
-import type { Permission, TJoinedRole, TRole } from '@caesar/shared';
+import {
+  OWNER_ROLE_ID,
+  type Permission,
+  type TJoinedRole,
+  type TRole
+} from '@caesar/shared';
 import { rolePermissions, roles, userRoles } from '@caesar/shared/db/schema';
-import { and, eq, getTableColumns, sql } from 'drizzle-orm';
+import { and, eq, getTableColumns, ne, sql } from 'drizzle-orm';
 import { db } from '..';
 import { prepared } from '../prepared';
 type TQueryResult = TRole & {
@@ -21,8 +26,16 @@ const parseRole = (role: TQueryResult): TJoinedRole => ({
     : []
 });
 
+// The default role is handed to every signup and to every holder of a
+// deleted role. Owner is never it: set-default-role refuses the request,
+// and a row that predates or bypasses that guard is not returned here, so
+// no consumer can hand Owner out by default.
 const getDefaultRole = async (): Promise<TRole | undefined> =>
-  await db.select().from(roles).where(eq(roles.isDefault, true)).get();
+  await db
+    .select()
+    .from(roles)
+    .where(and(eq(roles.isDefault, true), ne(roles.id, OWNER_ROLE_ID)))
+    .get();
 
 const getRole = async (roleId: number): Promise<TJoinedRole | undefined> => {
   const role = await db

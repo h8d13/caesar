@@ -5,20 +5,30 @@ import { publishSound } from '@server/db/publishers';
 import { getUniqueSoundName } from '@server/db/queries/sounds';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { fileManager } from '@server/utils/file-manager';
+import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { z } from 'zod';
 
 const addSoundRoute = protectedProcedure
   .input(
-    z.array(
-      z.object({
-        fileId: z.string(),
-        name: z.string().min(1).max(32)
-      })
-    )
+    z
+      .array(
+        z.object({
+          fileId: z.string(),
+          name: z.string().min(1).max(32)
+        })
+      )
+      .max(50)
   )
   .mutation(async ({ input, ctx }) => {
     await ctx.needsPermission(Permission.MANAGE_SOUNDS);
+
+    for (const data of input) {
+      invariant(fileManager.temporaryFileHasMimeType(data.fileId, 'audio/'), {
+        code: 'BAD_REQUEST',
+        message: 'Invalid file type. Sounds must be audio files.'
+      });
+    }
 
     for (const data of input) {
       const newFile = await fileManager.saveFile(data.fileId, ctx.userId);

@@ -133,8 +133,11 @@ const isUserDmParticipant = async (
   return !!dm;
 };
 
-// throws unless the user is a participant. Callers that already know the
-// channel is a DM skip the lookup by passing isDm.
+// Throws unless the channel is a DM and the user one of its two
+// participants. A non-DM channel is refused, not waved through: callers
+// use this as their only gate on a client-supplied channel id, and a
+// silent pass let dms.hangupCall tear down server voice channels. Callers
+// that already know the channel is a DM skip the lookup by passing isDm.
 const assertDmParticipant = async (
   channelId: number,
   userId: number,
@@ -142,7 +145,12 @@ const assertDmParticipant = async (
 ): Promise<void> => {
   const isDmChannel = isDm ?? (await isDirectMessageChannel(channelId));
 
-  if (!isDmChannel) return;
+  if (!isDmChannel) {
+    throw new TRPCError({
+      code: 'NOT_FOUND',
+      message: 'DM channel not found'
+    });
+  }
 
   const isParticipant = await isUserDmParticipant(channelId, userId);
 

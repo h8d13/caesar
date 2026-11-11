@@ -1,10 +1,9 @@
 import { Permission, UploadHeaders } from '@caesar/shared';
 import { roles, users } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import { getJwtSecret } from '@server/utils/jwt-secret';
+import { signJwt } from '@server/utils/jwt-secret';
 import { deriveAuthKey } from '@server/utils/password';
 import { eq } from 'drizzle-orm';
-import jwt from 'jsonwebtoken';
 import { appRouter } from '../routers';
 import { createMockContext } from './context';
 import { testsBaseUrl } from './setup';
@@ -19,10 +18,9 @@ const getMockedToken = async (userId: number) => {
     .where(eq(users.id, userId))
     .get();
 
-  const token = jwt.sign(
+  const token = await signJwt(
     { userId, sessionEpoch: row?.sessionEpoch ?? 0 },
-    await getJwtSecret(),
-    { expiresIn: '86400s' }
+    86400
   );
 
   return token;

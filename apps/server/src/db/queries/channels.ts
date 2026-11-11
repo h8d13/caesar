@@ -231,6 +231,17 @@ const getChannelAudience = async (
       ? sql`AND ${table.permission} = ${permission} AND ${table.allow} = 1`
       : sql``;
 
+  // Same rule as resolvePermissions: a user override beats any role, so a
+  // role member with an explicit deny for this permission is not in the
+  // audience (owners still are: they see every channel).
+  const notDenied = permission
+    ? sql`AND ${userRoles.userId} NOT IN (
+        SELECT ${channelUserPermissions.userId} FROM ${channelUserPermissions}
+          WHERE ${channelUserPermissions.channelId} = ${channelId}
+            AND ${channelUserPermissions.permission} = ${permission}
+            AND ${channelUserPermissions.allow} = 0)`
+    : sql``;
+
   // direct overrides, members of granted roles, and owners (who see all)
   const rows = await db.all<{ userId: number }>(sql`
     SELECT ${channelUserPermissions.userId} AS userId
@@ -243,7 +254,10 @@ const getChannelAudience = async (
         SELECT ${channelRolePermissions.roleId} FROM ${channelRolePermissions}
           WHERE ${channelRolePermissions.channelId} = ${channelId}
             ${granted(channelRolePermissions)})
-        OR ${userRoles.roleId} = ${OWNER_ROLE_ID}
+        ${notDenied}
+    UNION
+    SELECT ${userRoles.userId} FROM ${userRoles}
+      WHERE ${userRoles.roleId} = ${OWNER_ROLE_ID}
     ORDER BY 1`);
 
   return rows.map((row) => row.userId);

@@ -1,6 +1,7 @@
-import { socialCreditLedger } from '@caesar/shared/db/schema';
+import { predictionPools, socialCreditLedger } from '@caesar/shared/db/schema';
 import { initTest } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
+import { eq, sum } from 'drizzle-orm';
 import { describe, expect, test } from 'vite-plus/test';
 
 const fund = (userIds: number[]) =>
@@ -62,5 +63,89 @@ describe('prediction router', () => {
       [0, 0],
       [0, 0]
     ]);
+  });
+
+  test('two concurrent resolves settle the pool once', async () => {
+    await fund([1, 2]);
+
+    const { caller: owner } = await initTest(1);
+    const { caller: member } = await initTest(2);
+
+    const created = await owner.prediction.create({
+      question: 'race?',
+      options: ['a', 'b'],
+      durationMinutes: 5
+    });
+    const [a, b] = created.pool!.options;
+
+    await owner.prediction.stake({ optionId: a!.id, amount: 50 });
+    await member.prediction.stake({ optionId: b!.id, amount: 50 });
+
+    await tdb
+      .update(predictionPools)
+      .set({ closesAt: Date.now() - 1000 })
+      .where(eq(predictionPools.id, created.pool!.id));
+
+    const results = await Promise.allSettled([
+      owner.prediction.resolve({ winningOptionId: a!.id }),
+      owner.prediction.resolve({ winningOptionId: b!.id })
+    ]);
+
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+
+    // zero-sum: both sides were paid the whole pot when the two interleaved
+    const ledger = await tdb
+      .select({ total: sum(socialCreditLedger.amount) })
+      .from(socialCreditLedger)
+      .get();
+
+    expect(Number(ledger?.total)).toBe(200);
+  });
+
+  test('two concurrent creates open one pool', async () => {
+    const { caller } = await initTest(1);
+    const input = { question: 'q', options: ['a', 'b'], durationMinutes: 5 };
+
+    const results = await Promise.allSettled([
+      caller.prediction.create(input),
+      caller.prediction.create(input)
+    ]);
+
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+
+    // a second open pool could never be resolved and blocked every later one
+    const open = await tdb
+      .select()
+      .from(predictionPools)
+      .where(eq(predictionPools.status, 'open'));
+
+    expect(open).toHaveLength(1);
+  });
+
+  test('a stake racing a cancel is refunded or refused, never kept', async () => {
+    await fund([1, 2]);
+
+    const { caller: owner } = await initTest(1);
+    const { caller: member } = await initTest(2);
+
+    const created = await owner.prediction.create({
+      question: 'cancelled?',
+      options: ['a', 'b'],
+      durationMinutes: 5
+    });
+    const [a] = created.pool!.options;
+
+    await Promise.allSettled([
+      member.prediction.stake({ optionId: a!.id, amount: 40 }),
+      owner.prediction.cancel()
+    ]);
+
+    // whichever ran first, nothing of the 200 may be stuck in a void pool
+    const ledger = await tdb
+      .select({ total: sum(socialCreditLedger.amount) })
+      .from(socialCreditLedger)
+      .get();
+
+    expect(Number(ledger?.total)).toBe(200);
   });
 });

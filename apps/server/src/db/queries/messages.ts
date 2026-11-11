@@ -21,6 +21,7 @@ import {
   getTableColumns,
   gt,
   gte,
+  inArray,
   lt,
   notExists,
   type SQL,
@@ -213,8 +214,12 @@ const getMessage = async (
   return message;
 };
 
+// visibleChannelIds: the channels the viewer can read. A moderator looking
+// at a user must not get their messages from private channels closed to
+// them.
 const getNonDirectMessagesFromUserId = async (
-  userId: number
+  userId: number,
+  visibleChannelIds: number[]
 ): Promise<TMessage[]> =>
   db
     .select()
@@ -222,6 +227,7 @@ const getNonDirectMessagesFromUserId = async (
     .where(
       and(
         eq(messages.userId, userId),
+        inArray(messages.channelId, visibleChannelIds),
         notExists(
           db
             .select()

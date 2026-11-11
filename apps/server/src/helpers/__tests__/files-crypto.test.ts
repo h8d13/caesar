@@ -1,18 +1,18 @@
-import * as serverModule from '@server/db/queries/server';
+import * as hmacSecretModule from '@server/utils/hmac-secret';
 import { beforeEach, describe, expect, test, vi } from 'vite-plus/test';
 import { generateFileToken, verifyFileToken } from '../files-crypto';
 
 // vi.mock can't intercept this module: setupFiles transitively import
 // files-crypto (via http/public → ../helpers/files-crypto), which captures
-// getServerTokenSync before the test file's vi.mock would fire. vi.spyOn
+// getHmacSecret before the test file's vi.mock would fire. vi.spyOn
 // patches the live ESM binding at runtime instead, so the consumer sees
 // the stub.
-const mockGetServerTokenSync = vi.spyOn(serverModule, 'getServerTokenSync');
-mockGetServerTokenSync.mockReturnValue('test-server-token-12345');
+const mockGetHmacSecret = vi.spyOn(hmacSecretModule, 'getHmacSecret');
+mockGetHmacSecret.mockReturnValue('test-server-token-12345');
 
 describe('files-crypto', () => {
   beforeEach(() => {
-    mockGetServerTokenSync.mockClear();
+    mockGetHmacSecret.mockClear();
   });
 
   describe('generateFileToken', () => {
@@ -25,7 +25,7 @@ describe('files-crypto', () => {
       expect(token).toBeDefined();
       expect(typeof token).toBe('string');
       expect(token.length).toBe(64);
-      expect(mockGetServerTokenSync).toHaveBeenCalledTimes(1);
+      expect(mockGetHmacSecret).toHaveBeenCalledTimes(1);
     });
 
     test('should generate different tokens for different fileIds', () => {
@@ -54,15 +54,6 @@ describe('files-crypto', () => {
       const token2 = generateFileToken(fileId, channelAccessToken);
 
       expect(token1).toBe(token2);
-    });
-
-    test('should use server token from getServerTokenSync', () => {
-      const fileId = 123;
-      const channelAccessToken = 'channel-token-abc';
-
-      generateFileToken(fileId, channelAccessToken);
-
-      expect(mockGetServerTokenSync).toHaveBeenCalledTimes(1);
     });
   });
 

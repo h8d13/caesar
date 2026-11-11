@@ -25,9 +25,22 @@ type TLoginLockoutOptions = {
 
 type TLockoutEntry = {
   failures: number;
+  // failures per attempted identity, so a success can forgive only its own
+  bySubject: Map<string, number>;
   windowStart: number;
   lockedUntil: number;
 };
+
+// identities tracked per key; beyond it failures pool under one bucket
+const MAX_SUBJECTS_PER_KEY = 32;
+const OVERFLOW_SUBJECT = '\u0000overflow';
+
+const freshEntry = (now: number): TLockoutEntry => ({
+  failures: 0,
+  bySubject: new Map(),
+  windowStart: now,
+  lockedUntil: 0
+});
 
 type TLockoutStatus = {
   locked: boolean;
@@ -82,7 +95,7 @@ class LoginLockout {
     return { locked: false, retryAfterMs: 0 };
   };
 
-  public recordFailure = (key: string): void => {
+  public recordFailure = (key: string, subject: string): void => {
     if (this.disabled) return;
 
     const now = Date.now();
@@ -91,20 +104,24 @@ class LoginLockout {
 
     const existing = this.entries.get(key);
 
-    let entry: TLockoutEntry = existing ?? {
-      failures: 0,
-      windowStart: now,
-      lockedUntil: 0
-    };
+    let entry = existing ?? freshEntry(now);
 
     // Start a fresh window once the previous one elapsed and the key is not
     // currently locked (a locked key keeps accumulating so repeat offenders
     // escalate instead of resetting).
     if (entry.lockedUntil <= now && now - entry.windowStart > this.windowMs) {
-      entry = { failures: 0, windowStart: now, lockedUntil: 0 };
+      entry = freshEntry(now);
     }
 
     entry.failures += 1;
+
+    const bucket =
+      entry.bySubject.has(subject) ||
+      entry.bySubject.size < MAX_SUBJECTS_PER_KEY
+        ? subject
+        : OVERFLOW_SUBJECT;
+
+    entry.bySubject.set(bucket, (entry.bySubject.get(bucket) ?? 0) + 1);
 
     if (entry.failures >= this.maxFailures) {
       const exponent = Math.min(
@@ -118,10 +135,25 @@ class LoginLockout {
     this.entries.set(key, entry);
   };
 
-  // Clear on a successful authentication so a legitimate user who eventually
-  // gets their password right is not penalised by earlier typos.
-  public recordSuccess = (key: string): void => {
-    this.entries.delete(key);
+  // A successful authentication forgives the failures of that same
+  // identity, so a legitimate user who eventually gets their password right
+  // is not penalised by earlier typos. Failures against other identities
+  // stay: clearing the whole key let an attacker reset the counter at will
+  // by logging in to their own account between guesses at someone else's.
+  public recordSuccess = (key: string, subject: string): void => {
+    const entry = this.entries.get(key);
+
+    if (!entry) return;
+
+    entry.failures -= entry.bySubject.get(subject) ?? 0;
+    entry.bySubject.delete(subject);
+
+    if (entry.failures <= 0) {
+      this.entries.delete(key);
+    } else if (entry.failures < this.maxFailures) {
+      // what is left is below the threshold: the lock was this identity's
+      entry.lockedUntil = 0;
+    }
   };
 
   public clear = (): void => {

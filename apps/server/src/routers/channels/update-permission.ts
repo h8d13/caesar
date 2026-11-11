@@ -16,6 +16,7 @@ import {
 } from '@server/db/queries/channels';
 import { isDirectMessageChannel } from '@server/db/queries/dms';
 import { enqueueActivityLog } from '@server/queues/activity-log';
+import { sweepVoiceAccess } from '@server/runtimes/voice-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { and, eq } from 'drizzle-orm';
@@ -102,6 +103,8 @@ const updatePermissionsRoute = protectedProcedure
     );
 
     void publishChannelPermissions(affectedUserIds);
+    await sweepVoiceAccess();
+
     enqueueActivityLog({
       type: ActivityLogType.UPDATED_CHANNEL_PERMISSIONS,
       userId: ctx.user.id,

@@ -35,7 +35,12 @@ const produceRoute = voiceProcedure
         ctx.voiceChannelId,
         ChannelPermission.WEBCAM
       );
-    } else if (input.kind === StreamKind.SCREEN) {
+    } else if (
+      input.kind === StreamKind.SCREEN ||
+      // the audio half of a screen share: without a check it was a way to
+      // send audio with neither SPEAK nor SHARE_SCREEN
+      input.kind === StreamKind.SCREEN_AUDIO
+    ) {
       await ctx.needsChannelPermission(
         ctx.voiceChannelId,
         ChannelPermission.SHARE_SCREEN

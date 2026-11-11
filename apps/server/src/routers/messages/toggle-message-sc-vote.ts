@@ -2,6 +2,7 @@ import { messages, socialCreditLedger } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishMessage, publishUser } from '@server/db/publishers';
+import { serialPerUser } from '@server/games/shared-bindings';
 import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
@@ -21,6 +22,8 @@ const toggleMessageScVoteRoute = rateLimitedProcedure(protectedProcedure, {
   windowMs: config.rateLimiters.toggleMessageScVote.windowMs,
   logLabel: 'toggleMessageScVote'
 })
+  // the per-day / per-target limits below are read-then-insert
+  .use(serialPerUser)
   .input(
     z.object({
       messageId: z.number(),

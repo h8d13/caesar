@@ -12,7 +12,6 @@ import { desc, eq, isNotNull } from 'drizzle-orm';
 import { runDetached, withBalanceLock } from '../shared-bindings';
 import {
   BETTING_PHASE_DURATION_MS,
-  CASHOUT_GRACE_PERIOD_MS,
   CRASHED_PHASE_DURATION_MS,
   HOUSE_EDGE,
   MAX_BET,
@@ -40,7 +39,6 @@ class CrashRuntime {
   private multiplier = 1;
   private phaseStartedAt = 0;
   private flyingStartedAt = 0;
-  private crashedAt = 0;
   private activeBets: ActiveBetInternal[] = [];
   private tickInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -154,11 +152,10 @@ class CrashRuntime {
   }
 
   async cashOut(userId: number): Promise<void> {
-    const withinGracePeriod =
-      this.phase === CrashPhase.CRASHED &&
-      Date.now() - this.crashedAt <= CASHOUT_GRACE_PERIOD_MS;
-
-    if (this.phase !== CrashPhase.FLYING && !withinGracePeriod) {
+    // No grace window after the crash: one used to pay the crash point (the
+    // round's maximum) to a request landing just after it, so a client that
+    // waited for the crash and answered at once won every round.
+    if (this.phase !== CrashPhase.FLYING) {
       throw new Error('Can only cash out during the flying phase');
     }
 
@@ -169,10 +166,7 @@ class CrashRuntime {
       throw new Error('No active bet to cash out');
     }
 
-    // Grace period cashouts use the crash point as the multiplier
-    const cashoutMultiplier = withinGracePeriod
-      ? this.crashPoint
-      : this.multiplier;
+    const cashoutMultiplier = this.multiplier;
     const payout = Math.floor(bet.amount * cashoutMultiplier);
     const profit = payout - bet.amount;
 
@@ -258,9 +252,7 @@ class CrashRuntime {
       this.tickInterval = null;
     }
 
-    this.crashedAt = Date.now();
-
-    // Mark all uncashed bets as busted (can be reversed by grace period cashout)
+    // Mark all uncashed bets as busted
     for (const bet of this.activeBets) {
       if (bet.cashedOutAt === null) {
         bet.profit = -bet.amount;

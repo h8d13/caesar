@@ -64,7 +64,9 @@ const consumeChallenge = (
 };
 
 // HMAC of the internal user ID under the server secret. Stable per user,
-// opaque to the outside. Mirrors `hashIp`.
+// opaque to the outside. Stays on settings.secretToken (not hmac.key): it
+// is the WebAuthn user handle of every registered key, so re-keying it
+// would orphan them, and nothing is gained by guessing it.
 const hashUserId = (userId: number): Uint8Array<ArrayBuffer> => {
   const buf = crypto
     .createHmac('sha256', getServerTokenSync())

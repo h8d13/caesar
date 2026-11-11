@@ -16,7 +16,6 @@ import {
 } from '@caesar/shared/db/schema';
 import { count, max } from 'drizzle-orm';
 import type http from 'http';
-import jwt from 'jsonwebtoken';
 import z from 'zod';
 import { config } from '../config';
 import { db } from '../db';
@@ -29,8 +28,9 @@ import { getIpBlockKey } from '../helpers/network';
 import { isAtUserCap } from '../helpers/user-cap';
 import { logger } from '../logger';
 import { enqueueActivityLog } from '../queues/activity-log';
+import { canAssignRole } from '../routers/users/assert-can-assign-role';
 import { invariant } from '../utils/invariant';
-import { getJwtSecret } from '../utils/jwt-secret';
+import { signJwt } from '../utils/jwt-secret';
 import { hashPassword, verifyPassword } from '../utils/password';
 import { createLoginLockout } from '../utils/rate-limiters/login-lockout';
 import { createRateLimiter } from '../utils/rate-limiters/rate-limiter';
@@ -137,10 +137,14 @@ const registerUser = async (
   // If the invite has a specific role and it's different from the default,
   // assign it too. Never owner: add-invite refuses it, this covers any row
   // that predates or bypasses that guard.
+  // Nor a role its creator could no longer assign: add-invite checks the
+  // grant when the invite is made, but the creator may have been demoted
+  // (or the role given more permissions) since.
   if (
     invite?.roleId &&
     invite.roleId !== defaultRole.id &&
-    invite.roleId !== OWNER_ROLE_ID
+    invite.roleId !== OWNER_ROLE_ID &&
+    (await canAssignRole(invite.creatorId, invite.roleId))
   ) {
     await db.insert(userRoles).values({
       roleId: invite.roleId,
@@ -203,11 +207,11 @@ const loginRouteHandler = async (
   const lockoutKey = ip ? getIpBlockKey(ip) : undefined;
 
   const recordLoginFailure = () => {
-    if (lockoutKey) loginLockout.recordFailure(lockoutKey);
+    if (lockoutKey) loginLockout.recordFailure(lockoutKey, data.identity);
   };
 
   const recordLoginSuccess = () => {
-    if (lockoutKey) loginLockout.recordSuccess(lockoutKey);
+    if (lockoutKey) loginLockout.recordSuccess(lockoutKey, data.identity);
   };
 
   // Failed-login lockout (#371): sustained brute force from this IP.
@@ -253,7 +257,7 @@ const loginRouteHandler = async (
         recordLoginFailure();
 
         logger.info(
-          `[Auth] Signup failed for "${data.identity}": invite missing, expired or used up (IP: ${ip || 'unknown'})`
+          `[Auth] Signup failed for "${data.identity}": invite missing, expired, used up or from a banned creator (IP: ${ip || 'unknown'})`
         );
         throw new HttpValidationError('identity', GENERIC_AUTH_ERROR);
       }
@@ -356,10 +360,9 @@ const loginRouteHandler = async (
       message: 'Failed to build authentication options.'
     });
 
-    const preAuthToken = jwt.sign(
+    const preAuthToken = await signJwt(
       { userId: existingUser.id, type: 'pre-2fa', remember: data.remember },
-      await getJwtSecret(),
-      { expiresIn: '300s' /* 5 minutes */ }
+      300 // 5 minutes
     );
 
     sendJson(res, 200, { needs2fa: true, preAuthToken, options });

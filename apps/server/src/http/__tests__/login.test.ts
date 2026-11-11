@@ -1,18 +1,22 @@
-import { OWNER_ROLE_ID } from '@caesar/shared';
+import { OWNER_ROLE_ID, Permission } from '@caesar/shared';
 import { invites, roles, userRoles, users } from '@caesar/shared/db/schema';
 import {
   getRoleIdByName,
   getSessionCookie,
-  login
+  initTest,
+  login,
+  makeModerator
 } from '@server/__tests__/helpers';
 import { tdb, testsBaseUrl } from '@server/__tests__/setup';
 import { config } from '@server/config';
-import { getJwtSecret } from '@server/utils/jwt-secret';
+import { getUserRoleIds } from '@server/db/queries/roles';
+import { verifyJwt } from '@server/utils/jwt-secret';
 import { deriveAuthKey } from '@server/utils/password';
 import { setRateLimitingDisabled } from '@server/utils/rate-limiters';
 import { eq } from 'drizzle-orm';
-import jwt from 'jsonwebtoken';
 import { afterEach, describe, expect, test } from 'vite-plus/test';
+
+type TSessionClaims = { exp: number; iat: number; userId: number };
 
 // Inserts an invite carrying roleId, signs identity up with it and returns
 // the role ids the new user ended up with.
@@ -54,9 +58,8 @@ describe('/login', () => {
 
     expect(data).toHaveProperty('success', true);
 
-    const decoded = jwt.verify(
-      getSessionCookie(response)!,
-      await getJwtSecret()
+    const decoded = await verifyJwt<TSessionClaims>(
+      getSessionCookie(response)!
     );
 
     expect(decoded).toHaveProperty('userId');
@@ -452,10 +455,9 @@ describe('/login', () => {
 
     expect(response.status).toBe(200);
 
-    const decoded = jwt.verify(
-      getSessionCookie(response)!,
-      await getJwtSecret()
-    ) as jwt.JwtPayload;
+    const decoded = await verifyJwt<TSessionClaims>(
+      getSessionCookie(response)!
+    );
 
     expect(decoded).toHaveProperty('userId');
     expect(typeof decoded.userId).toBe('number');
@@ -510,6 +512,56 @@ describe('/login', () => {
     expect(roleIds).toHaveLength(2);
   });
 
+  test('should not grant an invite role its creator can no longer assign', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: mod } = await makeModerator(owner, [
+      Permission.MANAGE_INVITES,
+      Permission.MANAGE_USERS
+    ]);
+    const modRoleId = (await getUserRoleIds(2)).find((id) => id > 3)!;
+
+    // allowed: the moderator holds everything this role grants
+    const { code } = await mod.invites.add({ maxUses: 5, roleId: modRoleId });
+
+    // demoted afterwards: the invite must not hand the role back
+    await owner.users.removeRole({ userId: 2, roleId: modRoleId });
+
+    const response = await login('latejoiner', 'password123', code);
+
+    expect(response.status).toBe(200);
+
+    const user = await tdb
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.identity, 'latejoiner'))
+      .get();
+
+    expect(await getUserRoleIds(user!.id)).not.toContain(modRoleId);
+  });
+
+  test('should refuse an invite whose creator is banned', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: mod } = await makeModerator(owner, [
+      Permission.MANAGE_INVITES
+    ]);
+    const { code } = await mod.invites.add({ maxUses: 5 });
+
+    await owner.users.ban({ userId: 2 });
+
+    const response = await login('friendofbanned', 'password123', code);
+
+    expect(response.status).toBe(400);
+
+    // the use is given back, the code stays unused
+    const invite = await tdb
+      .select({ uses: invites.uses })
+      .from(invites)
+      .where(eq(invites.code, code))
+      .get();
+
+    expect(invite?.uses).toBe(0);
+  });
+
   test('should never grant the owner role from an invite row', async () => {
     // add-invite refuses this; a direct insert stands in for a pre-guard row
     const roleIds = await signupWithRoleInvite('owneruser', OWNER_ROLE_ID);
@@ -556,10 +608,9 @@ describe('/login', () => {
 
     expect(await response.json()).toHaveProperty('success', true);
 
-    const decoded = jwt.verify(
-      getSessionCookie(response)!,
-      await getJwtSecret()
-    ) as jwt.JwtPayload;
+    const decoded = await verifyJwt<TSessionClaims>(
+      getSessionCookie(response)!
+    );
 
     expect(decoded).toHaveProperty('userId');
 
@@ -573,10 +624,9 @@ describe('/login', () => {
 
     expect(response2.status).toBe(200);
 
-    const decoded2 = jwt.verify(
-      getSessionCookie(response2)!,
-      await getJwtSecret()
-    ) as jwt.JwtPayload;
+    const decoded2 = await verifyJwt<TSessionClaims>(
+      getSessionCookie(response2)!
+    );
 
     expect(decoded2).toHaveProperty('userId');
     expect(decoded2.userId).toBe(firstUser?.id);

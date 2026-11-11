@@ -1,3 +1,4 @@
+import { toImageSrc } from '@/helpers/media-url';
 import {
     isAllowedMessageClass,
     MESSAGE_ALLOWED_ATTRIBUTES,
@@ -108,11 +109,15 @@ const sanitizeElement = (domNode: Element, options: HTMLReactParserOptions) => {
 
     if (!ALLOWED_TAGS.has(tag)) return <>{children}</>;
 
-    return createElement(
-        tag,
-        attributesToProps(filterAttributes(tag, domNode.attribs)),
-        children
-    );
+    const attributes = filterAttributes(tag, domNode.attribs);
+
+    // raw <img> and markdown ![](): an off-origin one is fetched through
+    // the server's image proxy, custom emoji (same-origin files) stay as is
+    if (tag === 'img' && attributes.src !== undefined) {
+        attributes.src = toImageSrc(attributes.src);
+    }
+
+    return createElement(tag, attributesToProps(attributes), children);
 };
 
-export { sanitizeElement };
+export { isAllowedUrl, sanitizeElement };
