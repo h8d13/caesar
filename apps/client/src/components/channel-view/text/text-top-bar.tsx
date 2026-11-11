@@ -137,10 +137,10 @@ type TDmEncryptionIndicatorProps = {
 const DmEncryptionIndicator = memo(
     ({ encrypted }: TDmEncryptionIndicatorProps) => {
         const Icon = encrypted ? Lock : LockOpen;
-        const label = encrypted ? 'End-to-end encrypted' : 'Not encrypted';
+        const label = encrypted ? 'End-to-end encrypted' : 'Not E2EE';
         const details = encrypted
-            ? 'End-to-end encrypted: only you and the other participant can read messages sent in this mode. The server operator still sees who sent them, when, and file names and sizes.'
-            : 'Not encrypted: the server operator can read this conversation. Turn on ephemeral mode to encrypt new messages end-to-end.';
+            ? 'Only you and the other participant can read these messages. Sender, time, and file names and sizes stay visible.'
+            : 'Encrypted in transit only. Turn on ephemeral mode for end-to-end encryption.';
 
         return (
             <Tooltip
