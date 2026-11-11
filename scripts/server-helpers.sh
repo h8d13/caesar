@@ -19,5 +19,5 @@ SystemMaxUse=200M
 EOF
 systemctl restart systemd-journald
 
-# docker/podman container logs: rotated per container by the `logging:`
-# blocks in docker-compose.yaml (json-file, 5 x 10 MB), nothing to do here
+# limit similarly docker/podman logs
+# ...

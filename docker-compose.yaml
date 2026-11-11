@@ -3,9 +3,8 @@ name: caesar
 # Production: published image + Caddy HTTPS. Download it with config.ini
 # (see below); works with docker compose or rootless podman-compose:
 #   docker compose up -d                          (first run / start)
-#   ./update.sh                                   (update: git pull for this
-#   file and its Caddy pin, image pull, recreate; podman-compose keeps
-#   running containers on a re-pulled tag without --force-recreate)
+#   docker compose pull && docker compose up -d --force-recreate   (update;
+#   podman-compose keeps running containers on a re-pulled tag without it)
 # Local builds of the checkout: compose.prod-dev.yaml. Settings: .env and
 # config.ini, see wiki Configuration. Aliases / extra instances:
 # wiki Home#custom-caddyfile.
