@@ -19,6 +19,12 @@ services:
     container_name: caesar-prod-dev
     restart: "no"
     stop_grace_period: 2s
+    # Same confinement as docker-compose.yaml, so a write the image no longer
+    # allows shows up here first. No memory/cpu/log limits: short-lived.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     # Same port inside and out: mediasoup announces its listen port in ICE
     # candidates. 41000 stays clear of prod's 40000+ worker ranges.
     ports:
@@ -40,6 +46,10 @@ services:
     restart: "no"
     depends_on:
       - caesar
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     ports:
       - "8443:8443/tcp"
       - "8443:8443/udp" # HTTP/3

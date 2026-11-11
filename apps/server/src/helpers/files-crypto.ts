@@ -1,11 +1,11 @@
 import crypto from 'crypto';
-import { getServerTokenSync } from '../db/queries/server';
+import { getHmacSecret } from '../utils/hmac-secret';
 
 const generateFileToken = (
   fileId: number,
   channelAccessToken: string
 ): string => {
-  const hmac = crypto.createHmac('sha256', getServerTokenSync());
+  const hmac = crypto.createHmac('sha256', getHmacSecret());
 
   hmac.update(`${fileId}:${channelAccessToken}`);
 

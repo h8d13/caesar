@@ -12,7 +12,7 @@ import { ChannelMentionOverride } from '../overrides/channel-mention';
 import { LinkOverride } from '../overrides/link';
 import { MentionOverride } from '../overrides/mention';
 import { CodeBlock } from './code-block';
-import { sanitizeElement } from './sanitize-element';
+import { isAllowedUrl, sanitizeElement } from './sanitize-element';
 import type { TFoundMedia } from './types';
 
 // the slice of a domhandler node read here; every node kind fits it
@@ -55,7 +55,11 @@ const serializer = (
         if (domNode instanceof Element && domNode.name === 'a') {
             const href = domNode.attribs.href;
 
-            if (!URL.canParse(href)) {
+            // LinkOverride opens its link with window.open: without the
+            // scheme check here a markdown link could carry javascript: or
+            // a local protocol handler (ms-msdt:, vscode:, steam:, ...).
+            // sanitizeElement drops such an href and keeps the label.
+            if (!URL.canParse(href) || !isAllowedUrl(href)) {
                 return sanitizeElement(domNode, options);
             }
 

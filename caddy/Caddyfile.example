@@ -1,3 +1,11 @@
+# On-demand TLS: certificates are requested at the first TLS handshake for
+# a name, after Caddy asked the `ask` endpoint whether that name is allowed.
+#
+# The endpoint must list the names, never a pattern: with a wildcard DNS
+# record (* IN A ...) every label resolves here, and a check like
+# `endsWith(".example.com")` lets anyone order one certificate per random
+# label until the CA rate-limits the whole domain (and fills caddy_data).
+# Add a name to @ok below when you start using it.
 {
 	on_demand_tls {
 		ask http://localhost:9000/check
@@ -5,7 +13,7 @@
 }
 
 :9000 {
-	@ok expression `{query.domain} == "example.com" || {query.domain}.endsWith(".example.com")`
+	@ok expression `{query.domain} in ["www.example.com", "chat.example.com", "old.example.com"]`
 	respond @ok 200
 	respond 403
 }
@@ -14,6 +22,8 @@ example.com {
 	reverse_proxy caesar:4991
 }
 
+# Any enumerated alias redirects to the canonical host. Names that are not in
+# @ok get no certificate: the handshake fails, nothing is issued.
 *.example.com {
 	tls {
 		on_demand

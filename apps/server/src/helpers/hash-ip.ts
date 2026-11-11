@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { getServerTokenSync } from '../db/queries/server';
+import { getHmacSecret } from '../utils/hmac-secret';
 
 // Stable per-server HMAC of an IP address. Same IP → same 16-char hash on this
 // server. Different servers → unlinkable hashes. Used for stored audit/login
@@ -12,7 +12,7 @@ const hashIp = (ip: string | null | undefined): string | null => {
   if (!ip) return null;
 
   return crypto
-    .createHmac('sha256', getServerTokenSync())
+    .createHmac('sha256', getHmacSecret())
     .update(ip)
     .digest('hex')
     .slice(0, 16);

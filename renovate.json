@@ -34,6 +34,14 @@
       "automerge": true
     },
     {
+      "matchFileNames": ["apps/server/package.json"],
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "server minor+patch",
+      "automerge": false,
+      "description": "the server bundles its devDependencies into the SEA (apps/server/vite.config.ts): they are runtime code (ws, sanitize-html, trpc, zod, ...). A merge to master publishes :edge, so these need a human, like the prod group"
+    },
+    {
       "matchUpdateTypes": ["minor", "patch"],
       "matchDepTypes": ["dependencies"],
       "groupName": "prod minor+patch"

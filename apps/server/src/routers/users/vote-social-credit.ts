@@ -6,6 +6,7 @@ import {
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
+import { serialPerUser } from '@server/games/shared-bindings';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { and, eq, gte } from 'drizzle-orm';
@@ -25,6 +26,8 @@ const voteSocialCreditRoute = rateLimitedProcedure(protectedProcedure, {
   windowMs: config.rateLimiters.voteSocialCredit.windowMs,
   logLabel: 'voteSocialCredit'
 })
+  // the per-day / per-target limits below are read-then-insert
+  .use(serialPerUser)
   .input(
     z.object({
       targetUserId: z.number(),

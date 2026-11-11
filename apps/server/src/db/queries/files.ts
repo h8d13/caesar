@@ -82,7 +82,14 @@ const getFilesByMessageId = async (messageId: number): Promise<TFile[]> => {
   return rows.map((row) => row.files);
 };
 
-const getFilesByUserId = async (userId: number): Promise<TFile[]> => {
+// A user's files as a moderator may see them. Attachments are limited to
+// channels the viewer can read (visibleChannelIds): the access token minted
+// here opens a private file to any session, so another pair's DM or a
+// private channel the viewer is not in must never get one.
+const getFilesByUserId = async (
+  userId: number,
+  visibleChannelIds: number[]
+): Promise<TFile[]> => {
   const result = await db
     .select({
       file: files,
@@ -95,18 +102,20 @@ const getFilesByUserId = async (userId: number): Promise<TFile[]> => {
     .where(eq(files.userId, userId))
     .all();
 
-  const results = result.map((r) => {
-    const rowCopy: TFile = { ...r.file };
+  const results = result
+    .filter((r) => !r.channel || visibleChannelIds.includes(r.channel.id))
+    .map((r) => {
+      const rowCopy: TFile = { ...r.file };
 
-    if (r.channel?.private) {
-      rowCopy._accessToken = generateFileToken(
-        r.file.id,
-        r.channel.fileAccessToken
-      );
-    }
+      if (r.channel?.private) {
+        rowCopy._accessToken = generateFileToken(
+          r.file.id,
+          r.channel.fileAccessToken
+        );
+      }
 
-    return rowCopy;
-  });
+      return rowCopy;
+    });
 
   return results;
 };

@@ -1,8 +1,10 @@
+import { ChannelType } from '@caesar/shared';
 import { messages } from '@caesar/shared/db/schema';
 import { initTest } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { pruneExpiredMessages } from '@server/crons/prune-expired';
 import { updateSettings } from '@server/db/mutations/server';
+import { VoiceRuntime } from '@server/runtimes/voice';
 import { eq } from 'drizzle-orm';
 import { describe, expect, test } from 'vite-plus/test';
 
@@ -334,5 +336,48 @@ describe('dms router', () => {
 
       expect(results).toHaveLength(1);
     }
+  });
+
+  test('hangupCall should not touch a server voice channel', async () => {
+    const { caller: owner } = await initTest();
+    const { caller: member } = await initTest(2);
+    const voiceChannelId = await owner.channels.add({
+      type: ChannelType.VOICE,
+      name: 'voice-hangup',
+      categoryId: 1
+    });
+
+    expect(VoiceRuntime.findById(voiceChannelId)).toBeDefined();
+
+    await expect(
+      member.dms.hangupCall({ channelId: voiceChannelId })
+    ).rejects.toThrow('DM channel not found');
+
+    // the runtime of a server channel is only created at boot or with the
+    // channel: destroyed here, nobody could join it again until a restart
+    expect(VoiceRuntime.findById(voiceChannelId)).toBeDefined();
+
+    await owner.channels.delete({ channelId: voiceChannelId });
+  });
+
+  test('hangupCall should refuse a non-participant', async () => {
+    const { caller: member } = await initTest(2);
+
+    // channel 3: seeded DM between users 3 and 4
+    await expect(member.dms.hangupCall({ channelId: 3 })).rejects.toThrow(
+      'You are not a participant in this DM channel'
+    );
+  });
+
+  test('startCall and acceptCall should refuse a channel that is not a DM', async () => {
+    const { caller } = await initTest(2);
+
+    // channel 2: the seeded server voice channel
+    await expect(caller.dms.startCall({ channelId: 2 })).rejects.toThrow(
+      'DM channel not found'
+    );
+    await expect(caller.dms.acceptCall({ channelId: 2 })).rejects.toThrow(
+      'DM channel not found'
+    );
   });
 });

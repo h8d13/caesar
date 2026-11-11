@@ -58,9 +58,18 @@ export const removeUserFromVoiceChannel = (
         serverSliceActions.removeUserFromVoiceChannel({ userId, channelId })
     );
 
-    if (userId !== ownUserId && channelId === currentChannelId) {
+    if (channelId !== currentChannelId) return;
+
+    if (userId !== ownUserId) {
         playSound(SoundType.REMOTE_USER_LEFT_VOICE_CHANNEL);
+        return;
     }
+
+    // Our own leave while we still think we are in the room: the server
+    // removed us (access to the channel was revoked). A leave we asked for
+    // clears currentVoiceChannelId before this event comes back.
+    toast.info('You no longer have access to this voice channel');
+    void leaveVoice({ reason: 'access_revoked' });
 };
 
 export const updateVoiceChannelState = (
@@ -149,6 +158,7 @@ export type TLeaveVoiceReason =
     | 'switch_channel'
     | 'open_device_settings'
     | 'channel_deleted'
+    | 'access_revoked'
     | 'join_failed'
     | 'unknown';
 
@@ -179,8 +189,9 @@ export const leaveVoice = async (options?: {
     updateOwnVoiceState({ webcamEnabled: false, sharingScreen: false });
     setPinnedCard(undefined);
 
-    // the server already destroyed the runtime: just tear down locally
-    if (reason === 'channel_deleted') {
+    // the server already destroyed the runtime, or removed us from it:
+    // just tear down locally
+    if (reason === 'channel_deleted' || reason === 'access_revoked') {
         playSound(SoundType.OWN_USER_LEFT_VOICE_CHANNEL);
         return;
     }

@@ -1,7 +1,6 @@
-import { ServerEvents } from '@caesar/shared';
 import { getChannelByIdOrThrow } from '@server/db/queries/channels';
-import { getDirectMessageChannelParticipantIds } from '@server/db/queries/dms';
 import { logger } from '@server/logger';
+import { removeFromVoice } from '@server/runtimes/voice-access';
 import { invariant } from '@server/utils/invariant';
 import { voiceProcedure } from '@server/utils/voice-procedure';
 
@@ -15,34 +14,7 @@ const leaveVoiceRoute = voiceProcedure.mutation(async ({ ctx }) => {
     message: 'User not in voice channel'
   });
 
-  ctx.voiceRuntime.removeUser(ctx.user.id);
-
-  const channelState = ctx.voiceRuntime.getState();
-
-  ctx.pubsub.publish(ServerEvents.USER_LEAVE_VOICE, {
-    channelId: ctx.voiceChannelId,
-    userId: ctx.user.id
-  });
-  ctx.pubsub.publish(ServerEvents.VOICE_CHANNEL_STATE_UPDATE, {
-    channelId: ctx.voiceChannelId,
-    activeSince: channelState.activeSince
-  });
-
-  // For DM calls: notify the peer so their overlay closes, destroy runtime if empty.
-  if (channel.isDm) {
-    const participants = await getDirectMessageChannelParticipantIds(
-      ctx.voiceChannelId
-    );
-    const peerId = participants.find((id) => id !== ctx.user.id);
-    if (peerId != null) {
-      ctx.pubsub.publishFor(peerId, ServerEvents.DM_CALL_ENDED, {
-        channelId: ctx.voiceChannelId
-      });
-    }
-    if (channelState.users.length === 0) {
-      ctx.voiceRuntime.destroy();
-    }
-  }
+  await removeFromVoice(ctx.voiceRuntime, ctx.user.id);
 
   ctx.currentVoiceChannelId = undefined;
 

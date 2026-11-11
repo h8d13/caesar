@@ -17,6 +17,7 @@ import { publishUser } from '@server/db/publishers';
 import { invalidateSettings } from '@server/db/queries/server';
 import { getUserByIdentity } from '@server/db/queries/users';
 import { assertCanModifyOwnerUser } from '@server/helpers/assert-can-modify-owner-user';
+import { closeSocket } from '@server/helpers/close-reason';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { pubsub } from '@server/utils/pubsub';
@@ -97,7 +98,7 @@ const performUserDeletion = async ({
   });
 
   for (const userWs of userWsList) {
-    userWs.close(DisconnectCode.KICKED, reason);
+    closeSocket(userWs, DisconnectCode.KICKED, reason);
   }
 
   const deletedUserId = await ensureDeletedUser();

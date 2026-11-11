@@ -54,14 +54,28 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm --filter @caesar/server deploy --prod /deploy/server
 
 # distroless has no shell/chown, so stage the whole tree under /out; the runtime
-# lays it down with COPY --chown. assets -> /app/static-prod-assets (served and
+# lays it down with COPY. assets -> /app/static-prod-assets (served and
 # migrated in place, see helpers/paths.ts), /home/node/.config/caesar = DATA_PATH.
 # DATA_PATH exists in the image so an empty named volume mounted there is
 # copied up owned by 1000, on any engine/userns (no host chown needed).
-RUN mkdir -p /out/app/static-prod-assets /out/home/node/.config/caesar \
-    && cp -r /app/apps/client/dist /out/app/static-prod-assets/interface \
-    && cp -r /app/apps/server/src/db/migrations /out/app/static-prod-assets/drizzle \
-    && cp -r /deploy/server/node_modules /out/app/node_modules \
+#
+# /app is code and stays read-only for the server: root-owned (plain COPY
+# below) and a-w on top, /app itself included (staged one level down, under
+# /out/code, so the COPY carries its mode instead of creating it 755). A bug
+# in the app then cannot rewrite node_modules, the mediasoup worker, the
+# served client (sw.js) or the migrations. The SEA imports its bundle from
+# /app/.caesar-runtime.mjs through /app/.caesar-runtime-loader.cjs (they
+# must sit next to node_modules for bare-specifier resolution) and only
+# writes them when they differ from what it embeds (build/bootstrap.cjs):
+# shipping the same two build outputs here means it never writes under
+# /app.
+RUN mkdir -p /out/code/app/static-prod-assets /out/home/node/.config/caesar \
+    && cp -r /app/apps/client/dist /out/code/app/static-prod-assets/interface \
+    && cp -r /app/apps/server/src/db/migrations /out/code/app/static-prod-assets/drizzle \
+    && cp -r /deploy/server/node_modules /out/code/app/node_modules \
+    && cp /app/apps/server/dist/server.mjs /out/code/app/.caesar-runtime.mjs \
+    && cp /app/apps/server/dist/runtime-loader.cjs /out/code/app/.caesar-runtime-loader.cjs \
+    && chmod -R a-w /out/code/app \
     && cp /app/apps/server/dist/caesar /out/caesar \
     && cp -a --parents /usr/lib/*-linux-gnu/libatomic.so.1* /out
 
@@ -79,8 +93,9 @@ ENV CAESAR_ENV=production \
 COPY --from=builder --chmod=755 /out/caesar /usr/local/bin/caesar
 COPY --from=builder /out/usr/lib /usr/lib
 
-# uid 1000 so the SEA can write /app/.caesar-runtime.mjs on boot.
-COPY --from=builder --chown=1000:1000 /out/app /app
+# /app: root-owned, nothing in it writable by the server (see the staging
+# step above). Only DATA_PATH under /home belongs to uid 1000.
+COPY --from=builder /out/code/ /
 COPY --from=builder --chown=1000:1000 /out/home /home
 
 WORKDIR /app

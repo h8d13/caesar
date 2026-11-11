@@ -89,6 +89,15 @@ const authMiddleware = t.middleware(async ({ ctx, next }) => {
     message: 'You must be authenticated to perform this action.'
   });
 
+  // A kicked or banned socket is closing, not yet closed, for a moment (see
+  // closeSocket), and ws still delivers what the client sends meanwhile.
+  const ws = ctx.getOwnWs();
+
+  invariant(!ws || ws.readyState === ws.OPEN, {
+    code: 'UNAUTHORIZED',
+    message: 'This connection is closing.'
+  });
+
   return next();
 });
 

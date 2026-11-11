@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 // Assemble Node SEA executable from dist/server.mjs.
 // Linux-only (skips codesign / Windows resource patching).
-// Output: dist/caesar (a Node binary with the bundle embedded as an
-// asset; bootstrap.cjs extracts and imports it at boot).
+// Output: dist/caesar (a Node binary with the bundle and a one-line
+// loader embedded as assets; bootstrap.cjs extracts and imports them at
+// boot). Dockerfile.prod also ships dist/server.mjs and
+// dist/runtime-loader.cjs pre-extracted, so the image needs no write.
 
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, chmodSync, writeFileSync, existsSync } from 'node:fs';
@@ -14,6 +16,7 @@ const distDir = path.join(serverDir, 'dist');
 const bundlePath = path.join(distDir, 'server.mjs');
 const bootstrapSrc = path.join(serverDir, 'build/bootstrap.cjs');
 const bootstrapDst = path.join(distDir, 'bootstrap.cjs');
+const loaderPath = path.join(distDir, 'runtime-loader.cjs');
 const seaConfigPath = path.join(distDir, 'sea-config.json');
 const seaBlobPath = path.join(distDir, 'sea-prep.blob');
 const binaryPath = path.join(distDir, 'caesar');
@@ -24,6 +27,7 @@ if (!existsSync(bundlePath)) {
 }
 
 copyFileSync(bootstrapSrc, bootstrapDst);
+writeFileSync(loaderPath, 'module.exports = (url) => import(url);\n');
 
 writeFileSync(
   seaConfigPath,
@@ -35,7 +39,8 @@ writeFileSync(
       useSnapshot: false,
       useCodeCache: true,
       assets: {
-        'main.mjs': bundlePath
+        'main.mjs': bundlePath,
+        'loader.cjs': loaderPath
       }
     },
     null,

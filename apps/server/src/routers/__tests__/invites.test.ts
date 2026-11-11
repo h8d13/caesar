@@ -1,6 +1,11 @@
-import { ActivityLogType, OWNER_ROLE_ID } from '@caesar/shared';
+import { ActivityLogType, OWNER_ROLE_ID, Permission } from '@caesar/shared';
 import { users } from '@caesar/shared/db/schema';
-import { getRoleIdByName, initTest, login } from '@server/__tests__/helpers';
+import {
+  getRoleIdByName,
+  initTest,
+  login,
+  makeModerator
+} from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import { eq } from 'drizzle-orm';
 import { describe, expect, test, vi } from 'vite-plus/test';
@@ -270,5 +275,43 @@ describe('invites router', () => {
         ])
       );
     });
+  });
+
+  test('should hide the code of a role invite from a viewer who could not assign that role', async () => {
+    const { caller: owner } = await initTest(1);
+    const adminRoleId = await owner.roles.add();
+
+    await owner.roles.update({
+      roleId: adminRoleId,
+      name: 'Admin',
+      color: '#abcdef',
+      permissions: [Permission.MANAGE_INVITES, Permission.MANAGE_ROLES],
+      storageQuotaOverrideEnabled: false,
+      storageSpaceQuota: 0
+    });
+
+    const adminInvite = await owner.invites.add({ roleId: adminRoleId });
+    const plainInvite = await owner.invites.add({});
+
+    const { caller: mod } = await makeModerator(owner, [
+      Permission.MANAGE_INVITES
+    ]);
+    const seen = await mod.invites.getAll();
+
+    // signing up with that code would make the moderator's alt an admin
+    expect(seen.find((i) => i.id === adminInvite.id)!.code).toBe('');
+    expect(seen.find((i) => i.id === plainInvite.id)!.code).toBe(
+      plainInvite.code
+    );
+    expect(JSON.stringify(await mod.invites.getLog())).not.toContain(
+      adminInvite.code
+    );
+
+    // the owner could assign it, so still reads it
+    const own = await owner.invites.getAll();
+
+    expect(own.find((i) => i.id === adminInvite.id)!.code).toBe(
+      adminInvite.code
+    );
   });
 });

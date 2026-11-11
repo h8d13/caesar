@@ -138,7 +138,7 @@ const seedDatabase = async () => {
   // user it would reference doesn't exist yet, and PRAGMA foreign_keys
   // rejects the dangling FK.
   console.log(
-    'First-time setup. Save this owner token, it is not recoverable:'
+    'First-time setup. Sign in, then claim Owner with this token (it only works while the server has no owner):'
   );
   console.log(`  useToken("${originalToken}")`);
 };

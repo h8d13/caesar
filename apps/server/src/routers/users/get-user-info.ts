@@ -1,4 +1,5 @@
 import { Permission } from '@caesar/shared';
+import { getChannelAccess } from '@server/db/queries/channels';
 import { getFilesByUserId } from '@server/db/queries/files';
 import { getLastLoginIp } from '@server/db/queries/logins';
 import { getNonDirectMessagesFromUserId } from '@server/db/queries/messages';
@@ -26,11 +27,16 @@ const getUserInfoRoute = protectedProcedure
       message: 'User not found'
     });
 
+    // MANAGE_USERS is not a pass into channels the moderator cannot read
+    const visibleChannelIds = (await getChannelAccess(ctx.userId)).channels.map(
+      (channel) => channel.id
+    );
+
     const [lastLoginIp, files, messages, storageUsage, settings] =
       await Promise.all([
         getLastLoginIp(user.id),
-        getFilesByUserId(user.id),
-        getNonDirectMessagesFromUserId(user.id),
+        getFilesByUserId(user.id, visibleChannelIds),
+        getNonDirectMessagesFromUserId(user.id, visibleChannelIds),
         getStorageUsageByUserId(user.id),
         getSettings()
       ]);

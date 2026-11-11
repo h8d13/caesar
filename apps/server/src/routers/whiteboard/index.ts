@@ -1,26 +1,37 @@
-import { ServerEvents, type Layer } from '@caesar/shared';
-import { whiteboard } from '@server/runtimes/whiteboard';
+import { LayerType, ServerEvents, type Layer } from '@caesar/shared';
+import { MAX_LAYERS, whiteboard } from '@server/runtimes/whiteboard';
+import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, t } from '@server/utils/trpc';
 import { z } from 'zod';
 
+// Every layer is broadcast to every client and kept in server memory, so
+// each field is bounded here; the board as a whole is bounded in the
+// runtime (runtimes/whiteboard.ts).
+const MAX_POINTS = 20_000; // a long freehand stroke; [x, y, pressure] each
+const MAX_TEXT_LENGTH = 10_000;
+
+const coordinate = z.number().finite();
+const channel = z.number().min(0).max(255);
+const layerIdSchema = z.string().min(1).max(64);
+
 const colorSchema = z.object({
-  r: z.number(),
-  g: z.number(),
-  b: z.number()
+  r: channel,
+  g: channel,
+  b: channel
 });
 
 const layerSchema = z.object({
-  type: z.string(),
-  x: z.number(),
-  y: z.number(),
-  width: z.number(),
-  height: z.number(),
+  type: z.enum(LayerType),
+  x: coordinate,
+  y: coordinate,
+  width: coordinate,
+  height: coordinate,
   fill: colorSchema,
-  points: z.array(z.array(z.number())).optional(),
-  value: z.string().optional(),
-  strokeSize: z.number().optional(),
-  x2: z.number().optional(),
-  y2: z.number().optional()
+  points: z.array(z.array(coordinate).max(3)).max(MAX_POINTS).optional(),
+  value: z.string().max(MAX_TEXT_LENGTH).optional(),
+  strokeSize: coordinate.optional(),
+  x2: coordinate.optional(),
+  y2: coordinate.optional()
 });
 
 // --- Queries ---
@@ -32,13 +43,17 @@ const getStateRoute = protectedProcedure.query(() => whiteboard.getState());
 const addLayerRoute = protectedProcedure
   .input(
     z.object({
-      layerId: z.string(),
+      layerId: layerIdSchema,
       layer: layerSchema
     })
   )
   .mutation(({ input, ctx }) => {
     const layer = input.layer as Layer;
-    whiteboard.addLayer(input.layerId, layer);
+
+    invariant(whiteboard.addLayer(input.layerId, layer), {
+      code: 'BAD_REQUEST',
+      message: 'The whiteboard is full. Clear it or remove some layers.'
+    });
 
     ctx.pubsub.publish(ServerEvents.WHITEBOARD_LAYER_ADD, {
       layerId: input.layerId,
@@ -49,13 +64,16 @@ const addLayerRoute = protectedProcedure
 const updateLayerRoute = protectedProcedure
   .input(
     z.object({
-      layerId: z.string(),
+      layerId: layerIdSchema,
       layer: layerSchema.partial()
     })
   )
   .mutation(({ input, ctx }) => {
     const layer = input.layer as Partial<Layer>;
-    whiteboard.updateLayer(input.layerId, layer);
+
+    // nothing to tell anyone about a layer that does not exist or a change
+    // that did not fit
+    if (!whiteboard.updateLayer(input.layerId, layer)) return;
 
     ctx.pubsub.publish(ServerEvents.WHITEBOARD_LAYER_UPDATE, {
       layerId: input.layerId,
@@ -64,7 +82,7 @@ const updateLayerRoute = protectedProcedure
   });
 
 const deleteLayerRoute = protectedProcedure
-  .input(z.object({ layerIds: z.array(z.string()) }))
+  .input(z.object({ layerIds: z.array(layerIdSchema).max(MAX_LAYERS) }))
   .mutation(({ input, ctx }) => {
     whiteboard.deleteLayer(input.layerIds);
 
@@ -82,8 +100,8 @@ const clearRoute = protectedProcedure.mutation(({ ctx }) => {
 const cursorUpdateRoute = protectedProcedure
   .input(
     z.object({
-      x: z.number(),
-      y: z.number()
+      x: coordinate,
+      y: coordinate
     })
   )
   .mutation(({ input, ctx }) => {

@@ -1,6 +1,5 @@
 import type http from 'http';
 import ipaddr from 'ipaddr.js';
-import { UAParser } from 'ua-parser-js';
 import type { TConnectionInfo } from '../types';
 import { TRUSTED_CLIENT_IP_HEADER, TRUSTED_PROXY_HOPS } from '../utils/env';
 
@@ -181,7 +180,7 @@ const getWsIp = (
   });
 };
 
-// Plain HTTP routes only need the IP; skips the User-Agent parse.
+// Plain HTTP routes only need the IP.
 const getRequestIp = (req: http.IncomingMessage): string | undefined =>
   getWsIp(undefined, req);
 
@@ -196,29 +195,10 @@ const getWsInfo = (
 
   if (!ip && !userAgent) return undefined;
 
-  let os: string | undefined;
-  let device: string | undefined;
-
-  if (userAgent) {
-    try {
-      const result = new UAParser(userAgent).getResult();
-
-      os = result.os.name
-        ? [result.os.name, result.os.version].filter(Boolean).join(' ')
-        : undefined;
-
-      device = result.device.type
-        ? [result.device.vendor, result.device.model]
-            .filter(Boolean)
-            .join(' ')
-            .trim() || undefined
-        : 'Desktop';
-    } catch {
-      // agent parsing failed, ignore and proceed with undefined values
-    }
-  }
-
-  return { ip, os, device, userAgent };
+  // The raw User-Agent is kept as is. It used to be parsed into os/device
+  // columns that nothing ever read, which put a third-party parser on a
+  // header any client controls.
+  return { ip, userAgent };
 };
 
 export { getRequestIp, getWsInfo, resolveClientIp };

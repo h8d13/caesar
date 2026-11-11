@@ -58,4 +58,37 @@ describe('WhiteboardRuntime', () => {
     runtime.addLayer('b', createLayer());
     expect(runtime.getState().layerIds).toEqual(['b']);
   });
+
+  test('the board as a whole has a budget, on add and on update', () => {
+    const runtime = new WhiteboardRuntime();
+    const note = (length: number): Layer => ({
+      ...createLayer(),
+      type: LayerType.Note,
+      value: 'x'.repeat(length)
+    });
+
+    // each layer is within its own limit; together they are not
+    let added = 0;
+
+    while (runtime.addLayer(`n${added}`, note(10_000))) added++;
+
+    expect(added).toBeGreaterThan(0);
+    expect(added).toBeLessThan(1_000);
+    expect(runtime.getState().layerIds).toHaveLength(added);
+
+    // growing an existing layer is refused the same way
+    runtime.addLayer('small', note(1));
+    expect(runtime.updateLayer('n0', { value: 'x'.repeat(10_000) })).toBe(true);
+    runtime.deleteLayer(['small']);
+
+    // deleting gives the room back
+    runtime.deleteLayer(['n0']);
+    expect(runtime.addLayer('again', note(10_000))).toBe(true);
+  });
+
+  test('updating a layer that does not exist reports it', () => {
+    const runtime = new WhiteboardRuntime();
+
+    expect(runtime.updateLayer('missing', { x: 1 })).toBe(false);
+  });
 });

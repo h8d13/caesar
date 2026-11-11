@@ -1,3 +1,4 @@
+import { toImageSrc } from '@/helpers/media-url';
 import type { TMessageMetadata } from '@caesar/shared';
 import { ChevronDown } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
@@ -49,8 +50,12 @@ const EmbedOverride = memo(({ metadata }: TEmbedOverrideProps) => {
         }
     })();
 
-    const favicon = metadata.favicons?.[0];
-    const image = metadata.images?.[0];
+    // Both come from the linked page, so whoever posted the link picks
+    // their host: fetched through the server's image proxy, never directly.
+    const rawFavicon = metadata.favicons?.[0];
+    const favicon = rawFavicon ? toImageSrc(rawFavicon) : undefined;
+    const rawImage = metadata.images?.[0];
+    const image = rawImage ? toImageSrc(rawImage) : undefined;
     const youtubeId = useMemo(
         () => getYoutubeVideoId(metadata.url),
         [metadata.url]

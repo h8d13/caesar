@@ -4,6 +4,7 @@ import { db } from '@server/db';
 import { publishChannel } from '@server/db/publishers';
 import { isDirectMessageChannel } from '@server/db/queries/dms';
 import { enqueueActivityLog } from '@server/queues/activity-log';
+import { sweepVoiceAccess } from '@server/runtimes/voice-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';
@@ -48,13 +49,9 @@ const updateChannelRoute = protectedProcedure
     // privacy setting changed
     const ensureUserAccess = updatedChannel.private !== oldChannel?.private;
 
-    console.log('updated channel', {
-      updatedChannel,
-      oldChannel,
-      ensureUserAccess
-    });
-
     void publishChannel(updatedChannel.id, 'update', ensureUserAccess);
+    await sweepVoiceAccess();
+
     enqueueActivityLog({
       type: ActivityLogType.UPDATED_CHANNEL,
       userId: ctx.user.id,

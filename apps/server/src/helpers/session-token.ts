@@ -1,7 +1,6 @@
 import { randomBytes } from 'crypto';
 import type http from 'http';
-import jwt from 'jsonwebtoken';
-import { getJwtSecret } from '../utils/jwt-secret';
+import { decodeJwt, signJwt } from '../utils/jwt-secret';
 
 // The session JWT lives only in an HttpOnly cookie, so page script (and an
 // XSS) can never read it. The x-token header stays accepted for non-browser
@@ -20,10 +19,7 @@ const mintSessionToken = async (
   userId: number,
   sessionEpoch: number,
   remember: boolean
-) =>
-  jwt.sign({ userId, sessionEpoch, remember }, await getJwtSecret(), {
-    expiresIn: `${SESSION_MAX_AGE_S}s`
-  });
+) => signJwt({ userId, sessionEpoch, remember }, SESSION_MAX_AGE_S);
 
 // remember=false gives a browser-session cookie (gone when the browser
 // closes); the JWT itself still expires after SESSION_MAX_AGE_S
@@ -114,7 +110,7 @@ const takeSessionRefresh = (nonce: string) => {
 
 // the remember flag rides in the JWT so a re-mint keeps the cookie's kind
 const isRememberedToken = (token: string) =>
-  (jwt.decode(token) as { remember?: boolean } | null)?.remember === true;
+  decodeJwt<{ remember?: boolean }>(token)?.remember === true;
 
 export {
   clearSessionCookieHeaders,

@@ -1,3 +1,7 @@
+import {
+  DIRECT_IMAGE_URL_PREFIXES,
+  GIPHY_MEDIA_HOST_SUFFIX
+} from '@caesar/shared';
 import fs from 'fs';
 import type http from 'http';
 import path from 'path';
@@ -108,6 +112,15 @@ const sanitizeFileName = (name: string): string | null => {
   return baseName;
 };
 
+// see DIRECT_IMAGE_URL_PREFIXES: the client and this list must agree
+const IMG_HOSTS = [
+  `https://*${GIPHY_MEDIA_HOST_SUFFIX}`,
+  ...DIRECT_IMAGE_URL_PREFIXES,
+  // thumbnails loaded by the YouTube embed card
+  'https://i.ytimg.com',
+  'https://img.youtube.com'
+];
+
 const buildCsp = (nonce?: string): string => {
   // blob: is the DTLN worklet (fetched, cached, loaded via object URL). No
   // data:: an injected <script src="data:..."> would run under it.
@@ -120,7 +133,9 @@ const buildCsp = (nonce?: string): string => {
     "default-src 'self'",
     `script-src ${scriptSrc}`,
     `style-src ${styleSrc}`,
-    "img-src 'self' data: blob: https:",
+    // No blanket https: an image hosted elsewhere is fetched by the server
+    // (/proxy/image), see IMG_HOSTS.
+    `img-src 'self' data: blob: ${IMG_HOSTS.join(' ')}`,
     // 'self' covers the same-origin tRPC WebSocket (ws/wss). api.giphy.com:
     // keyless GIF search from the client-side picker
     "connect-src 'self' https://api.giphy.com",
@@ -262,6 +277,7 @@ export {
   buildEtag,
   getJsonBody,
   getRequestPathname,
+  hasMatchingEtag,
   hasPrefixPathSegment,
   pipeFile,
   safeDecodeURIComponent,

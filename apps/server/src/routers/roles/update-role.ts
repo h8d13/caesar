@@ -13,6 +13,7 @@ import { getRole } from '@server/db/queries/roles';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { assertCanGrantPermissions } from '@server/routers/users/assert-can-assign-role';
 import { assertCanModifyOwnerRole } from '@server/routers/users/assert-can-modify-owner-role';
+import { sweepVoiceAccess } from '@server/runtimes/voice-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';
@@ -71,6 +72,8 @@ const updateRoleRoute = protectedProcedure
     });
 
     void publishRole(updatedRole.id, 'update');
+    await sweepVoiceAccess();
+
     enqueueActivityLog({
       type: ActivityLogType.UPDATED_ROLE,
       userId: ctx.user.id,

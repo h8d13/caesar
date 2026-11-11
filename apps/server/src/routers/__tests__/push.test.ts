@@ -118,4 +118,22 @@ describe('push router', () => {
 
     expect(row).toBeDefined();
   });
+
+  test.each([
+    'https://127.0.0.1/x',
+    'https://[::1]/x',
+    'https://169.254.169.254/latest',
+    'https://10.0.0.5/x',
+    'https://caddy/x',
+    'https://caesar:4991/x',
+    'https://localhost/x',
+    'https://foo.internal/x',
+    'https://push.example.com:8443/x'
+  ])('should reject the non-public endpoint %s', async (endpoint) => {
+    const { caller } = await initTest(2);
+
+    await expect(caller.push.subscribe({ ...SUB, endpoint })).rejects.toThrow(
+      'Invalid push endpoint'
+    );
+  });
 });

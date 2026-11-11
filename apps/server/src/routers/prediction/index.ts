@@ -27,6 +27,26 @@ const LEDGER_TYPE = 'prediction_pool';
 // just drops the countdown and the pool falls back to "awaiting result".
 const challengeEndsAtById = new Map<number, number>();
 
+// Every pool mutation reads the pool, then writes it many awaits later.
+// Interleaved, two resolves settled a pool twice (both sides paid the whole
+// pot), two creates opened two pools (the older one then stays open
+// forever), and a stake could land in a pool being cancelled and never be
+// refunded. One chain for all four: each runs against the state the
+// previous one left.
+let poolLock: Promise<unknown> = Promise.resolve();
+
+const serialPool = t.middleware(({ next }) => {
+  const run = poolLock.then(() => next());
+
+  // a rejected mutation must not wedge the chain, nor its result be kept
+  poolLock = run.then(
+    () => {},
+    () => {}
+  );
+
+  return run;
+});
+
 type TPoolRow = typeof predictionPools.$inferSelect;
 type TPoolStatus = 'open' | 'resolved' | 'void';
 
@@ -141,6 +161,7 @@ const getStateRoute = protectedProcedure.query(({ ctx }) =>
 );
 
 const createPoolRoute = protectedProcedure
+  .use(serialPool)
   .input(
     z.object({
       question: z.string().trim().min(1).max(200),
@@ -195,6 +216,7 @@ const stakeRoute = rateLimitedProcedure(protectedProcedure, {
   windowMs: 10_000,
   logLabel: 'prediction.stake'
 })
+  .use(serialPool)
   .input(
     z.object({
       optionId: z.number().int(),
@@ -275,6 +297,7 @@ const stakeRoute = rateLimitedProcedure(protectedProcedure, {
   });
 
 const resolveRoute = protectedProcedure
+  .use(serialPool)
   .input(z.object({ winningOptionId: z.number().int() }))
   .mutation(async ({ ctx, input }) => {
     const pool = await getCurrentPool();
@@ -355,41 +378,43 @@ const resolveRoute = protectedProcedure
     return stateFor(ctx.userId, await broadcast());
   });
 
-const cancelRoute = protectedProcedure.mutation(async ({ ctx }) => {
-  const pool = await getCurrentPool();
-  if (!pool) {
-    ctx.throwValidationError('pool', 'No pool');
-  }
-  const p = pool!;
+const cancelRoute = protectedProcedure
+  .use(serialPool)
+  .mutation(async ({ ctx }) => {
+    const pool = await getCurrentPool();
+    if (!pool) {
+      ctx.throwValidationError('pool', 'No pool');
+    }
+    const p = pool!;
 
-  if (p.creatorId !== ctx.userId) {
-    ctx.throwValidationError('pool', 'Only the creator can cancel');
-  }
-  if (p.status === 'resolved') {
-    ctx.throwValidationError('pool', 'Already resolved');
-  }
+    if (p.creatorId !== ctx.userId) {
+      ctx.throwValidationError('pool', 'Only the creator can cancel');
+    }
+    if (p.status !== 'open') {
+      ctx.throwValidationError('pool', 'Already settled');
+    }
 
-  const bets = await db
-    .select()
-    .from(predictionBets)
-    .where(eq(predictionBets.poolId, p.id))
-    .all();
-  for (const b of bets) {
-    if (b.ledgerEntryId != null) await updateLedgerEntry(b.ledgerEntryId, 0);
-  }
+    const bets = await db
+      .select()
+      .from(predictionBets)
+      .where(eq(predictionBets.poolId, p.id))
+      .all();
+    for (const b of bets) {
+      if (b.ledgerEntryId != null) await updateLedgerEntry(b.ledgerEntryId, 0);
+    }
 
-  await db
-    .update(predictionPools)
-    .set({ status: 'void' })
-    .where(eq(predictionPools.id, p.id))
-    .run();
-  challengeEndsAtById.delete(p.id);
+    await db
+      .update(predictionPools)
+      .set({ status: 'void' })
+      .where(eq(predictionPools.id, p.id))
+      .run();
+    challengeEndsAtById.delete(p.id);
 
-  for (const userId of new Set(bets.map((b) => b.userId))) {
-    await publishUser(userId, 'update');
-  }
-  return stateFor(ctx.userId, await broadcast());
-});
+    for (const userId of new Set(bets.map((b) => b.userId))) {
+      await publishUser(userId, 'update');
+    }
+    return stateFor(ctx.userId, await broadcast());
+  });
 
 // Server-wide pool, so the global publish/subscribe pair: every client listens.
 const onUpdateRoute = protectedProcedure.subscription(({ ctx }) => {

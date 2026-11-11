@@ -17,6 +17,8 @@ const DB_PATH = path.join(DATA_PATH, 'db.sqlite');
 const PUBLIC_PATH = path.join(DATA_PATH, 'public');
 const TMP_PATH = path.join(DATA_PATH, 'tmp');
 const UPLOADS_PATH = path.join(DATA_PATH, 'uploads');
+// off-site images fetched by the image proxy; disposable
+const IMAGE_CACHE_PATH = path.join(DATA_PATH, 'image-cache');
 const CONFIG_INI_PATH = path.resolve(DATA_PATH, 'config.ini');
 
 // Prod reads build assets in place from the image (Dockerfile.prod stages
@@ -39,6 +41,7 @@ export {
   DATA_PATH,
   DB_PATH,
   DRIZZLE_PATH,
+  IMAGE_CACHE_PATH,
   INTERFACE_PATH,
   PUBLIC_PATH,
   TMP_PATH,

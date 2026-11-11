@@ -164,10 +164,19 @@ class VoiceRuntime {
     return undefined;
   };
 
-  public static getVoiceMap = (): TVoiceMap => {
+  public static all = (): VoiceRuntime[] => [...voiceRuntimes.values()];
+
+  // visibleChannelIds: the channels the asking user can see. Who sits in a
+  // private channel, or that two people are in a DM call, is not for
+  // everyone.
+  public static getVoiceMap = (
+    visibleChannelIds: ReadonlySet<number>
+  ): TVoiceMap => {
     const map: TVoiceMap = {};
 
     voiceRuntimes.forEach((runtime, channelId) => {
+      if (!visibleChannelIds.has(channelId)) return;
+
       const state = runtime.getState();
       const users: TPublicVoiceChannelState['users'] = {};
 

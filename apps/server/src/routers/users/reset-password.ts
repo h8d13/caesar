@@ -8,7 +8,10 @@ import { users } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
 import { getUserById } from '@server/db/queries/users';
-import { assertCanModifyOwnerUser } from '@server/helpers/assert-can-modify-owner-user';
+import {
+  assertCanModifyOwnerUser,
+  assertCanTakeOverUser
+} from '@server/helpers/assert-can-modify-owner-user';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { invariant } from '@server/utils/invariant';
 import { generateTemporaryPassword } from '@server/utils/password';
@@ -38,6 +41,12 @@ const resetPasswordRoute = rateLimitedProcedure(protectedProcedure, {
     });
 
     await assertCanModifyOwnerUser(
+      ctx.userId,
+      input.userId,
+      'reset the password of'
+    );
+
+    await assertCanTakeOverUser(
       ctx.userId,
       input.userId,
       'reset the password of'

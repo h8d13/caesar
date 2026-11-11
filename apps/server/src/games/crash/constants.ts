@@ -5,4 +5,3 @@ export const MULTIPLIER_GROWTH_RATE = 0.06;
 export const MIN_BET = 1;
 export const MAX_BET = 10_000;
 export const HOUSE_EDGE = 0.01;
-export const CASHOUT_GRACE_PERIOD_MS = 50;

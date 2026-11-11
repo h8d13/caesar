@@ -1,4 +1,5 @@
-import type { TTempFile } from '@caesar/shared';
+import { OWNER_ROLE_ID, type TTempFile } from '@caesar/shared';
+import { userRoles, users } from '@caesar/shared/db/schema';
 import {
   getCaller,
   initTest,
@@ -6,8 +7,15 @@ import {
   uploadFile
 } from '@server/__tests__/helpers';
 import { TEST_SECRET_TOKEN } from '@server/__tests__/seed';
+import { tdb } from '@server/__tests__/setup';
 import { updateSettings } from '@server/db/mutations/server';
+import { getUserRoleIds } from '@server/db/queries/roles';
+import { eq } from 'drizzle-orm';
 import { describe, expect, test } from 'vite-plus/test';
+
+// the owner token only works on a server that has no owner
+const removeOwner = () =>
+  tdb.delete(userRoles).where(eq(userRoles.roleId, OWNER_ROLE_ID));
 
 describe('others router', () => {
   test('should throw when user tries to join with no handshake', async () => {
@@ -100,8 +108,21 @@ describe('others router', () => {
     ).rejects.toThrow('Insufficient permissions');
   });
 
+  test('should refuse the secret token while the server has an owner', async () => {
+    const { caller } = await initTest(2);
+
+    // the right token: it is a bootstrap key, not a standing one
+    await expect(
+      caller.others.useSecretToken({ token: TEST_SECRET_TOKEN })
+    ).rejects.toThrow('This server already has an owner');
+
+    expect(await getUserRoleIds(2)).not.toContain(OWNER_ROLE_ID);
+  });
+
   test('should throw when using invalid secret token', async () => {
     const { caller } = await initTest(2);
+
+    await removeOwner();
 
     await expect(
       caller.others.useSecretToken({ token: 'invalid-token' })
@@ -110,6 +131,8 @@ describe('others router', () => {
 
   test('should accept valid secret token and assign owner role', async () => {
     const { caller } = await initTest(2);
+
+    await removeOwner();
 
     await caller.others.useSecretToken({ token: TEST_SECRET_TOKEN });
 
@@ -207,6 +230,8 @@ describe('others router', () => {
   test('should rate limit secret token guessing', async () => {
     const { caller } = await initTest(2);
 
+    await removeOwner();
+
     for (let i = 0; i < 5; i++) {
       await expect(
         caller.others.useSecretToken({ token: `guess-${i}` })
@@ -216,5 +241,52 @@ describe('others router', () => {
     await expect(
       caller.others.useSecretToken({ token: 'guess-5' })
     ).rejects.toThrow('Too many requests. Please try again shortly.');
+  });
+
+  test('should refuse joinServer on a socket whose user was banned after it connected', async () => {
+    const { caller: owner } = await initTest();
+    // connected (context built from a then-valid token), not joined yet
+    const { caller: parked } = await getCaller(2);
+    const { handshakeHash } = await parked.others.handshake();
+
+    await owner.users.ban({ userId: 2, reason: 'test' });
+
+    await expect(parked.others.joinServer({ handshakeHash })).rejects.toThrow(
+      'Session is no longer valid'
+    );
+    await expect(parked.users.getAll()).rejects.toThrow();
+  });
+
+  test('should refuse joinServer on a socket whose session was revoked after it connected', async () => {
+    const { caller: parked } = await getCaller(2);
+    const { handshakeHash } = await parked.others.handshake();
+
+    // what logout, a password change or "sign out other sessions" do
+    await tdb.update(users).set({ sessionEpoch: 99 }).where(eq(users.id, 2));
+
+    await expect(parked.others.joinServer({ handshakeHash })).rejects.toThrow(
+      'Session is no longer valid'
+    );
+  });
+
+  test('two concurrent secret token claims make one owner', async () => {
+    const { caller: first } = await initTest(2);
+    const { caller: second } = await initTest(3, '127.0.0.2');
+
+    await removeOwner();
+
+    const results = await Promise.allSettled([
+      first.others.useSecretToken({ token: TEST_SECRET_TOKEN }),
+      second.others.useSecretToken({ token: TEST_SECRET_TOKEN })
+    ]);
+
+    expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(1);
+
+    const owners = await tdb
+      .select()
+      .from(userRoles)
+      .where(eq(userRoles.roleId, OWNER_ROLE_ID));
+
+    expect(owners).toHaveLength(1);
   });
 });

@@ -111,14 +111,22 @@ const TableInvite = memo(
             >
                 <div className="flex items-center min-w-0">
                     <div className="flex items-center gap-2 min-w-0">
-                        <code className="text-xs font-mono bg-muted px-2 py-1 rounded truncate">
-                            {invite.code}
+                        <code
+                            className="text-xs font-mono bg-muted px-2 py-1 rounded truncate"
+                            title={
+                                invite.code
+                                    ? undefined
+                                    : 'This invite grants a role you cannot assign, so its code is hidden'
+                            }
+                        >
+                            {invite.code || 'hidden'}
                         </code>
                         <Button
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 shrink-0"
                             onClick={handleCopyCode}
+                            disabled={!invite.code}
                         >
                             <Copy className="h-3 w-3" />
                         </Button>

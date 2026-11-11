@@ -16,6 +16,7 @@ import {
   type HttpRouteHandler,
   sendJson
 } from './helpers';
+import { imageProxyRouteHandler } from './image-proxy';
 import { infoRouteHandler } from './info';
 import { interfaceRouteHandler } from './interface';
 import { loginRouteHandler } from './login';
@@ -41,7 +42,8 @@ const routeHandlers: Partial<
     exact: {
       '/healthz': healthRouteHandler,
       '/info': infoRouteHandler,
-      '/e2ee/session-key': getE2eeSessionKeyRouteHandler
+      '/e2ee/session-key': getE2eeSessionKeyRouteHandler,
+      '/proxy/image': imageProxyRouteHandler
     },
     prefix: {
       '/public': publicRouteHandler

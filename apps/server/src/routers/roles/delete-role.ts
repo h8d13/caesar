@@ -5,6 +5,7 @@ import { fallbackUsersToDefaultRole } from '@server/db/mutations/users';
 import { publishRole } from '@server/db/publishers';
 import { getRole } from '@server/db/queries/roles';
 import { enqueueActivityLog } from '@server/queues/activity-log';
+import { sweepVoiceAccess } from '@server/runtimes/voice-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';
@@ -38,6 +39,8 @@ const deleteRoleRoute = protectedProcedure
     await db.delete(roles).where(eq(roles.id, role.id));
 
     void publishRole(role.id, 'delete');
+    await sweepVoiceAccess();
+
     enqueueActivityLog({
       type: ActivityLogType.DELETED_ROLE,
       userId: ctx.user.id,

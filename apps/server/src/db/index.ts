@@ -28,9 +28,9 @@ const loadDb = async () => {
 
   await seedDatabase();
 
-  // Warm the in-memory server-token cache so getServerTokenSync (file
-  // tokens, IP hashing, webauthn) works without a prior async read. Session
-  // JWTs moved to jwt.key, so nothing else calls getServerToken at boot.
+  // Warm the in-memory server-token cache so getServerTokenSync (the
+  // WebAuthn user handle) works without a prior async read. Session JWTs
+  // use jwt.key, IP hashes and file tokens hmac.key.
   await getServerToken();
 };
 

@@ -147,7 +147,7 @@ describe('voice router', () => {
     ).rejects.toThrow('Insufficient permissions');
   });
 
-  test('a member who loses JOIN mid-call can still close their stream', async () => {
+  test('a member who loses JOIN_VOICE_CHANNELS mid-call is removed from the room', async () => {
     const { caller: owner } = await initTest(1);
     const { caller: member } = await initTest(3);
     const voiceChannelId = await owner.channels.add({
@@ -171,6 +171,10 @@ describe('voice router', () => {
       state: { micMuted: true, soundMuted: false }
     });
 
+    const runtime = VoiceRuntime.findById(voiceChannelId)!;
+
+    expect(runtime.getUser(3)).toBeDefined();
+
     try {
       await setMemberPermissions(
         memberRole.permissions.filter(
@@ -178,16 +182,71 @@ describe('voice router', () => {
         )
       );
 
+      // join was the only check: they used to keep hearing the room
+      expect(runtime.getUser(3)).toBeUndefined();
+
+      // closing a stream stays harmless cleanup
       await expect(
         member.voice.closeProducer({ kind: StreamKind.AUDIO })
       ).resolves.toBeUndefined();
-      // every other voice step still needs the permission
       await expect(member.voice.createProducerTransport()).rejects.toThrow(
         'Insufficient permissions'
       );
     } finally {
       await setMemberPermissions(memberRole.permissions);
-      await member.voice.leave();
+    }
+  });
+
+  test('a member who loses access to a private voice channel is removed from it', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: member } = await initTest(3);
+    const voiceChannelId = await owner.channels.add({
+      type: ChannelType.VOICE,
+      name: 'voice-private',
+      categoryId: 1
+    });
+
+    await member.voice.join({
+      channelId: voiceChannelId,
+      state: { micMuted: true, soundMuted: false }
+    });
+
+    const runtime = VoiceRuntime.findById(voiceChannelId)!;
+
+    // private with no grant for the member
+    await owner.channels.update({
+      channelId: voiceChannelId,
+      name: 'voice-private',
+      private: true
+    });
+
+    expect(runtime.getUser(3)).toBeUndefined();
+    // the socket still believes it is in the room: it must not be able to
+    // keep consuming from it
+    await expect(member.voice.createConsumerTransport()).rejects.toThrow(
+      'User is not in a voice channel'
+    );
+  });
+
+  test('the voice map only lists channels the joiner can see', async () => {
+    const { caller: caller3 } = await initTest(3);
+
+    // channel 3: seeded DM between users 3 and 4
+    await caller3.dms.startCall({ channelId: 3 });
+    await caller3.voice.join({
+      channelId: 3,
+      state: { micMuted: true, soundMuted: false }
+    });
+
+    try {
+      const { initialData: outsider } = await initTest(2);
+      const { initialData: peer } = await initTest(4);
+
+      // who is in a DM call is the two participants' business
+      expect(outsider.voiceMap[3]).toBeUndefined();
+      expect(peer.voiceMap[3]).toBeDefined();
+    } finally {
+      await caller3.voice.leave();
     }
   });
 

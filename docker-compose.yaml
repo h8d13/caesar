@@ -17,7 +17,29 @@ services:
     container_name: caesar
     restart: unless-stopped
     stop_grace_period: 2s
-    cpus: "4"
+    # Confinement: uid 1000 (image), no capabilities, no setuid gain. /app in
+    # the image is root-owned and read-only; only the data volume is writable.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Limits keep a runaway server from taking the host (sshd, caddy) down
+    # with it. Memory: Node heap + one mediasoup-worker per
+    # CAESAR_WEBRTC_WORKERS + 64 MiB per login being hashed (argon2); on a
+    # small VPS leave ~512m for the host, on a big one raise it. CPUs: 0 =
+    # no cap, because Docker refuses to start a container asking for more
+    # CPUs than the host has (a fixed "4" breaks 1-2 vCPU servers); set it
+    # to at most your vCPU count. pids counts threads too (about 30 at idle).
+    mem_limit: ${CAESAR_MEM_LIMIT:-2g}
+    cpus: ${CAESAR_CPUS:-0}
+    pids_limit: 512
+    # Without this the default json-file log grows until the disk is full.
+    # podman documents max-size only; it accepts max-file without error.
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     ports:
       - "40000-40002:40000-40002/tcp"
       - "40000-40002:40000-40002/udp"
@@ -48,6 +70,17 @@ services:
     restart: unless-stopped
     depends_on:
       - caesar
+    # Caddy runs as root in its container; NET_BIND_SERVICE (bind 80/443) is
+    # the only capability it needs. Its volumes stay writable: root owns them.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    mem_limit: 512m
+    pids_limit: 512
+    logging: *logging
     ports:
       - "80:80/tcp"
       - "443:443/tcp"

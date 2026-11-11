@@ -8,6 +8,7 @@ import { publishChannelPermissions } from '@server/db/publishers';
 import { getAffectedOnlineUserIdsForChannel } from '@server/db/queries/channels';
 import { isDirectMessageChannel } from '@server/db/queries/dms';
 import { enqueueActivityLog } from '@server/queues/activity-log';
+import { sweepVoiceAccess } from '@server/runtimes/voice-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { and, eq } from 'drizzle-orm';
@@ -38,6 +39,10 @@ const deletePermissionsRoute = protectedProcedure
       message: 'Cannot delete DM channel permissions'
     });
 
+    const affectedBefore = await getAffectedOnlineUserIdsForChannel(
+      input.channelId
+    );
+
     await db.transaction(async (tx) => {
       if (input.userId) {
         await tx
@@ -60,11 +65,17 @@ const deletePermissionsRoute = protectedProcedure
       }
     });
 
-    const affectedUserIds = await getAffectedOnlineUserIdsForChannel(
+    const affectedAfter = await getAffectedOnlineUserIdsForChannel(
       input.channelId
     );
 
-    void publishChannelPermissions(affectedUserIds);
+    // the audience before the delete as well: whoever was just removed is
+    // no longer in it, and would never hear that their permissions changed
+    void publishChannelPermissions([
+      ...new Set([...affectedBefore, ...affectedAfter])
+    ]);
+    await sweepVoiceAccess();
+
     enqueueActivityLog({
       type: ActivityLogType.DELETED_CHANNEL_PERMISSIONS,
       userId: ctx.user.id,
