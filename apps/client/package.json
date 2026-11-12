@@ -45,7 +45,7 @@
     "react-dom": "catalog:",
     "react-lite-youtube-embed": "^3.7.0",
     "react-redux": "^9.3.1",
-    "react-virtuoso": "^4.18.20",
+    "react-virtuoso": "^4.18.21",
     "sonner": "catalog:",
     "tailwind-merge": "catalog:",
     "tailwindcss": "catalog:"
