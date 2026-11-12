@@ -7,12 +7,11 @@ import {
 } from '@/features/server/channels/hooks';
 import { useServerName } from '@/features/server/hooks';
 import { infoSelector } from '@/features/server/selectors';
-import { useUsers } from '@/features/server/users/hooks';
 import { getFileUrl } from '@/helpers/get-file-url';
 import { getTRPCClient } from '@/lib/trpc';
-import { ChannelType, UserStatus } from '@caesar/shared';
+import { ChannelType } from '@caesar/shared';
 import { useQuery } from '@tanstack/react-query';
-import { Activity, ArrowLeft, ArrowRight, Database, Users } from 'lucide-react';
+import { Activity, ArrowLeft, ArrowRight, Database } from 'lucide-react';
 import { memo } from 'react';
 import { useSelector } from 'react-redux';
 
@@ -62,25 +61,6 @@ const PingInfo = memo(() => {
     );
 });
 
-const OnlineCount = memo(() => {
-    const users = useUsers();
-    const onlineCount = users.filter(
-        (u) => u.status === UserStatus.ONLINE
-    ).length;
-
-    return (
-        <div className="flex justify-center mt-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                <span className="tabular-nums font-medium text-foreground">
-                    {onlineCount}
-                </span>
-                <Users className="h-3 w-3" />
-            </span>
-        </div>
-    );
-});
-
 const WelcomeScreen = memo(
     ({ serverName }: { serverName: string | undefined }) => {
         const info = useSelector(infoSelector);
@@ -102,7 +82,6 @@ const WelcomeScreen = memo(
                         Welcome to <span className="bold">{serverName}</span>.
                     </h2>
                     <PingInfo />
-                    <OnlineCount />
                 </div>
                 <div className="flex flex-col items-center justify-center h-full gap-6 p-8 text-center md:hidden">
                     <div className="flex flex-col gap-2">
@@ -111,7 +90,6 @@ const WelcomeScreen = memo(
                             <span className="bold">{serverName}</span>.
                         </h2>
                         <PingInfo />
-                        <OnlineCount />
                     </div>
                     <div className="flex flex-col gap-3 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">

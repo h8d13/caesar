@@ -3,8 +3,7 @@ import { UserAvatar } from '@/components/user-avatar';
 import { openStoryViewer } from '@/features/app/actions';
 import {
     useChannelById,
-    useSelectedChannelId,
-    useSelectedChannelType
+    useSelectedChannelId
 } from '@/features/server/channels/hooks';
 import { useUsers } from '@/features/server/users/hooks';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
@@ -12,7 +11,8 @@ import { getSocialCreditColor } from '@/helpers/get-social-credit-color';
 import { LocalStorageKey } from '@/helpers/storage';
 import { getTRPCClient } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
-import { ChannelType, DELETED_USER_IDENTITY_AND_NAME } from '@caesar/shared';
+import { DELETED_USER_IDENTITY_AND_NAME, UserStatus } from '@caesar/shared';
+import { Users } from 'lucide-react';
 import { memo, useEffect, useMemo, useState } from 'react';
 import { UserPopover } from '../user-popover';
 
@@ -76,14 +76,10 @@ type TRightSidebarProps = {
     isOpen?: boolean;
 };
 
-type TFilterMode = 'all' | 'channel';
-
 const RightSidebar = memo(
     ({ className, isOpen = true }: TRightSidebarProps) => {
-        const [filterMode, setFilterMode] = useState<TFilterMode>('all');
         const users = useUsers();
         const selectedChannelId = useSelectedChannelId();
-        const selectedChannelType = useSelectedChannelType();
         const selectedChannel = useChannelById(selectedChannelId ?? -1);
 
         // members are fetched per private channel; any other channel, or one
@@ -93,7 +89,6 @@ const RightSidebar = memo(
             ids: Set<number>;
         } | null>(null);
 
-        const isVoiceChannel = selectedChannelType === ChannelType.VOICE;
         const isPrivateChannel = selectedChannel?.private === true;
 
         const channelMemberIds = useMemo(
@@ -123,16 +118,13 @@ const RightSidebar = memo(
                 );
         }, [selectedChannelId, isPrivateChannel]);
 
-        const { usersToShow, usersCount } = useMemo(() => {
+        const { usersToShow, usersCount, onlineCount } = useMemo(() => {
             let filtered = users.filter(
                 (user) => user.name !== DELETED_USER_IDENTITY_AND_NAME
             );
 
-            if (
-                filterMode === 'channel' &&
-                isPrivateChannel &&
-                channelMemberIds.size > 0
-            ) {
+            // a private channel lists its own members only
+            if (isPrivateChannel && channelMemberIds.size > 0) {
                 filtered = filtered.filter((user) =>
                     channelMemberIds.has(user.id)
                 );
@@ -140,9 +132,12 @@ const RightSidebar = memo(
 
             return {
                 usersToShow: filtered.slice(0, MAX_USERS_TO_SHOW),
-                usersCount: filtered.length
+                usersCount: filtered.length,
+                onlineCount: filtered.filter(
+                    (user) => user.status === UserStatus.ONLINE
+                ).length
             };
-        }, [users, isPrivateChannel, channelMemberIds, filterMode]);
+        }, [users, isPrivateChannel, channelMemberIds]);
 
         const hasHiddenUsers = usersToShow.length < usersCount;
 
@@ -156,36 +151,14 @@ const RightSidebar = memo(
                 isOpen={isOpen}
                 className={cn('h-full', className)}
             >
-                <div className="flex h-12 items-center border-b border-border px-4 justify-between">
-                    <h3 className="text-sm font-semibold text-foreground">
-                        Members - {usersCount}
-                    </h3>
-                    {(isPrivateChannel || isVoiceChannel) && (
-                        <div className="flex gap-1">
-                            <button
-                                onClick={() => setFilterMode('all')}
-                                className={cn(
-                                    'text-xs px-2 py-0.5 rounded transition-colors',
-                                    filterMode === 'all'
-                                        ? 'bg-accent text-foreground'
-                                        : 'text-muted-foreground hover:text-foreground'
-                                )}
-                            >
-                                All
-                            </button>
-                            <button
-                                onClick={() => setFilterMode('channel')}
-                                className={cn(
-                                    'text-xs px-2 py-0.5 rounded transition-colors',
-                                    filterMode === 'channel'
-                                        ? 'bg-accent text-foreground'
-                                        : 'text-muted-foreground hover:text-foreground'
-                                )}
-                            >
-                                Channel
-                            </button>
-                        </div>
-                    )}
+                <div className="flex h-12 items-center border-b border-border px-4">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
+                        <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                        <span className="tabular-nums font-medium text-foreground">
+                            {onlineCount}/{usersCount}
+                        </span>
+                        <Users className="h-3 w-3" />
+                    </span>
                 </div>
                 <div className="flex-1 overflow-y-auto p-2">
                     <div className="space-y-1">
