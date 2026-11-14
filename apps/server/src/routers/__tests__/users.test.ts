@@ -1177,6 +1177,15 @@ describe('users router', () => {
     expect(info.user.banReason).toBeNull();
   });
 
+  test('a moderator cannot unban the server owner', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: mod } = await makeModerator(owner);
+
+    await expect(mod.users.unban({ userId: 1 })).rejects.toThrow(
+      'You cannot unban the server owner.'
+    );
+  });
+
   test('should throw when kicking non-connected user', async () => {
     const { caller } = await initTest();
 

@@ -1,6 +1,6 @@
-import { ChannelPermission, ChannelType } from '@caesar/shared';
+import { ChannelPermission, ChannelType, Permission } from '@caesar/shared';
 import { messages } from '@caesar/shared/db/schema';
-import { initTest } from '@server/__tests__/helpers';
+import { initTest, makeModerator } from '@server/__tests__/helpers';
 import { tdb } from '@server/__tests__/setup';
 import {
   getAffectedUserIdsForChannel,
@@ -1153,5 +1153,49 @@ describe('channels router', () => {
     await expect(
       caller.channels.reorder({ categoryId: 1, channelIds: [3] })
     ).rejects.toThrow('Direct message channels cannot be reordered');
+  });
+
+  test('managing the permissions of a private channel requires seeing it', async () => {
+    const { caller: owner } = await initTest(1);
+    const channelId = await owner.channels.add({
+      type: ChannelType.TEXT,
+      name: 'perm-hidden',
+      categoryId: 1
+    });
+
+    await owner.channels.update({
+      channelId,
+      name: 'perm-hidden',
+      private: true
+    });
+
+    const { caller: mod } = await makeModerator(owner, [
+      Permission.MANAGE_CHANNEL_PERMISSIONS
+    ]);
+
+    await expect(mod.channels.getPermissions({ channelId })).rejects.toThrow(
+      'Insufficient channel permissions'
+    );
+    // the global permission alone used to let its holder grant themselves in
+    await expect(
+      mod.channels.updatePermissions({
+        channelId,
+        userId: 2,
+        permissions: [ChannelPermission.VIEW_CHANNEL]
+      })
+    ).rejects.toThrow('Insufficient channel permissions');
+    await expect(
+      mod.channels.deletePermissions({ channelId, roleId: 2 })
+    ).rejects.toThrow('Insufficient channel permissions');
+
+    await owner.channels.updatePermissions({
+      channelId,
+      userId: 2,
+      permissions: [ChannelPermission.VIEW_CHANNEL]
+    });
+
+    await expect(
+      mod.channels.getPermissions({ channelId })
+    ).resolves.toBeDefined();
   });
 });

@@ -5,6 +5,7 @@ import {
 } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { isDirectMessageChannel } from '@server/db/queries/dms';
+import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';
@@ -25,6 +26,11 @@ const getPermissionsRoute = protectedProcedure
       code: 'FORBIDDEN',
       message: 'Cannot view DM channel permissions'
     });
+
+    // managing a channel's permissions requires seeing it: otherwise the
+    // global permission alone reads a private channel's overrides, or
+    // grants its holder access to it
+    await assertChannelAccess(ctx, input.channelId);
 
     const [rolePermissions, userPermissions] = await Promise.all([
       db
