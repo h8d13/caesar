@@ -25,6 +25,7 @@ const zEnvConfig = z.object({
   webRtc: z.object({
     port: z.coerce.number().int().positive(),
     announcedAddress: z.string(),
+    announcedAddressV6: z.string(),
     maxBitrate: z.coerce.number().int().positive(),
     workers: z.coerce.number().int().nonnegative()
   }),
@@ -46,6 +47,8 @@ const envDefaults: TEnvConfig = {
   webRtc: {
     port: 40000,
     announcedAddress: '',
+    // empty = IPv4 only
+    announcedAddressV6: '',
     maxBitrate: 30_000_000, // 30 Mbps
     // each worker binds basePort + i, must match exposed port range
     workers: 1
@@ -62,6 +65,7 @@ const envConfig = zEnvConfig.parse(
     'server.maxRequestBodyBytes': 'CAESAR_MAX_REQUEST_BODY_BYTES',
     'webRtc.port': 'CAESAR_WEBRTC_PORT',
     'webRtc.announcedAddress': 'CAESAR_WEBRTC_ANNOUNCED_ADDRESS',
+    'webRtc.announcedAddressV6': 'CAESAR_WEBRTC_ANNOUNCED_ADDRESS_V6',
     'webRtc.maxBitrate': 'CAESAR_WEBRTC_MAX_BITRATE',
     'webRtc.workers': 'CAESAR_WEBRTC_WORKERS',
     'limits.maxUsers': 'CAESAR_MAX_USERS'
