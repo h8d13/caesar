@@ -453,7 +453,7 @@ importers:
         specifier: ^7.0.0
         version: 7.0.0
       sanitize-html:
-        specifier: ^2.18.1
+        specifier: ^2.18.2
         version: 2.18.2
       tsx:
         specifier: ^4.23.15
