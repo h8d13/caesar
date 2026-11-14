@@ -13,6 +13,7 @@ import {
 } from '@server/__tests__/helpers';
 import { appRouter } from '@server/routers';
 import { VoiceRuntime } from '@server/runtimes/voice';
+import { isVoiceSocket, markVoiceSocket } from '@server/runtimes/voice-access';
 import { loadMediasoup } from '@server/utils/mediasoup';
 import { pubsub } from '@server/utils/pubsub';
 import type { Observable } from '@trpc/server/observable';
@@ -281,6 +282,224 @@ describe('voice router', () => {
       state: { micMuted: true, soundMuted: false }
     });
     await caller.voice.leave();
+  });
+
+  test('a camera keeps running only while WEBCAM is granted', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: member } = await initTest(3);
+    const voiceChannelId = await owner.channels.add({
+      type: ChannelType.VOICE,
+      name: 'voice-streams',
+      categoryId: 1
+    });
+    const grant = (permissions: ChannelPermission[]) =>
+      owner.channels.updatePermissions({
+        channelId: voiceChannelId,
+        userId: 3,
+        permissions
+      });
+
+    await owner.channels.update({
+      channelId: voiceChannelId,
+      name: 'voice-streams',
+      private: true
+    });
+    await grant([
+      ChannelPermission.VIEW_CHANNEL,
+      ChannelPermission.JOIN,
+      ChannelPermission.WEBCAM,
+      ChannelPermission.SHARE_SCREEN
+    ]);
+
+    await member.voice.join({
+      channelId: voiceChannelId,
+      state: { micMuted: true, soundMuted: false }
+    });
+
+    const runtime = VoiceRuntime.findById(voiceChannelId)!;
+    const closeWebcam = vi.fn();
+    const fakeProducer = (id: string, close = vi.fn()) =>
+      ({
+        id,
+        appData: {},
+        type: 'simple',
+        close,
+        observer: { on: vi.fn() }
+      }) as unknown as Parameters<typeof runtime.addProducer>[2];
+    const webcam = fakeProducer('webcam', closeWebcam);
+    const screen = fakeProducer('screen');
+
+    runtime.addProducer(3, StreamKind.VIDEO, webcam);
+    runtime.addProducer(3, StreamKind.SCREEN, screen);
+    runtime.updateUserState(3, { webcamEnabled: true, sharingScreen: true });
+
+    const closed: unknown[] = [];
+    const sub = pubsub
+      .subscribeAcrossChannels(ServerEvents.VOICE_PRODUCER_CLOSED)
+      .subscribe({ next: (event) => closed.push(event) });
+
+    try {
+      await grant([
+        ChannelPermission.VIEW_CHANNEL,
+        ChannelPermission.JOIN,
+        ChannelPermission.SHARE_SCREEN
+      ]);
+    } finally {
+      sub.unsubscribe();
+    }
+
+    // still in the room, without the stream they may no longer send
+    expect(runtime.getUser(3)).toBeDefined();
+    expect(runtime.getProducer(StreamKind.VIDEO, 3)).toBeUndefined();
+    expect(closeWebcam).toHaveBeenCalled();
+    expect(runtime.getUserState(3).webcamEnabled).toBe(false);
+    // the id is how the owner's client knows the server closed it
+    expect(closed).toEqual([
+      {
+        channelId: voiceChannelId,
+        remoteId: 3,
+        kind: StreamKind.VIDEO,
+        producerId: 'webcam'
+      }
+    ]);
+
+    expect(runtime.getProducer(StreamKind.SCREEN, 3)).toBe(screen);
+    expect(runtime.getUserState(3).sharingScreen).toBe(true);
+
+    await member.voice.leave();
+  });
+
+  test('a mic is paused while SPEAK is revoked and comes back muted', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: member } = await initTest(3);
+    const voiceChannelId = await owner.channels.add({
+      type: ChannelType.VOICE,
+      name: 'voice-speak',
+      categoryId: 1
+    });
+    const grant = (permissions: ChannelPermission[]) =>
+      owner.channels.updatePermissions({
+        channelId: voiceChannelId,
+        userId: 3,
+        permissions
+      });
+    const withSpeak = [
+      ChannelPermission.VIEW_CHANNEL,
+      ChannelPermission.JOIN,
+      ChannelPermission.SPEAK
+    ];
+
+    await owner.channels.update({
+      channelId: voiceChannelId,
+      name: 'voice-speak',
+      private: true
+    });
+    await grant(withSpeak);
+
+    await member.voice.join({
+      channelId: voiceChannelId,
+      state: { micMuted: false, soundMuted: false }
+    });
+
+    const runtime = VoiceRuntime.findById(voiceChannelId)!;
+    const mic = {
+      id: 'mic',
+      appData: {},
+      type: 'simple',
+      paused: false,
+      close: vi.fn(),
+      observer: { on: vi.fn() },
+      pause: async () => {
+        mic.paused = true;
+      },
+      resume: async () => {
+        mic.paused = false;
+      }
+    };
+
+    runtime.addProducer(
+      3,
+      StreamKind.AUDIO,
+      mic as unknown as Parameters<typeof runtime.addProducer>[2]
+    );
+
+    await grant([ChannelPermission.VIEW_CHANNEL, ChannelPermission.JOIN]);
+
+    // kept, so the client can unmute into it later, but nobody hears it
+    expect(runtime.getProducer(StreamKind.AUDIO, 3)).toBeDefined();
+    expect(mic.paused).toBe(true);
+    expect(runtime.getUserState(3).micMuted).toBe(true);
+
+    // and they cannot unmute themselves meanwhile
+    await member.voice.updateState({ micMuted: false });
+    expect(runtime.getUserState(3).micMuted).toBe(true);
+
+    await grant(withSpeak);
+
+    // forwarding is back, the user stays muted until they unmute
+    expect(mic.paused).toBe(false);
+    expect(runtime.getUserState(3).micMuted).toBe(true);
+
+    await member.voice.updateState({ micMuted: false });
+    expect(runtime.getUserState(3).micMuted).toBe(false);
+
+    await member.voice.leave();
+  });
+
+  test('leaving clears the voice channel on the socket context', async () => {
+    const { caller: owner } = await initTest(1);
+    const voiceChannelId = await owner.channels.add({
+      type: ChannelType.VOICE,
+      name: 'voice-leave',
+      categoryId: 1
+    });
+    const ctx = await createMockContext({
+      customToken: await getMockedToken(3)
+    });
+    const member = appRouter.createCaller(ctx);
+    const { handshakeHash } = await member.others.handshake();
+
+    await member.others.joinServer({ handshakeHash });
+    await member.voice.join({
+      channelId: voiceChannelId,
+      state: { micMuted: true, soundMuted: false }
+    });
+
+    expect(ctx.currentVoiceChannelId).toBe(voiceChannelId);
+
+    await member.voice.leave();
+
+    // the producer event subscriptions filter on it
+    expect(ctx.currentVoiceChannelId).toBeUndefined();
+  });
+
+  test('only the socket that joined a call owns it', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: member } = await initTest(3);
+    const voiceChannelId = await owner.channels.add({
+      type: ChannelType.VOICE,
+      name: 'voice-socket',
+      categoryId: 1
+    });
+    const joiner = {};
+    const otherTab = {};
+
+    expect(isVoiceSocket(3, joiner)).toBe(false);
+
+    markVoiceSocket(3, joiner);
+
+    expect(isVoiceSocket(3, joiner)).toBe(true);
+    expect(isVoiceSocket(3, otherTab)).toBe(false);
+
+    await member.voice.join({
+      channelId: voiceChannelId,
+      state: { micMuted: true, soundMuted: false }
+    });
+    await member.voice.leave();
+
+    // leaving drops the claim: a later call from another tab is not ended
+    // by this socket closing
+    expect(isVoiceSocket(3, joiner)).toBe(false);
   });
 });
 

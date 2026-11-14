@@ -107,6 +107,19 @@ export const updateVoiceUserState = (
         }
     }
 
+    // The server mutes us when SPEAK is revoked mid-call. Our own flag is
+    // what drives the mic track and the mute button, so it has to follow.
+    if (
+        userId === ownUserId &&
+        channelId === currentChannelId &&
+        newState.micMuted === true &&
+        !ownVoiceStateSelector(state).micMuted
+    ) {
+        store.dispatch(
+            serverSliceActions.updateOwnVoiceState({ micMuted: true })
+        );
+    }
+
     store.dispatch(
         serverSliceActions.updateVoiceUserState({ userId, channelId, newState })
     );

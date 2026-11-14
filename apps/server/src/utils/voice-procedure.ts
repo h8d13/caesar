@@ -47,7 +47,17 @@ const voiceRuntimeMiddleware = t.middleware(async ({ ctx, next }) => {
   }
 
   return next({
-    ctx: { ...ctx, voiceChannelId: ctx.currentVoiceChannelId, voiceRuntime }
+    ctx: {
+      ...ctx,
+      voiceChannelId: ctx.currentVoiceChannelId,
+      voiceRuntime,
+      // The procedure gets a copy of ctx: writing currentVoiceChannelId
+      // there never reaches the socket's own context, which the voice
+      // event subscriptions read.
+      clearVoiceChannel: () => {
+        ctx.currentVoiceChannelId = undefined;
+      }
+    }
   });
 });
 

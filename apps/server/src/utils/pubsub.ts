@@ -88,6 +88,9 @@ type Events = {
     channelId: number;
     remoteId: number;
     kind: StreamKind;
+    // set when the server closed the producer on its own (permission
+    // revoked), so the owner's client can match it to its local producer
+    producerId?: string;
   };
 
   [ServerEvents.EMOJI_CREATE]: TJoinedEmoji;
