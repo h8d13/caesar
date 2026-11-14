@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.28@sha256:bb22d9815c728170f72750f4e5b0d672e06176142e1d602c7e66c050100b7e5b
+# syntax=docker/dockerfile:1.29@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
 ARG CAESAR_BUILD_VERSION
 
 # trixie = Debian 13, same glibc as the cc-debian13 runtime below. mediasoup's
@@ -83,7 +83,7 @@ RUN mkdir -p /out/code/app/static-prod-assets /out/home/node/.config/caesar \
 # distroless "cc" = glibc + libstdc++ + libgcc: minimum for the Node SEA,
 # prebuilt mediasoup-worker and argon2 (all dynamic glibc). "static" has no libc.
 # Node 26 also links libatomic, which "cc" lacks: staged from the builder.
-FROM gcr.io/distroless/cc-debian13@sha256:159783207c2cd44c2aa5715961d13c8612368ac9bd450f887e3f08fc8ea461e3
+FROM gcr.io/distroless/cc-debian13@sha256:809d04afa1be033c441f76bb0051878c342fb76d0ea236bc6dc94b655fa0fbd6
 
 # DATA_PATH = XDG_CONFIG_HOME/caesar; set HOME/XDG since uid 1000 has no passwd entry.
 ENV CAESAR_ENV=production \
