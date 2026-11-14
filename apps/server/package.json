@@ -32,12 +32,12 @@
     "mime-types": "^3.0.2",
     "postject": "^1.0.0-alpha.6",
     "queue": "^7.0.0",
-    "sanitize-html": "^2.18.1",
+    "sanitize-html": "^2.18.2",
     "tsx": "^4.23.15",
     "typescript": "catalog:",
     "vite-plus": "catalog:",
     "web-push": "^4.0.0",
-    "ws": "^8.22.2",
+    "ws": "^8.23.0",
     "zod": "^4.6.7"
   },
   "dependencies": {
