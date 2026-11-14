@@ -16,7 +16,7 @@ const leaveVoiceRoute = voiceProcedure.mutation(async ({ ctx }) => {
 
   await removeFromVoice(ctx.voiceRuntime, ctx.user.id);
 
-  ctx.currentVoiceChannelId = undefined;
+  ctx.clearVoiceChannel();
 
   logger.info('%s left voice channel %s', ctx.user.name, channel.name);
 });

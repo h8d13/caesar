@@ -2,6 +2,7 @@ import { ActivityLogType, Permission } from '@caesar/shared';
 import { users } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
+import { assertCanModifyOwnerUser } from '@server/helpers/assert-can-modify-owner-user';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { protectedProcedure } from '@server/utils/trpc';
 import { eq } from 'drizzle-orm';
@@ -15,6 +16,7 @@ const unbanRoute = protectedProcedure
   )
   .mutation(async ({ ctx, input }) => {
     await ctx.needsPermission(Permission.MANAGE_USERS);
+    await assertCanModifyOwnerUser(ctx.userId, input.userId, 'unban');
 
     await db
       .update(users)

@@ -54,12 +54,54 @@ const resolveAnnouncedAddress = async (): Promise<string> => {
   return address;
 };
 
-const buildListenInfos = (port: number, announcedAddress: string) => {
+// IPv6 is opt in (CAESAR_WEBRTC_ANNOUNCED_ADDRESS_V6, an address or a
+// hostname with an AAAA record): the container's published ports must
+// carry IPv6 as well, which a default Docker/Podman network does not.
+// Anything that does not give an IPv6 address leaves it off rather than
+// announcing candidates nobody can reach.
+const resolveAnnouncedAddressV6 = async (): Promise<string | undefined> => {
+  const host = config.webRtc.announcedAddressV6.trim();
+
+  if (!host) return undefined;
+
+  try {
+    const { address } = await dns.lookup(host, { family: 6 });
+
+    return address;
+  } catch {
+    logger.warn(
+      `CAESAR_WEBRTC_ANNOUNCED_ADDRESS_V6 "${host}" gives no IPv6 address, IPv6 voice is disabled`
+    );
+
+    return undefined;
+  }
+};
+
+// The IPv6 listeners sit next to the IPv4 ones on the same port: ipv6Only
+// keeps '::' from also claiming the IPv4 side 0.0.0.0 already holds.
+const buildListenInfos = (
+  port: number,
+  announcedAddress: string,
+  announcedAddressV6?: string
+) => {
+  const listenInfos: mediasoup.types.TransportListenInfo[] = [
+    { protocol: 'udp', ip: '0.0.0.0', announcedAddress, port },
+    { protocol: 'tcp', ip: '0.0.0.0', announcedAddress, port }
+  ];
+
+  if (announcedAddressV6) {
+    const v6 = {
+      ip: '::',
+      announcedAddress: announcedAddressV6,
+      port,
+      flags: { ipv6Only: true }
+    };
+
+    listenInfos.push({ protocol: 'udp', ...v6 }, { protocol: 'tcp', ...v6 });
+  }
+
   return {
-    listenInfos: [
-      { protocol: 'udp' as const, ip: '0.0.0.0', announcedAddress, port },
-      { protocol: 'tcp' as const, ip: '0.0.0.0', announcedAddress, port }
-    ],
+    listenInfos,
     summary: { ip: '0.0.0.0', announcedAddress }
   };
 };
@@ -69,9 +111,10 @@ const loadMediasoup = async () => {
   const count = resolveWorkerCount();
   const logLevel = resolveLogLevel();
   const announcedAddress = await resolveAnnouncedAddress();
+  const announcedAddressV6 = await resolveAnnouncedAddressV6();
 
   logger.info(
-    `Spawning ${count} mediasoup worker(s) (logLevel=${logLevel}, basePort=${basePort})`
+    `Spawning ${count} mediasoup worker(s) (logLevel=${logLevel}, basePort=${basePort}, ipv6=${announcedAddressV6 ?? 'off'})`
   );
 
   for (let i = 0; i < count; i++) {
@@ -96,7 +139,11 @@ const loadMediasoup = async () => {
     });
 
     const port = basePort + i;
-    const { listenInfos, summary } = buildListenInfos(port, announcedAddress);
+    const { listenInfos, summary } = buildListenInfos(
+      port,
+      announcedAddress,
+      announcedAddressV6
+    );
     const webRtcServer = await worker.createWebRtcServer({ listenInfos });
 
     if (i === 0) webRtcServerListenInfo = summary;
@@ -116,5 +163,11 @@ const getWorkerSlot = (index: number): WorkerSlot => {
 
 const getListenInfo = () => webRtcServerListenInfo;
 
-export { getAllWorkers, getListenInfo, getWorkerSlot, loadMediasoup };
+export {
+  buildListenInfos,
+  getAllWorkers,
+  getListenInfo,
+  getWorkerSlot,
+  loadMediasoup
+};
 export type { WorkerSlot };

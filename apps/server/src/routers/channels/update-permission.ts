@@ -15,6 +15,7 @@ import {
   getAffectedOnlineUserIdsForChannel
 } from '@server/db/queries/channels';
 import { isDirectMessageChannel } from '@server/db/queries/dms';
+import { assertChannelAccess } from '@server/helpers/assert-channel-access';
 import { enqueueActivityLog } from '@server/queues/activity-log';
 import { sweepVoiceAccess } from '@server/runtimes/voice-access';
 import { invariant } from '@server/utils/invariant';
@@ -48,6 +49,11 @@ const updatePermissionsRoute = protectedProcedure
       code: 'FORBIDDEN',
       message: 'Cannot update DM channel permissions'
     });
+
+    // managing a channel's permissions requires seeing it: otherwise the
+    // global permission alone reads a private channel's overrides, or
+    // grants its holder access to it
+    await assertChannelAccess(ctx, input.channelId);
 
     invariant(input.roleId !== OWNER_ROLE_ID, {
       code: 'BAD_REQUEST',

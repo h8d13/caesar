@@ -15,6 +15,7 @@ type TVoiceProducerEvent = {
   channelId: number;
   remoteId: number;
   kind: StreamKind;
+  producerId?: string;
 };
 
 // Subscribe across all channels and filter per event. The ctx is the

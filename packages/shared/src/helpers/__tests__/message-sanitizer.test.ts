@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'vite-plus/test';
-import { isEmojiOnlyMessage, isEmptyMessage } from '../message-sanitizer';
+import {
+  getPlainTextFromHtml,
+  isEmojiOnlyMessage,
+  isEmptyMessage
+} from '../message-sanitizer';
 
 describe('isEmptyMessage', () => {
   test('should return true for empty string', () => {
@@ -224,5 +228,18 @@ describe('isEmojiOnlyMessage', () => {
         '<p><img src="https://cdn.example.com/emoji.png" alt="custom" class="emoji-image" /></p>'
       )
     ).toBe(true);
+  });
+
+  // the patterns used to rescan the rest of the input from every '<img',
+  // which made a crafted message quadratic
+  test('should stay linear on many unclosed tags', () => {
+    const html = '<img '.repeat(50_000);
+    const start = performance.now();
+
+    getPlainTextFromHtml(html);
+    isEmojiOnlyMessage(html);
+    isEmptyMessage(html);
+
+    expect(performance.now() - start).toBeLessThan(1000);
   });
 });

@@ -38,7 +38,7 @@ import { enqueueActivityLog } from '../queues/activity-log';
 import { appRouter } from '../routers';
 import { getUserRoles } from '../routers/users/get-user-roles';
 import { VoiceRuntime } from '../runtimes/voice';
-import { removeFromVoice } from '../runtimes/voice-access';
+import { isVoiceSocket, removeFromVoice } from '../runtimes/voice-access';
 import type { TConnectionInfo } from '../types';
 import { invariant } from './invariant';
 import { pubsub } from './pubsub';
@@ -427,6 +427,14 @@ const createWsServer = async (server: http.Server) => {
             client.readyState === WebSocket.OPEN
         );
 
+        const voiceRuntime = VoiceRuntime.findRuntimeByUserId(userId);
+
+        // the call goes with the socket that joined it, even while other
+        // sessions stay open: none of them can leave it
+        if (voiceRuntime && (!hasOtherSessions || isVoiceSocket(userId, ws))) {
+          await removeFromVoice(voiceRuntime, userId);
+        }
+
         if (hasOtherSessions) return;
 
         const user = await getUserById(userId);
@@ -465,10 +473,6 @@ const createWsServer = async (server: http.Server) => {
 
           connectedAt.delete(user.id);
         }
-
-        const voiceRuntime = VoiceRuntime.findRuntimeByUserId(user.id);
-
-        if (voiceRuntime) await removeFromVoice(voiceRuntime, user.id);
 
         usersIpMap.delete(user.id);
         pubsub.publish(ServerEvents.USER_LEAVE, user.id);

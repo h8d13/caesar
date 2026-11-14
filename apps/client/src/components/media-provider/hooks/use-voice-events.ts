@@ -18,6 +18,8 @@ type TEvents = {
         kind: TRemoteUserStreamKinds
     ) => void;
     clearRemoteUserStreamsForUser: (userId: number) => void;
+    // must be stable (useLatestCallback): it is an effect dependency
+    stopClosedOwnStream: (kind: StreamKind, producerId: string) => void;
     rtpCapabilities: RtpCapabilities | null | undefined;
 };
 
@@ -25,6 +27,7 @@ const useVoiceEvents = ({
     consume,
     removeRemoteUserStream,
     clearRemoteUserStreamsForUser,
+    stopClosedOwnStream,
     rtpCapabilities
 }: TEvents) => {
     const currentVoiceChannelId = useCurrentVoiceChannelId();
@@ -81,9 +84,17 @@ const useVoiceEvents = ({
         const onVoiceProducerClosedSub = trpc.voice.onProducerClosed.subscribe(
             undefined,
             {
-                onData: ({ channelId, remoteId, kind }) => {
+                onData: ({ channelId, remoteId, kind, producerId }) => {
                     if (currentVoiceChannelId !== channelId || isCleaningUp)
                         return;
+
+                    if (remoteId === ownUserId) {
+                        // only the server closing our stream (permission
+                        // revoked) carries an id; the rest echo our own close
+                        if (producerId) stopClosedOwnStream(kind, producerId);
+
+                        return;
+                    }
 
                     logVoice('Producer closed event received', {
                         remoteId,
@@ -147,6 +158,7 @@ const useVoiceEvents = ({
         consume,
         removeRemoteUserStream,
         clearRemoteUserStreamsForUser,
+        stopClosedOwnStream,
         rtpCapabilities
     ]);
 };

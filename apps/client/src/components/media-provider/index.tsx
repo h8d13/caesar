@@ -1,7 +1,11 @@
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
 import { playSound } from '@/features/server/sounds/actions';
 import { SoundType } from '@/features/server/types';
-import { joinVoice, leaveVoice } from '@/features/server/voice/actions';
+import {
+    joinVoice,
+    leaveVoice,
+    updateOwnVoiceState
+} from '@/features/server/voice/actions';
 import { useOwnVoiceState } from '@/features/server/voice/hooks';
 import {
     MICROPHONE_GATE_CLOSE_HOLD_MS,
@@ -1121,8 +1125,10 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
 
                 await createProducerTransport(device);
                 await createConsumerTransport(device);
-                await consumeExistingProducers(incomingRouterRtpCapabilities);
+                // mic first: Firefox needs an active getUserMedia capture
+                // when the receive transport gathers its candidates
                 await startMicStream();
+                await consumeExistingProducers(incomingRouterRtpCapabilities);
 
                 startMonitoring(
                     producerTransport.current,
@@ -1189,10 +1195,38 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
 
     useVoiceHotkeys(toggleMic, toggleSound);
 
+    // The server closed one of our producers (WEBCAM / SHARE_SCREEN revoked
+    // mid-stream): stop capturing too. Matching the id keeps a late event
+    // for an old producer from stopping a stream started since.
+    const stopClosedOwnStream = useLatestCallback(
+        (kind: StreamKind, producerId: string) => {
+            if (
+                kind === StreamKind.VIDEO &&
+                localVideoProducerRef.current?.id === producerId
+            ) {
+                logVoice('Webcam producer closed by the server');
+
+                stopWebcamStream();
+                updateOwnVoiceState({ webcamEnabled: false });
+                playSound(SoundType.OWN_USER_STOPPED_WEBCAM);
+            } else if (
+                kind === StreamKind.SCREEN &&
+                localScreenShareProducerRef.current?.id === producerId
+            ) {
+                logVoice('Screen share producer closed by the server');
+
+                stopScreenShareStream();
+                updateOwnVoiceState({ sharingScreen: false });
+                playSound(SoundType.OWN_USER_STOPPED_SCREENSHARE);
+            }
+        }
+    );
+
     useVoiceEvents({
         consume,
         removeRemoteUserStream,
         clearRemoteUserStreamsForUser,
+        stopClosedOwnStream,
         rtpCapabilities: routerRtpCapabilities
     });
 

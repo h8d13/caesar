@@ -9,6 +9,7 @@ import { getChannelByIdOrThrow } from '@server/db/queries/channels';
 import { assertDmParticipant } from '@server/db/queries/dms';
 import { logger } from '@server/logger';
 import { VoiceRuntime } from '@server/runtimes/voice';
+import { markVoiceSocket } from '@server/runtimes/voice-access';
 import { invariant } from '@server/utils/invariant';
 import { protectedProcedure, rateLimitedProcedure } from '@server/utils/trpc';
 import { z } from 'zod';
@@ -68,6 +69,11 @@ const joinVoiceRoute = rateLimitedProcedure(protectedProcedure, {
     const channelState = runtime.getState();
 
     ctx.currentVoiceChannelId = channel.id;
+
+    const ws = ctx.getOwnWs();
+
+    if (ws) markVoiceSocket(ctx.user.id, ws);
+
     ctx.pubsub.publish(ServerEvents.USER_JOIN_VOICE, {
       channelId: input.channelId,
       userId: ctx.user.id,
