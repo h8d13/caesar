@@ -156,7 +156,7 @@ body,
   --scrollbar-thumb-hover-color: #555;
 }
 
-/* the theme provider sets .light/.dark on <html> (system mode included);
+/* the theme provider sets .light/.dark on <html>;
    prefers-color-scheme would ignore an explicit app theme */
 .dark {
   --scrollbar-track-color: #2e2e2e;

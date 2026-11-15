@@ -1,4 +1,4 @@
-import { Toaster, TooltipProvider } from '@caesar/ui';
+import { TooltipProvider } from '@caesar/ui';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { setDefaultOptions } from 'date-fns';
 import { enGB } from 'date-fns/locale';
@@ -12,6 +12,7 @@ import { AutoLoginController } from './components/routing/auto-login-controller.
 import { Routing } from './components/routing/index.tsx';
 import { ServerScreensProvider } from './components/server-screens/index.tsx';
 import { ThemeProvider } from './components/theme-provider/index.tsx';
+import { ThemedToaster } from './components/theme-provider/themed-toaster.tsx';
 import { loadApp } from './features/app/pre-auth-actions.ts';
 import { store } from './features/store.ts';
 import { printConsoleBanner } from './helpers/print-console-banner';
@@ -36,15 +37,12 @@ setDefaultOptions({ locale: enGB });
 createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <QueryClientProvider client={queryClient}>
-            <ThemeProvider
-                defaultTheme="system"
-                storageKey={LocalStorageKey.VITE_UI_THEME}
-            >
+            <ThemeProvider storageKey={LocalStorageKey.VITE_UI_THEME}>
                 <Provider store={store}>
                     {/* Toaster must live INSIDE Provider so custom toast
                         content (e.g., DmIncomingCall) can call useSelector
                         without hitting a null Redux context. */}
-                    <Toaster />
+                    <ThemedToaster />
                     <StoreDebug />
                     {/* Tooltip/TooltipRoot rely on this single provider */}
                     <TooltipProvider delayDuration={200}>

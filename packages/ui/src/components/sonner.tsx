@@ -1,12 +1,10 @@
-import { useTheme } from 'next-themes';
 import { Toaster as Sonner, type ToasterProps } from 'sonner';
 
+// theme comes from the caller: sonner's own default ('light') and 'system'
+// would both ignore the app theme
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = 'system' } = useTheme();
-
   return (
     <Sonner
-      theme={theme as ToasterProps['theme']}
       className="toaster group"
       // Always show the close X. Swipe-to-dismiss was non-obvious;
       // the X gives a discoverable affordance.
