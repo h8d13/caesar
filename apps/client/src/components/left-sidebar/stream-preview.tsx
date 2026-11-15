@@ -33,7 +33,7 @@ const StreamPreviewImage = memo(
 
         if (!data) {
             return (
-                <div className="flex size-full items-center justify-center text-background/60">
+                <div className="flex size-full items-center justify-center text-xs text-white/60">
                     No preview yet
                 </div>
             );
@@ -59,13 +59,18 @@ const StreamPreview = memo((props: TStreamPreviewProps) => {
     const Icon = isScreen ? Monitor : Video;
 
     return (
-        <TooltipContent side="right" sideOffset={8} className="p-1.5">
+        <TooltipContent
+            side="right"
+            sideOffset={8}
+            className="bg-popover text-popover-foreground border p-1.5 shadow-md"
+            arrowClassName="bg-popover fill-popover"
+        >
             <div className="flex w-60 flex-col gap-1.5">
                 <div className="aspect-video w-full overflow-hidden rounded bg-black">
                     <StreamPreviewImage {...props} />
                 </div>
                 <div className="flex items-center gap-1.5 px-0.5">
-                    <Icon className="size-3.5 shrink-0" />
+                    <Icon className="size-3.5 shrink-0 text-muted-foreground" />
                     <span className="font-medium">
                         {isScreen ? 'Sharing screen' : 'Camera on'}
                     </span>
