@@ -13,7 +13,9 @@ const createTempRoomRoute = rateLimitedProcedure(protectedProcedure, {
 })
   .input(
     z.object({
-      name: z.string().trim().max(TEMP_ROOM_NAME_MAX_LENGTH).optional()
+      name: z.string().trim().max(TEMP_ROOM_NAME_MAX_LENGTH).optional(),
+      // off: a members-only room, the link refuses anyone not signed in
+      guestsAllowed: z.boolean().default(true)
     })
   )
   .mutation(async ({ input, ctx }) => {
@@ -21,7 +23,8 @@ const createTempRoomRoute = rateLimitedProcedure(protectedProcedure, {
 
     const room = await createTempRoom(
       ctx.userId,
-      input.name || `${ctx.user.name}'s room`
+      input.name || `${ctx.user.name}'s room`,
+      input.guestsAllowed
     );
 
     invariant(room !== 'limit', {

@@ -389,6 +389,31 @@ describe('temp rooms', () => {
     for (const sub of subs) sub.unsubscribe();
   });
 
+  test('a members-only room refuses guests, not members', async () => {
+    const { caller: owner } = await initTest(1);
+    const room = await owner.tempRooms.create({
+      name: 'Staff',
+      guestsAllowed: false
+    });
+
+    expect(room.guestsAllowed).toBe(false);
+
+    const { guest, ctx } = await initGuest();
+
+    await expect(
+      guest.tempRooms.joinAsGuest({ token: room.token, name: 'Eve', state })
+    ).rejects.toThrow('This room is for members only');
+    expect(ctx.authenticated).toBe(false);
+
+    const joined = await owner.tempRooms.join({ token: room.token, state });
+
+    expect(joined.room.guestsAllowed).toBe(false);
+    await owner.voice.leave();
+
+    // guests are allowed unless turned off
+    expect((await owner.tempRooms.create({})).guestsAllowed).toBe(true);
+  });
+
   test('a full room refuses the next guest', async () => {
     const { caller: owner } = await initTest(1);
     const room = await owner.tempRooms.create({});

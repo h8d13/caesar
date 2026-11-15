@@ -1,8 +1,8 @@
 import { UserAvatar } from '@/components/user-avatar';
+import { openDialog } from '@/features/dialogs/actions';
 import { useCan } from '@/features/server/hooks';
 import {
     closeTempRoom,
-    createTempRoom,
     kickTempRoomGuest,
     viewTempRoom
 } from '@/features/server/temp-rooms/actions';
@@ -10,7 +10,7 @@ import {
     useCurrentTempRoomListParticipants,
     useTempRoom
 } from '@/features/server/temp-rooms/hooks';
-import { getTempRoomLink } from '@/features/server/temp-rooms/link';
+import { copyTempRoomLink } from '@/features/server/temp-rooms/link';
 import { TEMP_ROOMS_QUERY_KEY } from '@/features/server/temp-rooms/subscriptions';
 import { getInitialsFromName } from '@/helpers/get-initials-from-name';
 import { useJoinTempRoom } from '@/hooks/use-join-temp-room';
@@ -27,6 +27,7 @@ import {
     HeadphoneOff,
     Headphones,
     Link,
+    Lock,
     Mic,
     MicOff,
     Monitor,
@@ -37,17 +38,12 @@ import {
     X
 } from 'lucide-react';
 import { memo, useCallback } from 'react';
-import { toast } from 'sonner';
+import { Dialog } from '../dialogs/dialogs';
 import { CallTime } from './call-time';
 
 const NO_ROOMS: TTempRoomWithToken[] = [];
 
-const copyRoomLink = (token: string) => {
-    navigator.clipboard.writeText(getTempRoomLink(token)).then(
-        () => toast.success('Room link copied. Anyone with it can join.'),
-        () => toast.error('Could not copy the link')
-    );
-};
+const openCreateDialog = () => openDialog(Dialog.CREATE_TEMP_ROOM);
 
 type TRoomUserProps = {
     roomId: number;
@@ -154,7 +150,10 @@ const RoomRow = memo(({ room, isCurrent, onJoin }: TRoomRowProps) => {
         else onJoin(room.token);
     }, [isCurrent, onJoin, room.token]);
 
-    const onCopy = useCallback(() => copyRoomLink(room.token), [room.token]);
+    const onCopy = useCallback(
+        () => copyTempRoomLink(room.token),
+        [room.token]
+    );
 
     const onClose = useCallback(() => {
         void closeTempRoom(room.id);
@@ -172,7 +171,13 @@ const RoomRow = memo(({ room, isCurrent, onJoin }: TRoomRowProps) => {
                 onClick={onSelect}
                 title={isCurrent ? 'Show the room' : 'Join the room'}
             >
-                <Timer className="h-4 w-4 shrink-0" />
+                {room.guestsAllowed ? (
+                    <Timer className="h-4 w-4 shrink-0" />
+                ) : (
+                    <span title="Members only: guests cannot join">
+                        <Lock className="h-4 w-4 shrink-0" />
+                    </span>
+                )}
                 <span className="flex items-center flex-1 min-w-0">
                     <span className="truncate">{room.name}</span>
                     {isCurrent && <CallTime channelId={room.id} />}
@@ -227,12 +232,6 @@ const TempRooms = memo(() => {
         queryFn: () => getTRPCClient().tempRooms.list.query()
     });
 
-    const onCreate = useCallback(async () => {
-        const room = await createTempRoom();
-
-        if (room) copyRoomLink(room.token);
-    }, []);
-
     // in a room someone else manages: joined by its link
     const isCurrentListed = rooms.some((room) => room.id === currentRoom?.id);
 
@@ -249,8 +248,8 @@ const TempRooms = memo(() => {
                         icon={Plus}
                         variant="ghost"
                         size="sm"
-                        title="Open a temp room and copy its link"
-                        onClick={onCreate}
+                        title="Open a temp room"
+                        onClick={openCreateDialog}
                     />
                 )}
             </div>

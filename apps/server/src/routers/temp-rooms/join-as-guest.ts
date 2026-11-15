@@ -51,6 +51,13 @@ const joinTempRoomAsGuestRoute = rateLimitedProcedure(publicProcedure, {
     // a kicked guest gets the same answer as a dead link
     invariant(room && !(ip && room.blockedIps.has(ip)), ROOM_NOT_FOUND);
 
+    // The link is real, so saying what it is for gives nothing away, and
+    // tells a member who opened it signed out what to do.
+    invariant(room.guestsAllowed, {
+      code: 'FORBIDDEN',
+      message: 'This room is for members only. Sign in to join it.'
+    });
+
     invariant(!VoiceRuntime.findRuntimeByUserId(ctx.userId), {
       code: 'BAD_REQUEST',
       message: 'Already in a room'

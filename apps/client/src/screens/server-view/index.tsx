@@ -6,7 +6,7 @@ import { ModViewSheet } from '@/components/mod-view-sheet';
 import { Protect } from '@/components/protect';
 import { RightSidebar } from '@/components/right-sidebar';
 import { StoryViewer } from '@/components/story-viewer';
-import { TempRoomLinkPrompt } from '@/components/temp-room-link-prompt';
+import { TempRoomLinkJoin } from '@/components/temp-room-link-join';
 import { TopBar } from '@/components/top-bar';
 import { setDmsOpen } from '@/features/app/actions';
 import { useDmsOpen, useSelectedDmChannelId } from '@/features/app/hooks';
@@ -121,7 +121,7 @@ const ServerView = memo(() => {
     return (
         <MediaProvider>
             <DmIncomingCall />
-            <TempRoomLinkPrompt />
+            <TempRoomLinkJoin />
             <E2eeKeyRegister />
             <div
                 className="flex h-dvh flex-col bg-background text-foreground"

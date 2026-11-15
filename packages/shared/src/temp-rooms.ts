@@ -24,6 +24,8 @@ export type TTempRoom = {
   id: number;
   name: string;
   creatorId: number;
+  // false: the link only admits signed-in members
+  guestsAllowed: boolean;
   createdAt: number;
   expiresAt: number;
 };

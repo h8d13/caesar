@@ -1,5 +1,6 @@
 import { TEMP_ROOM_HASH_PARAM } from '@caesar/shared';
 import { useSyncExternalStore } from 'react';
+import { toast } from 'sonner';
 
 // A temp room link is `<origin>/#temp=<token>`. The token sits in the
 // fragment so it never reaches the server in a request line (access logs)
@@ -26,6 +27,13 @@ const useTempRoomLinkToken = () =>
 
 const getTempRoomLink = (token: string) =>
     `${window.location.origin}/#${TEMP_ROOM_HASH_PARAM}=${token}`;
+
+const copyTempRoomLink = (token: string) => {
+    navigator.clipboard.writeText(getTempRoomLink(token)).then(
+        () => toast.success('Room link copied'),
+        () => toast.error('Could not copy the link')
+    );
+};
 
 const clearTempRoomLink = () => {
     if (!readHashToken()) return;
@@ -61,6 +69,7 @@ const getPendingTempRoomToken = (): string | undefined => {
 
 export {
     clearTempRoomLink,
+    copyTempRoomLink,
     getPendingTempRoomToken,
     getTempRoomLink,
     setPendingTempRoomToken,

@@ -62,6 +62,7 @@ const toPublicTempRoom = (room: TTempRoomEntry): TTempRoom => ({
   id: room.id,
   name: room.name,
   creatorId: room.creatorId,
+  guestsAllowed: room.guestsAllowed,
   createdAt: room.createdAt,
   expiresAt: room.expiresAt
 });
@@ -79,7 +80,8 @@ const getTempRoomPermissions = (
 
 const createTempRoom = async (
   creatorId: number,
-  name: string
+  name: string,
+  guestsAllowed: boolean
 ): Promise<TTempRoomEntry | 'limit'> => {
   let ownRooms = 0;
 
@@ -96,6 +98,7 @@ const createTempRoom = async (
     id: nextRoomId--,
     name,
     creatorId,
+    guestsAllowed,
     createdAt: now,
     expiresAt: now + TEMP_ROOM_TTL_MS,
     // 256 bits: the link is the only thing between a stranger and the room

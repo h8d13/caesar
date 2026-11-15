@@ -19,6 +19,7 @@ import {
 } from '@/features/server/temp-rooms/link';
 import { useMedia } from '@/features/server/voice/hooks';
 import { getFileUrl } from '@/helpers/get-file-url';
+import { hasTRPCClient } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
 import { DisconnectCode, GUEST_NAME_MAX_LENGTH } from '@caesar/shared';
 import {
@@ -101,23 +102,34 @@ const GuestJoinForm = memo(({ token, onOpenDevices }: TGuestJoinFormProps) => {
         setJoining(true);
         saveGuestName(trimmed);
 
+        let joined;
+
         try {
-            const joined = await joinTempRoomAsGuest(token, trimmed);
-
-            await init(joined.routerRtpCapabilities, joined.room.id);
+            joined = await joinTempRoomAsGuest(token, trimmed);
         } catch (e) {
-            // a join that got in but could not set up media: do not stay in
-            // the room as a silent ghost
-            await leaveTempRoomAsGuest().catch(() => {});
-
-            const message =
-                e instanceof Error ? e.message : 'Could not join the room';
-
-            // the form was replaced by the room view if the join itself
-            // went through: the toast is what still shows then
-            toast.error(message);
-            setError(message);
+            // refused (dead link, full room, bad name): said next to the field
+            setError(
+                e instanceof Error ? e.message : 'Could not join the room'
+            );
             setJoining(false);
+            return;
+        }
+
+        // From here the room view has replaced this form.
+        try {
+            await init(joined.routerRtpCapabilities, joined.room.id);
+        } catch {
+            // Media setup can still be running when the room goes away under
+            // it (removed, room closed, e.g. while the microphone prompt was
+            // open): the socket is gone then and the join form already says
+            // why. Its internal error is not for the guest.
+            if (!hasTRPCClient()) return;
+
+            // a real setup failure: do not stay in the room as a silent ghost
+            await leaveTempRoomAsGuest().catch(() => {});
+            toast.error(
+                'Could not set up audio for the room. Check your microphone and try again.'
+            );
         }
     }, [name, token, init]);
 

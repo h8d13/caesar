@@ -27,6 +27,11 @@ const DialogsMap = {
             default: m.CreateCategoryDialog
         }))
     ),
+    [Dialog.CREATE_TEMP_ROOM]: lazy(() =>
+        import('./create-temp-room').then((m) => ({
+            default: m.CreateTempRoomDialog
+        }))
+    ),
     [Dialog.DELETE_USER]: lazy(() =>
         import('./delete-user').then((m) => ({ default: m.DeleteUserDialog }))
     ),

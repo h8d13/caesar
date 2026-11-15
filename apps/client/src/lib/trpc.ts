@@ -134,4 +134,8 @@ const cleanup = (keepSession = false) => {
     }, 100);
 };
 
-export { cleanup, connectToTRPC, getTRPCClient };
+// false once the socket is gone (closed by the server, logout, leave): for
+// code that outlives it and has to tell that apart from a real failure
+const hasTRPCClient = () => trpc !== null;
+
+export { cleanup, connectToTRPC, getTRPCClient, hasTRPCClient };

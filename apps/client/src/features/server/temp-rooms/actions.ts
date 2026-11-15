@@ -106,9 +106,12 @@ export const leaveTempRoomAsGuest = async () => {
     cleanup();
 };
 
-export const createTempRoom = async (name?: string) => {
+export const createTempRoom = async (options: {
+    name?: string;
+    guestsAllowed: boolean;
+}) => {
     try {
-        return await getTRPCClient().tempRooms.create.mutate({ name });
+        return await getTRPCClient().tempRooms.create.mutate(options);
     } catch (error) {
         toast.error(getTrpcError(error, 'Failed to open a room'));
     }
