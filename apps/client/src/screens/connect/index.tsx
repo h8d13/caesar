@@ -1,6 +1,7 @@
 import { useInfo } from '@/features/server/hooks';
 import { ensureAudioCtxReady } from '@/features/server/sounds/actions';
 import { getFileUrl, getUrlFromServer } from '@/helpers/get-file-url';
+import { readErrorBody, serverFetch } from '@/helpers/server-fetch';
 import {
     getLocalStorageItemBool,
     LocalStorageKey,
@@ -216,7 +217,7 @@ const Connect = memo(() => {
             );
 
             const url = getUrlFromServer();
-            const response = await fetch(`${url}/login`, {
+            const response = await serverFetch(`${url}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -232,7 +233,7 @@ const Connect = memo(() => {
             // Burst limit and failed-login lockout reply 429 with a plain
             // { error } body rather than per-field errors.
             if (response.status === 429) {
-                const data = await response.json().catch(() => ({}));
+                const data = await readErrorBody(response);
 
                 setErrors({
                     identity:
@@ -243,7 +244,7 @@ const Connect = memo(() => {
             }
 
             if (!response.ok) {
-                const data = await response.json();
+                const data = await readErrorBody(response);
 
                 setErrors(data.errors || {});
                 return;
@@ -299,7 +300,7 @@ const Connect = memo(() => {
             });
 
             const url = getUrlFromServer();
-            const response = await fetch(`${url}/login/2fa`, {
+            const response = await serverFetch(`${url}/login/2fa`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -309,7 +310,7 @@ const Connect = memo(() => {
             });
 
             if (!response.ok) {
-                const errData = await response.json();
+                const errData = await readErrorBody(response);
                 const message =
                     errData.errors?.preAuthToken ||
                     errData.errors?.response ||
