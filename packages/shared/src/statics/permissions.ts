@@ -8,6 +8,7 @@ export enum Permission {
   ENABLE_WEBCAM = 'ENABLE_WEBCAM',
   USE_SOUNDBOARD = 'USE_SOUNDBOARD',
   USE_DMS = 'USE_DMS',
+  CREATE_TEMP_ROOMS = 'CREATE_TEMP_ROOMS',
   // ADMIN PERMISSIONS
   MANAGE_CHANNELS = 'MANAGE_CHANNELS',
   MANAGE_CHANNEL_PERMISSIONS = 'MANAGE_CHANNEL_PERMISSIONS',
@@ -34,6 +35,7 @@ export const permissionLabels: Record<Permission, string> = {
   [Permission.ENABLE_WEBCAM]: 'Enable webcam',
   [Permission.USE_SOUNDBOARD]: 'Use soundboard',
   [Permission.USE_DMS]: 'Use direct messages',
+  [Permission.CREATE_TEMP_ROOMS]: 'Create temp rooms',
   [Permission.MANAGE_CHANNELS]: 'Manage channels',
   [Permission.MANAGE_CHANNEL_PERMISSIONS]: 'Manage channel permissions',
   [Permission.MANAGE_CATEGORIES]: 'Manage categories',
@@ -63,6 +65,8 @@ export const permissionDescriptions: Record<Permission, string> = {
     'Grants the ability to play soundboard sounds in voice channels.',
   [Permission.USE_DMS]:
     'Grants the ability to send and receive direct messages.',
+  [Permission.CREATE_TEMP_ROOMS]:
+    'Grants the ability to open temporary voice rooms that anyone with the link can join, without an account.',
   [Permission.MANAGE_CHANNELS]:
     'Grants the ability to create, update, and delete channels.',
   [Permission.MANAGE_CHANNEL_PERMISSIONS]:

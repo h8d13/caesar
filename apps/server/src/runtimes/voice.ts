@@ -123,6 +123,9 @@ class VoiceRuntime {
   public readonly id: number;
   // DM call runtimes follow DM rules, see voiceRuntimeMiddleware
   public readonly isDm: boolean;
+  // Temp rooms have no channel row: being in the room is the only access
+  // rule (see runtimes/temp-rooms.ts). Their ids are negative.
+  public readonly isTemp: boolean;
   private state: TChannelState = {
     users: [],
     activeSince: null
@@ -153,9 +156,10 @@ class VoiceRuntime {
   // only, dropped with the producer it shows.
   private streamPreviews: Map<string, TStreamPreview> = new Map();
 
-  constructor(channelId: number, isDm = false) {
+  constructor(channelId: number, isDm = false, isTemp = false) {
     this.id = channelId;
     this.isDm = isDm;
+    this.isTemp = isTemp;
     voiceRuntimes.set(channelId, this);
   }
 

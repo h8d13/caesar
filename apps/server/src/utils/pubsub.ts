@@ -11,6 +11,7 @@ import type {
   TJoinedRole,
   TJoinedSound,
   TPublicServerSettings,
+  TTempRoomParticipant,
   TVoiceUserState,
   WhiteboardCursor
 } from '@caesar/shared';
@@ -92,6 +93,12 @@ type Events = {
     // revoked), so the owner's client can match it to its local producer
     producerId?: string;
   };
+
+  [ServerEvents.TEMP_ROOM_PARTICIPANTS]: {
+    roomId: number;
+    participants: TTempRoomParticipant[];
+  };
+  [ServerEvents.TEMP_ROOM_CLOSED]: { roomId: number };
 
   [ServerEvents.EMOJI_CREATE]: TJoinedEmoji;
   [ServerEvents.EMOJI_UPDATE]: TJoinedEmoji;

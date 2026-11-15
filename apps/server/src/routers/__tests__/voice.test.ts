@@ -11,10 +11,10 @@ import {
   initTest,
   type TCaller
 } from '@server/__tests__/helpers';
+import { loadTestMediasoup } from '@server/__tests__/mediasoup';
 import { appRouter } from '@server/routers';
 import { VoiceRuntime } from '@server/runtimes/voice';
 import { isVoiceSocket, markVoiceSocket } from '@server/runtimes/voice-access';
-import { loadMediasoup } from '@server/utils/mediasoup';
 import { pubsub } from '@server/utils/pubsub';
 import type { Observable } from '@trpc/server/observable';
 import { beforeAll, describe, expect, test, vi } from 'vite-plus/test';
@@ -24,7 +24,7 @@ import { beforeAll, describe, expect, test, vi } from 'vite-plus/test';
 // parallel forks don't collide on it.
 describe('voice router', () => {
   beforeAll(async () => {
-    await loadMediasoup();
+    await loadTestMediasoup();
   });
 
   test('should rate limit excessive voice join attempts', async () => {
@@ -113,6 +113,11 @@ describe('voice router', () => {
     const { caller: owner } = await initTest(1);
     const { caller: caller3 } = await initTest(3);
     const DM_CHANNEL_ID = 3; // seeded DM between users 3 and 4
+    const serverVoiceChannelId = await owner.channels.add({
+      type: ChannelType.VOICE,
+      name: 'server-voice',
+      categoryId: 1
+    });
 
     // Member role (users 3 and 4) keeps DMs, loses server voice
     await owner.roles.update({
@@ -142,7 +147,7 @@ describe('voice router', () => {
     // server voice channels still need the permission
     await expect(
       caller3.voice.join({
-        channelId: 2,
+        channelId: serverVoiceChannelId,
         state: { micMuted: true, soundMuted: false }
       })
     ).rejects.toThrow('Insufficient permissions');

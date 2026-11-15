@@ -11,7 +11,9 @@ const voiceRuntimeMiddleware = t.middleware(async ({ ctx, next }) => {
 
   // DM calls follow DM rules end to end: join only checks participation
   // (fixed for the DM's lifetime), JOIN_VOICE_CHANNELS gates server voice.
-  if (!voiceRuntime?.isDm) {
+  // Temp rooms hold guests, who have no roles at all: holding the link was
+  // checked at join, and being in the room is checked below.
+  if (!voiceRuntime?.isDm && !voiceRuntime?.isTemp) {
     await ctx.needsPermission(Permission.JOIN_VOICE_CHANNELS);
   }
 

@@ -4,6 +4,7 @@ export * from './helpers/index';
 export * from './logs';
 export * from './statics/index';
 export * from './tables';
+export * from './temp-rooms';
 export * from './test-ids';
 export * from './types';
 export * from './voice';

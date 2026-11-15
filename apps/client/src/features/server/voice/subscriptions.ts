@@ -13,7 +13,9 @@ import {
 
 import { emitSoundboardPlay } from './soundboard-audio';
 
-const subscribeToVoice = () => {
+// soundboard: false on the guest socket, whose router has no such event
+// (a guest has no access to the server's sounds)
+const subscribeToVoice = ({ soundboard = true } = {}) => {
     const trpc = getTRPCClient();
 
     const onUserJoinVoiceSub = trpc.voice.onJoin.subscribe(undefined, {
@@ -58,9 +60,8 @@ const subscribeToVoice = () => {
         }
     );
 
-    const onSoundboardPlaySub = trpc.voice.onSoundboardPlay.subscribe(
-        undefined,
-        {
+    const subscribeToSoundboard = () =>
+        trpc.voice.onSoundboardPlay.subscribe(undefined, {
             onData: ({ channelId, soundId }) => {
                 const currentChannelId = currentVoiceChannelIdSelector(
                     store.getState()
@@ -79,15 +80,15 @@ const subscribeToVoice = () => {
             },
             onError: (err) =>
                 console.error('onSoundboardPlay subscription error:', err)
-        }
-    );
+        });
+    const onSoundboardPlaySub = soundboard ? subscribeToSoundboard() : null;
 
     return () => {
         onUserJoinVoiceSub.unsubscribe();
         onUserLeaveVoiceSub.unsubscribe();
         onUserUpdateVoiceSub.unsubscribe();
         onVoiceChannelStateSub.unsubscribe();
-        onSoundboardPlaySub.unsubscribe();
+        onSoundboardPlaySub?.unsubscribe();
     };
 };
 

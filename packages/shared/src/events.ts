@@ -67,6 +67,10 @@ export enum ServerEvents {
 
   SOUNDBOARD_PLAY = 'soundboardPlay',
 
+  // who is in a temp room (names included: guests are not users)
+  TEMP_ROOM_PARTICIPANTS = 'tempRoomParticipants',
+  TEMP_ROOM_CLOSED = 'tempRoomClosed',
+
   WATCH_PARTY_UPDATE = 'watchPartyUpdate',
   PREDICTION_POOL_UPDATE = 'predictionPoolUpdate'
 }

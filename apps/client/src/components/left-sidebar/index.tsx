@@ -15,6 +15,7 @@ import { Categories } from './categories';
 import { DirectMessages } from './direct-messages';
 import { DmButton } from './direct-messages/dm-button';
 import { ServerDropdownMenu } from './server-dropdown';
+import { TempRooms } from './temp-rooms';
 import { UserControl } from './user-control';
 import { VoiceControl } from './voice-control';
 
@@ -63,6 +64,7 @@ const LeftSidebar = memo(({ className, isOpen = true }: TLeftSidebarProps) => {
             <div className="flex-1 overflow-y-auto">
                 {dmsOpen ? <DirectMessages /> : <Categories />}
             </div>
+            <TempRooms />
             <VoiceControl />
             <UserControl />
         </ResizableSidebar>

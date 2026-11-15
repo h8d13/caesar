@@ -1,6 +1,7 @@
 import { useDevices } from '@/components/devices-provider/hooks/use-devices';
 import { useMediaControl } from '@/components/media-provider/hooks/use-media-control';
 import { UserAvatar } from '@/components/user-avatar';
+import { useIsTempRoomGuest } from '@/features/server/temp-rooms/hooks';
 import type { TVoiceUser } from '@/features/server/types';
 import { useOwnUserId } from '@/features/server/users/hooks';
 import {
@@ -48,6 +49,8 @@ const VoiceUserCard = memo(
         const { devices } = useDevices();
         const ownUserId = useOwnUserId();
         const isOwnUser = userId === ownUserId;
+        // temp rooms: someone without an account, named by themselves
+        const isGuest = useIsTempRoomGuest(userId);
         const showUserBanners = useShowUserBannersInVoice();
         const { isSimulcastConsumer } = useMedia();
         const showQualityControl =
@@ -138,6 +141,11 @@ const VoiceUserCard = memo(
                     <div className="flex items-center justify-between">
                         <span className="text-white font-medium text-xs truncate">
                             {voiceUser.name}
+                            {isGuest && (
+                                <span className="ml-1 font-normal text-white/60">
+                                    (guest)
+                                </span>
+                            )}
                         </span>
 
                         <div className="flex items-center gap-1">

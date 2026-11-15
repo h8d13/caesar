@@ -12,6 +12,9 @@ import type {
     TPublicServerSettings,
     TReadStateMap,
     TServerInfo,
+    TTempRoom,
+    TTempRoomParticipant,
+    TTempRoomVoiceState,
     TVoiceMap,
     TVoiceUserState
 } from '@caesar/shared';
@@ -75,6 +78,15 @@ export interface IServerState {
     showUserBannersInVoice: boolean;
     // 0 = silent, 1 = quiet, 2 = normal, 3 = loud (mirrors SpeakingIntensity)
     speakingMap: Record<number, number>;
+    // The temp room we are in, if any. Its id is negative and it has no
+    // channel: voiceMap, currentVoiceChannelId and selectedChannelId carry
+    // that id like any voice channel's.
+    tempRoom: TTempRoom | undefined;
+    // who is in it, by name: guests are not users, and a guest's store has
+    // no users at all
+    tempRoomParticipants: TTempRoomParticipant[];
+    // this tab is a guest in a temp room: no session, no server data
+    guestMode: boolean;
 }
 
 const initialState: IServerState = {
@@ -118,7 +130,10 @@ const initialState: IServerState = {
         LocalStorageKey.VOICE_CHAT_SHOW_USER_BANNERS,
         true
     ),
-    speakingMap: {}
+    speakingMap: {},
+    tempRoom: undefined,
+    tempRoomParticipants: [],
+    guestMode: false
 };
 
 const updateWindow = (
@@ -545,6 +560,55 @@ export const serverSlice = createSlice({
                         (id) => id !== action.payload
                     );
             }
+        },
+        enterTempRoom: (
+            state,
+            action: PayloadAction<{
+                room: TTempRoom;
+                participants: TTempRoomParticipant[];
+                voice: TTempRoomVoiceState;
+                // set for a guest, whose id comes with the join
+                guestId?: number;
+            }>
+        ) => {
+            const { room, participants, voice, guestId } = action.payload;
+
+            state.tempRoom = room;
+            state.tempRoomParticipants = participants;
+            state.voiceMap[room.id] = voice;
+            state.currentVoiceChannelId = room.id;
+            state.selectedChannelId = room.id;
+
+            if (guestId !== undefined) {
+                state.guestMode = true;
+                state.ownUserId = guestId;
+            }
+        },
+        viewTempRoom: (state) => {
+            if (state.tempRoom) state.selectedChannelId = state.tempRoom.id;
+        },
+        leaveTempRoom: (state) => {
+            if (!state.tempRoom) return;
+
+            delete state.voiceMap[state.tempRoom.id];
+
+            if (state.selectedChannelId === state.tempRoom.id) {
+                state.selectedChannelId = undefined;
+            }
+
+            state.tempRoom = undefined;
+            state.tempRoomParticipants = [];
+        },
+        setTempRoomParticipants: (
+            state,
+            action: PayloadAction<{
+                roomId: number;
+                participants: TTempRoomParticipant[];
+            }>
+        ) => {
+            if (state.tempRoom?.id !== action.payload.roomId) return;
+
+            state.tempRoomParticipants = action.payload.participants;
         },
         setCurrentVoiceChannelId: (
             state,

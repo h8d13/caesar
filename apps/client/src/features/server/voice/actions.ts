@@ -66,9 +66,14 @@ export const removeUserFromVoiceChannel = (
     }
 
     // Our own leave while we still think we are in the room: the server
-    // removed us (access to the channel was revoked). A leave we asked for
-    // clears currentVoiceChannelId before this event comes back.
-    toast.info('You no longer have access to this voice channel');
+    // removed us (access to the channel was revoked, or the temp room
+    // closed). A leave we asked for clears currentVoiceChannelId before
+    // this event comes back.
+    toast.info(
+        state.server.tempRoom?.id === channelId
+            ? 'This room was closed'
+            : 'You no longer have access to this voice channel'
+    );
     void leaveVoice({ reason: 'access_revoked' });
 };
 
@@ -199,6 +204,8 @@ export const leaveVoice = async (options?: {
     }
 
     setCurrentVoiceChannelId(undefined);
+    // a temp room only exists for us while we are in it
+    store.dispatch(serverSliceActions.leaveTempRoom());
     updateOwnVoiceState({ webcamEnabled: false, sharingScreen: false });
     setPinnedCard(undefined);
 

@@ -1,6 +1,8 @@
 import {
+  ChannelType,
   ActivityLogType,
   ChannelPermission,
+  GUEST_WS_PATH,
   OWNER_ROLE_ID,
   type Permission,
   ServerEvents,
@@ -37,9 +39,11 @@ import { logger } from '../logger';
 import { enqueueActivityLog } from '../queues/activity-log';
 import { appRouter } from '../routers';
 import { getUserRoles } from '../routers/users/get-user-roles';
+import { getTempRoomPermissions, isTempRoomId } from '../runtimes/temp-rooms';
 import { VoiceRuntime } from '../runtimes/voice';
 import { isVoiceSocket, removeFromVoice } from '../runtimes/voice-access';
 import type { TConnectionInfo } from '../types';
+import { createGuestWsServer } from './guest-wss';
 import { invariant } from './invariant';
 import { pubsub } from './pubsub';
 import type { Context, TChannelPermissionHints } from './trpc';
@@ -207,13 +211,19 @@ const createContext = async ({
     // assertChannelAccess passes what it already looked up.
     opts?: TChannelPermissionHints
   ): Promise<TChannelPermissionsMap | 'dm-outsider'> => {
+    // no channel row and no roles involved, the owner bypass included:
+    // a temp room belongs to whoever is in it
+    if (isTempRoomId(channelId)) {
+      return getTempRoomPermissions(channelId, decodedUser.id);
+    }
+
     const channel = opts?.channel ?? (await getChannelAccessRow(channelId));
 
     if (!channel) return NO_PERMISSIONS;
 
     // DMs are decided by participation alone: the owner bypass below
     // must never reach another pair's conversation.
-    if (channel.isDm) {
+    if (channel.type === ChannelType.DM) {
       const isParticipant =
         opts?.isDmParticipant ??
         (await isUserDmParticipant(channelId, decodedUser.id));
@@ -363,13 +373,30 @@ const createWsServer = async (server: http.Server) => {
     // The client uses a single wsLink, so every tRPC call rides this socket.
     // No permessage-deflate: compressing every broadcast per recipient
     // capped a 200-user room at ~1.5s send p95 (85ms without).
+    // noServer: upgrades are routed by path below, the guest endpoint
+    // (temp rooms, no session) being a server of its own
     wss = new WebSocketServer({
-      server,
+      noServer: true,
       perMessageDeflate: false,
       // ws defaults to 100 MiB per frame; uploads go over HTTP, the largest
       // legit frame (a long whiteboard stroke) is well under this
       maxPayload: 4 * 1024 * 1024
     });
+
+    const mainWss = wss;
+    const guestWss = createGuestWsServer();
+
+    server.on('upgrade', (req, socket, head) => {
+      const pathname = new URL(req.url ?? '/', 'http://localhost').pathname;
+      const target = pathname === GUEST_WS_PATH ? guestWss : mainWss;
+
+      target.handleUpgrade(req, socket, head, (ws) => {
+        target.emit('connection', ws, req);
+      });
+    });
+
+    // with noServer nothing closes the guest server with the http one
+    mainWss.on('close', () => guestWss.close());
 
     wss.on('connection', (incoming, req) => {
       const ws = attachSessionFields(incoming);

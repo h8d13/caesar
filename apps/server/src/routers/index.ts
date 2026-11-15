@@ -15,6 +15,7 @@ import { predictionRouter } from './prediction';
 import { pushRouter } from './push';
 import { rolesRouter } from './roles';
 import { soundsRouter } from './sounds';
+import { tempRoomsRouter } from './temp-rooms';
 import { usersRouter } from './users';
 import { voiceRouter } from './voice';
 import { watchPartyRouter } from './watch-party';
@@ -34,6 +35,7 @@ const appRouter = t.router({
   invites: invitesRouter,
   keys: keysRouter,
   voice: voiceRouter,
+  tempRooms: tempRoomsRouter,
   categories: categoriesRouter,
   whiteboard: whiteboardRouter,
   watchParty: watchPartyRouter,

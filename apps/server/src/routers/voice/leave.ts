@@ -5,7 +5,10 @@ import { invariant } from '@server/utils/invariant';
 import { voiceProcedure } from '@server/utils/voice-procedure';
 
 const leaveVoiceRoute = voiceProcedure.mutation(async ({ ctx }) => {
-  const channel = await getChannelByIdOrThrow(ctx.voiceChannelId);
+  // a temp room has no channel row to name it
+  const channelName = ctx.voiceRuntime.isTemp
+    ? `temp room ${ctx.voiceChannelId}`
+    : (await getChannelByIdOrThrow(ctx.voiceChannelId)).name;
 
   const userInChannel = ctx.voiceRuntime.getUser(ctx.user.id);
 
@@ -18,7 +21,7 @@ const leaveVoiceRoute = voiceProcedure.mutation(async ({ ctx }) => {
 
   ctx.clearVoiceChannel();
 
-  logger.info('%s left voice channel %s', ctx.user.name, channel.name);
+  logger.info('%s left voice channel %s', ctx.user.name, channelName);
 });
 
 export { leaveVoiceRoute };

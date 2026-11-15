@@ -3,6 +3,7 @@ import {
     selectedDmChannelIdSelector
 } from '@/features/app/selectors';
 import type { IRootState } from '@/features/store';
+import { ChannelType } from '@caesar/shared';
 import type { TChannel } from '@caesar/shared';
 import { createSelector } from '@reduxjs/toolkit';
 import { createCachedSelector } from 're-reselect';
@@ -14,10 +15,17 @@ export const channelsSelector = (state: IRootState) => state.server.channels;
 export const selectedChannelIdSelector = (state: IRootState) =>
     state.server.selectedChannelId;
 
+// a temp room is not in `channels` but is viewed like a voice channel
 export const selectedChannelTypeSelector = createSelector(
-    [channelsSelector, selectedChannelIdSelector],
-    (channels, selectedChannelId) =>
-        channels.find((channel) => channel.id === selectedChannelId)?.type
+    [
+        channelsSelector,
+        selectedChannelIdSelector,
+        (state: IRootState) => state.server.tempRoom?.id
+    ],
+    (channels, selectedChannelId, tempRoomId) =>
+        selectedChannelId !== undefined && selectedChannelId === tempRoomId
+            ? ChannelType.VOICE
+            : channels.find((channel) => channel.id === selectedChannelId)?.type
 );
 
 export const currentVoiceChannelIdSelector = (state: IRootState) =>
@@ -100,7 +108,7 @@ export const directMessagesUnreadCountSelector = createSelector(
     [channelsSelector, channelsReadStatesSelector],
     (channels, readStates) => {
         return channels
-            .filter((channel) => channel.isDm)
+            .filter((channel) => channel.type === ChannelType.DM)
             .reduce((acc, channel) => acc + (readStates[channel.id] ?? 0), 0);
     }
 );

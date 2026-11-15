@@ -27,11 +27,14 @@ let trpc: ReturnType<typeof createTRPCClient<AppRouter>> | null = null;
 let currentHost: string | null = null;
 let isCleaningUp = false;
 
-const initializeTRPC = (host: string) => {
+// path: the guest endpoint (temp rooms) is a second WebSocket server on the
+// same host. Its router only has the room's voice procedures, under the
+// same names as AppRouter's, so the voice code calls either socket alike.
+const initializeTRPC = (host: string, path = '') => {
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
 
     wsClient = createWSClient({
-        url: `${protocol}://${host}`,
+        url: `${protocol}://${host}${path}`,
         // typed as { code?: number }, but trpc forwards the socket's
         // CloseEvent as is (ws.addEventListener('close', ...))
         onClose: (closeCause) => {
@@ -71,17 +74,17 @@ const initializeTRPC = (host: string) => {
         links: [wsLink({ client: wsClient })]
     });
 
-    currentHost = host;
+    currentHost = host + path;
 
     return trpc;
 };
 
-const connectToTRPC = (host: string) => {
-    if (trpc && currentHost === host) {
+const connectToTRPC = (host: string, path = '') => {
+    if (trpc && currentHost === host + path) {
         return trpc;
     }
 
-    return initializeTRPC(host);
+    return initializeTRPC(host, path);
 };
 
 const getTRPCClient = () => {

@@ -1,5 +1,9 @@
 import { useCurrentVoiceChannelId } from '@/features/server/channels/hooks';
 import { playSound } from '@/features/server/sounds/actions';
+import {
+    useIsGuestMode,
+    useIsInTempRoom
+} from '@/features/server/temp-rooms/hooks';
 import { SoundType } from '@/features/server/types';
 import {
     joinVoice,
@@ -191,6 +195,8 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
     const audioVideoRefsMap = useRef<Map<number, AudioVideoRefs>>(new Map());
     const ownVoiceState = useOwnVoiceState();
     const currentVoiceChannelId = useCurrentVoiceChannelId();
+    const isGuestMode = useIsGuestMode();
+    const isInTempRoom = useIsInTempRoom();
     const { devices } = useDevices();
 
     const getOrCreateRefs = useCallback((remoteId: number): AudioVideoRefs => {
@@ -1167,8 +1173,9 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
     // A moderator dragged us into another voice channel. Re-run the join flow
     // for the destination; joinVoice() leaves the current channel first. Only
     // active while in voice (the server only moves users already connected).
+    // Not for a guest: nobody moves them, and their socket has no such event.
     useEffect(() => {
-        if (!currentVoiceChannelId) return;
+        if (!currentVoiceChannelId || isGuestMode) return;
 
         const sub = getTRPCClient().voice.onForceMove.subscribe(undefined, {
             onData: async ({ channelId }) => {
@@ -1182,7 +1189,7 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
         });
 
         return () => sub.unsubscribe();
-    }, [currentVoiceChannelId, init]);
+    }, [currentVoiceChannelId, isGuestMode, init]);
 
     const { toggleMic, toggleSound, toggleWebcam, toggleScreenShare } =
         useVoiceControls({
@@ -1311,14 +1318,20 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                 <MediaControlProvider>
                     <div className="relative">
                         <SpeakingDetector />
-                        <StreamPreviewUploader
-                            stream={localScreenShareStream}
-                            kind={StreamKind.SCREEN}
-                        />
-                        <StreamPreviewUploader
-                            stream={localVideoStream}
-                            kind={StreamKind.VIDEO}
-                        />
+                        {/* previews are for people outside the call
+                            hovering a streamer: a temp room has no outside */}
+                        {!isInTempRoom && (
+                            <>
+                                <StreamPreviewUploader
+                                    stream={localScreenShareStream}
+                                    kind={StreamKind.SCREEN}
+                                />
+                                <StreamPreviewUploader
+                                    stream={localVideoStream}
+                                    kind={StreamKind.VIDEO}
+                                />
+                            </>
+                        )}
                         <FloatingPinnedCard
                             remoteUserStreams={remoteUserStreams}
                             localScreenShareStream={localScreenShareStream}

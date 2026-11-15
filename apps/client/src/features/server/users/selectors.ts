@@ -1,6 +1,6 @@
 import type { IRootState } from '@/features/store';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
-import { UserStatus } from '@caesar/shared';
+import { type TJoinedPublicUser, UserStatus } from '@caesar/shared';
 import { createSelector } from '@reduxjs/toolkit';
 import { createCachedSelector } from 're-reselect';
 
@@ -47,9 +47,46 @@ export const ownUserSelector = createSelector(
     (ownUserId, users) => users.find((user) => user.id === ownUserId)
 );
 
+// Temp room participants the store has no user for, as users: every guest
+// on a member's client, everyone on a guest's (which has no users at all).
+// Only what a voice card shows is real (id, name). They never join
+// `users`, so no member list picks them up.
+export const tempRoomUsersSelector = createSelector(
+    [
+        (state: IRootState) => state.server.tempRoomParticipants,
+        (state: IRootState) => state.server.users
+    ],
+    (participants, users): TJoinedPublicUser[] =>
+        participants
+            .filter(({ id }) => !users.some((user) => user.id === id))
+            .map(({ id, name }) => ({
+                id,
+                name,
+                bannerColor: null,
+                bio: null,
+                birthday: null,
+                avatar: null,
+                avatarId: null,
+                banner: null,
+                bannerId: null,
+                banned: false,
+                socialCredit: 0,
+                activeStatusCount: 0,
+                createdAt: 0,
+                roleIds: [],
+                status: UserStatus.ONLINE
+            }))
+);
+
 export const userByIdSelector = createCachedSelector(
-    [usersSelector, (_: IRootState, userId: number) => userId],
-    (users, userId) => users.find((user) => user.id === userId)
+    [
+        usersSelector,
+        tempRoomUsersSelector,
+        (_: IRootState, userId: number) => userId
+    ],
+    (users, roomUsers, userId) =>
+        users.find((user) => user.id === userId) ??
+        roomUsers.find((user) => user.id === userId)
 )((_, userId: number) => userId);
 
 export const isOwnUserSelector = createCachedSelector(

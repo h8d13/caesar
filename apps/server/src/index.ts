@@ -8,6 +8,7 @@ import { initGames } from './games';
 import { logger } from './logger';
 import { enqueueActivityLog } from './queues/activity-log';
 import { initVoiceRuntimes } from './runtimes';
+import { startTempRoomSweep } from './runtimes/temp-room-lifecycle';
 import { createServers } from './utils/create-servers';
 import { IS_PRODUCTION, SERVER_VERSION } from './utils/env';
 import { loadJwtSecret } from './utils/jwt-secret';
@@ -20,6 +21,7 @@ await loadVapidKeys();
 await createServers();
 await loadMediasoup();
 await initVoiceRuntimes();
+startTempRoomSweep();
 loadCrons();
 await initGames();
 

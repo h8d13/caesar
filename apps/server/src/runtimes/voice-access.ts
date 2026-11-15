@@ -14,6 +14,7 @@ import { getDirectMessageChannelParticipantIds } from '@server/db/queries/dms';
 import { logger } from '@server/logger';
 import { getUserRoles } from '@server/routers/users/get-user-roles';
 import { pubsub } from '@server/utils/pubsub';
+import { forgetTempRoomParticipant } from './temp-rooms';
 import { VoiceRuntime } from './voice';
 
 // The socket that joined each user's call. A user may hold several
@@ -185,6 +186,8 @@ const removeFromVoice = async (
     activeSince
   });
 
+  if (runtime.isTemp) forgetTempRoomParticipant(runtime.id, userId);
+
   if (!runtime.isDm) return;
 
   const participants = await getDirectMessageChannelParticipantIds(runtime.id);
@@ -204,13 +207,14 @@ const removeFromVoice = async (
 // kept hearing a room after losing it (channel made private, grant or role
 // removed). Called after every change that can take access away: removes
 // whoever no longer passes the join rule. DM calls are participation-only
-// and never change, so they are skipped. Rooms are few and small: one pass
+// and never change, so they are skipped, and so are temp rooms (no channel
+// row: membership is their only rule). Rooms are few and small: one pass
 // over everyone in voice is cheaper than tracking who a change touched.
 // Whoever stays loses the streams they may no longer send, and gets a mic
 // paused by an earlier revocation back.
 const sweepVoiceAccess = async (): Promise<void> => {
   for (const runtime of VoiceRuntime.all()) {
-    if (runtime.isDm) continue;
+    if (runtime.isDm || runtime.isTemp) continue;
 
     const channel = await getChannelAccessRow(runtime.id);
 

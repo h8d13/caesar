@@ -36,7 +36,9 @@ export enum DisconnectCode {
   KICKED = 4000,
   BANNED = 4001,
   SESSION_SUPERSEDED = 4003,
-  LOGGED_OUT = 4004
+  LOGGED_OUT = 4004,
+  // guest socket: the temp room it was in closed or expired
+  TEMP_ROOM_CLOSED = 4005
 }
 
 // identity and name of the placeholder user; the UI renders "Deleted"

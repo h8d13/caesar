@@ -23,6 +23,7 @@ import type { TVoiceUser } from './types';
 import {
     ownUserIdSelector,
     ownUserSelector,
+    tempRoomUsersSelector,
     userByIdSelector,
     usersSelector
 } from './users/selectors';
@@ -105,15 +106,17 @@ export const typingUsersByChannelIdSelector = createCachedSelector(
 )((_, channelId: number) => channelId);
 
 export const voiceUsersByChannelIdSelector = createSelector(
-    [usersSelector, voiceChannelStateSelector],
-    (users, voiceState) => {
+    [usersSelector, voiceChannelStateSelector, tempRoomUsersSelector],
+    (users, voiceState, roomUsers) => {
         const voiceUsers: TVoiceUser[] = [];
 
         if (!voiceState) return voiceUsers;
 
         Object.entries(voiceState.users).forEach(([userIdStr, state]) => {
             const userId = Number(userIdStr);
-            const user = users.find((u) => u.id === userId);
+            const user =
+                users.find((u) => u.id === userId) ??
+                roomUsers.find((u) => u.id === userId);
 
             if (user) {
                 voiceUsers.push({
