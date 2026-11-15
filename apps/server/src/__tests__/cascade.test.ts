@@ -1,3 +1,4 @@
+import { ChannelType } from '@caesar/shared';
 import {
   activityLog,
   categories,
@@ -563,13 +564,12 @@ describe('database cascades', async () => {
     const [dmChannel] = await tdb
       .insert(channels)
       .values({
-        type: 'TEXT',
+        type: ChannelType.DM,
         name: 'dm-channel',
         position: 0,
         fileAccessToken: 'dm-token-1',
         fileAccessTokenUpdatedAt: Date.now(),
         categoryId,
-        isDm: true,
         createdAt: Date.now()
       })
       .returning();
@@ -642,13 +642,12 @@ describe('database cascades', async () => {
     const [dmChannel] = await tdb
       .insert(channels)
       .values({
-        type: 'TEXT',
+        type: ChannelType.DM,
         name: 'dm-channel-u1',
         position: 0,
         fileAccessToken: 'dm-token-u1',
         fileAccessTokenUpdatedAt: Date.now(),
         categoryId,
-        isDm: true,
         createdAt: Date.now()
       })
       .returning();
@@ -721,13 +720,12 @@ describe('database cascades', async () => {
     const [dmChannel] = await tdb
       .insert(channels)
       .values({
-        type: 'TEXT',
+        type: ChannelType.DM,
         name: 'dm-channel-u2',
         position: 0,
         fileAccessToken: 'dm-token-u2',
         fileAccessTokenUpdatedAt: Date.now(),
         categoryId,
-        isDm: true,
         createdAt: Date.now()
       })
       .returning();

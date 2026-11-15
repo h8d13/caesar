@@ -1,5 +1,6 @@
+import { useChannelById } from '@/features/server/channels/hooks';
 import { useCan } from '@/features/server/hooks';
-import { Permission } from '@caesar/shared';
+import { ChannelType, Permission } from '@caesar/shared';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@caesar/ui';
 import { memo } from 'react';
 import type { TServerScreenBaseProps } from '../screens';
@@ -17,6 +18,11 @@ const ChannelSettings = memo(({ close, channelId }: TChannelSettingsProps) => {
     // general and security hit MANAGE_CHANNELS routes, permissions its own
     const canManageChannels = can(Permission.MANAGE_CHANNELS);
     const canManagePermissions = can(Permission.MANAGE_CHANNEL_PERMISSIONS);
+    // security only holds the file access token, which only text channels
+    // have: voice channels hold no messages, so no files to gate
+    const channel = useChannelById(channelId);
+    const showSecurity =
+        canManageChannels && channel?.type === ChannelType.TEXT;
 
     return (
         <ServerScreenLayout close={close} title="Channel Settings">
@@ -34,7 +40,7 @@ const ChannelSettings = memo(({ close, channelId }: TChannelSettingsProps) => {
                                 Permissions
                             </TabsTrigger>
                         )}
-                        {canManageChannels && (
+                        {showSecurity && (
                             <TabsTrigger value="security">Security</TabsTrigger>
                         )}
                     </TabsList>
@@ -49,7 +55,7 @@ const ChannelSettings = memo(({ close, channelId }: TChannelSettingsProps) => {
                             <ChannelPermissions channelId={channelId} />
                         </TabsContent>
                     )}
-                    {canManageChannels && (
+                    {showSecurity && (
                         <TabsContent value="security" className="space-y-6">
                             <Security channelId={channelId} />
                         </TabsContent>

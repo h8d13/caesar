@@ -18,6 +18,7 @@ import { dmKey, E2EE_LOCKED_MESSAGE, hasPriv, open, seal } from '@/lib/e2ee';
 import { getTRPCClient } from '@/lib/trpc';
 import { useDmE2eeContext } from '@/lib/use-dm-e2ee';
 import {
+    ChannelType,
     ChannelPermission,
     DELETED_USER_IDENTITY_AND_NAME,
     getTrpcError,
@@ -57,7 +58,8 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
     const channel = useChannelById(channelId);
     const allUsers = useUsers();
     const ownUserId = useOwnUserId();
-    const e2eeContext = useDmE2eeContext(channelId, channel?.isDm);
+    const isDm = channel?.type === ChannelType.DM;
+    const e2eeContext = useDmE2eeContext(channelId, isDm);
 
     // Decrypt the "Replying to ..." preview shown above the compose area
     // when the target message was ephemeral. Returns null on miss; we then
@@ -94,12 +96,12 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
         : (replyingTo?.content ?? null);
     const mentionUsers = useMemo(
         () =>
-            channel?.isDm
+            isDm
                 ? undefined
                 : allUsers.filter(
                       (u) => u.name !== DELETED_USER_IDENTITY_AND_NAME
                   ),
-        [allUsers, channel?.isDm]
+        [allUsers, isDm]
     );
     const typingUsers = useTypingUsersByChannelId(channelId);
 
@@ -171,7 +173,6 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
             // (server enforces the matching invariant either way).
             let content = message;
             let isEncrypted = false;
-            const isDm = !!channel?.isDm;
             const ephemeralMs = isDm
                 ? (await trpc.dms.getEphemeral.query({ channelId })).ephemeralMs
                 : null;
@@ -234,7 +235,7 @@ const TextChannel = memo(({ channelId }: TChannelProps) => {
             replyingTo,
             e2eeContext,
             ownUserId,
-            channel?.isDm,
+            isDm,
             hasNewer,
             onJumpToPresent
         ]

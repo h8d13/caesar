@@ -316,7 +316,7 @@ describe('/public', () => {
 
     expect(outsider.status).toBe(403);
 
-    const fileToken = generateFileToken(dbFile!.id, channel!.fileAccessToken);
+    const fileToken = generateFileToken(dbFile!.id, channel!.fileAccessToken!);
     const participant = await fetch(`${url}?accessToken=${fileToken}`, {
       headers: { 'x-token': await getMockedToken(2) }
     });
@@ -621,7 +621,7 @@ describe('/public', () => {
 
     expect(dbFile).toBeDefined();
 
-    const validToken = generateFileToken(dbFile!.id, channel!.fileAccessToken);
+    const validToken = generateFileToken(dbFile!.id, channel!.fileAccessToken!);
     const response = await fetch(
       `${testsBaseUrl}/public/${encodeURIComponent(dbFile!.name)}?accessToken=${validToken}`,
       { headers: { 'x-token': token } }
@@ -695,7 +695,7 @@ describe('/public', () => {
 
     const wrongChannelToken = generateFileToken(
       dbFile!.id,
-      channel2!.fileAccessToken
+      channel2!.fileAccessToken!
     );
 
     const response = await fetch(

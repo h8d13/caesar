@@ -115,13 +115,14 @@ const seedDatabase = async (db: LibSQLDatabase) => {
       createdAt: firstStart
     },
     {
-      type: ChannelType.VOICE,
-      name: 'Voice',
+      // a second TEXT channel: tests create the VOICE channels they need
+      type: ChannelType.TEXT,
+      name: 'General 2',
       position: 1,
       fileAccessToken: randomUUIDv7(),
       fileAccessTokenUpdatedAt: Date.now(),
       categoryId: 2,
-      topic: 'General voice channel',
+      topic: 'Second text channel',
       createdAt: firstStart
     }
   ];
@@ -266,10 +267,9 @@ const seedDatabase = async (db: LibSQLDatabase) => {
   ]);
 
   const dmChannel: TIChannel = {
-    type: ChannelType.VOICE,
+    type: ChannelType.DM,
     name: 'DM Channel',
     position: 0,
-    isDm: true,
     private: true,
     fileAccessToken: randomUUIDv7(),
     fileAccessTokenUpdatedAt: Date.now(),

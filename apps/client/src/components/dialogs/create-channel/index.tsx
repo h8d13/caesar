@@ -1,7 +1,12 @@
 import { useLatestCallback } from '@/hooks/use-latest-callback';
 import { getTRPCClient } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
-import { ChannelType, parseTrpcErrors, type TTrpcErrors } from '@caesar/shared';
+import {
+    type TServerChannelType,
+    ChannelType,
+    parseTrpcErrors,
+    type TTrpcErrors
+} from '@caesar/shared';
 import { AutoFocus, Group, Input } from '@caesar/ui';
 import { Hash, Mic } from 'lucide-react';
 import { memo, useState } from 'react';
@@ -41,14 +46,15 @@ const ChannelTypeItem = ({
 type TCreateChannelFormProps = {
     categoryId: number;
     close: () => void;
-    defaultChannelType: ChannelType;
+    defaultChannelType: TServerChannelType;
 };
 
 // Form state lives here, inside the shell: typing re-renders this body
 // only, not the dialog layers above it.
 const CreateChannelForm = memo(
     ({ categoryId, close, defaultChannelType }: TCreateChannelFormProps) => {
-        const [channelType, setChannelType] = useState(defaultChannelType);
+        const [channelType, setChannelType] =
+            useState<TServerChannelType>(defaultChannelType);
         const [name, setName] = useState('New Channel');
         const [loading, setLoading] = useState(false);
         const [errors, setErrors] = useState<TTrpcErrors>({});
@@ -119,7 +125,7 @@ const CreateChannelForm = memo(
 
 type TCreateChannelDialogProps = TDialogBaseProps & {
     categoryId: number;
-    defaultChannelType?: ChannelType;
+    defaultChannelType?: TServerChannelType;
 };
 
 const CreateChannelDialog = memo(

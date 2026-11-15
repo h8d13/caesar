@@ -372,7 +372,7 @@ describe('dms router', () => {
   test('startCall and acceptCall should refuse a channel that is not a DM', async () => {
     const { caller } = await initTest(2);
 
-    // channel 2: the seeded server voice channel
+    // channel 2: a seeded server channel
     await expect(caller.dms.startCall({ channelId: 2 })).rejects.toThrow(
       'DM channel not found'
     );

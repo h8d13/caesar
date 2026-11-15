@@ -15,7 +15,12 @@ import {
     useVoiceUsersByChannelId
 } from '@/features/server/hooks';
 import { cn } from '@/lib/utils';
-import { ChannelPermission, Permission, type TChannel } from '@caesar/shared';
+import {
+    ChannelType,
+    ChannelPermission,
+    Permission,
+    type TChannel
+} from '@caesar/shared';
 import {
     closestCorners,
     pointerIntersection,
@@ -212,7 +217,7 @@ const Channel = memo(
             () => onSelect(channelId),
             [onSelect, channelId]
         );
-        const isVoiceTarget = channel?.type === 'VOICE' && !channel.isDm;
+        const isVoiceTarget = channel?.type === ChannelType.VOICE;
 
         const { ref, handleRef, isDragging } = useSortable({
             id: `ch-${channelId}`,

@@ -5,10 +5,25 @@ import {
   type TUser
 } from '.';
 
+// TEXT holds messages, VOICE hosts a room, DM does both (a conversation
+// and its 1:1 call). A VOICE channel never holds messages or attachments,
+// so it has no file access token either.
 export enum ChannelType {
   TEXT = 'TEXT',
-  VOICE = 'VOICE'
+  VOICE = 'VOICE',
+  DM = 'DM'
 }
+
+// the types a server admin can create; DMs are opened by their participants
+export const SERVER_CHANNEL_TYPES = [
+  ChannelType.TEXT,
+  ChannelType.VOICE
+] as const;
+
+export type TServerChannelType = (typeof SERVER_CHANNEL_TYPES)[number];
+
+export const channelHoldsMessages = (type: ChannelType): boolean =>
+  type === ChannelType.TEXT || type === ChannelType.DM;
 
 export enum StreamKind {
   AUDIO = 'audio',

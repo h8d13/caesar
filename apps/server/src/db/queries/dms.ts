@@ -1,3 +1,4 @@
+import { ChannelType } from '@caesar/shared';
 import type { TDirectMessageConversation } from '@caesar/shared';
 import { directMessages, messages } from '@caesar/shared/db/schema';
 import { TRPCError } from '@trpc/server';
@@ -108,7 +109,7 @@ const getDirectMessageConversations = async (
 };
 
 const isDirectMessageChannel = async (channelId: number): Promise<boolean> =>
-  !!(await getChannelAccessRow(channelId))?.isDm;
+  (await getChannelAccessRow(channelId))?.type === ChannelType.DM;
 
 // checks if the user is a participant in the DM channel by looking for a matching row in the directMessages table
 const isUserDmParticipant = async (

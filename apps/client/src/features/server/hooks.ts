@@ -1,4 +1,8 @@
-import { ChannelPermission, type Permission } from '@caesar/shared';
+import {
+    ChannelType,
+    ChannelPermission,
+    type Permission
+} from '@caesar/shared';
 import { useCallback, useMemo } from 'react';
 import { shallowEqual, useSelector } from 'react-redux';
 import type { IRootState } from '../store';
@@ -106,7 +110,7 @@ export const useAccessibleChannels = () => {
         () =>
             channels.filter((channel) => {
                 // DMs aren't server channels and shouldn't be linkable.
-                if (channel.isDm) return false;
+                if (channel.type === ChannelType.DM) return false;
 
                 if (isOwner || !channel.private) return true;
 

@@ -1,5 +1,6 @@
 import { PermissionToggleRow } from '@/components/permission-toggle-row';
 import {
+    type TServerChannelType,
     ChannelPermission,
     channelPermissionDescriptions,
     channelPermissionLabels,
@@ -10,7 +11,10 @@ import { memo, useMemo } from 'react';
 // Voice-only and text-only permissions don't apply to the other channel
 // type. SEND_MESSAGES is meaningless in a voice channel; JOIN / SPEAK /
 // SHARE_SCREEN / WEBCAM are meaningless in a text channel.
-const PERMISSIONS_BY_CHANNEL_TYPE: Record<ChannelType, ChannelPermission[]> = {
+const PERMISSIONS_BY_CHANNEL_TYPE: Record<
+    TServerChannelType,
+    ChannelPermission[]
+> = {
     [ChannelType.TEXT]: [
         ChannelPermission.VIEW_CHANNEL,
         ChannelPermission.SEND_MESSAGES
@@ -26,7 +30,7 @@ const PERMISSIONS_BY_CHANNEL_TYPE: Record<ChannelType, ChannelPermission[]> = {
 
 type TChannelPermissionListProps = {
     permissions: Array<{ permission: string; allow: boolean }>;
-    channelType: ChannelType;
+    channelType: TServerChannelType;
     onTogglePermission: (permission: ChannelPermission, allow: boolean) => void;
 };
 

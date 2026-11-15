@@ -2,7 +2,7 @@ import { requestConfirmation } from '@/features/dialogs/actions';
 import { useChannelById } from '@/features/server/channels/hooks';
 import { useOwnUserId, useUserById } from '@/features/server/users/hooks';
 import { getTRPCClient } from '@/lib/trpc';
-import { getTrpcError } from '@caesar/shared';
+import { ChannelType, getTrpcError } from '@caesar/shared';
 import { Tooltip } from '@caesar/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { Hash, Lock, LockOpen, Timer, Trash2 } from 'lucide-react';
@@ -198,7 +198,7 @@ const TextTopbar = memo(
     ({ onScrollToMessage, channelId }: TTextTopbarProps) => {
         const channel = useChannelById(channelId);
         const ownUserId = useOwnUserId();
-        const isDm = channel?.isDm;
+        const isDm = channel?.type === ChannelType.DM;
         const channelName = channel?.name;
         const dmPeerId = useMemo(
             () =>
@@ -210,7 +210,7 @@ const TextTopbar = memo(
         const dmPeer = useUserById(dmPeerId ?? -1);
 
         const info = useMemo(() => {
-            if (channel?.isDm) {
+            if (channel?.type === ChannelType.DM) {
                 return {
                     name: 'DM',
                     topic: dmPeer?.name
@@ -240,7 +240,7 @@ const TextTopbar = memo(
                             </span>
                         )}
                     </div>
-                    {channel?.isDm ? (
+                    {channel?.type === ChannelType.DM ? (
                         <DmActions channelId={channelId} />
                     ) : (
                         <div className="flex items-center gap-1">

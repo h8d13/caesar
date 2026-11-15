@@ -6,6 +6,7 @@ import { dmKey, hasPriv, openStreamed } from '@/lib/e2ee';
 import { useDmE2eeContext } from '@/lib/use-dm-e2ee';
 import { cn } from '@/lib/utils';
 import {
+    ChannelType,
     audioExtensions,
     imageExtensions,
     isEmojiOnlyMessage,
@@ -57,8 +58,11 @@ const MessageRenderer = memo(
         // media previews are skipped for these (MVP: download-only) and
         // the file card click hijacks the link to decrypt + blob-URL.
         const isEphemeralEncrypted =
-            !!channel?.isDm && message.expiresAt != null;
-        const e2eeCtx = useDmE2eeContext(message.channelId, channel?.isDm);
+            channel?.type === ChannelType.DM && message.expiresAt != null;
+        const e2eeCtx = useDmE2eeContext(
+            message.channelId,
+            channel?.type === ChannelType.DM
+        );
         const canDecryptFiles =
             isEphemeralEncrypted &&
             hasPriv() &&

@@ -17,7 +17,12 @@ import { useUploadFiles } from '@/hooks/use-upload-files';
 import { useVoiceRecorder } from '@/hooks/use-voice-recorder';
 import { getTRPCClient } from '@/lib/trpc';
 import type { TJoinedPublicUser, TTempFile } from '@caesar/shared';
-import { ChannelPermission, isEmptyMessage, Permission } from '@caesar/shared';
+import {
+    ChannelType,
+    ChannelPermission,
+    isEmptyMessage,
+    Permission
+} from '@caesar/shared';
 import { Button, Spinner } from '@caesar/ui';
 import { filesize } from 'filesize';
 import { Mic, Paperclip, Send, Square, X } from 'lucide-react';
@@ -87,7 +92,7 @@ const MessageCompose = memo(
 
         const canUploadFiles = useMemo(() => {
             const canShareFilesInDm =
-                !channel?.isDm ||
+                channel?.type !== ChannelType.DM ||
                 !!publicSettings?.storageFileSharingInDirectMessages;
 
             return (

@@ -45,7 +45,7 @@ const publishMessage = logFailures(
     messageId: number | undefined,
     channelId: number | undefined,
     type: 'create' | 'update' | 'delete',
-    channel?: Pick<TChannelAccess, 'isDm' | 'private'>
+    channel?: Pick<TChannelAccess, 'type' | 'private'>
   ) => {
     if (!messageId || !channelId) return;
 

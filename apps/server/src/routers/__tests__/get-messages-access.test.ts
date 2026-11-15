@@ -47,7 +47,7 @@ const recordSql = async (fn: () => Promise<unknown>): Promise<string[]> => {
 // the route fires publishes whose own queries land in the same window, and a
 // table-level count would fold those in and break on unrelated changes.
 const ACCESS_CHANNEL_READ =
-  /select "private", "is_dm_channel", "file_access_token" from "channels"/i;
+  /select "private", "type", "file_access_token" from "channels"/i;
 
 // The ordered limit-1 lookup the read-state update used to issue on every
 // page, including pages that already contained the newest message.

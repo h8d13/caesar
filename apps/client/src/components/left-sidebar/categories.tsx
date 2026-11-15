@@ -249,7 +249,7 @@ const Categories = memo(() => {
             if (destChannelId === sourceChannelId) return;
 
             const dest = channels.find((c) => c.id === destChannelId);
-            if (dest?.type !== ChannelType.VOICE || dest.isDm) return;
+            if (dest?.type !== ChannelType.VOICE) return;
 
             try {
                 await trpc.voice.moveUser.mutate({

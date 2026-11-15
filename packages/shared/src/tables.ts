@@ -35,7 +35,7 @@ export type TChannel = InferSelectModel<typeof channels>;
 // threaded through the checks so one operation reads the row a single time.
 export type TChannelAccess = Pick<
   TChannel,
-  'private' | 'isDm' | 'fileAccessToken'
+  'private' | 'type' | 'fileAccessToken'
 >;
 export type TFile = InferSelectModel<typeof files> & {
   _accessToken?: string;

@@ -1,4 +1,6 @@
 import {
+  channelHoldsMessages,
+  ChannelType,
   ChannelPermission,
   isEmptyMessage,
   MESSAGE_MAX_LENGTH,
@@ -45,7 +47,13 @@ const sendMessageRoute = rateLimitedProcedure(protectedProcedure, {
       ),
       getSettings()
     ]);
-    const isDmChannel = channel?.isDm ?? false;
+    // the one place a message is inserted: VOICE channels never hold any
+    invariant(!channel || channelHoldsMessages(channel.type), {
+      code: 'BAD_REQUEST',
+      message: 'This channel does not hold messages.'
+    });
+
+    const isDmChannel = channel?.type === ChannelType.DM;
 
     if (input.replyToMessageId) {
       const replyToMessage = await db

@@ -9,7 +9,12 @@ import { store } from '@/features/store';
 import { getFileUrl } from '@/helpers/get-file-url';
 import { getRegistration } from '@/lib/service-worker';
 import { getTRPCClient } from '@/lib/trpc';
-import { hasMention, TYPING_MS, type TJoinedMessage } from '@caesar/shared';
+import {
+    ChannelType,
+    hasMention,
+    TYPING_MS,
+    type TJoinedMessage
+} from '@caesar/shared';
 import {
     channelByIdSelector,
     selectedChannelIdSelector
@@ -46,9 +51,10 @@ const sendBrowserNotification = (
     // For DMs we just show the sender; for regular channels we keep the
     // `in #<channel>` suffix.
     const userName = user?.name ?? 'Unknown';
-    const title = channel?.isDm
-        ? userName
-        : `${userName} in #${channel?.name ?? 'unknown'}`;
+    const title =
+        channel?.type === ChannelType.DM
+            ? userName
+            : `${userName} in #${channel?.name ?? 'unknown'}`;
     const body = 'You have a new message.';
     const icon = user?.avatar ? getFileUrl(user.avatar) : undefined;
 
@@ -107,7 +113,8 @@ export const addMessages = (
             browserNotificationsForMentionsSelector(state);
         const notificationsForDmsOnly =
             browserNotificationsForDmsSelector(state);
-        const channelIsDm = !!channelByIdSelector(state, channelId)?.isDm;
+        const channelIsDm =
+            channelByIdSelector(state, channelId)?.type === ChannelType.DM;
         const targetMessage = messages[0];
         const isFromOwnUser = ownUserId === targetMessage.userId;
         // selectedDmChannelId persists across DM-panel close (so reopening

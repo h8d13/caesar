@@ -1,4 +1,10 @@
-import { ActivityLogType, ChannelType, Permission } from '@caesar/shared';
+import {
+  channelHoldsMessages,
+  SERVER_CHANNEL_TYPES,
+  ActivityLogType,
+  ChannelType,
+  Permission
+} from '@caesar/shared';
 import { channels } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishChannel } from '@server/db/publishers';
@@ -12,7 +18,7 @@ import { z } from 'zod';
 const addChannelRoute = protectedProcedure
   .input(
     z.object({
-      type: z.enum(ChannelType),
+      type: z.enum(SERVER_CHANNEL_TYPES),
       name: z.string().min(1).max(27),
       categoryId: z.number()
     })
@@ -40,8 +46,10 @@ const addChannelRoute = protectedProcedure
               : 0,
           name: input.name,
           type: input.type,
-          fileAccessToken: randomUUIDv7(),
-          fileAccessTokenUpdatedAt: now,
+          ...(channelHoldsMessages(input.type) && {
+            fileAccessToken: randomUUIDv7(),
+            fileAccessTokenUpdatedAt: now
+          }),
           categoryId: input.categoryId,
           createdAt: now
         })
@@ -64,7 +72,7 @@ const addChannelRoute = protectedProcedure
       details: {
         channelId: channel.id,
         channelName: channel.name,
-        type: channel.type as ChannelType
+        type: channel.type
       }
     });
 

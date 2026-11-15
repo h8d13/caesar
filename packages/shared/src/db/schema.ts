@@ -3,6 +3,7 @@
 /// <reference types="node" />
 
 import {
+  type ChannelType,
   type TActivityLogDetailsMap,
   type TMessageMetadata
 } from '@caesar/shared';
@@ -121,15 +122,13 @@ const channels = sqliteTable(
   'channels',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
-    type: text('type').notNull(),
+    type: text('type').$type<ChannelType>().notNull(),
     name: text('name').notNull(),
     topic: text('topic'),
-    fileAccessToken: text('file_access_token').notNull().unique(),
-    fileAccessTokenUpdatedAt: integer('file_access_token_updated_at').notNull(),
+    // null on VOICE channels: they hold no messages, so no files to gate
+    fileAccessToken: text('file_access_token').unique(),
+    fileAccessTokenUpdatedAt: integer('file_access_token_updated_at'),
     private: integer('private', { mode: 'boolean' }).notNull().default(false),
-    isDm: integer('is_dm_channel', { mode: 'boolean' })
-      .notNull()
-      .default(false),
     position: integer('position').notNull(),
     categoryId: integer('category_id').references(() => categories.id, {
       onDelete: 'cascade'

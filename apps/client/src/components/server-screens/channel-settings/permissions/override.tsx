@@ -75,9 +75,7 @@ const Override = memo(
         const targetId = parseInt(targetIdStr, 10);
         const isRole = overrideType === 'role';
         const channel = useChannelById(channelId);
-        // schema types channel.type as plain string (drizzle text column),
-        // narrow back to the enum and default to TEXT if anything
-        // unexpected lands here.
+        // only server channels have overrides: DMs never reach this screen
         const channelType =
             channel?.type === ChannelType.VOICE
                 ? ChannelType.VOICE

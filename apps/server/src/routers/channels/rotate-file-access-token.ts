@@ -1,4 +1,4 @@
-import { ActivityLogType, Permission } from '@caesar/shared';
+import { ChannelType, ActivityLogType, Permission } from '@caesar/shared';
 import { channels } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { getChannelByIdOrThrow } from '@server/db/queries/channels';
@@ -20,9 +20,10 @@ const rotateFileAccessTokenRoute = protectedProcedure
 
     const channel = await getChannelByIdOrThrow(input.channelId);
 
-    invariant(!channel.isDm, {
+    // VOICE has no token to rotate; a DM's is not the server's to rotate
+    invariant(channel.type === ChannelType.TEXT, {
       code: 'FORBIDDEN',
-      message: 'Cannot rotate file access token for DM channels'
+      message: 'Only text channels have a file access token to rotate'
     });
 
     const newToken = randomUUIDv7();

@@ -41,7 +41,7 @@ import {
   precompile
 } from './json-sql';
 
-type TChannelAccess = { private: boolean; fileAccessToken: string };
+type TChannelAccess = { private: boolean; fileAccessToken: string | null };
 
 // Wire columns: TJoinedMessage omits these two, so a new column ships
 // without touching this file. replyToMessageId only resolves `replyTo`.
@@ -107,11 +107,13 @@ const withFileTokens = (
   joined: TJoinedMessage[],
   channel: TChannelAccess
 ): TJoinedMessage[] => {
-  if (!channel.private) return joined;
+  const { fileAccessToken } = channel;
+
+  if (!channel.private || !fileAccessToken) return joined;
 
   for (const message of joined) {
     for (const file of message.files) {
-      file._accessToken = generateFileToken(file.id, channel.fileAccessToken);
+      file._accessToken = generateFileToken(file.id, fileAccessToken);
     }
   }
 
@@ -208,7 +210,7 @@ const getMessage = async (
   // libsql rows are array-like, not iterable: index, do not destructure
   const [message] = withFileTokens([parseJson(row[0])], {
     private: Boolean(row[1]),
-    fileAccessToken: row[2] as string
+    fileAccessToken: row[2] as string | null
   });
 
   return message;

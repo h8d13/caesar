@@ -139,11 +139,9 @@ const publicRouteHandler = async (
     // private channel files additionally require a file-specific access token
     if (channel?.private) {
       const accessToken = url.searchParams.get('accessToken');
-      const isValidToken = verifyFileToken(
-        dbFile.id,
-        channel.fileAccessToken,
-        accessToken || ''
-      );
+      const isValidToken =
+        !!channel.fileAccessToken &&
+        verifyFileToken(dbFile.id, channel.fileAccessToken, accessToken || '');
 
       if (!isValidToken) {
         sendJson(res, 403, { error: 'Forbidden' });

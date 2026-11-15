@@ -107,7 +107,7 @@ const getFilesByUserId = async (
     .map((r) => {
       const rowCopy: TFile = { ...r.file };
 
-      if (r.channel?.private) {
+      if (r.channel?.private && r.channel.fileAccessToken) {
         rowCopy._accessToken = generateFileToken(
           r.file.id,
           r.channel.fileAccessToken

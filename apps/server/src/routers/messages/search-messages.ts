@@ -1,4 +1,4 @@
-import { ChannelType } from '@caesar/shared';
+import { channelHoldsMessages, ChannelType } from '@caesar/shared';
 import { messages } from '@caesar/shared/db/schema';
 import { config } from '@server/config';
 import { db } from '@server/db';
@@ -58,14 +58,12 @@ const searchMessagesRoute = rateLimitedProcedure(protectedProcedure, {
   .query(async ({ ctx, input }) => {
     const { query, limit, channelId } = input;
 
-    // DMs are stored as ChannelType.VOICE with `isDm=true` (the same channel
-    // also hosts the optional voice call), so the message-bearing channels
-    // are the union of TEXT channels and DMs. getChannelAccess applies
+    // getChannelAccess applies
     // VIEW_CHANNEL (DM participation included) in one batch instead of a
     // permission check per channel on the server.
     const searchable = (await getChannelAccess(ctx.userId)).channels.filter(
       (c) =>
-        (c.type === ChannelType.TEXT || c.isDm) &&
+        channelHoldsMessages(c.type) &&
         (channelId === undefined || c.id === channelId)
     );
 
@@ -74,7 +72,9 @@ const searchMessagesRoute = rateLimitedProcedure(protectedProcedure, {
     }
 
     const accessibleIds = searchable.map((c) => c.id);
-    const isDmByChannelId = new Map(searchable.map((c) => [c.id, c.isDm]));
+    const dmChannelIds = new Set(
+      searchable.filter((c) => c.type === ChannelType.DM).map((c) => c.id)
+    );
 
     const rows = await db
       .select({
@@ -99,7 +99,7 @@ const searchMessagesRoute = rateLimitedProcedure(protectedProcedure, {
 
     return rows.map((row) => ({
       ...row,
-      isDm: isDmByChannelId.get(row.channelId) ?? false
+      isDm: dmChannelIds.has(row.channelId)
     }));
   });
 

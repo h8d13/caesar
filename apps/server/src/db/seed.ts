@@ -86,8 +86,6 @@ const seedDatabase = async () => {
       type: ChannelType.VOICE,
       name: 'General Voice',
       position: 0,
-      fileAccessToken: randomUUIDv7(),
-      fileAccessTokenUpdatedAt: Date.now(),
       categoryId: 2,
       topic: 'General voice channel',
       createdAt: firstStart

@@ -1,4 +1,8 @@
-import { ChannelPermission, type TChannelAccess } from '@caesar/shared';
+import {
+  ChannelType,
+  ChannelPermission,
+  type TChannelAccess
+} from '@caesar/shared';
 import { getChannelAccessRow } from '@server/db/queries/channels';
 import { assertDmChannel } from '@server/db/queries/dms';
 import type { Context } from '@server/utils/trpc';
@@ -23,7 +27,7 @@ const assertChannelAccess = async (
   const isDmParticipant = await assertDmChannel(
     channelId,
     ctx.userId,
-    channel?.isDm ?? false
+    channel?.type === ChannelType.DM
   );
 
   await ctx.needsChannelPermission(channelId, permission, {

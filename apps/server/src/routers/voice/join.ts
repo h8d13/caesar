@@ -31,7 +31,7 @@ const joinVoiceRoute = rateLimitedProcedure(protectedProcedure, {
   .mutation(async ({ input, ctx }) => {
     const channel = await getChannelByIdOrThrow(input.channelId);
 
-    if (channel.isDm) {
+    if (channel.type === ChannelType.DM) {
       // DM calls: just verify participant, no server-wide voice permission needed.
       await assertDmParticipant(input.channelId, ctx.userId);
     } else {

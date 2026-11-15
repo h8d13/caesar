@@ -1,4 +1,5 @@
 import {
+  ChannelType,
   ChannelPermission,
   OWNER_ROLE_ID,
   UNREAD_COUNT_MAX,
@@ -36,7 +37,7 @@ const channelAccessRowQuery = prepared(() =>
   db
     .select({
       private: channels.private,
-      isDm: channels.isDm,
+      type: channels.type,
       fileAccessToken: channels.fileAccessToken
     })
     .from(channels)
@@ -160,12 +161,14 @@ const getChannelAccess = async (userId: number) => {
 
   for (const channel of allChannels) {
     // another pair's DM gets no entry: even its id is not the user's to see
-    if (channel.isDm && !ownDmChannelIds.has(channel.id)) continue;
+    if (channel.type === ChannelType.DM && !ownDmChannelIds.has(channel.id))
+      continue;
 
     // DMs have no granular permissions: a participant holds all of them
-    const resolved = channel.isDm
-      ? ALL_PERMISSIONS
-      : resolvePermissions(overrides.get(channel.id), grants.get(channel.id));
+    const resolved =
+      channel.type === ChannelType.DM
+        ? ALL_PERMISSIONS
+        : resolvePermissions(overrides.get(channel.id), grants.get(channel.id));
 
     permissions[channel.id] = { channelId: channel.id, permissions: resolved };
 
@@ -203,7 +206,7 @@ type TAudienceOptions = {
   forceAllUsers?: boolean;
   permission?: ChannelPermission;
   // callers that already read the row (send, typing, push) skip the lookup
-  channel?: Pick<TChannelAccess, 'isDm' | 'private'>;
+  channel?: Pick<TChannelAccess, 'type' | 'private'>;
 };
 
 // Who a channel's events reach: every user, or an explicit id list.
@@ -217,7 +220,9 @@ const getChannelAudience = async (
 
   if (!channel) return [];
 
-  if (channel.isDm) return getDirectMessageChannelParticipantIds(channelId);
+  if (channel.type === ChannelType.DM) {
+    return getDirectMessageChannelParticipantIds(channelId);
+  }
 
   if (!channel.private || options?.forceAllUsers) return 'everyone';
 

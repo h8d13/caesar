@@ -4,7 +4,12 @@ import { useOwnUserId } from '@/features/server/users/hooks';
 import { uploadFile, type TUploadProgress } from '@/helpers/upload-file';
 import { dmKey, hasPriv } from '@/lib/e2ee';
 import { useDmE2eeContext } from '@/lib/use-dm-e2ee';
-import { isPreviewable, Permission, type TTempFile } from '@caesar/shared';
+import {
+    ChannelType,
+    isPreviewable,
+    Permission,
+    type TTempFile
+} from '@caesar/shared';
 import {
     useCallback,
     useEffect,
@@ -49,7 +54,7 @@ const useUploadFiles = (
     const selectedChannel = useChannelById(channelId);
     const can = useCan();
 
-    const isDmChannel = !!selectedChannel?.isDm;
+    const isDmChannel = selectedChannel?.type === ChannelType.DM;
 
     const canShareFilesInDirectMessages =
         !isDmChannel || !!settings?.storageFileSharingInDirectMessages;

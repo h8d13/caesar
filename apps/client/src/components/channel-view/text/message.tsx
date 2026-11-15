@@ -13,6 +13,7 @@ import { E2EE_LOCKED_MESSAGE, hasPriv } from '@/lib/e2ee';
 import { useDecryptedMessage } from '@/lib/use-decrypted-message';
 import { cn } from '@/lib/utils';
 import {
+    ChannelType,
     hasMention,
     OWNER_ROLE_ID,
     Permission,
@@ -66,12 +67,15 @@ const Message = memo(
         // when the peer has read at least up to it. sliding forward as
         // new own messages are sent avoids stranding the mark mid-group.
         const showDmReadIndicator =
-            !!channel?.isDm &&
+            channel?.type === ChannelType.DM &&
             isFromOwnUser &&
             !!dmReadByPeer &&
             isLatestOwn &&
             dmReadByPeer.lastReadMessageId >= message.id;
-        const decrypted = useDecryptedMessage(message, channel?.isDm);
+        const decrypted = useDecryptedMessage(
+            message,
+            channel?.type === ChannelType.DM
+        );
 
         const displayMessage = useMemo<TJoinedMessage>(() => {
             if (decrypted.status === 'decrypted') {
@@ -150,7 +154,10 @@ const Message = memo(
                                 message={displayMessage}
                                 disableFiles={disableFiles}
                                 disableReactions={disableReactions}
-                                disableVotes={disableVotes || !!channel?.isDm}
+                                disableVotes={
+                                    disableVotes ||
+                                    channel?.type === ChannelType.DM
+                                }
                             />
                         )}
                         {message.expiresAt != null && !hideExpiresBadge && (
@@ -172,7 +179,7 @@ const Message = memo(
                                 channelId={message.channelId}
                                 editable={message.editable ?? false}
                                 isPinned={message.pinned ?? false}
-                                disablePin={!!channel?.isDm}
+                                disablePin={channel?.type === ChannelType.DM}
                             />
                         )}
                     </>

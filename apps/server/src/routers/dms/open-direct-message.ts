@@ -68,11 +68,10 @@ const openDirectMessageRoute = rateLimitedProcedure(protectedProcedure, {
       const newChannel = await tx
         .insert(channels)
         .values({
-          type: ChannelType.VOICE, // the DM channel also hosts its 1:1 call
+          type: ChannelType.DM,
           name: `DM - ${ctx.user.id}:${input.userId}`,
           topic: null,
           private: true,
-          isDm: true,
           position: 0,
           categoryId: null,
           fileAccessToken: randomUUIDv7(),

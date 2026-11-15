@@ -856,7 +856,7 @@ describe('channels router', () => {
     expect(newToken).toBeDefined();
     expect(newToken).not.toBe(originalToken);
     expect(channelAfter.fileAccessTokenUpdatedAt).toBeGreaterThan(
-      channelBefore.fileAccessTokenUpdatedAt
+      channelBefore.fileAccessTokenUpdatedAt!
     );
   });
 
@@ -904,7 +904,7 @@ describe('channels router', () => {
     });
 
     const channelBefore = await caller.channels.get({ channelId: 1 });
-    const oldToken = channelBefore.fileAccessToken;
+    const oldToken = channelBefore.fileAccessToken!;
 
     const oldFileToken = generateFileToken(123, oldToken);
 
@@ -913,7 +913,7 @@ describe('channels router', () => {
     });
 
     const channelAfter = await caller.channels.get({ channelId: 1 });
-    const newToken = channelAfter.fileAccessToken;
+    const newToken = channelAfter.fileAccessToken!;
 
     const newFileToken = generateFileToken(123, newToken);
 
@@ -989,7 +989,43 @@ describe('channels router', () => {
       caller.channels.rotateFileAccessToken({
         channelId: 3
       })
-    ).rejects.toThrow('Cannot rotate file access token for DM channels');
+    ).rejects.toThrow('Only text channels have a file access token to rotate');
+  });
+
+  test('a voice channel has no file access token and holds no messages', async () => {
+    const { caller } = await initTest();
+
+    const channelId = await caller.channels.add({
+      type: ChannelType.VOICE,
+      name: 'voice-no-files',
+      categoryId: 1
+    });
+
+    const channel = await caller.channels.get({ channelId });
+
+    expect(channel.fileAccessToken).toBeNull();
+    expect(channel.fileAccessTokenUpdatedAt).toBeNull();
+
+    await expect(
+      caller.channels.rotateFileAccessToken({ channelId })
+    ).rejects.toThrow('Only text channels have a file access token to rotate');
+
+    await expect(
+      caller.messages.send({ channelId, content: 'hello', files: [] })
+    ).rejects.toThrow('This channel does not hold messages.');
+  });
+
+  test('should refuse to create a DM channel through channels.add', async () => {
+    const { caller } = await initTest();
+
+    await expect(
+      caller.channels.add({
+        // @ts-expect-error DM is not a server channel type
+        type: ChannelType.DM,
+        name: 'not-a-dm',
+        categoryId: 1
+      })
+    ).rejects.toThrow();
   });
 
   test('should mark DM channel as read', async () => {

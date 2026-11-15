@@ -1,4 +1,4 @@
-import { ChannelPermission, hasMention } from '@caesar/shared';
+import { ChannelType, ChannelPermission, hasMention } from '@caesar/shared';
 import { pushSubscriptions, users } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import {
@@ -80,9 +80,8 @@ const enqueueMessagePush = ({
       }
 
       const senderName = await getUserName(messageUserId);
-      const title = channel.isDm
-        ? senderName
-        : `${senderName} in #${channel.name}`;
+      const isDm = channel.type === ChannelType.DM;
+      const title = isDm ? senderName : `${senderName} in #${channel.name}`;
       const payload = { title, body: 'You have a new message.' };
 
       const goneEndpoints: string[] = [];
@@ -92,7 +91,7 @@ const enqueueMessagePush = ({
           const wanted =
             sub.notifyAll ||
             (sub.notifyMentions && hasMention(content, sub.userId)) ||
-            (sub.notifyDms && channel.isDm);
+            (sub.notifyDms && isDm);
 
           if (!wanted) return;
 

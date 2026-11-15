@@ -1,4 +1,4 @@
-import { ActivityLogType, Permission } from '@caesar/shared';
+import { ChannelType, ActivityLogType, Permission } from '@caesar/shared';
 import { channels } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
 import { publishChannel } from '@server/db/publishers';
@@ -24,7 +24,10 @@ const reorderChannelsRoute = protectedProcedure
       .select({ id: channels.id })
       .from(channels)
       .where(
-        and(inArray(channels.id, input.channelIds), eq(channels.isDm, true))
+        and(
+          inArray(channels.id, input.channelIds),
+          eq(channels.type, ChannelType.DM)
+        )
       )
       .get();
 
