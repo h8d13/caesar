@@ -1,4 +1,5 @@
 import { ChannelPermission, ServerEvents } from '@caesar/shared';
+import { notifyTempRoomChanged } from '@server/runtimes/temp-rooms';
 import { voiceProcedure } from '@server/utils/voice-procedure';
 import { z } from 'zod';
 
@@ -39,6 +40,10 @@ const updateVoiceStateRoute = voiceProcedure
       userId: ctx.user.id,
       state: newState
     });
+
+    // temp rooms: presence above only reaches who is in the room, the
+    // lists of rooms (creator, managers) are told apart
+    if (ctx.voiceRuntime.isTemp) notifyTempRoomChanged(ctx.voiceChannelId);
   });
 
 export { updateVoiceStateRoute };

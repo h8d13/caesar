@@ -28,10 +28,16 @@ export type TTempRoom = {
   expiresAt: number;
 };
 
-// what the creator (and moderators) get: the link token included
+// a participant as a list of rooms shows it: with its mute / camera / screen
+// state, like a user under a voice channel
+export type TTempRoomListParticipant = TTempRoomParticipant & {
+  state: TVoiceUserState;
+};
+
+// what the creator and MANAGE_TEMP_ROOMS holders get: the link token included
 export type TTempRoomWithToken = TTempRoom & {
   token: string;
-  participants: TTempRoomParticipant[];
+  participants: TTempRoomListParticipant[];
 };
 
 export type TTempRoomVoiceState = {

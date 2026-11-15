@@ -69,7 +69,9 @@ export enum ServerEvents {
 
   // who is in a temp room (names included: guests are not users)
   TEMP_ROOM_PARTICIPANTS = 'tempRoomParticipants',
-  TEMP_ROOM_CLOSED = 'tempRoomClosed',
+  // a room opened, closed, or its occupants changed: whoever lists it
+  // (its creator, MANAGE_TEMP_ROOMS holders) refetches
+  TEMP_ROOMS_CHANGED = 'tempRoomsChanged',
 
   WATCH_PARTY_UPDATE = 'watchPartyUpdate',
   PREDICTION_POOL_UPDATE = 'predictionPoolUpdate'

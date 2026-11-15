@@ -1,14 +1,8 @@
-import {
-  DisconnectCode,
-  OWNER_ROLE_ID,
-  Permission,
-  ServerEvents
-} from '@caesar/shared';
+import { DisconnectCode, OWNER_ROLE_ID, Permission } from '@caesar/shared';
 import { getUserById } from '../db/queries/users';
 import { closeSocket } from '../helpers/close-reason';
 import { logger } from '../logger';
 import { getUserRoles } from '../routers/users/get-user-roles';
-import { pubsub } from '../utils/pubsub';
 import {
   deleteTempRoom,
   getAllTempRooms,
@@ -44,10 +38,6 @@ const closeTempRoom = async (room: TTempRoomEntry, reason: string) => {
   for (const ws of guestSockets) {
     closeSocket(ws, DisconnectCode.TEMP_ROOM_CLOSED, 'This room was closed');
   }
-
-  pubsub.publishFor(room.creatorId, ServerEvents.TEMP_ROOM_CLOSED, {
-    roomId: room.id
-  });
 
   logger.info('Temp room %d (%s) closed: %s', room.id, room.name, reason);
 };

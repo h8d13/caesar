@@ -1,7 +1,7 @@
 import { Permission, type TTempRoomWithToken } from '@caesar/shared';
 import {
   getAllTempRooms,
-  getTempRoomParticipants,
+  getTempRoomListParticipants,
   toPublicTempRoom
 } from '@server/runtimes/temp-rooms';
 import { protectedProcedure } from '@server/utils/trpc';
@@ -18,7 +18,7 @@ const listTempRoomsRoute = protectedProcedure.query(
       .map((room) => ({
         ...toPublicTempRoom(room),
         token: room.token,
-        participants: getTempRoomParticipants(room)
+        participants: getTempRoomListParticipants(room)
       }));
   }
 );

@@ -98,7 +98,7 @@ type Events = {
     roomId: number;
     participants: TTempRoomParticipant[];
   };
-  [ServerEvents.TEMP_ROOM_CLOSED]: { roomId: number };
+  [ServerEvents.TEMP_ROOMS_CHANGED]: { creatorId: number };
 
   [ServerEvents.EMOJI_CREATE]: TJoinedEmoji;
   [ServerEvents.EMOJI_UPDATE]: TJoinedEmoji;

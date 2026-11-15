@@ -1,4 +1,5 @@
-import { ChannelPermission, ServerEvents } from '@caesar/shared';
+import { ChannelPermission, Permission, ServerEvents } from '@caesar/shared';
+import { logger } from '@server/logger';
 import { getTempRoomPermissions } from '@server/runtimes/temp-rooms';
 import type { Events } from '@server/utils/pubsub';
 import { protectedProcedure } from '@server/utils/trpc';
@@ -30,9 +31,36 @@ const onTempRoomParticipantsRoute = protectedProcedure.subscription(
     )
 );
 
-// targeted at the room's creator, whose list of rooms it updates
-const onTempRoomClosedRoute = protectedProcedure.subscription(async ({ ctx }) =>
-  ctx.pubsub.subscribeFor(ctx.userId, ServerEvents.TEMP_ROOM_CLOSED)
+// A list of rooms went stale. Reaches exactly who tempRooms.list would show
+// the room to: its creator and MANAGE_TEMP_ROOMS holders. Nobody else
+// learns that a room exists, opened or closed.
+const onTempRoomsChangedRoute = protectedProcedure.subscription(
+  async ({ ctx }) =>
+    observable<Events[typeof ServerEvents.TEMP_ROOMS_CHANGED]>((observer) => {
+      const sub = ctx.pubsub
+        .subscribe(ServerEvents.TEMP_ROOMS_CHANGED)
+        .subscribe({
+          next: (data) => {
+            if (data.creatorId === ctx.userId) {
+              observer.next(data);
+              return;
+            }
+
+            // detached from any request: a rejected lookup must not become
+            // an unhandled rejection, the event is dropped instead
+            ctx
+              .hasPermission(Permission.MANAGE_TEMP_ROOMS)
+              .then((allowed) => {
+                if (allowed) observer.next(data);
+              })
+              .catch((error) => {
+                logger.error('[TempRooms] dropped a list update:', error);
+              });
+          }
+        });
+
+      return () => sub.unsubscribe();
+    })
 );
 
-export { onTempRoomClosedRoute, onTempRoomParticipantsRoute };
+export { onTempRoomParticipantsRoute, onTempRoomsChangedRoute };

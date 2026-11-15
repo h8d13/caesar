@@ -1,6 +1,6 @@
 import { t } from '@server/utils/trpc';
 import { createTempRoomRoute } from './create';
-import { onTempRoomClosedRoute, onTempRoomParticipantsRoute } from './events';
+import { onTempRoomParticipantsRoute, onTempRoomsChangedRoute } from './events';
 import { joinTempRoomRoute } from './join';
 import { listTempRoomsRoute } from './list';
 import { closeTempRoomRoute, kickTempRoomGuestRoute } from './manage';
@@ -12,5 +12,5 @@ export const tempRoomsRouter = t.router({
   close: closeTempRoomRoute,
   kickGuest: kickTempRoomGuestRoute,
   onParticipants: onTempRoomParticipantsRoute,
-  onClosed: onTempRoomClosedRoute
+  onChanged: onTempRoomsChangedRoute
 });

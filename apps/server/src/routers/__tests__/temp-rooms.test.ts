@@ -22,7 +22,14 @@ import { createGuestContext } from '@server/utils/guest-wss';
 import { pubsub } from '@server/utils/pubsub';
 import type { CreateWSSContextFnOptions } from '@trpc/server/adapters/ws';
 import type { IncomingMessage } from 'http';
-import { afterEach, beforeAll, describe, expect, test } from 'vite-plus/test';
+import {
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
+  vi
+} from 'vite-plus/test';
 
 const state = { micMuted: true, soundMuted: false };
 
@@ -320,6 +327,66 @@ describe('temp rooms', () => {
     await member.tempRooms.close({ roomId: room.id });
 
     expect(findTempRoomById(room.id)).toBeUndefined();
+  });
+
+  test('list updates reach the creator and managers only', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: member } = await initTest(2);
+    const { caller: other } = await initTest(3);
+    const seen = { owner: 0, member: 0, other: 0 };
+    const subs = [
+      (await owner.tempRooms.onChanged()).subscribe({
+        next: () => seen.owner++
+      }),
+      (await member.tempRooms.onChanged()).subscribe({
+        next: () => seen.member++
+      }),
+      (await other.tempRooms.onChanged()).subscribe({
+        next: () => seen.other++
+      })
+    ];
+
+    await owner.roles.update({
+      roleId: 2,
+      name: 'Member',
+      color: '#99aab5',
+      storageQuotaOverrideEnabled: false,
+      storageSpaceQuota: 0,
+      permissions: [Permission.CREATE_TEMP_ROOMS]
+    });
+
+    // opened by a member: they and the owner (who manages all) hear of it
+    const room = await member.tempRooms.create({});
+
+    await vi.waitFor(() => expect(seen.owner).toBe(1));
+    expect(seen.member).toBe(1);
+
+    // someone entering or leaving changes the count the list shows
+    const { guest } = await initGuest();
+
+    await guest.tempRooms.joinAsGuest({
+      token: room.token,
+      name: 'Bob',
+      state
+    });
+
+    await vi.waitFor(() => expect(seen.owner).toBe(2));
+    expect(seen.member).toBe(2);
+    expect((await owner.tempRooms.list())[0]!.participants).toHaveLength(1);
+
+    await guest.voice.leave();
+
+    await vi.waitFor(() => expect(seen.owner).toBe(3));
+    expect((await owner.tempRooms.list())[0]!.participants).toHaveLength(0);
+
+    await member.tempRooms.close({ roomId: room.id });
+
+    await vi.waitFor(() => expect(seen.owner).toBe(4));
+    expect(seen.member).toBe(4);
+    // same role, not the creator, no MANAGE_TEMP_ROOMS
+    expect(seen.other).toBe(0);
+
+    for (const sub of subs) sub.unsubscribe();
   });
 
   test('a full room refuses the next guest', async () => {

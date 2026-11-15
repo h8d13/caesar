@@ -3,6 +3,7 @@ import {
   TEMP_ROOM_MAX_PARTICIPANTS,
   type TChannelPermissionsMap,
   type TTempRoom,
+  type TTempRoomListParticipant,
   type TTempRoomParticipant,
   type TTempRoomVoiceState
 } from '@caesar/shared';
@@ -110,6 +111,7 @@ const createTempRoom = async (
 
   rooms.set(room.id, room);
   roomsByToken.set(room.token, room);
+  publishTempRoomsChanged(room);
 
   return room;
 };
@@ -123,6 +125,18 @@ const getTempRoomParticipants = (
     isGuest
   }));
 
+const getTempRoomListParticipants = (
+  room: TTempRoomEntry
+): TTempRoomListParticipant[] => {
+  const runtime = VoiceRuntime.findById(room.id);
+
+  return getTempRoomParticipants(room).flatMap((participant) =>
+    runtime
+      ? [{ ...participant, state: runtime.getUserState(participant.id) }]
+      : []
+  );
+};
+
 const getTempRoomVoiceState = (roomId: number): TTempRoomVoiceState => {
   const users: TTempRoomVoiceState['users'] = {};
   const state = VoiceRuntime.findById(roomId)?.getState();
@@ -134,11 +148,28 @@ const getTempRoomVoiceState = (roomId: number): TTempRoomVoiceState => {
   return { users, activeSince: state?.activeSince ?? null };
 };
 
+// For the lists of rooms: no content, the receivers refetch what they are
+// allowed to see. Sent on every change a list shows (opened, closed, who
+// is in it).
+const publishTempRoomsChanged = (room: TTempRoomEntry) => {
+  pubsub.publish(ServerEvents.TEMP_ROOMS_CHANGED, {
+    creatorId: room.creatorId
+  });
+};
+
+// a participant muted, turned a camera on, ...: the lists show that too
+const notifyTempRoomChanged = (roomId: number) => {
+  const room = rooms.get(roomId);
+
+  if (room) publishTempRoomsChanged(room);
+};
+
 const publishTempRoomParticipants = (room: TTempRoomEntry) => {
   pubsub.publish(ServerEvents.TEMP_ROOM_PARTICIPANTS, {
     roomId: room.id,
     participants: getTempRoomParticipants(room)
   });
+  publishTempRoomsChanged(room);
 };
 
 const isTempRoomFull = (room: TTempRoomEntry) =>
@@ -189,6 +220,7 @@ const forgetTempRoomParticipant = (roomId: number, userId: number) => {
 const deleteTempRoom = (room: TTempRoomEntry) => {
   rooms.delete(room.id);
   roomsByToken.delete(room.token);
+  publishTempRoomsChanged(room);
 };
 
 export {
@@ -200,11 +232,13 @@ export {
   findTempRoomByToken,
   forgetTempRoomParticipant,
   getAllTempRooms,
+  getTempRoomListParticipants,
   getTempRoomParticipants,
   getTempRoomPermissions,
   getTempRoomVoiceState,
   isTempRoomFull,
   isTempRoomId,
+  notifyTempRoomChanged,
   TEMP_ROOM_EMPTY_GRACE_MS,
   toPublicTempRoom
 };

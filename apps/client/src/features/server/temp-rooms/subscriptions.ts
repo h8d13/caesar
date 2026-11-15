@@ -10,10 +10,6 @@ const subscribeToTempRoomParticipants = () => {
     const sub = getTRPCClient().tempRooms.onParticipants.subscribe(undefined, {
         onData: (data) => {
             store.dispatch(serverSliceActions.setTempRoomParticipants(data));
-            // the list of rooms we manage shows them too
-            void queryClient.invalidateQueries({
-                queryKey: TEMP_ROOMS_QUERY_KEY
-            });
         },
         onError: (err) =>
             console.error('onTempRoomParticipants subscription error:', err)
@@ -22,12 +18,13 @@ const subscribeToTempRoomParticipants = () => {
     return () => sub.unsubscribe();
 };
 
-// members only: a room we created closed (by us elsewhere, a moderator,
-// its expiry)
+// members only: a room we may list (ours, or any with MANAGE_TEMP_ROOMS)
+// opened, closed or changed occupants. The event carries nothing to show:
+// the list is refetched, and the server filters it again.
 const subscribeToTempRooms = () => {
     const unsubscribeParticipants = subscribeToTempRoomParticipants();
 
-    const onClosedSub = getTRPCClient().tempRooms.onClosed.subscribe(
+    const onChangedSub = getTRPCClient().tempRooms.onChanged.subscribe(
         undefined,
         {
             onData: () => {
@@ -36,13 +33,13 @@ const subscribeToTempRooms = () => {
                 });
             },
             onError: (err) =>
-                console.error('onTempRoomClosed subscription error:', err)
+                console.error('onTempRoomsChanged subscription error:', err)
         }
     );
 
     return () => {
         unsubscribeParticipants();
-        onClosedSub.unsubscribe();
+        onChangedSub.unsubscribe();
     };
 };
 
