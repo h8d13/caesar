@@ -1,6 +1,8 @@
 import { VoiceChannel } from '@/components/channel-view/voice';
 import { VoiceAudioStreams } from '@/components/channel-view/voice/voice-audio-streams';
+import { Devices } from '@/components/device-settings';
 import { MediaProvider } from '@/components/media-provider';
+import { ServerScreenLayout } from '@/components/server-screens/server-screen-layout';
 import { useDisconnectInfo, useInfo } from '@/features/server/hooks';
 import { ensureAudioCtxReady } from '@/features/server/sounds/actions';
 import {
@@ -37,6 +39,7 @@ import {
     Monitor,
     MonitorOff,
     PhoneOff,
+    Settings,
     Users,
     Video,
     VideoOff
@@ -72,11 +75,12 @@ const getClosedMessage = (code: number | undefined) => {
 
 type TGuestJoinFormProps = {
     token: string;
+    onOpenDevices: () => void;
 };
 
 // The form owns the name; the frame around it never re-renders on a
 // keystroke.
-const GuestJoinForm = memo(({ token }: TGuestJoinFormProps) => {
+const GuestJoinForm = memo(({ token, onOpenDevices }: TGuestJoinFormProps) => {
     const { init } = useMedia();
     const [name, setName] = useState(loadGuestName);
     const [error, setError] = useState<string>();
@@ -152,6 +156,16 @@ const GuestJoinForm = memo(({ token }: TGuestJoinFormProps) => {
             </Button>
             <Button
                 type="button"
+                variant="outline"
+                className="w-full"
+                onClick={onOpenDevices}
+                disabled={joining}
+            >
+                <Settings className="h-4 w-4 mr-1.5" />
+                Microphone, camera and speakers
+            </Button>
+            <Button
+                type="button"
                 variant="ghost"
                 className="w-full"
                 onClick={signInInstead}
@@ -163,40 +177,45 @@ const GuestJoinForm = memo(({ token }: TGuestJoinFormProps) => {
     );
 });
 
-const GuestJoinScreen = memo(({ token }: TGuestJoinFormProps) => {
-    const info = useInfo();
-    const logoSrc = info?.logo ? getFileUrl(info.logo) : '/logo.png';
+const GuestJoinScreen = memo(
+    ({ token, onOpenDevices }: TGuestJoinFormProps) => {
+        const info = useInfo();
+        const logoSrc = info?.logo ? getFileUrl(info.logo) : '/logo.png';
 
-    return (
-        <div className="flex flex-col gap-2 justify-center items-center h-full p-4">
-            <Card className="w-full max-w-sm gap-2">
-                <CardHeader>
-                    <CardTitle className="flex flex-col items-center gap-2 text-center">
-                        <img
-                            src={logoSrc}
-                            alt={VITE_APP_NAME}
-                            className={
-                                info?.logo
-                                    ? 'max-w-full max-h-24 object-contain rounded-xl'
-                                    : 'w-24 h-24 rounded-xl'
-                            }
-                        />
-                        <span className="text-xl font-bold leading-tight">
-                            {info?.name ?? VITE_APP_NAME}
+        return (
+            <div className="flex flex-col gap-2 justify-center items-center h-full p-4">
+                <Card className="w-full max-w-sm gap-2">
+                    <CardHeader>
+                        <CardTitle className="flex flex-col items-center gap-2 text-center">
+                            <img
+                                src={logoSrc}
+                                alt={VITE_APP_NAME}
+                                className={
+                                    info?.logo
+                                        ? 'max-w-full max-h-24 object-contain rounded-xl'
+                                        : 'w-24 h-24 rounded-xl'
+                                }
+                            />
+                            <span className="text-xl font-bold leading-tight">
+                                {info?.name ?? VITE_APP_NAME}
+                            </span>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-4">
+                        <span className="text-sm text-muted-foreground text-center">
+                            You were invited to a voice room. No account needed:
+                            you will only see and hear this room.
                         </span>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-4">
-                    <span className="text-sm text-muted-foreground text-center">
-                        You were invited to a voice room. No account needed: you
-                        will only see and hear this room.
-                    </span>
-                    <GuestJoinForm token={token} />
-                </CardContent>
-            </Card>
-        </div>
-    );
-});
+                        <GuestJoinForm
+                            token={token}
+                            onOpenDevices={onOpenDevices}
+                        />
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+);
 
 type TControlButtonProps = {
     label: string;
@@ -237,7 +256,11 @@ const ON = 'bg-green-500/15 hover:bg-green-500/25 text-green-400';
 const OFF = 'bg-red-500/15 hover:bg-red-500/25 text-red-400';
 const SHARING = 'bg-blue-500/15 hover:bg-blue-500/25 text-blue-400';
 
-const GuestControls = memo(() => {
+type TGuestControlsProps = {
+    onOpenDevices: () => void;
+};
+
+const GuestControls = memo(({ onOpenDevices }: TGuestControlsProps) => {
     const {
         ownVoiceState,
         toggleMic,
@@ -308,6 +331,16 @@ const GuestControls = memo(() => {
                     <MonitorOff className="h-5 w-5" />
                 )}
             </ControlButton>
+            {/* devices bind when a call is set up, so changing them means
+                leaving and joining again (same as for a member) */}
+            <ControlButton
+                label="Device settings (leaves the room)"
+                active={false}
+                activeClassName=""
+                onClick={onOpenDevices}
+            >
+                <Settings className="h-5 w-5" />
+            </ControlButton>
             <Button variant="destructive" className="ml-2" onClick={leave}>
                 <PhoneOff className="h-4 w-4 mr-1.5" />
                 Leave
@@ -319,28 +352,31 @@ const GuestControls = memo(() => {
 type TGuestRoomViewProps = {
     roomId: number;
     roomName: string;
+    onOpenDevices: () => void;
 };
 
-const GuestRoomView = memo(({ roomId, roomName }: TGuestRoomViewProps) => {
-    const participantCount = useTempRoomParticipants().length;
+const GuestRoomView = memo(
+    ({ roomId, roomName, onOpenDevices }: TGuestRoomViewProps) => {
+        const participantCount = useTempRoomParticipants().length;
 
-    return (
-        <div className="flex h-dvh flex-col bg-background text-foreground">
-            <header className="flex h-12 items-center justify-between border-b border-border px-4">
-                <h1 className="font-semibold truncate">{roomName}</h1>
-                <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    {participantCount}
-                </span>
-            </header>
-            <main className="flex flex-1 flex-col relative min-w-0 min-h-0">
-                <VoiceChannel channelId={roomId} />
-            </main>
-            <VoiceAudioStreams channelId={roomId} />
-            <GuestControls />
-        </div>
-    );
-});
+        return (
+            <div className="flex h-dvh flex-col bg-background text-foreground">
+                <header className="flex h-12 items-center justify-between border-b border-border px-4">
+                    <h1 className="font-semibold truncate">{roomName}</h1>
+                    <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <Users className="h-4 w-4" />
+                        {participantCount}
+                    </span>
+                </header>
+                <main className="flex flex-1 flex-col relative min-w-0 min-h-0">
+                    <VoiceChannel channelId={roomId} />
+                </main>
+                <VoiceAudioStreams channelId={roomId} />
+                <GuestControls onOpenDevices={onOpenDevices} />
+            </div>
+        );
+    }
+);
 
 type TGuestRoomProps = {
     token: string;
@@ -351,16 +387,42 @@ type TGuestRoomProps = {
 // the socket behind it only has the room's voice procedures.
 const GuestRoom = memo(({ token }: TGuestRoomProps) => {
     const room = useTempRoom();
+    // Here, not in the app's settings screens: those belong to a session
+    // and are reset with it, and a guest only needs this one panel.
+    const [devicesOpen, setDevicesOpen] = useState(false);
 
-    return (
-        <MediaProvider>
-            {room ? (
-                <GuestRoomView roomId={room.id} roomName={room.name} />
-            ) : (
-                <GuestJoinScreen token={token} />
-            )}
-        </MediaProvider>
-    );
+    const openDevices = useCallback(async () => {
+        // from inside the room: leave it properly first (socket and
+        // subscriptions included), the join form is what closing returns to
+        await leaveTempRoomAsGuest();
+        setDevicesOpen(true);
+    }, []);
+
+    const closeDevices = useCallback(() => setDevicesOpen(false), []);
+
+    let content;
+
+    if (devicesOpen) {
+        content = (
+            <ServerScreenLayout close={closeDevices} title="Device settings">
+                <div className="mx-auto max-w-4xl">
+                    <Devices onClose={closeDevices} />
+                </div>
+            </ServerScreenLayout>
+        );
+    } else if (room) {
+        content = (
+            <GuestRoomView
+                roomId={room.id}
+                roomName={room.name}
+                onOpenDevices={openDevices}
+            />
+        );
+    } else {
+        content = <GuestJoinScreen token={token} onOpenDevices={openDevices} />;
+    }
+
+    return <MediaProvider>{content}</MediaProvider>;
 });
 
 export { GuestRoom };

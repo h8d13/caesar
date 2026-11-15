@@ -1,9 +1,9 @@
+import { Devices } from '@/components/device-settings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@caesar/ui';
 import { memo } from 'react';
 import type { TServerScreenBaseProps } from '../screens';
 import { ServerScreenLayout } from '../server-screen-layout';
 import { DeleteAccount } from './delete-account';
-import { Devices } from './devices';
 import { MultiSessionToggle } from './multi-session-toggle';
 import { Notifications } from './notifications';
 import { Password } from './password';
@@ -28,7 +28,7 @@ const UserSettings = memo(({ close }: TUserSettingsProps) => {
                     </TabsList>
 
                     <TabsContent value="devices" className="space-y-6">
-                        <Devices />
+                        <Devices onClose={close} />
                     </TabsContent>
                     <TabsContent value="profile" className="space-y-6">
                         <Profile />

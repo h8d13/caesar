@@ -60,7 +60,16 @@ import ResolutionFpsControl from './resolution-fps-control';
 
 const DEFAULT_NAME = 'default';
 
-const Devices = memo(() => {
+type TDevicesProps = {
+    // Cancel: whoever hosts the panel decides what closing it means (the
+    // user settings screen for a member, the guest view for a guest)
+    onClose: () => void;
+};
+
+// Device settings live in this browser only (DevicesProvider, local
+// storage): nothing here talks to the server, so the panel works without a
+// session.
+const Devices = memo(({ onClose }: TDevicesProps) => {
     const currentVoiceChannelId = useCurrentVoiceChannelId();
     const settings = usePublicServerSettings();
     const {
@@ -187,6 +196,7 @@ const Devices = memo(() => {
                 </CardDescription>
                 <SettingsFooterActions
                     onSave={saveDeviceSettings}
+                    onCancel={onClose}
                     loading={false}
                 />
             </CardHeader>
