@@ -98,6 +98,13 @@ const defaultUserState: TVoiceUserState = {
   sharingScreen: false
 };
 
+type TPreviewKind = StreamKind.VIDEO | StreamKind.SCREEN;
+
+type TStreamPreview = {
+  image: string;
+  updatedAt: number;
+};
+
 type TTransportMap = {
   [userId: number]: WebRtcTransport;
 };
@@ -141,6 +148,10 @@ class VoiceRuntime {
   private consumers: TConsumerMap = {};
   // producerId -> simulcast quality layers metadata (labels match producer encodings)
   private producerQualityLayers: Map<string, TStreamQualityLayer[]> = new Map();
+  // Latest still of each camera / screen share, uploaded by its owner so
+  // users outside the room can hover a streamer for a preview. In memory
+  // only, dropped with the producer it shows.
+  private streamPreviews: Map<string, TStreamPreview> = new Map();
 
   constructor(channelId: number, isDm = false) {
     this.id = channelId;
@@ -237,6 +248,7 @@ class VoiceRuntime {
       });
     });
 
+    this.streamPreviews.clear();
     voiceRuntimes.delete(this.id);
   };
 
@@ -607,6 +619,7 @@ class VoiceRuntime {
     if (!producer) return;
 
     producer.close();
+    this.streamPreviews.delete(`${userId}-${type}`);
 
     if (type === StreamKind.VIDEO) {
       delete this.videoProducers[userId];
@@ -618,6 +631,28 @@ class VoiceRuntime {
       delete this.screenAudioProducers[userId];
     }
   }
+
+  // Only while the stream runs: a preview never outlives its producer.
+  public setStreamPreview = (
+    userId: number,
+    kind: TPreviewKind,
+    preview: TStreamPreview
+  ): boolean => {
+    if (!this.getProducer(kind, userId)) return false;
+
+    this.streamPreviews.set(`${userId}-${kind}`, preview);
+
+    return true;
+  };
+
+  public getStreamPreview = (
+    userId: number,
+    kind: TPreviewKind
+  ): TStreamPreview | undefined => {
+    if (!this.getProducer(kind, userId)) return undefined;
+
+    return this.streamPreviews.get(`${userId}-${kind}`);
+  };
 
   public getConsumer = (
     userId: number,

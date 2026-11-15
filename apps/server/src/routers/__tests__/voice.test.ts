@@ -369,6 +369,95 @@ describe('voice router', () => {
     await member.voice.leave();
   });
 
+  test('stream previews reach whoever can see the channel, while the stream runs', async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: viewer } = await initTest(2);
+    const { caller: member } = await initTest(3);
+    const voiceChannelId = await owner.channels.add({
+      type: ChannelType.VOICE,
+      name: 'voice-previews',
+      categoryId: 1
+    });
+
+    await owner.channels.update({
+      channelId: voiceChannelId,
+      name: 'voice-previews',
+      private: true
+    });
+    await owner.channels.updatePermissions({
+      channelId: voiceChannelId,
+      userId: 3,
+      permissions: [
+        ChannelPermission.VIEW_CHANNEL,
+        ChannelPermission.JOIN,
+        ChannelPermission.SHARE_SCREEN
+      ]
+    });
+
+    await member.voice.join({
+      channelId: voiceChannelId,
+      state: { micMuted: true, soundMuted: false }
+    });
+
+    const runtime = VoiceRuntime.findById(voiceChannelId)!;
+    // FF D8 FF E0: a JPEG header
+    const image = 'data:image/jpeg;base64,/9j/4AAQSkZJRg==';
+    const query = {
+      channelId: voiceChannelId,
+      userId: 3,
+      kind: StreamKind.SCREEN
+    } as const;
+
+    try {
+      // no stream yet: nothing to attach a preview to
+      await member.voice.setStreamPreview({ kind: StreamKind.SCREEN, image });
+      expect(await owner.voice.getStreamPreview(query)).toBeNull();
+
+      runtime.addProducer(3, StreamKind.SCREEN, {
+        id: 'screen',
+        appData: {},
+        type: 'simple',
+        close: vi.fn(),
+        observer: { on: vi.fn() }
+      } as unknown as Parameters<typeof runtime.addProducer>[2]);
+
+      await expect(
+        member.voice.setStreamPreview({
+          kind: StreamKind.SCREEN,
+          image: 'data:image/svg+xml;base64,PHN2Zz4='
+        })
+      ).rejects.toThrow();
+
+      await member.voice.setStreamPreview({ kind: StreamKind.SCREEN, image });
+
+      expect((await owner.voice.getStreamPreview(query))?.image).toBe(image);
+      // outside the call is fine, outside the channel is not
+      await expect(viewer.voice.getStreamPreview(query)).rejects.toThrow();
+
+      await owner.channels.updatePermissions({
+        channelId: voiceChannelId,
+        userId: 2,
+        permissions: [ChannelPermission.VIEW_CHANNEL]
+      });
+
+      expect((await viewer.voice.getStreamPreview(query))?.image).toBe(image);
+
+      // the preview goes with the stream
+      runtime.removeProducer(3, StreamKind.SCREEN);
+      runtime.addProducer(3, StreamKind.SCREEN, {
+        id: 'screen-2',
+        appData: {},
+        type: 'simple',
+        close: vi.fn(),
+        observer: { on: vi.fn() }
+      } as unknown as Parameters<typeof runtime.addProducer>[2]);
+
+      expect(await viewer.voice.getStreamPreview(query)).toBeNull();
+    } finally {
+      await member.voice.leave();
+    }
+  });
+
   test('a mic is paused while SPEAK is revoked and comes back muted', async () => {
     const { caller: owner } = await initTest(1);
     const { caller: member } = await initTest(3);

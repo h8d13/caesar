@@ -62,6 +62,7 @@ import { useVoiceControls } from './hooks/use-voice-controls';
 import { useVoiceEvents } from './hooks/use-voice-events';
 import { useVoiceHotkeys } from './hooks/use-voice-hotkeys';
 import { MediaControlProvider } from './media-control-provider';
+import { StreamPreviewUploader } from './stream-preview-uploader';
 
 // Encoding strategy:
 // VP9 / AV1 -> single encoding, L1T3 temporal-only scalability. K-SVC
@@ -1310,6 +1311,14 @@ const MediaProvider = memo(({ children }: TMediaProviderProps) => {
                 <MediaControlProvider>
                     <div className="relative">
                         <SpeakingDetector />
+                        <StreamPreviewUploader
+                            stream={localScreenShareStream}
+                            kind={StreamKind.SCREEN}
+                        />
+                        <StreamPreviewUploader
+                            stream={localVideoStream}
+                            kind={StreamKind.VIDEO}
+                        />
                         <FloatingPinnedCard
                             remoteUserStreams={remoteUserStreams}
                             localScreenShareStream={localScreenShareStream}

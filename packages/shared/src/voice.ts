@@ -49,3 +49,12 @@ export type TStreamQuality =
   | { mode: 'layer'; spatialLayer: number };
 
 export type TConsumerType = 'simple' | 'simulcast' | 'svc' | 'pipe';
+
+// Hover previews of a camera / screen share for users outside the call:
+// the streamer uploads a downscaled JPEG still on this cadence.
+export const STREAM_PREVIEW_INTERVAL_MS = 10_000;
+// the server ignores uploads closer together than this
+export const STREAM_PREVIEW_MIN_INTERVAL_MS = 3_000;
+export const STREAM_PREVIEW_MAX_WIDTH = 480;
+// base64 data URL length (~150 KB of JPEG)
+export const STREAM_PREVIEW_MAX_LENGTH = 200_000;
