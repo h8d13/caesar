@@ -231,7 +231,7 @@ describe('temp rooms', () => {
       next: (data) => left.push(data.userId)
     });
 
-    // not the creator, no MANAGE_USERS
+    // not the creator, no MANAGE_TEMP_ROOMS
     await expect(member.tempRooms.close({ roomId: room.id })).rejects.toThrow(
       'Insufficient permissions'
     );
@@ -286,6 +286,40 @@ describe('temp rooms', () => {
       owner.tempRooms.kickGuest({ roomId: room.id, guestId: 1 })
     ).rejects.toThrow('Guest not found in this room');
     await owner.voice.leave();
+  });
+
+  test("MANAGE_TEMP_ROOMS, not MANAGE_USERS, opens other people's rooms", async () => {
+    const { caller: owner } = await initTest(1);
+    const { caller: member } = await initTest(2);
+    const room = await owner.tempRooms.create({});
+    const memberRole = {
+      roleId: 2,
+      name: 'Member',
+      color: '#99aab5',
+      storageQuotaOverrideEnabled: false,
+      storageSpaceQuota: 0
+    };
+
+    await owner.roles.update({
+      ...memberRole,
+      permissions: [Permission.MANAGE_USERS]
+    });
+
+    expect(await member.tempRooms.list()).toEqual([]);
+    await expect(member.tempRooms.close({ roomId: room.id })).rejects.toThrow(
+      'Insufficient permissions'
+    );
+
+    await owner.roles.update({
+      ...memberRole,
+      permissions: [Permission.MANAGE_TEMP_ROOMS]
+    });
+
+    expect((await member.tempRooms.list()).map((r) => r.id)).toEqual([room.id]);
+
+    await member.tempRooms.close({ roomId: room.id });
+
+    expect(findTempRoomById(room.id)).toBeUndefined();
   });
 
   test('a full room refuses the next guest', async () => {

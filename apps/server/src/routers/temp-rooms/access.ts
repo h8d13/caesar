@@ -16,15 +16,15 @@ const ROOM_NOT_FOUND = {
   message: 'This room link is invalid or has expired'
 } as const;
 
-// Its creator and whoever moderates users may close a room or remove a
-// guest from it.
+// Its creator and whoever holds MANAGE_TEMP_ROOMS may close a room or
+// remove a guest from it.
 const getManageableTempRoom = async (ctx: Context, roomId: number) => {
   const room = findTempRoomById(roomId);
 
   invariant(room, ROOM_NOT_FOUND);
 
   if (room.creatorId !== ctx.userId) {
-    await ctx.needsPermission(Permission.MANAGE_USERS);
+    await ctx.needsPermission(Permission.MANAGE_TEMP_ROOMS);
   }
 
   return room;

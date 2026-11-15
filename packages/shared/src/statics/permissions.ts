@@ -22,7 +22,8 @@ export enum Permission {
   MANAGE_STORAGE = 'MANAGE_STORAGE',
   MANAGE_INVITES = 'MANAGE_INVITES',
   VIEW_USER_SENSITIVE_DATA = 'VIEW_USER_SENSITIVE_DATA',
-  MOVE_MEMBERS = 'MOVE_MEMBERS'
+  MOVE_MEMBERS = 'MOVE_MEMBERS',
+  MANAGE_TEMP_ROOMS = 'MANAGE_TEMP_ROOMS'
 }
 
 export const permissionLabels: Record<Permission, string> = {
@@ -48,7 +49,8 @@ export const permissionLabels: Record<Permission, string> = {
   [Permission.MANAGE_STORAGE]: 'Manage storage',
   [Permission.MANAGE_INVITES]: 'Manage invites',
   [Permission.VIEW_USER_SENSITIVE_DATA]: 'View user sensitive data',
-  [Permission.MOVE_MEMBERS]: 'Move voice members'
+  [Permission.MOVE_MEMBERS]: 'Move voice members',
+  [Permission.MANAGE_TEMP_ROOMS]: 'Manage temp rooms'
 };
 
 export const permissionDescriptions: Record<Permission, string> = {
@@ -90,7 +92,9 @@ export const permissionDescriptions: Record<Permission, string> = {
   [Permission.VIEW_USER_SENSITIVE_DATA]:
     'Grants the ability to view user server interactions.',
   [Permission.MOVE_MEMBERS]:
-    'Grants the ability to drag members between voice channels.'
+    'Grants the ability to drag members between voice channels.',
+  [Permission.MANAGE_TEMP_ROOMS]:
+    'Grants the ability to see every open temp room, join it, close it and remove guests from it. Without it a user only manages the rooms they opened.'
 };
 
 export const DEFAULT_ROLE_PERMISSIONS = [
