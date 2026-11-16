@@ -188,10 +188,10 @@ catalogs:
       version: 4.3.5
     '@trpc/client':
       specifier: ^11.28.0
-      version: 11.28.0
+      version: 11.28.3
     '@trpc/server':
       specifier: ^11.28.0
-      version: 11.28.0
+      version: 11.28.3
     '@types/node':
       specifier: ^26.6.6
       version: 26.6.6
@@ -209,7 +209,7 @@ catalogs:
       version: 0.45.4
     lucide-react:
       specifier: ^1.72.0
-      version: 1.72.0
+      version: 1.73.0
     mediasoup:
       specifier: 3.32.2
       version: 3.32.2
@@ -314,7 +314,7 @@ importers:
         version: 3.34.0(@floating-ui/dom@1.8.0)(@tiptap/core@3.34.0(@tiptap/pm@3.34.0))(@tiptap/pm@3.34.0)
       '@trpc/client':
         specifier: 'catalog:'
-        version: 11.28.0(@trpc/server@11.28.0(@types/ws@8.18.2)(typescript@7.0.2))(typescript@7.0.2)
+        version: 11.28.3(@trpc/server@11.28.3(@types/ws@8.18.2)(typescript@7.0.2))(typescript@7.0.2)
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
@@ -332,7 +332,7 @@ importers:
         version: 6.1.9(@types/react@19.3.0)(react@19.3.1)
       lucide-react:
         specifier: 'catalog:'
-        version: 1.72.0(@types/react@19.3.0)(react@19.3.1)
+        version: 1.73.0(@types/react@19.3.0)(react@19.3.1)
       marked:
         specifier: ^18.2.0
         version: 18.2.0
@@ -362,7 +362,7 @@ importers:
         version: 9.3.1(@types/react@19.3.0)(react@19.3.1)(redux@5.0.1)
       react-virtuoso:
         specifier: ^4.18.22
-        version: 4.18.22(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        version: 4.18.23(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       sonner:
         specifier: 'catalog:'
         version: 2.0.8(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -421,7 +421,7 @@ importers:
         version: 14.1.0
       '@trpc/server':
         specifier: 'catalog:'
-        version: 11.28.0(@types/ws@8.18.2)(typescript@7.0.2)
+        version: 11.28.3(@types/ws@8.18.2)(typescript@7.0.2)
       '@types/ini':
         specifier: ^4.1.1
         version: 4.1.1
@@ -560,7 +560,7 @@ importers:
         version: 2.1.1
       lucide-react:
         specifier: 'catalog:'
-        version: 1.72.0(@types/react@19.3.0)(react@19.3.1)
+        version: 1.73.0(@types/react@19.3.0)(react@19.3.1)
       react:
         specifier: 'catalog:'
         version: 19.3.1
@@ -2380,14 +2380,14 @@ packages:
       '@tiptap/core': 3.34.0
       '@tiptap/pm': 3.34.0
 
-  '@trpc/client@11.28.0':
-    resolution: {integrity: sha512-uaj/19rUZKcUkQHAw8mBpjHeR5N/SJyCEy1HPPOC0fpgfV7Zz3cXbz/L9Tqhy+0YMlHwb0PuFGEo2krNjV+Sng==}
+  '@trpc/client@11.28.3':
+    resolution: {integrity: sha512-NnMXBOCVzPMELdQH/X26MhI4u9g83nxWy3apc7UX1beevUk6rEYqfOboqCb/rVoVPu3CBVaPb8PB7AG51oEKvQ==}
     peerDependencies:
-      '@trpc/server': 11.28.0
+      '@trpc/server': 11.28.3
       typescript: '>=5.7.2'
 
-  '@trpc/server@11.28.0':
-    resolution: {integrity: sha512-jj/JplNMKCyNZChmOxYRVnN4vNsS1zvLEnFfPkuvoYmrouKMuFNi4zaIMn1lDx6yyuuru/e5+rjcrBrIGc3p4g==}
+  '@trpc/server@11.28.3':
+    resolution: {integrity: sha512-os9o1enNvbcSSyn9agxsYPkIE8kWK7IJbkD5/ySCCApsdM58cFZ5IF410G9Q0k3RwKfsM2Q/GbGp1rbgCWLp5Q==}
     peerDependencies:
       '@types/aws-lambda': '*'
       '@types/express': '*'
@@ -3332,8 +3332,8 @@ packages:
   linkifyjs@4.4.0:
     resolution: {integrity: sha512-InTexvtbai+2c+dEVGcc6O6P2DMVIiwD9a/i4zFroazOIYLOS6FSVmAJ7kFeumnCMx6/gQqNAkbUvgMubV4+MA==}
 
-  lucide-react@1.72.0:
-    resolution: {integrity: sha512-fbF5i1GU8GODETa3Q7rXqrJrcx3iPYrQtxthom103zGx+Z0BGwKYAW9s+9435ohYJ7hQm0av0PoZcqI1CRwNrg==}
+  lucide-react@1.73.0:
+    resolution: {integrity: sha512-fVOzGviL9mTfHenG1PbCfIceavyGlnpYNSYr+aGZHLRymAJ7DTP6KHuqt0uBkCKAoenr1UVkwSbDIYt2xIesEQ==}
     peerDependencies:
       '@types/react': '*'
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -3491,8 +3491,8 @@ packages:
     resolution: {integrity: sha512-LKWqWJRhstyYo9pGvgor/ivk2w94eSjE3RGVuzLGlr3NmD8bf7RcYGze1mNdEHRP6TRP6rMuDHk5t44hnTRyow==}
     engines: {node: '>=14.19.0'}
 
-  postcss@8.5.32:
-    resolution: {integrity: sha512-LJlKCCAUFKOuZxipUdYw1NzIITEsPcgyOG9LkvRJvuKj/bRzbuRY0ARXvL0pWGpsZvn8jku+LMep2eU0seHp8g==}
+  postcss@8.5.33:
+    resolution: {integrity: sha512-RVHEU9/Pp1Fnjr/MpAJsZoADukCKhfIi15OunEYiGktIkYLkPVvC1sioWolGDS7XByMTx9m/IGbro0Js13zhnQ==}
     engines: {node: ^10 || ^12 || >=14}
 
   postject@1.0.0-alpha.6:
@@ -3645,8 +3645,8 @@ packages:
       '@types/react':
         optional: true
 
-  react-virtuoso@4.18.22:
-    resolution: {integrity: sha512-0Jga1NmJsAwhxZlEyE6xN1HtEHePgsWbuzYcJokanaIDVTbc59ocm3MocQ6yJIYTJICaWqYY3+Z4FQ3mnGuD+w==}
+  react-virtuoso@4.18.23:
+    resolution: {integrity: sha512-J/FpyeLUbU6uEXiMsTKjlJaSMqpjxPCanjSYRxFKobLhP73Wo4gloFldDD7osmFUEv2VMF8Ki/YScofwa3ymyw==}
     peerDependencies:
       react: '>=16 || >=17 || >= 18 || >= 19'
       react-dom: '>=16 || >=17 || >= 18 || >=19'
@@ -3745,8 +3745,8 @@ packages:
   tailwindcss@4.3.5:
     resolution: {integrity: sha512-FcQk9BuffmEHJP2G0XmB2SplU1aLTI7j07Kunk+U74Ny+XiWOtzXz9aujFZ/avntw1e2cOv/3PkgzflQ7gX2vQ==}
 
-  tapable@2.3.3:
-    resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
+  tapable@2.3.4:
+    resolution: {integrity: sha512-NHFiWnAbMJxNNpBwiO7jJVGDuqMxT9/oV8v57RR+fgBQShkJil5inGD8/xWy0hjLyHQyX1tu27QANhlz3KBqCg==}
     engines: {node: '>=6'}
 
   tar@7.5.23:
@@ -5437,12 +5437,12 @@ snapshots:
       '@tiptap/core': 3.34.0(@tiptap/pm@3.34.0)
       '@tiptap/pm': 3.34.0
 
-  '@trpc/client@11.28.0(@trpc/server@11.28.0(@types/ws@8.18.2)(typescript@7.0.2))(typescript@7.0.2)':
+  '@trpc/client@11.28.3(@trpc/server@11.28.3(@types/ws@8.18.2)(typescript@7.0.2))(typescript@7.0.2)':
     dependencies:
-      '@trpc/server': 11.28.0(@types/ws@8.18.2)(typescript@7.0.2)
+      '@trpc/server': 11.28.3(@types/ws@8.18.2)(typescript@7.0.2)
       typescript: 7.0.2
 
-  '@trpc/server@11.28.0(@types/ws@8.18.2)(typescript@7.0.2)':
+  '@trpc/server@11.28.3(@types/ws@8.18.2)(typescript@7.0.2)':
     dependencies:
       typescript: 7.0.2
     optionalDependencies:
@@ -5644,7 +5644,7 @@ snapshots:
       '@oxc-project/runtime': 0.158.0
       '@oxc-project/types': 0.158.0
       lightningcss: 1.33.0
-      postcss: 8.5.32
+      postcss: 8.5.33
       yuku-parser: 0.19.0
     optionalDependencies:
       '@types/node': 26.6.6
@@ -5862,7 +5862,7 @@ snapshots:
   enhanced-resolve@5.27.0:
     dependencies:
       graceful-fs: 4.2.12
-      tapable: 2.3.3
+      tapable: 2.3.4
 
   entities@8.1.0: {}
 
@@ -6116,7 +6116,7 @@ snapshots:
 
   linkifyjs@4.4.0: {}
 
-  lucide-react@1.72.0(@types/react@19.3.0)(react@19.3.1):
+  lucide-react@1.73.0(@types/react@19.3.0)(react@19.3.1):
     dependencies:
       react: 19.3.1
     optionalDependencies:
@@ -6331,7 +6331,7 @@ snapshots:
 
   pngjs@7.0.0: {}
 
-  postcss@8.5.32:
+  postcss@8.5.33:
     dependencies:
       nanoid: 3.3.20
       picocolors: 1.1.1
@@ -6500,7 +6500,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.3.0
 
-  react-virtuoso@4.18.22(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
+  react-virtuoso@4.18.23(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
     dependencies:
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
@@ -6532,7 +6532,7 @@ snapshots:
       is-plain-object: 5.1.0
       launder: 1.7.2
       parse-srcset: 1.0.2
-      postcss: 8.5.32
+      postcss: 8.5.33
 
   scheduler@0.28.0: {}
 
@@ -6579,7 +6579,7 @@ snapshots:
 
   tailwindcss@4.3.5: {}
 
-  tapable@2.3.3: {}
+  tapable@2.3.4: {}
 
   tar@7.5.23:
     dependencies:
