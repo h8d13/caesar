@@ -295,22 +295,22 @@ importers:
         specifier: ^5.107.1
         version: 5.107.1(@types/react@19.3.0)(react@19.3.1)
       '@tiptap/core':
-        specifier: ^3.33.1
+        specifier: ^3.34.0
         version: 3.34.0(@tiptap/pm@3.34.0)
       '@tiptap/extension-emoji':
-        specifier: ^3.33.1
+        specifier: ^3.34.0
         version: 3.34.0(@tiptap/core@3.34.0(@tiptap/pm@3.34.0))(@tiptap/pm@3.34.0)(@tiptap/suggestion@3.34.0(@floating-ui/dom@1.8.0)(@tiptap/core@3.34.0(@tiptap/pm@3.34.0))(@tiptap/pm@3.34.0))(emojibase@18.0.0)
       '@tiptap/pm':
-        specifier: ^3.33.1
+        specifier: ^3.34.0
         version: 3.34.0
       '@tiptap/react':
-        specifier: ^3.33.1
+        specifier: ^3.34.0
         version: 3.34.0(@floating-ui/dom@1.8.0)(@tiptap/core@3.34.0(@tiptap/pm@3.34.0))(@tiptap/pm@3.34.0)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@tiptap/starter-kit':
-        specifier: ^3.33.1
+        specifier: ^3.34.0
         version: 3.34.0
       '@tiptap/suggestion':
-        specifier: ^3.33.1
+        specifier: ^3.34.0
         version: 3.34.0(@floating-ui/dom@1.8.0)(@tiptap/core@3.34.0(@tiptap/pm@3.34.0))(@tiptap/pm@3.34.0)
       '@trpc/client':
         specifier: 'catalog:'
@@ -322,7 +322,7 @@ importers:
         specifier: ^4.4.0
         version: 4.4.0
       filesize:
-        specifier: ^11.0.31
+        specifier: ^11.0.32
         version: 11.0.32
       highlight.js:
         specifier: ^11.12.0
