@@ -7,7 +7,7 @@ import type http from 'http';
 import path from 'path';
 import { pipeline } from 'stream';
 import { logger } from '../logger';
-import { PayloadTooLargeError } from './utils';
+import { MalformedJsonError, PayloadTooLargeError } from './utils';
 
 type HttpRouteHandler = (
   req: http.IncomingMessage,
@@ -55,8 +55,11 @@ const getJsonBody = async <T = unknown>(
       try {
         const body = Buffer.concat(chunks).toString('utf8');
         resolve(body ? JSON.parse(body) : {});
-      } catch (err) {
-        reject(err);
+      } catch {
+        // A JSON syntax error is bad client input, not a server fault:
+        // reject with a typed error the router maps to 400, not a raw
+        // SyntaxError that falls through to a generic 500.
+        reject(new MalformedJsonError());
       }
     });
 

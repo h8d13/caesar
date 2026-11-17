@@ -25,7 +25,11 @@ import { logoutRouteHandler } from './logout';
 import { publicRouteHandler } from './public';
 import { sessionRefreshRouteHandler } from './session-refresh';
 import { uploadFileRouteHandler } from './upload';
-import { HttpValidationError, PayloadTooLargeError } from './utils';
+import {
+  HttpValidationError,
+  MalformedJsonError,
+  PayloadTooLargeError
+} from './utils';
 
 type SupportedMethod = 'GET' | 'POST';
 
@@ -181,6 +185,9 @@ const createHttpServer = async (port: number = config.server.port) => {
             return;
           } else if (error instanceof PayloadTooLargeError) {
             sendJson(res, 413, { error: error.message });
+            return;
+          } else if (error instanceof MalformedJsonError) {
+            sendJson(res, 400, { error: error.message });
             return;
           }
 

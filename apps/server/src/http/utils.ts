@@ -17,4 +17,12 @@ class PayloadTooLargeError extends Error {
   }
 }
 
-export { HttpValidationError, PayloadTooLargeError };
+class MalformedJsonError extends Error {
+  constructor(message = 'Malformed JSON body') {
+    super(message);
+    this.name = 'MalformedJsonError';
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+export { HttpValidationError, MalformedJsonError, PayloadTooLargeError };
