@@ -39,4 +39,18 @@ const readErrorBody = async (response: Response): Promise<TErrorBody> => {
     return {};
 };
 
-export { readErrorBody, serverFetch, UNREACHABLE_MESSAGE };
+// Forms render per-field errors, but some failures carry only a top-level
+// { error } (malformed or wrongly shaped body, 413): show that on
+// fallbackField rather than failing with nothing on screen.
+const toFieldErrors = (
+    body: TErrorBody,
+    fallbackField: string
+): Record<string, string> => {
+    const errors = body.errors ?? {};
+
+    if (Object.keys(errors).length > 0 || !body.error) return errors;
+
+    return { [fallbackField]: body.error };
+};
+
+export { readErrorBody, serverFetch, toFieldErrors, UNREACHABLE_MESSAGE };

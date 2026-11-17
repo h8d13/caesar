@@ -7,7 +7,7 @@ import {
   getRequestPathname,
   hasPrefixPathSegment
 } from '../helpers';
-import { PayloadTooLargeError } from '../utils';
+import { MalformedJsonError, PayloadTooLargeError } from '../utils';
 
 const createMockRequest = (
   url?: string,
@@ -92,7 +92,36 @@ describe('http helpers', () => {
         req.emit('end');
       });
 
-      await expect(getJsonBody(req, 64 * 1024)).rejects.toBeInstanceOf(Error);
+      // typed, so the router can answer 400 instead of a generic 500
+      await expect(getJsonBody(req, 64 * 1024)).rejects.toBeInstanceOf(
+        MalformedJsonError
+      );
+    });
+
+    test('rejects a whitespace-only body as malformed', async () => {
+      const req = createMockRequest('/login', 'localhost:9999');
+
+      queueMicrotask(() => {
+        req.emit('data', '   ');
+        req.emit('end');
+      });
+
+      await expect(getJsonBody(req, 64 * 1024)).rejects.toBeInstanceOf(
+        MalformedJsonError
+      );
+    });
+
+    test('rejects a BOM-prefixed body as malformed', async () => {
+      const req = createMockRequest('/login', 'localhost:9999');
+
+      queueMicrotask(() => {
+        req.emit('data', '\uFEFF{}');
+        req.emit('end');
+      });
+
+      await expect(getJsonBody(req, 64 * 1024)).rejects.toBeInstanceOf(
+        MalformedJsonError
+      );
     });
 
     test('rejects when request emits an error', async () => {

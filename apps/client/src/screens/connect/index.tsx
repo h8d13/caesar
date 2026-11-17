@@ -1,7 +1,11 @@
 import { useInfo } from '@/features/server/hooks';
 import { ensureAudioCtxReady } from '@/features/server/sounds/actions';
 import { getFileUrl, getUrlFromServer } from '@/helpers/get-file-url';
-import { readErrorBody, serverFetch } from '@/helpers/server-fetch';
+import {
+    readErrorBody,
+    serverFetch,
+    toFieldErrors
+} from '@/helpers/server-fetch';
 import {
     getLocalStorageItemBool,
     LocalStorageKey,
@@ -246,7 +250,7 @@ const Connect = memo(() => {
             if (!response.ok) {
                 const data = await readErrorBody(response);
 
-                setErrors(data.errors || {});
+                setErrors(toFieldErrors(data, 'identity'));
                 return;
             }
 

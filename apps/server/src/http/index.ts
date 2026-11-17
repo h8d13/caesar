@@ -165,6 +165,20 @@ const createHttpServer = async (port: number = config.server.port) => {
             return interfaceRouteHandler(req, res);
           }
         } catch (error) {
+          // Client went away mid-request (closed tab, dropped connection):
+          // nobody is left to answer, and it is not a server fault to log.
+          // res, not req: req reads as destroyed once its body is consumed.
+          if (res.destroyed) return;
+
+          // A handler that throws after it started answering cannot be given
+          // a second status line; writeHead would throw from this listener
+          // as an unhandled rejection.
+          if (res.headersSent) {
+            logger.error('HTTP route error after headers sent:', error);
+            res.end();
+            return;
+          }
+
           const errorsMap: Record<string, string> = {};
 
           if (error instanceof z.ZodError) {
@@ -174,6 +188,17 @@ const createHttpServer = async (port: number = config.server.port) => {
               if (typeof field === 'string') {
                 errorsMap[field] = issue.message;
               }
+            }
+
+            // Valid JSON of the wrong shape (null, [], "x", 42) fails at the
+            // root, with no field to hang the message on: without this the
+            // client gets a bare { errors: {} } and shows nothing.
+            if (Object.keys(errorsMap).length === 0) {
+              sendJson(res, 400, {
+                error: 'Invalid request body',
+                errors: errorsMap
+              });
+              return;
             }
 
             sendJson(res, 400, { errors: errorsMap });
