@@ -6,8 +6,9 @@
 
 - Text Channels vs Voice Channels
 
-Voice channels **never hold text or attachements**. (Do not need a rotate token)
-Can have 3 types: standard (or private), DM(1-to-1, with E2EE) or TMP(One to many un-authed)
+Voice channels **never hold text or attachements**. (Do not need a rotate token).
+
+Can have 3 types: standard (public or private), DM(1-to-1, with E2EE) or TEMP(One to many un-authed)
 
 - ACLs
 
