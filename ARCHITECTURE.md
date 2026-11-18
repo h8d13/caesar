@@ -6,11 +6,11 @@
 
 - Text Channels vs Voice Channels
 
-Voice channels **never hold text or attachements**. (Do not need a rotate token).
+Voice channels **never hold text or attachments**. (Do not need a rotate token).
 
 Can have 3 types: standard (public or private), DM(1-to-1, with E2EE) or TEMP(One to many un-authed)
 
-This seperation is intentional, I do not see a sane reason a voice channel should have text. Just like
+This separation is intentional, I do not see a sane reason a voice channel should have text. Just like
 "threads" are redundant to actual text channels replies. Or groups in DMs being the same as using VCs.
 
 So they are all kept separate, on purpose.
