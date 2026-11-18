@@ -14,13 +14,9 @@
  ╚═════╝   ╚═╝  ╚═╝  ╚══════╝  ╚══════╝  ╚═╝  ╚═╝   ╚═╝  ╚═╝
 ```
 
-## info
+## wiki
 
-privacy focused fork of https://github.com/Sharkord/sharkord
-
-your digital privacy matters now https://fightchatcontrol.eu
-
-documentation available https://github.com/h8d13/caesar/wiki
+- https://github.com/h8d13/caesar/wiki
 
 ## stack
 
