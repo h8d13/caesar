@@ -52,6 +52,9 @@ RUN pnpm --filter @caesar/server build:sea
 # runtime (process.cwd() == /app); mediasoup resolves its worker from there.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm --filter @caesar/server deploy --prod /deploy/server
+# Drop what those deps install but never load (build sources, the
+# postinstall's own deps, types), then load them from what is left.
+RUN node apps/server/build/prune-node-modules.mjs /deploy/server/node_modules
 
 # distroless has no shell/chown, so stage the whole tree under /out; the runtime
 # lays it down with COPY. assets -> /app/static-prod-assets (served and
