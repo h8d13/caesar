@@ -27,5 +27,5 @@ config.ini
 .dockerignore
 
 LICENSE
-readme
+README.md
 *.md

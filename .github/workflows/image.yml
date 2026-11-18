@@ -22,7 +22,7 @@ on:
     tags: ['v*']
     paths-ignore:
       - '**.md'
-      - 'readme'
+      - 'README.md'
   workflow_dispatch:
 
 # Read-only by default: the ci job installs and runs dependency code on the

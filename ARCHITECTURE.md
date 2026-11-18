@@ -1,9 +1,5 @@
 # Caesar
 
-[![Docker Pulls](https://ghcr-badge.elias.eu.org/shield/h8d13/caesar/caesar)](https://github.com/h8d13/caesar/pkgs/container/caesar)
-[![Image size](https://ghcr-badge.egpl.dev/h8d13/caesar/size?tag=edge)](https://github.com/h8d13/caesar/pkgs/container/caesar)
-[![License](https://img.shields.io/github/license/h8d13/caesar)](LICENSE)
-
 - Text Channels vs Voice Channels
 
 Voice channels **never hold text or attachments**. (Do not need a rotate token).
