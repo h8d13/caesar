@@ -7,15 +7,12 @@ import {
 import { db } from '@server/db';
 import { publishUser } from '@server/db/publishers';
 import {
+  activitiesProcedure,
   createGameLedgerBindings,
   withBalanceLock
 } from '@server/games/shared-bindings';
 import { pubsub } from '@server/utils/pubsub';
-import {
-  protectedProcedure,
-  rateLimitedProcedure,
-  t
-} from '@server/utils/trpc';
+import { rateLimitedProcedure, t } from '@server/utils/trpc';
 import { and, countDistinct, desc, eq, sql } from 'drizzle-orm';
 import z from 'zod';
 
@@ -156,11 +153,11 @@ const broadcast = async () => {
   return pool;
 };
 
-const getStateRoute = protectedProcedure.query(({ ctx }) =>
+const getStateRoute = activitiesProcedure.query(({ ctx }) =>
   stateFor(ctx.userId)
 );
 
-const createPoolRoute = protectedProcedure
+const createPoolRoute = activitiesProcedure
   .use(serialPool)
   .input(
     z.object({
@@ -211,7 +208,7 @@ const createPoolRoute = protectedProcedure
     return stateFor(ctx.userId, await broadcast());
   });
 
-const stakeRoute = rateLimitedProcedure(protectedProcedure, {
+const stakeRoute = rateLimitedProcedure(activitiesProcedure, {
   maxRequests: 20,
   windowMs: 10_000,
   logLabel: 'prediction.stake'
@@ -296,7 +293,7 @@ const stakeRoute = rateLimitedProcedure(protectedProcedure, {
     return stateFor(ctx.userId, await broadcast());
   });
 
-const resolveRoute = protectedProcedure
+const resolveRoute = activitiesProcedure
   .use(serialPool)
   .input(z.object({ winningOptionId: z.number().int() }))
   .mutation(async ({ ctx, input }) => {
@@ -378,7 +375,7 @@ const resolveRoute = protectedProcedure
     return stateFor(ctx.userId, await broadcast());
   });
 
-const cancelRoute = protectedProcedure
+const cancelRoute = activitiesProcedure
   .use(serialPool)
   .mutation(async ({ ctx }) => {
     const pool = await getCurrentPool();
@@ -417,7 +414,7 @@ const cancelRoute = protectedProcedure
   });
 
 // Server-wide pool, so the global publish/subscribe pair: every client listens.
-const onUpdateRoute = protectedProcedure.subscription(({ ctx }) => {
+const onUpdateRoute = activitiesProcedure.subscription(({ ctx }) => {
   return ctx.pubsub.subscribe(ServerEvents.PREDICTION_POOL_UPDATE);
 });
 

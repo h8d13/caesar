@@ -69,12 +69,12 @@ const General = memo(() => {
 
                 <Group
                     label="Enable Server Activities"
-                    description="Allow users to use Watch Party, Casino with SC. If disabled, all game routes are blocked."
+                    description="Allow users to use activities. If disabled, all activity routes are blocked."
                 >
                     <Switch
-                        checked={settings.gamesEnabled}
+                        checked={settings.activitiesEnabled}
                         onCheckedChange={(checked) =>
-                            onChange('gamesEnabled', checked)
+                            onChange('activitiesEnabled', checked)
                         }
                     />
                 </Group>

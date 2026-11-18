@@ -1,5 +1,5 @@
 import { db } from '@server/db';
-import { assertGamesEnabled } from '@server/games/shared-bindings';
+import { assertActivitiesEnabled } from '@server/games/shared-bindings';
 import { protectedProcedure } from '@server/utils/trpc';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -13,7 +13,7 @@ const getGameHistoryRoute = protectedProcedure
     })
   )
   .query(async ({ input }) => {
-    await assertGamesEnabled();
+    await assertActivitiesEnabled();
     const offset = input.page * PAGE_SIZE;
 
     // Union query across all 3 game types, all resolved bets (wins AND losses), sorted by time

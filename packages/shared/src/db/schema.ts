@@ -55,7 +55,7 @@ const settings = sqliteTable(
     directMessagesEnabled: integer('direct_messages_enabled', {
       mode: 'boolean'
     }).notNull(),
-    gamesEnabled: integer('games_enabled', {
+    activitiesEnabled: integer('games_enabled', {
       mode: 'boolean'
     }).notNull(),
     storageUploadEnabled: integer('storage_uploads_enabled', {

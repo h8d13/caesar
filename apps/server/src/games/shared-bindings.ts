@@ -16,22 +16,22 @@ const runDetached = (label: string, work: Promise<unknown>) => {
   });
 };
 
-const assertGamesEnabled = async (): Promise<void> => {
+const assertActivitiesEnabled = async (): Promise<void> => {
   const settings = await getSettings();
-  invariant(settings.gamesEnabled, {
+  invariant(settings.activitiesEnabled, {
     code: 'FORBIDDEN',
-    message: 'Games are disabled on this server'
+    message: 'Activities are disabled on this server'
   });
 };
 
-// Games-gated equivalent of protectedProcedure. Used by every game
-// router so flipping settings.gamesEnabled off blocks every entry
-// point (queries, mutations, subscriptions) in one swap. Standalone
-// `assertGamesEnabled()` stays exported for non-game routes that touch
-// game data (bank balance, game history).
-const gamesProcedure = protectedProcedure.use(
+// Activities-gated equivalent of protectedProcedure. Used by every game
+// and watch-party router so flipping settings.activitiesEnabled off blocks
+// every entry point (queries, mutations, subscriptions) in one swap.
+// Standalone `assertActivitiesEnabled()` stays exported for non-game routes
+// that touch game data (bank balance, game history).
+const activitiesProcedure = protectedProcedure.use(
   t.middleware(async ({ next }) => {
-    await assertGamesEnabled();
+    await assertActivitiesEnabled();
     return next();
   })
 );
@@ -112,9 +112,9 @@ const createGameLedgerBindings = (ledgerableType: string) => ({
 });
 
 export {
-  assertGamesEnabled,
+  assertActivitiesEnabled,
   createGameLedgerBindings,
-  gamesProcedure,
+  activitiesProcedure,
   runDetached,
   serialPerUser,
   withBalanceLock

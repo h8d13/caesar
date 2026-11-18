@@ -1,7 +1,8 @@
 import { LayerType, ServerEvents, type Layer } from '@caesar/shared';
+import { activitiesProcedure } from '@server/games/shared-bindings';
 import { MAX_LAYERS, whiteboard } from '@server/runtimes/whiteboard';
 import { invariant } from '@server/utils/invariant';
-import { protectedProcedure, t } from '@server/utils/trpc';
+import { t } from '@server/utils/trpc';
 import { z } from 'zod';
 
 // Every layer is broadcast to every client and kept in server memory, so
@@ -36,11 +37,11 @@ const layerSchema = z.object({
 
 // --- Queries ---
 
-const getStateRoute = protectedProcedure.query(() => whiteboard.getState());
+const getStateRoute = activitiesProcedure.query(() => whiteboard.getState());
 
 // --- Mutations ---
 
-const addLayerRoute = protectedProcedure
+const addLayerRoute = activitiesProcedure
   .input(
     z.object({
       layerId: layerIdSchema,
@@ -61,7 +62,7 @@ const addLayerRoute = protectedProcedure
     });
   });
 
-const updateLayerRoute = protectedProcedure
+const updateLayerRoute = activitiesProcedure
   .input(
     z.object({
       layerId: layerIdSchema,
@@ -81,7 +82,7 @@ const updateLayerRoute = protectedProcedure
     });
   });
 
-const deleteLayerRoute = protectedProcedure
+const deleteLayerRoute = activitiesProcedure
   .input(z.object({ layerIds: z.array(layerIdSchema).max(MAX_LAYERS) }))
   .mutation(({ input, ctx }) => {
     whiteboard.deleteLayer(input.layerIds);
@@ -91,13 +92,13 @@ const deleteLayerRoute = protectedProcedure
     });
   });
 
-const clearRoute = protectedProcedure.mutation(({ ctx }) => {
+const clearRoute = activitiesProcedure.mutation(({ ctx }) => {
   whiteboard.clear();
 
   ctx.pubsub.publish(ServerEvents.WHITEBOARD_CLEAR, {});
 });
 
-const cursorUpdateRoute = protectedProcedure
+const cursorUpdateRoute = activitiesProcedure
   .input(
     z.object({
       x: coordinate,
@@ -119,23 +120,23 @@ const cursorUpdateRoute = protectedProcedure
 // Global publish/subscribe pairs: the board is server-wide, so every
 // connected client listens regardless of channel.
 
-const onLayerAddRoute = protectedProcedure.subscription(({ ctx }) => {
+const onLayerAddRoute = activitiesProcedure.subscription(({ ctx }) => {
   return ctx.pubsub.subscribe(ServerEvents.WHITEBOARD_LAYER_ADD);
 });
 
-const onLayerUpdateRoute = protectedProcedure.subscription(({ ctx }) => {
+const onLayerUpdateRoute = activitiesProcedure.subscription(({ ctx }) => {
   return ctx.pubsub.subscribe(ServerEvents.WHITEBOARD_LAYER_UPDATE);
 });
 
-const onLayerDeleteRoute = protectedProcedure.subscription(({ ctx }) => {
+const onLayerDeleteRoute = activitiesProcedure.subscription(({ ctx }) => {
   return ctx.pubsub.subscribe(ServerEvents.WHITEBOARD_LAYER_DELETE);
 });
 
-const onCursorUpdateRoute = protectedProcedure.subscription(({ ctx }) => {
+const onCursorUpdateRoute = activitiesProcedure.subscription(({ ctx }) => {
   return ctx.pubsub.subscribe(ServerEvents.WHITEBOARD_CURSOR_UPDATE);
 });
 
-const onClearRoute = protectedProcedure.subscription(({ ctx }) => {
+const onClearRoute = activitiesProcedure.subscription(({ ctx }) => {
   return ctx.pubsub.subscribe(ServerEvents.WHITEBOARD_CLEAR);
 });
 

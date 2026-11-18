@@ -45,7 +45,7 @@ const UserControl = memo(() => {
     const { ownVoiceState, toggleMic, toggleSound } = useMedia();
     const channelCan = useChannelCan(currentVoiceChannelId);
     const publicSettings = usePublicServerSettings();
-    const gamesEnabled = publicSettings?.gamesEnabled ?? true;
+    const activitiesEnabled = publicSettings?.activitiesEnabled ?? true;
 
     const handleSettingsClick = useCallback(() => {
         openServerScreen(ServerScreen.USER_SETTINGS);
@@ -70,21 +70,21 @@ const UserControl = memo(() => {
             id: 'casino',
             label: 'Casino',
             icon: Dices,
-            enabled: gamesEnabled,
+            enabled: activitiesEnabled,
             onSelect: () => openServerScreen(ServerScreen.GAMES)
         },
         {
             id: 'watch-party',
             label: 'Watch party',
             icon: MonitorPlay,
-            enabled: gamesEnabled,
+            enabled: activitiesEnabled,
             onSelect: () => openServerScreen(ServerScreen.WATCH_PARTY)
         },
         {
             id: 'whiteboard',
             label: 'Whiteboard',
             icon: PenTool,
-            enabled: true,
+            enabled: activitiesEnabled,
             onSelect: () => openServerScreen(ServerScreen.WHITEBOARD)
         }
     ];

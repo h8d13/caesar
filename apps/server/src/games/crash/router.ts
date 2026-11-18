@@ -2,7 +2,7 @@ import type {
   TCrashRoundResult,
   TCrashStateUpdate
 } from '@caesar/shared/games/crash';
-import { gamesProcedure } from '@server/games/shared-bindings';
+import { activitiesProcedure } from '@server/games/shared-bindings';
 import { rateLimitedProcedure, t } from '@server/utils/trpc';
 import { TRPCError } from '@trpc/server';
 import { observable } from '@trpc/server/observable';
@@ -16,17 +16,17 @@ const setRuntime = (r: CrashRuntime) => {
   runtime = r;
 };
 
-const getStateRoute = gamesProcedure.query(() => {
+const getStateRoute = activitiesProcedure.query(() => {
   return runtime.getState();
 });
 
-const getHistoryRoute = gamesProcedure
+const getHistoryRoute = activitiesProcedure
   .input(z.object({ limit: z.number().min(1).max(50).default(20) }))
   .query(({ input }) => {
     return runtime.getHistory(input.limit);
   });
 
-const placeBetRoute = rateLimitedProcedure(gamesProcedure, {
+const placeBetRoute = rateLimitedProcedure(activitiesProcedure, {
   maxRequests: 5,
   windowMs: 10_000,
   logLabel: 'crash.placeBet'
@@ -43,7 +43,7 @@ const placeBetRoute = rateLimitedProcedure(gamesProcedure, {
     }
   });
 
-const cashOutRoute = rateLimitedProcedure(gamesProcedure, {
+const cashOutRoute = rateLimitedProcedure(activitiesProcedure, {
   maxRequests: 5,
   windowMs: 10_000,
   logLabel: 'crash.cashOut'
@@ -58,14 +58,14 @@ const cashOutRoute = rateLimitedProcedure(gamesProcedure, {
   }
 });
 
-const onStateUpdateRoute = gamesProcedure.subscription(() => {
+const onStateUpdateRoute = activitiesProcedure.subscription(() => {
   return observable<TCrashStateUpdate>((observer) => {
     const unsub = runtime.subscribeToState((state) => observer.next(state));
     return { unsubscribe: unsub };
   });
 });
 
-const onRoundResultRoute = gamesProcedure.subscription(() => {
+const onRoundResultRoute = activitiesProcedure.subscription(() => {
   return observable<TCrashRoundResult>((observer) => {
     const unsub = runtime.subscribeToResult((result) => observer.next(result));
     return { unsubscribe: unsub };

@@ -44,7 +44,7 @@ const seedDatabase = async () => {
     serverId: randomUUIDv7(),
     secretToken: sha256(originalToken),
     directMessagesEnabled: true,
-    gamesEnabled: true,
+    activitiesEnabled: true,
     storageUploadEnabled: true,
     storageQuota: STORAGE_QUOTA,
     storageUploadMaxFileSize: STORAGE_MAX_FILE_SIZE,

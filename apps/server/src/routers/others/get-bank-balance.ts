@@ -1,11 +1,11 @@
 import { socialCreditLedger } from '@caesar/shared/db/schema';
 import { db } from '@server/db';
-import { assertGamesEnabled } from '@server/games/shared-bindings';
+import { assertActivitiesEnabled } from '@server/games/shared-bindings';
 import { protectedProcedure } from '@server/utils/trpc';
 import { sql } from 'drizzle-orm';
 
 const getBankBalanceRoute = protectedProcedure.query(async () => {
-  await assertGamesEnabled();
+  await assertActivitiesEnabled();
   // Bank balance = negative sum of all game ledger entries
   // When players lose (negative entries), bank gains. When players win (positive entries), bank loses.
   const result = await db

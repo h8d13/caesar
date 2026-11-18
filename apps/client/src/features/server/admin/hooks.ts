@@ -45,7 +45,7 @@ export const useAdminGeneral = () => {
         name: d?.name ?? '',
         description: d?.description ?? '',
         directMessagesEnabled: d?.directMessagesEnabled ?? true,
-        gamesEnabled: d?.gamesEnabled ?? true
+        activitiesEnabled: d?.activitiesEnabled ?? true
     }));
 
     const submit = useLatestCallback(async () => {
@@ -56,7 +56,7 @@ export const useAdminGeneral = () => {
                 name: settings.name,
                 description: settings.description,
                 directMessagesEnabled: settings.directMessagesEnabled,
-                gamesEnabled: settings.gamesEnabled
+                activitiesEnabled: settings.activitiesEnabled
             });
             // refresh the cached query so reopening settings reflects what was
             // saved (staleTime is 30s, so the cache would otherwise serve the

@@ -96,7 +96,7 @@
 - Login sets an `HttpOnly` `SameSite=Strict` cookie; `public.ts` reads header or cookie
 - Media ports: `CAESAR_WEBRTC_TCP=false` runs voice UDP only (no TCP listener
   to flood); per-source `nftables` connection limit documented for those who
-  keep the TCP fallback (wiki Guide "Media ports")
+  keep the TCP fallback (wiki Firewall "Media ports")
 
 ## Permissions & moderation (ACL)
 

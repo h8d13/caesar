@@ -60,7 +60,7 @@ describe('others router', () => {
       name: 'Updated Test Server',
       description: 'An updated description',
       directMessagesEnabled: false,
-      gamesEnabled: false,
+      activitiesEnabled: false,
       storageUploadEnabled: false,
       storageFileSharingInDirectMessages: false,
       storageQuota: 10 * 1024 * 1024 * 1024,
@@ -81,7 +81,7 @@ describe('others router', () => {
     expect(settings.directMessagesEnabled).toBe(
       newSettings.directMessagesEnabled
     );
-    expect(settings.gamesEnabled).toBe(newSettings.gamesEnabled);
+    expect(settings.activitiesEnabled).toBe(newSettings.activitiesEnabled);
     expect(settings.storageUploadEnabled).toBe(
       newSettings.storageUploadEnabled
     );
@@ -202,28 +202,34 @@ describe('others router', () => {
     ).rejects.toThrow('Too many requests. Please try again shortly.');
   });
 
-  test('blocks game routes and bank/history when gamesEnabled is false', async () => {
+  test('blocks activity routes and bank/history when activities are off', async () => {
     const { caller } = await initTest(1);
 
-    await updateSettings({ gamesEnabled: false });
+    await updateSettings({ activitiesEnabled: false });
 
     await expect(caller.coinflip.getState()).rejects.toThrow(
-      'Games are disabled on this server'
+      'Activities are disabled on this server'
     );
     await expect(caller.crash.getState()).rejects.toThrow(
-      'Games are disabled on this server'
+      'Activities are disabled on this server'
     );
     await expect(caller.roulette.getState()).rejects.toThrow(
-      'Games are disabled on this server'
+      'Activities are disabled on this server'
     );
     await expect(caller.watchParty.getState()).rejects.toThrow(
-      'Games are disabled on this server'
+      'Activities are disabled on this server'
+    );
+    await expect(caller.prediction.getState()).rejects.toThrow(
+      'Activities are disabled on this server'
+    );
+    await expect(caller.whiteboard.getState()).rejects.toThrow(
+      'Activities are disabled on this server'
     );
     await expect(caller.others.getBankBalance()).rejects.toThrow(
-      'Games are disabled on this server'
+      'Activities are disabled on this server'
     );
     await expect(caller.others.getGameHistory({ page: 0 })).rejects.toThrow(
-      'Games are disabled on this server'
+      'Activities are disabled on this server'
     );
   });
 

@@ -3,7 +3,7 @@ import {
   type TCoinflipResult,
   type TCoinflipStateUpdate
 } from '@caesar/shared/games/coinflip';
-import { gamesProcedure } from '@server/games/shared-bindings';
+import { activitiesProcedure } from '@server/games/shared-bindings';
 import { rateLimitedProcedure, t } from '@server/utils/trpc';
 import { TRPCError } from '@trpc/server';
 import { observable } from '@trpc/server/observable';
@@ -17,11 +17,11 @@ const setRuntime = (r: CoinflipRuntime) => {
   runtime = r;
 };
 
-const getStateRoute = gamesProcedure.query(() => {
+const getStateRoute = activitiesProcedure.query(() => {
   return runtime.getState();
 });
 
-const createChallengeRoute = rateLimitedProcedure(gamesProcedure, {
+const createChallengeRoute = rateLimitedProcedure(activitiesProcedure, {
   maxRequests: 5,
   windowMs: 10_000,
   logLabel: 'coinflip.createChallenge'
@@ -48,7 +48,7 @@ const createChallengeRoute = rateLimitedProcedure(gamesProcedure, {
     }
   });
 
-const acceptChallengeRoute = rateLimitedProcedure(gamesProcedure, {
+const acceptChallengeRoute = rateLimitedProcedure(activitiesProcedure, {
   maxRequests: 5,
   windowMs: 10_000,
   logLabel: 'coinflip.acceptChallenge'
@@ -65,7 +65,7 @@ const acceptChallengeRoute = rateLimitedProcedure(gamesProcedure, {
     }
   });
 
-const cancelChallengeRoute = rateLimitedProcedure(gamesProcedure, {
+const cancelChallengeRoute = rateLimitedProcedure(activitiesProcedure, {
   maxRequests: 5,
   windowMs: 10_000,
   logLabel: 'coinflip.cancelChallenge'
@@ -82,14 +82,14 @@ const cancelChallengeRoute = rateLimitedProcedure(gamesProcedure, {
     }
   });
 
-const onStateUpdateRoute = gamesProcedure.subscription(() => {
+const onStateUpdateRoute = activitiesProcedure.subscription(() => {
   return observable<TCoinflipStateUpdate>((observer) => {
     const unsub = runtime.subscribeToState((state) => observer.next(state));
     return { unsubscribe: unsub };
   });
 });
 
-const onResultRoute = gamesProcedure.subscription(() => {
+const onResultRoute = activitiesProcedure.subscription(() => {
   return observable<TCoinflipResult>((observer) => {
     const unsub = runtime.subscribeToResult((result) => observer.next(result));
     return { unsubscribe: unsub };

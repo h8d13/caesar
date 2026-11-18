@@ -43,7 +43,7 @@ services:
     # Media ports: straight to the internet, Caddy is not in front. The
     # /tcp line is the fallback for clients that cannot use UDP; with
     # CAESAR_WEBRTC_TCP=false nothing listens on it and it can go. Otherwise
-    # rate limit it per source (wiki Guide "Media ports"): ufw does not see
+    # rate limit it per source (wiki Firewall "Media ports"): ufw does not see
     # ports published by rootful Docker.
     ports:
       - "40000-40002:40000-40002/tcp"

@@ -46,7 +46,7 @@ export type TPublicServerSettings = Pick<
   | 'serverId'
   | 'storageUploadEnabled'
   | 'directMessagesEnabled'
-  | 'gamesEnabled'
+  | 'activitiesEnabled'
   | 'storageQuota'
   | 'storageUploadMaxFileSize'
   | 'storageFileSharingInDirectMessages'
