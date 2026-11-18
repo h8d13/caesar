@@ -57,7 +57,9 @@
     {
       "matchPackageNames": ["vite-plus", "@voidzero-dev/vite-plus-core"],
       "groupName": "vite-plus",
-      "description": "catalog aliases vite to vite-plus-core at the vite-plus version; they ship together"
+      "separateMajorMinor": false,
+      "dependencyDashboardApproval": false,
+      "description": "catalog aliases vite to vite-plus-core, whose version tracks the vite it bundles (8.3.8000 = vite 8.3.8) rather than vite-plus; a release bumps both, so they must land in one PR even when renovate reads one as a major"
     },
     {
       "matchPackageNames": ["@dnd-kit/**"],
