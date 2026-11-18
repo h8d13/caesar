@@ -79,15 +79,21 @@ const resolveAnnouncedAddressV6 = async (): Promise<string | undefined> => {
 
 // The IPv6 listeners sit next to the IPv4 ones on the same port: ipv6Only
 // keeps '::' from also claiming the IPv4 side 0.0.0.0 already holds.
+// The media ports face the internet directly (no Caddy in front). UDP junk
+// is dropped per packet, but a TCP listener holds state per connection and
+// can be flooded: tcp=false (CAESAR_WEBRTC_TCP) binds no TCP socket at all.
 const buildListenInfos = (
   port: number,
   announcedAddress: string,
-  announcedAddressV6?: string
+  announcedAddressV6?: string,
+  tcp = true
 ) => {
-  const listenInfos: mediasoup.types.TransportListenInfo[] = [
-    { protocol: 'udp', ip: '0.0.0.0', announcedAddress, port },
-    { protocol: 'tcp', ip: '0.0.0.0', announcedAddress, port }
-  ];
+  const protocols: mediasoup.types.TransportProtocol[] = tcp
+    ? ['udp', 'tcp']
+    : ['udp'];
+  const listenInfos: mediasoup.types.TransportListenInfo[] = protocols.map(
+    (protocol) => ({ protocol, ip: '0.0.0.0', announcedAddress, port })
+  );
 
   if (announcedAddressV6) {
     const v6 = {
@@ -97,7 +103,7 @@ const buildListenInfos = (
       flags: { ipv6Only: true }
     };
 
-    listenInfos.push({ protocol: 'udp', ...v6 }, { protocol: 'tcp', ...v6 });
+    listenInfos.push(...protocols.map((protocol) => ({ protocol, ...v6 })));
   }
 
   return {
@@ -114,7 +120,7 @@ const loadMediasoup = async () => {
   const announcedAddressV6 = await resolveAnnouncedAddressV6();
 
   logger.info(
-    `Spawning ${count} mediasoup worker(s) (logLevel=${logLevel}, basePort=${basePort}, ipv6=${announcedAddressV6 ?? 'off'})`
+    `Spawning ${count} mediasoup worker(s) (logLevel=${logLevel}, basePort=${basePort}, tcp=${config.webRtc.tcp ? 'on' : 'off'}, ipv6=${announcedAddressV6 ?? 'off'})`
   );
 
   for (let i = 0; i < count; i++) {
@@ -142,7 +148,8 @@ const loadMediasoup = async () => {
     const { listenInfos, summary } = buildListenInfos(
       port,
       announcedAddress,
-      announcedAddressV6
+      announcedAddressV6,
+      config.webRtc.tcp
     );
     const webRtcServer = await worker.createWebRtcServer({ listenInfos });
 

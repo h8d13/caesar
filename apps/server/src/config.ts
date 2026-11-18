@@ -27,6 +27,9 @@ const zEnvConfig = z.object({
     announcedAddress: z.string(),
     announcedAddressV6: z.string(),
     maxBitrate: z.coerce.number().int().positive(),
+    // Strict (not coerced): "off"/"no" would coerce to true and leave the
+    // listeners up while the operator believes them closed.
+    tcp: z.boolean(),
     workers: z.coerce.number().int().nonnegative()
   }),
   limits: z.object({
@@ -50,6 +53,9 @@ const envDefaults: TEnvConfig = {
     // empty = IPv4 only
     announcedAddressV6: '',
     maxBitrate: 30_000_000, // 30 Mbps
+    // ICE-TCP fallback for clients whose network blocks UDP. false = no TCP
+    // listener at all on the media ports (nothing to hold open in a flood).
+    tcp: true,
     // each worker binds basePort + i, must match exposed port range
     workers: 1
   },
@@ -67,6 +73,7 @@ const envConfig = zEnvConfig.parse(
     'webRtc.announcedAddress': 'CAESAR_WEBRTC_ANNOUNCED_ADDRESS',
     'webRtc.announcedAddressV6': 'CAESAR_WEBRTC_ANNOUNCED_ADDRESS_V6',
     'webRtc.maxBitrate': 'CAESAR_WEBRTC_MAX_BITRATE',
+    'webRtc.tcp': 'CAESAR_WEBRTC_TCP',
     'webRtc.workers': 'CAESAR_WEBRTC_WORKERS',
     'limits.maxUsers': 'CAESAR_MAX_USERS'
   })

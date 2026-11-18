@@ -40,4 +40,18 @@ describe('buildListenInfos', () => {
       });
     }
   });
+
+  test('binds no TCP listener when tcp is off', () => {
+    const { listenInfos } = buildListenInfos(
+      40000,
+      '203.0.113.7',
+      '2001:db8::7',
+      false
+    );
+
+    expect(listenInfos.map(({ protocol, ip }) => [protocol, ip])).toEqual([
+      ['udp', '0.0.0.0'],
+      ['udp', '::']
+    ]);
+  });
 });

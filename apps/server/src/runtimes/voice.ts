@@ -383,7 +383,7 @@ class VoiceRuntime {
     const transport = await router.createWebRtcTransport({
       webRtcServer,
       enableUdp: true,
-      enableTcp: true,
+      enableTcp: config.webRtc.tcp,
       preferUdp: true,
       preferTcp: false,
       initialAvailableOutgoingBitrate: Math.min(10000000, maxBitrate)

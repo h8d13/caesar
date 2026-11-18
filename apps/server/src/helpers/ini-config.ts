@@ -42,6 +42,10 @@ const rateLimiterDefaults = {
   changeAvatar: { maxRequests: 10, windowMs: 60_000 },
   changeBanner: { maxRequests: 10, windowMs: 60_000 },
   playSoundboard: { maxRequests: 30, windowMs: 60_000 },
+  // token bucket per user over every in-call voice route: maxRequests is
+  // the burst, refilled evenly over windowMs (20/s). Sized for joining a
+  // full room, which consumes every stream already there at once.
+  voiceSignaling: { maxRequests: 300, windowMs: 15_000 },
   e2eeSessionKey: { maxRequests: 20, windowMs: 60_000 },
   createTempRoom: { maxRequests: 5, windowMs: 60_000 },
   // per IP, members and guests alike: also bounds guessing at room links

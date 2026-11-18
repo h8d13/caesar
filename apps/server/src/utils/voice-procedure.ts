@@ -1,10 +1,52 @@
 import { ChannelPermission, Permission } from '@caesar/shared';
+import { config } from '@server/config';
+import { logger } from '@server/logger';
 import { VoiceRuntime } from '@server/runtimes/voice';
 import { TRPCError } from '@trpc/server';
 import { invariant } from './invariant';
+import { createTokenBucketRateLimiter } from './rate-limiters/rate-limiter';
 import { protectedProcedure, t } from './trpc';
 
-const voiceRuntimeMiddleware = t.middleware(async ({ ctx, next }) => {
+// One bucket per user for everything a call does after join. The object
+// counts are bounded by the runtime, the churn is not: any of these can be
+// called in a loop, by guests too.
+const voiceSignalingLimiter = createTokenBucketRateLimiter({
+  maxRequests: config.rateLimiters.voiceSignaling.maxRequests,
+  windowMs: config.rateLimiters.voiceSignaling.windowMs
+});
+
+// Tokens per call; anything not listed costs 1.
+const VOICE_CALL_COST: Record<string, number> = {
+  // always allowed: a user out of tokens must still be able to hang up,
+  // and once out of the room every other route here rejects them
+  'voice.leave': 0,
+  // a WebRTC transport is the heaviest thing a call allocates
+  'voice.createProducerTransport': 10,
+  'voice.createConsumerTransport': 10,
+  // amplifies: VOICE_NEW_PRODUCER makes every other participant answer
+  // with consume + resume (+ a keyframe request), paid from their own
+  // bucket. Priced so one user's sustained rate (1/s at the defaults) stays
+  // far below what the others earn back.
+  'voice.produce': 20
+};
+
+const voiceRuntimeMiddleware = t.middleware(async ({ ctx, next, path }) => {
+  // before any lookup, so a loop of calls that would be rejected below
+  // (not in a room, no permission) is bounded too
+  const cost = VOICE_CALL_COST[path] ?? 1;
+
+  if (
+    cost > 0 &&
+    !voiceSignalingLimiter.consume(`${ctx.user.id}`, cost).allowed
+  ) {
+    logger.debug(`[RateLimit] ${path} blocked user=${ctx.user.id}`);
+
+    throw new TRPCError({
+      code: 'TOO_MANY_REQUESTS',
+      message: 'Too many requests. Please try again shortly.'
+    });
+  }
+
   const voiceRuntime = ctx.currentVoiceChannelId
     ? VoiceRuntime.findById(ctx.currentVoiceChannelId)
     : undefined;

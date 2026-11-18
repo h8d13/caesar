@@ -56,6 +56,55 @@ describe('voice router', () => {
     ).rejects.toThrow('Too many requests. Please try again shortly.');
   });
 
+  test('in-call routes share one token bucket per user', async () => {
+    const { caller: owner } = await initTest(1);
+    const channelId = await owner.channels.add({
+      type: ChannelType.VOICE,
+      name: 'voice-signaling-limit',
+      categoryId: 1
+    });
+    const state = { micMuted: true, soundMuted: false };
+
+    const member = appRouter.createCaller(
+      await createMockContext({ customToken: await getMockedToken(3) })
+    );
+    const { handshakeHash } = await member.others.handshake();
+
+    await member.others.joinServer({ handshakeHash });
+    await owner.voice.join({ channelId, state });
+    await member.voice.join({ channelId, state });
+
+    // frozen clock: nothing is earned back while the loop runs
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(Date.now());
+
+    try {
+      // 300 tokens: two transports at 10 each, the rest at 1
+      await owner.voice.createProducerTransport();
+      await owner.voice.createConsumerTransport();
+
+      for (let i = 0; i < 280; i++) await owner.voice.getProducers();
+
+      await expect(owner.voice.getProducers()).rejects.toThrow(
+        'Too many requests. Please try again shortly.'
+      );
+      await expect(owner.voice.createProducerTransport()).rejects.toThrow(
+        'Too many requests. Please try again shortly.'
+      );
+
+      // someone else's bucket is untouched
+      await member.voice.getProducers();
+
+      // hanging up is never refused
+      await owner.voice.leave();
+    } finally {
+      clock.mockRestore();
+    }
+
+    expect(VoiceRuntime.findRuntimeByUserId(1)).toBeUndefined();
+
+    await member.voice.leave();
+  });
+
   test('re-creating a producer transport closes the old one and keeps the new', async () => {
     const { caller } = await initTest(1);
 

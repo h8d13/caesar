@@ -7,6 +7,10 @@ const setRateLimitingDisabled = (value: boolean) => {
   rateLimitingDisabled = value;
 };
 
+// disable rate limiting in development but not in tests
+const isRateLimitingBypassed = () =>
+  (IS_DEVELOPMENT && !IS_TEST) || rateLimitingDisabled;
+
 type TFixedWindowRateLimiterOptions = {
   maxRequests: number;
   windowMs: number;
@@ -42,8 +46,7 @@ class FixedWindowRateLimiter {
   }
 
   public consume = (key: string): TRateLimitResult => {
-    if ((IS_DEVELOPMENT && !IS_TEST) || rateLimitingDisabled) {
-      // disable rate limiting in development but not in tests
+    if (isRateLimitingBypassed()) {
       return {
         allowed: true,
         remaining: this.maxRequests,
@@ -114,5 +117,92 @@ class FixedWindowRateLimiter {
   };
 }
 
-export { FixedWindowRateLimiter, setRateLimitingDisabled };
+type TTokenBucket = {
+  tokens: number;
+  updatedAt: number;
+};
+
+// Token bucket: a key holds up to `maxRequests` tokens and earns them back
+// evenly, `maxRequests` per `windowMs`. Unlike the fixed window above it
+// has no reset edge to burst across, and a call can cost more than one
+// token, so one bucket can cover routes of very different weight.
+class TokenBucketRateLimiter {
+  private readonly buckets = new Map<string, TTokenBucket>();
+  private readonly capacity: number;
+  private readonly refillPerMs: number;
+  private readonly maxEntries: number;
+
+  constructor({
+    maxRequests,
+    windowMs,
+    maxEntries = 10_000
+  }: TFixedWindowRateLimiterOptions) {
+    this.capacity = maxRequests;
+    this.refillPerMs = maxRequests / windowMs;
+    this.maxEntries = maxEntries;
+  }
+
+  public consume = (key: string, cost = 1): TRateLimitResult => {
+    if (isRateLimitingBypassed()) {
+      return { allowed: true, remaining: this.capacity, retryAfterMs: 0 };
+    }
+
+    const now = Date.now();
+    const bucket = this.buckets.get(key);
+    const tokens = bucket ? this.refilled(bucket, now) : this.capacity;
+
+    if (tokens < cost) {
+      // a cost above the capacity can never be paid: report a full refill
+      const missing = Math.min(cost, this.capacity) - tokens;
+
+      return {
+        allowed: false,
+        remaining: Math.floor(tokens),
+        retryAfterMs: Math.ceil(missing / this.refillPerMs)
+      };
+    }
+
+    if (!bucket) this.gc(now);
+
+    this.buckets.set(key, { tokens: tokens - cost, updatedAt: now });
+
+    return {
+      allowed: true,
+      remaining: Math.floor(tokens - cost),
+      retryAfterMs: 0
+    };
+  };
+
+  public clear = () => {
+    this.buckets.clear();
+  };
+
+  private refilled = (bucket: TTokenBucket, now: number) =>
+    Math.min(
+      this.capacity,
+      bucket.tokens + (now - bucket.updatedAt) * this.refillPerMs
+    );
+
+  // A bucket that has refilled is the same as no bucket, so those go
+  // first; only then the oldest insertion.
+  private gc = (now: number) => {
+    if (this.buckets.size < this.maxEntries) return;
+
+    for (const [key, bucket] of this.buckets) {
+      if (this.refilled(bucket, now) >= this.capacity) this.buckets.delete(key);
+    }
+
+    if (this.buckets.size < this.maxEntries) return;
+
+    const oldestKey = this.buckets.keys().next().value;
+
+    if (oldestKey !== undefined) this.buckets.delete(oldestKey);
+  };
+}
+
+export {
+  FixedWindowRateLimiter,
+  setRateLimitingDisabled,
+  TokenBucketRateLimiter
+};
 export type { TRateLimitResult };

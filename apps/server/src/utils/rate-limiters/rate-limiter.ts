@@ -1,4 +1,4 @@
-import { FixedWindowRateLimiter } from '.';
+import { FixedWindowRateLimiter, TokenBucketRateLimiter } from '.';
 
 interface Clearable {
   clear: () => void;
@@ -18,6 +18,10 @@ const createRateLimiter = (
   options: ConstructorParameters<typeof FixedWindowRateLimiter>[0]
 ) => trackClearable(new FixedWindowRateLimiter(options));
 
+const createTokenBucketRateLimiter = (
+  options: ConstructorParameters<typeof TokenBucketRateLimiter>[0]
+) => trackClearable(new TokenBucketRateLimiter(options));
+
 const getRateLimitRetrySeconds = (retryAfterMs: number): number => {
   return Math.max(1, Math.ceil(retryAfterMs / 1000));
 };
@@ -35,6 +39,7 @@ const clearRateLimitersForTests = () => {
 export {
   clearRateLimitersForTests,
   createRateLimiter,
+  createTokenBucketRateLimiter,
   FixedWindowRateLimiter,
   getClientRateLimitKey,
   getRateLimitRetrySeconds,
