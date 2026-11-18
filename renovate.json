@@ -53,6 +53,12 @@
     },
     { "matchManagers": ["github-actions"], "groupName": "github-actions" },
     { "matchManagers": ["dockerfile", "docker-compose"], "groupName": "docker" },
+    {
+      "matchPackageNames": ["gcr.io/distroless/**", "docker.io/library/caddy"],
+      "matchUpdateTypes": ["digest"],
+      "minimumReleaseAge": null,
+      "description": "same tag, new digest: upstream's own rebuild. gcr.io exposes no release timestamp and caddy's is the floating tag's last push, so the age check never settles. Not automerged: PR CI doesn't build Dockerfile.prod and a merge publishes :edge"
+    },
     { "matchManagers": ["pre-commit"], "groupName": "pre-commit" },
     {
       "matchPackageNames": ["vite-plus", "@voidzero-dev/vite-plus-core"],
