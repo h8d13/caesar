@@ -60,6 +60,6 @@ export const AUTH_KEY_INFO = 'caesar-auth-v1';
 export const BASE64_32_BYTES_REGEX = /^[A-Za-z0-9+/]{43}=$/;
 
 // enforced client-side: the server only ever sees the authKey
-export const PASSWORD_MIN_LENGTH = 4;
+export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 128;
 export const PASSWORD_LENGTH_ERROR = `Password must be between ${PASSWORD_MIN_LENGTH} and ${PASSWORD_MAX_LENGTH} characters long`;

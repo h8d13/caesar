@@ -200,8 +200,10 @@ const Connect = memo(() => {
             return;
         }
 
+        // the minimum only binds a new password: an account created under
+        // a lower one must still be able to sign in
         if (
-            values.password.length < PASSWORD_MIN_LENGTH ||
+            (isSignup && values.password.length < PASSWORD_MIN_LENGTH) ||
             values.password.length > PASSWORD_MAX_LENGTH
         ) {
             setErrors({ password: PASSWORD_LENGTH_ERROR });
