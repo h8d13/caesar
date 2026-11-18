@@ -187,10 +187,10 @@ catalogs:
       specifier: ^4.3.5
       version: 4.3.5
     '@trpc/client':
-      specifier: ^11.28.2
+      specifier: ^11.28.3
       version: 11.28.3
     '@trpc/server':
-      specifier: ^11.28.2
+      specifier: ^11.28.3
       version: 11.28.3
     '@types/node':
       specifier: ^26.6.6
