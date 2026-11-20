@@ -34,7 +34,6 @@
 
 - https://ghcr.io/h8d13/caesar
 
----
  <!--Generated previews START-->
 ## Previews
 
@@ -54,4 +53,3 @@
 
 <img width="960" height="540" alt="features" src="https://github.com/user-attachments/assets/9f824f52-66d5-403a-b5d0-513891b38fca" />
  <!--Generated previews END-->
----
