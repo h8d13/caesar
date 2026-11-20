@@ -45,11 +45,11 @@
 
 <img width="960" height="540" alt="settings" src="https://github.com/user-attachments/assets/904ea7fb-0b17-44ba-ae57-33a9fa1739a1" />
 
-### DMs
+### DMs and more!
 
 <img width="960" height="540" alt="plot" src="https://github.com/user-attachments/assets/1012b18d-f4a3-45f9-8a2e-33d9722f1dfc" />
 
-### More!
+### Voice, Video/Screen-sharing, ...
 
 <img width="960" height="540" alt="features" src="https://github.com/user-attachments/assets/9f824f52-66d5-403a-b5d0-513891b38fca" />
  <!--Generated previews END-->
