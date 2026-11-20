@@ -45,24 +45,26 @@ const RoundWinners = memo(() => {
     if (winners.length === 0) return null;
 
     return (
+        // as tall as the wheel: as many columns as the free space takes,
+        // and a list longer than that scrolls
         <div
             ref={containerRef}
-            className="flex flex-col items-center gap-0.5 overflow-hidden max-h-24 px-4"
+            className="grid w-full grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] content-start gap-x-4 gap-y-0.5 overflow-y-auto max-h-48"
         >
             {winners.map((w, i) => (
                 <div
                     key={w.key}
-                    className="animate-in slide-in-from-bottom fade-in text-sm flex items-center gap-2"
+                    className="animate-in slide-in-from-bottom fade-in text-sm flex min-w-0 items-center gap-2"
                     style={{
                         animationDelay: `${i * 150}ms`,
                         animationDuration: '400ms',
                         animationFillMode: 'both'
                     }}
                 >
-                    <span className="text-muted-foreground truncate max-w-32">
+                    <span className="text-muted-foreground truncate">
                         {w.userName}
                     </span>
-                    <span className="text-green-400 font-medium tabular-nums">
+                    <span className="shrink-0 text-green-400 font-medium tabular-nums">
                         +{w.profit} SC
                     </span>
                 </div>

@@ -23,7 +23,7 @@ import {
     sleep
 } from './lib.mjs';
 
-const SCENARIOS = ['signup', 'settings', 'features', 'plot'];
+const SCENARIOS = ['signup', 'settings', 'features', 'plot', 'roulette'];
 
 const waitForServer = async () => {
     for (let i = 0; i < 120; i++) {

@@ -26,13 +26,22 @@ const RouletteGameContent = memo(() => {
     }, []);
 
     return (
-        <div className="flex flex-col gap-3 h-full pt-6">
+        // min-h-full, not h-full: at a fixed height the betting board (the
+        // one child that can shrink, being a scroll container) is squashed
+        // flat once bets are listed under it. The column scrolls instead.
+        <div className="flex flex-col gap-3 min-h-full pt-6">
             <RoundHistory />
-            <div className="flex items-center justify-center gap-6">
+            {/* 1fr | wheel | 1fr: the wheel stays centered whether or not
+                the side columns have anything to show */}
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-6">
+                <div className="flex min-w-0 justify-end">
+                    <LightningDisplay />
+                </div>
                 <RouletteWheel />
-                <LightningDisplay />
+                <div className="min-w-0">
+                    <RoundWinners />
+                </div>
             </div>
-            <RoundWinners />
             <BetControls>
                 <BettingBoard />
             </BetControls>
