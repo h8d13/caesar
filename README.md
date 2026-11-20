@@ -39,17 +39,18 @@
 
 ### Invite model
 
-<img width="960" height="540" alt="signup" src="https://github.com/user-attachments/assets/7cfd976d-398c-4833-8299-5edd22aa20a0" />
+<img width="960" height="540" alt="signup" src="https://github.com/user-attachments/assets/80966b2f-1fa1-40d7-944d-4e628a7ccef2" />
 
 ### Settings
 
-<img width="960" height="540" alt="settings" src="https://github.com/user-attachments/assets/904ea7fb-0b17-44ba-ae57-33a9fa1739a1" />
+<img width="960" height="540" alt="settings" src="https://github.com/user-attachments/assets/5a6ed984-fa17-4220-bf59-5a866282128c" />
 
 ### DMs and more!
 
-<img width="960" height="540" alt="plot" src="https://github.com/user-attachments/assets/1012b18d-f4a3-45f9-8a2e-33d9722f1dfc" />
+<img width="960" height="540" alt="plot" src="https://github.com/user-attachments/assets/0bbd60aa-4c26-4fef-bed3-5ace199df506" />
 
 ### Voice, Video/Screen-sharing, ...
 
-<img width="960" height="540" alt="features" src="https://github.com/user-attachments/assets/9f824f52-66d5-403a-b5d0-513891b38fca" />
+<img width="960" height="540" alt="features" src="https://github.com/user-attachments/assets/e8ba4a71-5dd5-4fe7-9025-332347295d53" />
+
  <!--Generated previews END-->
