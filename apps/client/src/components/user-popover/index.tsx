@@ -327,9 +327,6 @@ const UserCard = memo(({ userId }: { userId: number }) => {
                         >
                             {user.socialCredit ?? 0}
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                            SC
-                        </span>
                     </div>
                     {!isOwnUser && !isDeleted && !hasVotedToday && (
                         <div className="flex gap-1">
