@@ -22,3 +22,7 @@ caddy/Caddyfile
 
 # machine-specific bench baselines (WRITE_BENCH=1 pnpm bench)
 apps/server/benchmarks/
+
+# output of scripts/previews/record.sh: the GIFs are uploaded to the readme
+# by hand, not committed
+.github/previews/

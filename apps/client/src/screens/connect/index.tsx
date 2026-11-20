@@ -484,6 +484,9 @@ const Connect = memo(() => {
                                             label="confirm password"
                                             autoComplete="new-password"
                                             onEnter={onConnectClick}
+                                            data-testid={
+                                                TestId.CONNECT_CONFIRM_PASSWORD_INPUT
+                                            }
                                         />
                                     </Group>
                                 )}
