@@ -45,12 +45,11 @@
 
 <img width="960" height="540" alt="settings" src="https://github.com/user-attachments/assets/5a6ed984-fa17-4220-bf59-5a866282128c" />
 
-### DMs and more!
-
-<img width="960" height="540" alt="plot" src="https://github.com/user-attachments/assets/0bbd60aa-4c26-4fef-bed3-5ace199df506" />
-
 ### Voice, Video/Screen-sharing, ...
 
 <img width="960" height="540" alt="features" src="https://github.com/user-attachments/assets/e8ba4a71-5dd5-4fe7-9025-332347295d53" />
 
+### DMs and more!
+
+<img width="960" height="540" alt="plot" src="https://github.com/user-attachments/assets/0bbd60aa-4c26-4fef-bed3-5ace199df506" />
  <!--Generated previews END-->
