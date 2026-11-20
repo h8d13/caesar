@@ -1,6 +1,9 @@
-// The main loop of the app from the owner's seat: chat, join a voice
-// channel two members already sit in, share the screen and drag a member
-// into another channel.
+// The main loop of the app from the owner's seat: a markdown message with
+// a code block, a GIF, then a voice channel two members already sit in,
+// a screen share and dragging a member into another channel.
+//
+// The GIF comes live from GIPHY (needs network), so its picture is whatever
+// the search returns that day.
 import {
     MEMBERS,
     OWNER,
@@ -14,6 +17,15 @@ import {
     sleep,
     startRecording
 } from '../lib.mjs';
+
+const AGENDA = [
+    '- Senate meets at noon',
+    '- Bodyguards not needed',
+    '```js',
+    'const ides = new Date(-44, 2, 15);',
+    'if (today >= ides) beware();',
+    '```'
+];
 
 export default async ({ name, open }) => {
     const [brutus, cassius] = MEMBERS;
@@ -51,10 +63,29 @@ export default async ({ name, open }) => {
     await theirs.keyboard.press('Control+Enter');
     await actor.pause(800);
 
-    await actor.type(page.locator('main [contenteditable=true]'), 'On my way :rocket');
-    await actor.press('Enter');
+    // markdown in, formatted message out: a list and a highlighted code
+    // block (the composer takes the markdown literally)
+    await actor.click(page.locator('main [contenteditable=true]'), { after: 120 });
+
+    for (const line of AGENDA) {
+        await page.keyboard.type(line, { delay: 22 });
+        await page.keyboard.press('Enter');
+    }
+
     await actor.click(page.getByRole('button', { name: 'Send' }));
-    await actor.pause(500);
+    await actor.pause(1500);
+
+    // a GIF from the picker's GIPHY tab; picking one sends it
+    const picker = page.getByRole('dialog').filter({ hasText: 'GIFs' });
+
+    // last: every message's Add Reaction button has the same icon
+    await actor.click(iconButton(page.locator('main'), 'smile').last());
+    await actor.click(picker.getByRole('tab', { name: 'GIFs' }));
+    await actor.type(picker.getByRole('textbox'), 'cat');
+    await actor.click(picker.getByRole('tabpanel').getByRole('button').first());
+    // the picture loads after the message lands, below the fold
+    await actor.scrollTo(page.locator('main img[src*="giphy"]').last());
+    await actor.pause(2200);
 
     // voice: join, then share the screen
     await actor.click(page.getByRole('button', { name: VOICE_CHANNEL }));

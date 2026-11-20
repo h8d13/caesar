@@ -1,3 +1,4 @@
+import { isTrustedMediaUrl } from '@/helpers/media-url';
 import {
     audioExtensions,
     imageExtensions,
@@ -28,7 +29,7 @@ const getTextContent = (node: TTextNode): string => {
 
 const serializer = (
     domNode: DOMNode,
-    pushMedia: (media: TFoundMedia) => void,
+    pushMedia: ((media: TFoundMedia) => void) | undefined,
     messageId: number,
     options: HTMLReactParserOptions
 ) => {
@@ -76,15 +77,27 @@ const serializer = (
             );
 
             if (isImage) {
-                pushMedia({ type: 'image', url: href });
+                pushMedia?.({ type: 'image', url: href });
+
+                // A bare URL the browser loads directly (a GIF-picker pick,
+                // an upload) is fully replaced by the image below it. Kept
+                // when nothing draws the media grid, when the link has its
+                // own label, and for proxied images, which can fail to load.
+                if (
+                    pushMedia &&
+                    isTrustedMediaUrl(href) &&
+                    getTextContent(domNode).trim() === href
+                ) {
+                    return <></>;
+                }
 
                 return sanitizeElement(domNode, options);
             } else if (isVideo) {
-                pushMedia({ type: 'video', url: href });
+                pushMedia?.({ type: 'video', url: href });
 
                 return sanitizeElement(domNode, options);
             } else if (isAudio) {
-                pushMedia({ type: 'audio', url: href });
+                pushMedia?.({ type: 'audio', url: href });
 
                 return sanitizeElement(domNode, options);
             }

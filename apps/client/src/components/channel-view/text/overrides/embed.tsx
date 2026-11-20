@@ -1,37 +1,8 @@
 import { toImageSrc } from '@/helpers/media-url';
 import type { TMessageMetadata } from '@caesar/shared';
 import { ChevronDown } from 'lucide-react';
-import { memo, useCallback, useMemo, useState } from 'react';
-import LiteYouTubeEmbed from 'react-lite-youtube-embed';
-import 'react-lite-youtube-embed/dist/LiteYouTubeEmbed.css';
+import { memo, useCallback, useState } from 'react';
 import { LinkOverride } from './link';
-
-function getYoutubeVideoId(url: string): string | null {
-    try {
-        const u = new URL(url);
-        if (!/youtube\.com|youtu\.be/.test(u.hostname)) return null;
-
-        // youtu.be/VIDEO_ID
-        if (u.hostname.includes('youtu.be')) {
-            const id = u.pathname.slice(1);
-            return id.length === 11 ? id : null;
-        }
-
-        // youtube.com/watch?v=VIDEO_ID
-        const v = u.searchParams.get('v');
-        if (v?.length === 11) return v;
-
-        // youtube.com/shorts/VIDEO_ID, /embed/VIDEO_ID, /live/VIDEO_ID, /v/VIDEO_ID
-        const pathMatch = u.pathname.match(
-            /^\/(shorts|embed|live|v)\/([^/?#]+)/
-        );
-        if (pathMatch?.[2]?.length === 11) return pathMatch[2];
-
-        return null;
-    } catch {
-        return null;
-    }
-}
 
 type TEmbedOverrideProps = {
     metadata: TMessageMetadata;
@@ -56,10 +27,6 @@ const EmbedOverride = memo(({ metadata }: TEmbedOverrideProps) => {
     const favicon = rawFavicon ? toImageSrc(rawFavicon) : undefined;
     const rawImage = metadata.images?.[0];
     const image = rawImage ? toImageSrc(rawImage) : undefined;
-    const youtubeId = useMemo(
-        () => getYoutubeVideoId(metadata.url),
-        [metadata.url]
-    );
 
     return (
         <div className="max-w-md rounded-md border-l-4 border-primary bg-muted/50 overflow-hidden">
@@ -89,18 +56,7 @@ const EmbedOverride = memo(({ metadata }: TEmbedOverrideProps) => {
                 />
             </button>
 
-            {expanded && youtubeId && (
-                <div className="px-3 pb-3">
-                    <div className="rounded-md overflow-hidden">
-                        <LiteYouTubeEmbed
-                            id={youtubeId}
-                            title={metadata.title || 'YouTube video'}
-                        />
-                    </div>
-                </div>
-            )}
-
-            {expanded && !youtubeId && (
+            {expanded && (
                 <div className="flex gap-3 px-3 pb-3">
                     <div className="flex flex-col gap-1 min-w-0 flex-1">
                         {metadata.title && (

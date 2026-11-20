@@ -118,10 +118,7 @@ const sanitizeFileName = (name: string): string | null => {
 // see DIRECT_IMAGE_URL_PREFIXES: the client and this list must agree
 const IMG_HOSTS = [
   `https://*${GIPHY_MEDIA_HOST_SUFFIX}`,
-  ...DIRECT_IMAGE_URL_PREFIXES,
-  // thumbnails loaded by the YouTube embed card
-  'https://i.ytimg.com',
-  'https://img.youtube.com'
+  ...DIRECT_IMAGE_URL_PREFIXES
 ];
 
 const buildCsp = (nonce?: string): string => {

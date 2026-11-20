@@ -7,12 +7,12 @@ import type { TFoundMedia } from './types';
 // (marked, via renderMarkdown) -> React nodes with every override applied
 // (emoji, mentions, embeds, inline media). Shared by the message list and the
 // editor preview, so a preview is byte-for-byte the final render, never an
-// approximation. pushMedia defaults to a no-op for callers (like the preview)
-// that don't render the attached-media grid.
+// approximation, except that callers which don't render the attached-media
+// grid (like the preview) omit pushMedia and keep the links to that media.
 const renderMessageContent = (
     content: string,
     messageId: number,
-    pushMedia: (media: TFoundMedia) => void = () => {}
+    pushMedia?: (media: TFoundMedia) => void
 ) => {
     // self-referencing so sanitized elements recurse with the same overrides
     const options: HTMLReactParserOptions = {

@@ -200,6 +200,25 @@ describe('off-origin media never loads from the viewer', () => {
         );
     });
 
+    test('a bare giphy URL shows the image, not the link', () => {
+        const url = 'https://media.giphy.com/media/abc123/giphy.gif';
+        const html = renderWithMedia(url);
+
+        expect(html).toContain(
+            '<img src="https://media.giphy.com/media/abc123/giphy.webp"'
+        );
+        expect(html).not.toContain('<a ');
+        expect(html).not.toContain('giphy.gif');
+        // no media grid (the editor preview): the link is all there is
+        expect(render(url)).toContain('giphy.gif');
+    });
+
+    test('a bare proxied image URL keeps its link', () => {
+        const html = renderWithMedia('https://tracker.example/photo.png');
+
+        expect(html).toContain('<a ');
+    });
+
     test('a built-in emoji image still renders an <img>', () => {
         const html = renderWithMedia(
             '<p><img src="https://github.githubassets.com/images/icons/emoji/atom.png" class="emoji-image"></p>'

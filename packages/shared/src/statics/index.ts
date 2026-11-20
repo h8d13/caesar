@@ -8,8 +8,7 @@ export const DEFAULT_MESSAGES_LIMIT = 50;
 // other off-site image goes through the server's /proxy/image, so a
 // message cannot make viewers' browsers call a host its author picked.
 // One list for both sides: the client leaves these URLs alone, the server's
-// CSP img-src allows exactly these (plus YouTube thumbnails for the embed
-// card, which the client never builds a URL for itself).
+// CSP img-src allows exactly these.
 // Giphy: the GIF picker. The others: the built-in emoji image sets shipped
 // as URLs in the tiptap emoji dataset (fixed paths, nothing member-made).
 export const GIPHY_MEDIA_HOST_SUFFIX = '.giphy.com';

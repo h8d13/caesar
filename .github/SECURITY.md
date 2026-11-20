@@ -41,7 +41,7 @@ HTTPS enforcement: behind Caddy, server 301s any `x-forwarded-proto: http`
 - Operator still has full logs, and can read all channel messages and default 1:1 DMs (stored as plaintext, searchable server-side).
 - 1:1 DMs are E2EE only in ephemeral mode: for those the operator sees only ciphertext, plus metadata (sender, time, file names/sizes). The DM header shows which mode is on.
 - Peer public keys are served by the server and not pinned: E2EE holds against an honest operator reading their own DB/logs, not against one who tampers with it.
-- Off-site images in messages are fetched by the server (`/proxy/image`, members only) and off-site video/audio never load: posting a link does not reveal viewers' IPs to the poster. The CSP `img-src` enforces it; only Giphy, the built-in emoji image sets and YouTube thumbnails are loaded directly.
+- Off-site images in messages are fetched by the server (`/proxy/image`, members only) and off-site video/audio never load: posting a link does not reveal viewers' IPs to the poster. The CSP `img-src` enforces it; only Giphy and the built-in emoji image sets are loaded directly.
 - The image proxy sees the image URLs it is asked for, including those inside E2EE DMs once a participant views them.
 - Made for smaller trusted communities, not for public exposure.
 - Generic exposure (I.e: notifications/search do not leak on lock-screens/E2EE)
