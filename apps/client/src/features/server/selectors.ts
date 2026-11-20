@@ -1,3 +1,4 @@
+import { getReadableRoleColor } from '@/helpers/get-readable-role-color';
 import {
     ChannelPermission,
     OWNER_ROLE_ID,
@@ -6,7 +7,6 @@ import {
 } from '@caesar/shared';
 import { createSelector } from '@reduxjs/toolkit';
 import { createCachedSelector } from 're-reselect';
-import { getReadableRoleColor } from '@/helpers/get-readable-role-color';
 import type { IRootState } from '../store';
 import {
     channelByIdSelector,
@@ -93,7 +93,7 @@ export const userRolesSelector = createSelector(
 export const userNameColorSelector = createCachedSelector(
     [rolesSelector, userByIdSelector],
     (roles, user) => {
-        if (!user?.roleIds?.length) return undefined;
+        if (!user?.roleIds?.length) return;
         const role = roles.find(
             (r) => !r.isDefault && user.roleIds.includes(r.id)
         );

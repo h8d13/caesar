@@ -28,47 +28,45 @@ type TUserProps = {
     hasStatus: boolean;
 };
 
-const User = memo(
-    ({ userId, user, banned, hasStatus }: TUserProps) => {
-        const nameColor = useUserNameColor(userId);
+const User = memo(({ userId, user, banned, hasStatus }: TUserProps) => {
+    const nameColor = useUserNameColor(userId);
 
-        return (
-            <UserPopover userId={userId}>
-                <div className="flex items-center gap-3 rounded px-2 py-1.5 hover:bg-accent select-none min-w-0">
-                    <UserAvatar
-                        userId={userId}
-                        className={cn(
-                            'h-8 w-8 shrink-0',
-                            hasStatus && 'cursor-pointer'
-                        )}
-                        // story present: avatar jumps straight to the viewer
-                        // and swallows the click so the row popover stays shut.
-                        // no story: click falls through to the popover.
-                        onClick={
-                            hasStatus
-                                ? (e) => {
-                                      e.stopPropagation();
-                                      openStoryViewer(userId);
-                                  }
-                                : undefined
-                        }
-                    />
-                    <span
-                        className={cn(
-                            'text-sm truncate',
-                            banned && 'line-through opacity-50'
-                        )}
-                        style={{
-                            color: banned ? undefined : nameColor
-                        }}
-                    >
-                        {getRenderedUsername(user, userId)}
-                    </span>
-                </div>
-            </UserPopover>
-        );
-    }
-);
+    return (
+        <UserPopover userId={userId}>
+            <div className="flex items-center gap-3 rounded px-2 py-1.5 hover:bg-accent select-none min-w-0">
+                <UserAvatar
+                    userId={userId}
+                    className={cn(
+                        'h-8 w-8 shrink-0',
+                        hasStatus && 'cursor-pointer'
+                    )}
+                    // story present: avatar jumps straight to the viewer
+                    // and swallows the click so the row popover stays shut.
+                    // no story: click falls through to the popover.
+                    onClick={
+                        hasStatus
+                            ? (e) => {
+                                  e.stopPropagation();
+                                  openStoryViewer(userId);
+                              }
+                            : undefined
+                    }
+                />
+                <span
+                    className={cn(
+                        'text-sm truncate',
+                        banned && 'line-through opacity-50'
+                    )}
+                    style={{
+                        color: banned ? undefined : nameColor
+                    }}
+                >
+                    {getRenderedUsername(user, userId)}
+                </span>
+            </div>
+        </UserPopover>
+    );
+});
 
 type TRightSidebarProps = {
     className?: string;
