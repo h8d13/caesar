@@ -89,14 +89,14 @@ export const userRolesSelector = createSelector(
 );
 
 // name colour comes from the user's first non-default role (roles have no
-// explicit ordering, so list order decides); undefined = theme text colour
+// explicit ordering, so list order decides), falling back to the default
+// role's colour; undefined = theme text colour
 export const userNameColorSelector = createCachedSelector(
     [rolesSelector, userByIdSelector],
     (roles, user) => {
         if (!user?.roleIds?.length) return;
-        const role = roles.find(
-            (r) => !r.isDefault && user.roleIds.includes(r.id)
-        );
+        const userRoles = roles.filter((r) => user.roleIds.includes(r.id));
+        const role = userRoles.find((r) => !r.isDefault) ?? userRoles[0];
         return role ? getReadableRoleColor(role.color) : undefined;
     }
 )((_, userId: number) => userId);
