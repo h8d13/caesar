@@ -1,3 +1,4 @@
+import { getReadableRoleColor } from '@/helpers/get-readable-role-color';
 import type { TRole } from '@caesar/shared';
 import { Badge, IconButton } from '@caesar/ui';
 import { X } from 'lucide-react';
@@ -9,9 +10,7 @@ type TRoleBadgeProps = {
 };
 
 const RoleBadge = memo(({ role, onRemoveRole }: TRoleBadgeProps) => {
-    // clamp lightness into the theme's readable band so white/black
-    // roles stay visible on both themes, hue untouched
-    const readableColor = `oklch(from ${role.color} clamp(var(--role-color-l-min), l, var(--role-color-l-max)) c h)`;
+    const readableColor = getReadableRoleColor(role.color);
 
     return (
         <Badge

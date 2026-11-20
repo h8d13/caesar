@@ -7,6 +7,7 @@ import {
 import {
     useCan,
     usePublicServerSettings,
+    useUserNameColor,
     useUserRoles
 } from '@/features/server/hooks';
 import {
@@ -16,6 +17,7 @@ import {
 } from '@/features/server/users/hooks';
 import { getFileUrl } from '@/helpers/get-file-url';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
+import { getSocialCreditCoin } from '@/helpers/get-social-credit-coin';
 import { getSocialCreditColor } from '@/helpers/get-social-credit-color';
 import { removeNickname, setNickname } from '@/helpers/nicknames';
 import { useNickname } from '@/hooks/use-nickname';
@@ -42,7 +44,6 @@ import {
     MessageSquare,
     Pencil,
     ShieldCheck,
-    Star,
     Trash,
     UserCog,
     X
@@ -91,6 +92,7 @@ type TUserPopoverProps = {
 const UserCard = memo(({ userId }: { userId: number }) => {
     const user = useUserById(userId);
     const roles = useUserRoles(userId);
+    const nameColor = useUserNameColor(userId);
     const settings = usePublicServerSettings();
     const isOwnUser = useIsOwnUser(userId);
     const can = useCan();
@@ -230,11 +232,7 @@ const UserCard = memo(({ userId }: { userId: number }) => {
                     <div className="flex items-center gap-1.5">
                         <span
                             className="text-lg font-semibold truncate"
-                            style={{
-                                color: getSocialCreditColor(
-                                    user.socialCredit ?? 0
-                                )
-                            }}
+                            style={{ color: nameColor }}
                         >
                             {getRenderedUsername(user, user.id)}
                         </span>
@@ -313,13 +311,11 @@ const UserCard = memo(({ userId }: { userId: number }) => {
 
                 <div className="flex items-center gap-2 mb-3">
                     <div className="flex items-center gap-1.5 bg-muted/50 rounded-md px-2.5 py-1.5">
-                        <Star
-                            className="h-3.5 w-3.5"
-                            style={{
-                                color: getSocialCreditColor(
-                                    user.socialCredit ?? 0
-                                )
-                            }}
+                        <img
+                            src={getSocialCreditCoin(user.socialCredit ?? 0)}
+                            alt=""
+                            draggable={false}
+                            className="h-4 w-4 shrink-0"
                         />
                         <span
                             className="text-sm font-medium"

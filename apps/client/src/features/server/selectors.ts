@@ -6,6 +6,7 @@ import {
 } from '@caesar/shared';
 import { createSelector } from '@reduxjs/toolkit';
 import { createCachedSelector } from 're-reselect';
+import { getReadableRoleColor } from '@/helpers/get-readable-role-color';
 import type { IRootState } from '../store';
 import {
     channelByIdSelector,
@@ -86,6 +87,19 @@ export const userRolesSelector = createSelector(
         return roles.filter((role) => user.roleIds.includes(role.id));
     }
 );
+
+// name colour comes from the user's first non-default role (roles have no
+// explicit ordering, so list order decides); undefined = theme text colour
+export const userNameColorSelector = createCachedSelector(
+    [rolesSelector, userByIdSelector],
+    (roles, user) => {
+        if (!user?.roleIds?.length) return undefined;
+        const role = roles.find(
+            (r) => !r.isDefault && user.roleIds.includes(r.id)
+        );
+        return role ? getReadableRoleColor(role.color) : undefined;
+    }
+)((_, userId: number) => userId);
 
 export const typingUsersByChannelIdSelector = createCachedSelector(
     [

@@ -1,10 +1,9 @@
 import { VoiceUserContextMenu } from '@/components/context-menus/voice-user';
 import { UserAvatar } from '@/components/user-avatar';
-import { useCan } from '@/features/server/hooks';
+import { useCan, useUserNameColor } from '@/features/server/hooks';
 import type { TVoiceUser } from '@/features/server/types';
 import { useSpeakingIntensity } from '@/features/server/voice/hooks';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
-import { getSocialCreditColor } from '@/helpers/get-social-credit-color';
 import { cn } from '@/lib/utils';
 import { Permission, StreamKind } from '@caesar/shared';
 import { TooltipRoot, TooltipTrigger } from '@caesar/ui';
@@ -29,6 +28,7 @@ type TVoiceUserProps = {
 
 const VoiceUser = memo(({ user, channelId }: TVoiceUserProps) => {
     const speakingIntensity = useSpeakingIntensity(user.id);
+    const nameColor = useUserNameColor(user.id);
     const can = useCan();
     const canMove = can(Permission.MOVE_MEMBERS);
 
@@ -85,11 +85,7 @@ const VoiceUser = memo(({ user, channelId }: TVoiceUserProps) => {
 
                             <span
                                 className="flex-1 truncate text-xs"
-                                style={{
-                                    color: getSocialCreditColor(
-                                        user.socialCredit ?? 0
-                                    )
-                                }}
+                                style={{ color: nameColor }}
                             >
                                 {getRenderedUsername(user, user.id)}
                             </span>

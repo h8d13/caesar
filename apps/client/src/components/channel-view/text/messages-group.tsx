@@ -1,7 +1,7 @@
 import { UserAvatar } from '@/components/user-avatar';
+import { useUserNameColor } from '@/features/server/hooks';
 import { useIsOwnUser, useUserById } from '@/features/server/users/hooks';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
-import { getSocialCreditColor } from '@/helpers/get-social-credit-color';
 import { cn } from '@/lib/utils';
 import {
     DELETED_USER_IDENTITY_AND_NAME,
@@ -31,6 +31,7 @@ const MessagesGroup = memo(
     }: TMessagesGroupProps) => {
         const firstMessage = group[0];
         const user = useUserById(firstMessage.userId);
+        const nameColor = useUserNameColor(firstMessage.userId);
         const date = new Date(firstMessage.createdAt);
         const isOwnUser = useIsOwnUser(firstMessage.userId);
         const isDeletedUser = user?.name === DELETED_USER_IDENTITY_AND_NAME;
@@ -53,13 +54,7 @@ const MessagesGroup = memo(
                                     'line-through text-muted-foreground'
                             )}
                             style={
-                                isDeletedUser
-                                    ? undefined
-                                    : {
-                                          color: getSocialCreditColor(
-                                              user.socialCredit ?? 0
-                                          )
-                                      }
+                                isDeletedUser ? undefined : { color: nameColor }
                             }
                         >
                             {getRenderedUsername(user, user.id)}

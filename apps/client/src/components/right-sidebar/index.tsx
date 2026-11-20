@@ -5,9 +5,9 @@ import {
     useChannelById,
     useSelectedChannelId
 } from '@/features/server/channels/hooks';
+import { useUserNameColor } from '@/features/server/hooks';
 import { useUsers } from '@/features/server/users/hooks';
 import { getRenderedUsername } from '@/helpers/get-rendered-username';
-import { getSocialCreditColor } from '@/helpers/get-social-credit-color';
 import { LocalStorageKey } from '@/helpers/storage';
 import { getTRPCClient } from '@/lib/trpc';
 import { cn } from '@/lib/utils';
@@ -25,12 +25,13 @@ type TUserProps = {
     userId: number;
     user: { name: string };
     banned: boolean;
-    socialCredit: number;
     hasStatus: boolean;
 };
 
 const User = memo(
-    ({ userId, user, banned, socialCredit, hasStatus }: TUserProps) => {
+    ({ userId, user, banned, hasStatus }: TUserProps) => {
+        const nameColor = useUserNameColor(userId);
+
         return (
             <UserPopover userId={userId}>
                 <div className="flex items-center gap-3 rounded px-2 py-1.5 hover:bg-accent select-none min-w-0">
@@ -58,9 +59,7 @@ const User = memo(
                             banned && 'line-through opacity-50'
                         )}
                         style={{
-                            color: banned
-                                ? undefined
-                                : getSocialCreditColor(socialCredit)
+                            color: banned ? undefined : nameColor
                         }}
                     >
                         {getRenderedUsername(user, userId)}
@@ -168,7 +167,6 @@ const RightSidebar = memo(
                                 userId={user.id}
                                 user={user}
                                 banned={user.banned}
-                                socialCredit={user.socialCredit ?? 0}
                                 hasStatus={(user.activeStatusCount ?? 0) > 0}
                             />
                         ))}

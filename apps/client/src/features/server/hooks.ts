@@ -25,6 +25,7 @@ import {
     publicServerSettingsSelector,
     serverNameSelector,
     typingUsersByChannelIdSelector,
+    userNameColorSelector,
     userRolesSelector,
     versionSelector,
     voiceUsersByChannelIdSelector
@@ -129,6 +130,9 @@ export const useHasVisibleChannelsInCategory = (categoryId: number) =>
 
 export const useUserRoles = (userId: number) =>
     useSelector((state: IRootState) => userRolesSelector(state, userId));
+
+export const useUserNameColor = (userId: number) =>
+    useSelector((state: IRootState) => userNameColorSelector(state, userId));
 
 // the selector rebuilds its array on any typingMap/users change, a fresh
 // [] included: compare entries so idle channels don't re-render
