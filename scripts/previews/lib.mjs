@@ -42,14 +42,18 @@ const CURSOR_SCRIPT = () => {
             top: '0',
             zIndex: '2147483647',
             pointerEvents: 'none',
-            transform: 'translate(-100px, -100px)',
+            // translate, not transform: the scale of a click is applied
+            // after `translate` but before `transform`, so a transform
+            // offset would be scaled too and the cursor would jump a fifth
+            // of the way to the corner on every click
+            translate: '-100px -100px',
             transition: 'scale 80ms ease-out',
             transformOrigin: '4px 2px'
         });
         document.documentElement.appendChild(cursor);
 
         const move = (event) => {
-            cursor.style.transform = `translate(${event.clientX - 4}px, ${event.clientY - 2}px)`;
+            cursor.style.translate = `${event.clientX - 4}px ${event.clientY - 2}px`;
         };
 
         // capture: the app may stop propagation (drag and drop does)
