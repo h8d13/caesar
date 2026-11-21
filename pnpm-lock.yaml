@@ -247,7 +247,7 @@ importers:
   .:
     devDependencies:
       knip:
-        specifier: ^6.45.1
+        specifier: ^6.46.1
         version: 6.46.1
       vite-plus:
         specifier: 'catalog:'
