@@ -283,7 +283,7 @@ importers:
         specifier: ^2.4.0
         version: 2.4.0
       '@reduxjs/toolkit':
-        specifier: ^2.14.0
+        specifier: ^2.15.0
         version: 2.15.0(@types/react@19.3.0)(react-redux@9.3.1(@types/react@19.3.0)(react@19.3.1)(redux@5.0.1))(react@19.3.1)
       '@simplewebauthn/browser':
         specifier: ^14.0.0
@@ -322,7 +322,7 @@ importers:
         specifier: ^4.4.0
         version: 4.4.0
       filesize:
-        specifier: ^11.0.34
+        specifier: ^11.0.35
         version: 11.0.35
       highlight.js:
         specifier: ^11.12.0
