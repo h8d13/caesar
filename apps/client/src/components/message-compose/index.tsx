@@ -31,6 +31,7 @@ import {
     memo,
     Suspense,
     useCallback,
+    useEffect,
     useMemo,
     useRef,
     useState
@@ -137,6 +138,30 @@ const MessageCompose = memo(
             () => canUploadFiles && isVoiceRecordingSupported(),
             [canUploadFiles]
         );
+
+        // The editor is disabled while uploading, which drops its focus, and
+        // Ctrl+Enter is an editor keybinding: hand focus back once the upload
+        // settles so an attachment-only message sends from the keyboard.
+        // Not if the user moved elsewhere, nor on touch (pops the keyboard).
+        const wasUploadingRef = useRef(false);
+
+        useEffect(() => {
+            const finished = wasUploadingRef.current && !uploading;
+
+            wasUploadingRef.current = uploading;
+
+            if (!finished) return;
+
+            const active = document.activeElement;
+            const focusIsFree =
+                !active ||
+                active === document.body ||
+                !!containerRef.current?.contains(active);
+
+            const isTouch = window.matchMedia('(pointer: coarse)').matches;
+
+            if (focusIsFree && !isTouch) inputRef.current?.focus();
+        }, [uploading]);
 
         // typed input and setContent both land here
         const onInputChange = useCallback(

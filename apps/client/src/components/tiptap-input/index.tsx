@@ -56,6 +56,7 @@ type TTiptapInputProps = {
 type TTiptapInputHandle = {
     getHTML: () => string;
     setContent: (html: string) => void;
+    focus: () => void;
 };
 
 const TiptapInput = memo(
@@ -203,6 +204,9 @@ const TiptapInput = memo(
                 getHTML: () => (isLive(editor) ? editor.getHTML() : ''),
                 setContent: (html: string) => {
                     if (isLive(editor)) editor.commands.setContent(html);
+                },
+                focus: () => {
+                    if (isLive(editor)) editor.commands.focus();
                 }
             }),
             [editor]
