@@ -448,7 +448,7 @@ importers:
         specifier: ^8.18.2
         version: 8.18.2
       cron:
-        specifier: ^4.4.1
+        specifier: ^4.4.2
         version: 4.4.2
       drizzle-orm:
         specifier: 'catalog:'

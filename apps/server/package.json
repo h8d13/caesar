@@ -25,7 +25,7 @@
     "@types/sanitize-html": "^2.16.2",
     "@types/web-push": "^3.6.4",
     "@types/ws": "^8.18.2",
-    "cron": "^4.4.1",
+    "cron": "^4.4.2",
     "drizzle-orm": "catalog:",
     "ini": "^7.0.0",
     "ipaddr.js": "^2.5.0",
