@@ -33,8 +33,8 @@ catalog:
   tailwind-merge: ^3.7.1
   tailwindcss: ^4.3.5
   typescript: ~7.0.2
-  vite: npm:@voidzero-dev/vite-plus-core@8.3.8000
-  vite-plus: 1.7.0
+  vite: npm:@voidzero-dev/vite-plus-core@8.3.8001
+  vite-plus: 1.8.0
 
 # Whitelist of native deps whose postinstall scripts we permit; anything
 # else with a build script fails the install (pnpm's default strictDepBuilds).
