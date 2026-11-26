@@ -197,10 +197,10 @@ catalogs:
       specifier: ^4.3.5
       version: 4.3.5
     '@trpc/client':
-      specifier: ^11.29.7
+      specifier: ^11.29.11
       version: 11.31.3
     '@trpc/server':
-      specifier: ^11.29.7
+      specifier: ^11.29.11
       version: 11.31.3
     '@types/node':
       specifier: ^26.6.6
