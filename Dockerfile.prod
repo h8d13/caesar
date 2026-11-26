@@ -86,7 +86,7 @@ RUN mkdir -p /out/code/app/static-prod-assets /out/home/node/.config/caesar \
 # distroless "cc" = glibc + libstdc++ + libgcc: minimum for the Node SEA,
 # prebuilt mediasoup-worker and argon2 (all dynamic glibc). "static" has no libc.
 # Node 26 also links libatomic, which "cc" lacks: staged from the builder.
-FROM gcr.io/distroless/cc-debian13@sha256:dac90a25ffe03ebaace90cda886b081e61ab6cd77ac47eda51f7bcc15c320765
+FROM gcr.io/distroless/cc-debian13@sha256:e8343d4a7da8bb210df0c3ea29de38bbadbba6c773bed0cd8bde506fca3a5c44
 
 # DATA_PATH = XDG_CONFIG_HOME/caesar; set HOME/XDG since uid 1000 has no passwd entry.
 ENV CAESAR_ENV=production \
