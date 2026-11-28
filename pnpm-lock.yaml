@@ -203,7 +203,7 @@ catalogs:
       specifier: ^11.29.11
       version: 11.31.3
     '@types/node':
-      specifier: ^26.6.6
+      specifier: ^26.6.10
       version: 26.6.10
     '@types/react':
       specifier: ^19.3.2
